@@ -54,3 +54,65 @@
 - 가장 흔한 대기 동작은 통통 튀는 숨쉬기이고, 2~4장에 한 장당 1~2픽셀만 바꾼다. 걷기는 4~6장이면 된다 [확인](https://slynyrd.com/blog/2018/8/19/pixelblog-8-intro-to-animation).
 - 깜박임은 정해진 주기면 기계적으로 보이므로 난수 간격으로, 가끔 두세 번 연달아 깜박이게 한다 [발췌](https://www.indiedb.com/games/a-little-less-desperation/tutorials/dynamic-character-blink-on-idle).
 
+## 3. 템플릿처럼 보이지 않는 화면
+
+### AI가 만든 듯한 화면의 특징
+
+디자이너들의 글에서 겹치는 항목이다. 모두 의견 글이다.
+
+- Inter나 시스템 글꼴을 그대로 쓴다
+- 보라에서 파랑으로 가는 그라데이션, 남보라 강조색
+- 아이콘이 붙은 같은 크기의 둥근 카드 반복, 모든 곳의 옅은 그림자
+- 모든 요소가 같은 무게라 위계가 없다
+- 데이터가 찬 화면만 있고 빈 상태, 오류, 로딩이 없다
+- 아무것도 안 움직이거나 모두 같은 페이드인
+- 어느 제품에나 붙일 수 있는 문구
+
+출처: [Kosta Canatselis](https://world.hey.com/kostac/spot-the-slop-a-ui-designer-s-guide-to-fixing-ai-defaults-4c448c9c), [prg.sh](https://prg.sh/ramblings/Why-Your-AI-Keeps-Building-the-Same-Purple-Gradient-Website), [GeekyAnts](https://geekyants.com/blog/why-everything-your-ai-builds-looks-the-same)
+
+### 잘 만든 쪽이 하는 것
+
+- **글꼴**: Pretendard는 SIL OFL이라 앱에 넣어 배포할 수 있다(고지 파일 포함) [확인](https://github.com/orioncactus/pretendard). 당근 SEED는 Windows에서 맑은 고딕 대신 Pretendard를 지정하고 굵기는 400, 500, 700만 쓴다 [확인](https://seed-design.io/llms/foundations/typography.txt).
+- **글자 단계**: 토스 TDS는 크기와 줄 높이를 짝지은 토큰이다. 본문은 줄 높이 1.5배(17/25.5), 제목은 1.33배 안팎. 13 크기를 "읽지 않아도 되는 글"로 정의한다 [확인](https://tossmini-docs.toss.im/tds-mobile/foundation/typography/).
+- **색**: SEED는 값이 아닌 역할로 색을 정한다. 브랜드 색은 하나이고 "화면에서 가장 중요한 행동"에만 쓴다. 배경은 세 층이고, 계층은 배경 밝기 차이로 만들며 그림자는 주목도가 높은 소수 요소에만 쓴다 [확인](https://seed-design.io/llms/foundations/color/color-role.txt), [확인](https://seed-design.io/llms/foundations/elevation.txt). 토스의 가장 진한 글자색은 순흑이 아닌 #191f28이다 [확인](https://tossmini-docs.toss.im/tds-mobile/foundation/colors/).
+- **간격**: SEED는 4px 단위다 [확인](https://seed-design.io/llms/foundations/spacing.txt).
+- **내용 우선**: Things 3는 사용자의 내용을 가장 눈에 띄는 자리에 두고 장식을 줄인다. 애니메이션은 써 보다가 금방 질리면 뺀다 [확인](https://sspai.com/post/39724).
+- **대비**: WCAG 2.2 AA는 일반 글자 4.5:1, 큰 글자 3:1, 버튼 경계와 아이콘 3:1이다 [확인](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html).
+
+## 4. Swing으로 할 수 있는 것
+
+- **FlatLaf 3.8** (Apache-2.0): 테마 클래스 하나와 properties 파일로 색, 모서리 둥글기, 앱 고유 색 키를 한곳에서 관리한다. 변수와 `darken`, `lighten` 함수, 운영체제별 접두어를 지원한다 [확인](https://www.formdev.com/flatlaf/how-to-customize/), [확인](https://www.formdev.com/flatlaf/properties-files/).
+- **창 제목 표시줄**: macOS는 투명 제목 표시줄과 full window content로 내용을 제목 표시줄까지 올릴 수 있다(신호등 버튼 자리 약 70px 비움). Windows 10, 11도 FlatLaf 창 장식으로 제목 표시줄 색과 높이를 바꾸고 내용을 올릴 수 있다 [확인](https://www.formdev.com/flatlaf/macos/), [확인](https://www.formdev.com/flatlaf/window-decorations/).
+- **글꼴**: Pretendard 정적 굵기 파일을 JAR에 넣고 `Font.createFont`로 읽는다. 가변 글꼴은 AWT가 굵기 설정을 다루지 못해 피한다 [발췌](https://bugs.openjdk.org/browse/JDK-8378603). FlatLaf `defaultFont` 설정으로 앱 전체에 적용한다 [확인](https://www.formdev.com/flatlaf/typography/).
+- **아이콘**: `FlatSVGIcon`(JSVG 렌더러)으로 SVG를 배율에 맞게 그리고 색을 바꾼다 [확인](https://github.com/JFormDesigner/FlatLaf/tree/main/flatlaf-extras). Lucide(ISC), Tabler(MIT), Phosphor(MIT)는 상업 사용이 되고 고지 파일을 넣는다.
+- **그림 에셋**: Kenney 에셋은 전부 CC0이다 [확인](https://kenney.nl/support). OpenGameArt에 CC0 고양이 스프라이트가 있다 [발췌](https://opengameart.org/content/cute-kitty-animated-set). 고양이 방 꾸미기 전용 세트는 못 찾았다. itch.io 에셋은 제작자마다 라이선스가 다르다.
+- **움직임**: FlatLaf `Animator`와 `CubicBezierEasing`으로 경과 시간 기준의 이징을 쓴다 [확인](https://github.com/JFormDesigner/FlatLaf/blob/main/flatlaf-core/src/main/java/com/formdev/flatlaf/util/Animator.java). `javax.swing.Timer`는 밀린 이벤트를 합치므로 프레임 수로 위치를 계산하면 안 된다 [확인](https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/Timer.html).
+- **HiDPI**: Java 9부터 Windows도 자동 배율이다 [확인](https://openjdk.org/jeps/263). 흐려지는 주 원인은 논리 크기로 만든 이미지를 늘려 그리는 것이므로, 그림은 SVG나 2배 이미지로 둔다. 픽셀 아트는 150% 배율에서 고르지 않게 보인다 [추측].
+
+## 5. 종합
+
+### 방향을 정하는 사실
+
+1. 대상은 이미 에브리타임의 색 블록 시간표와 투두메이트의 단순한 색 목록에 익숙하다. 새 화면 언어를 가르칠 필요가 없다.
+2. 투두메이트의 동기는 친구의 칭찬이었다. 우리 앱에서 그 자리는 펫이다.
+3. 캐릭터의 품질은 실루엣과 적은 도형에서 나오고, 살아 보이는 것은 숨쉬기와 난수 깜박임 정도로 충분하다.
+4. 처벌하는 펫은 불안을 만든다는 근거가 처벌의 효과보다 많다. 기획의 "다마고치형"(Q-09)은 돌보지 않으면 나빠지는 것까지 가져오지 않는 편이 맞다.
+5. 메인 아래 띠는 데스크톱 동반자 장르와 같은 자리다. 이 장르가 사랑받는 이유(방해하지 않음, 행동에 반응함)를 그대로 따른다.
+6. 템플릿 티는 기본값에서 나온다. 글꼴, 색, 위계, 빈 상태, 문구를 모두 이 앱에 맞게 정하면 피할 수 있다.
+
+### 금지 목록 (초안)
+
+- 보라와 파랑 그라데이션, 남보라 강조색
+- 같은 크기 카드의 반복, 모든 요소에 그림자
+- 이모지를 아이콘 대신 쓰기
+- 시스템 기본 글꼴, 순흑 글자
+- 빈 상태와 오류 상태 없이 꽉 찬 시연 화면만 그리기
+- 어느 앱에나 붙는 문구("생산성을 높이세요")
+- 펫이 슬퍼하거나 아프거나 죽는 연출
+
+### 확인해야 할 것
+
+- 대학생이 아침에 노트북에서 일정을 보는지: 팀원과 친구 5명 정도에게 묻는다.
+- 펫 그림을 도형으로 그릴지, CC0 에셋을 쓸지: 시안을 둘 다 만들어 비교한다(Q-28).
+- jpackage 설치본이 Windows 150% 배율에서 흐리지 않은지: 설치 파일을 만든 뒤 시험한다.
+
