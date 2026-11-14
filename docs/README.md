@@ -6,7 +6,7 @@
 |---|---|---|
 | 01 | [개요와 요구사항](01-requirements.md) | CHARACTERISTICS, REQUIREMENT LISTS |
 | 02 | [유스케이스](02-usecases.md) | USECASES |
-| 03 | 유스케이스 다이어그램 | USECASE DIAGRAM |
+| 03 | [유스케이스 다이어그램](03-usecase-diagram.md) | USECASE DIAGRAM |
 | 04 | 시퀀스 다이어그램 | SEQUENCE DIAGRAM |
 | 05 | 화면 설계 | USER INTERFACE DESIGNS |
 | 06 | 함수 명세 | FUNCTION SPECIFICATION |
