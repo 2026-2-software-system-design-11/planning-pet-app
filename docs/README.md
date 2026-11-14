@@ -12,6 +12,7 @@
 | 06 | 함수 명세 | FUNCTION SPECIFICATION |
 | 07 | 클래스 다이어그램 | 개인과제 CP4 |
 | - | [결정 기록](decisions.md) | 양식에 없음. 무엇을 왜 정했는지 |
+| - | [저장 방식 측정](research/storage.md) | 양식에 없음. D-08의 근거 |
 
 ## 쓰는 규칙
 
