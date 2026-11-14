@@ -1,0 +1,28 @@
+@startsalt ui-settings
+!include ui-common.iuml
+{+
+  { <b>플래닝펫</b> | 연속 접속 <b>5일</b> | 보유 <b>120P</b> | [<color:#AAAAAA>출석 완료</color>] }
+  --
+  {
+    {
+      [  홈  ]
+      [일정관리]
+      [ pet ]
+      [<color:#AAAAAA>통계</color>]
+      [<b>설정</b>]
+    } | . |
+    {
+      <b>실행</b> | .
+      [X] 컴퓨터 켤 때 같이 실행 | .
+      <size:11><color:#666666>창을 닫아도 앱은 트레이에 남아 알림을 보내요</color></size> | .
+      . | .
+      <b>데이터</b> | .
+      저장 위치 | <color:#666666>(사용자 폴더)/PlanningPet</color>
+      . | [폴더 열기]
+      . | .
+      <b>정보</b> | .
+      버전 | 0.1.0
+    }
+  }
+}
+@endsalt
