@@ -1,0 +1,69 @@
+@startuml usecase
+left to right direction
+skinparam shadowing false
+skinparam defaultFontName "Apple SD Gothic Neo"
+skinparam defaultFontSize 13
+skinparam dpi 150
+skinparam packageStyle rectangle
+skinparam ranksep 80
+skinparam usecase {
+  BackgroundColor #F7F9FC
+  BorderColor #4A5568
+}
+skinparam ArrowColor #4A5568
+
+actor "사용자" as User
+actor "시계" as Clock
+actor "운영체제" as OS
+actor "웹 페이지" as Web
+
+rectangle "플래닝펫" {
+  usecase "UC-01\n앱 시작하기" as UC01
+  usecase "UC-17\n반려동물 고르기" as UC17
+  usecase "UC-02\n출석하기" as UC02
+  usecase "UC-03\n일정 추가하기" as UC03
+  usecase "UC-04\n할 일 빠르게\n추가하기" as UC04
+  usecase "UC-05\n일정 수정하기" as UC05
+  usecase "UC-06\n일정 삭제하기" as UC06
+  usecase "UC-07\n할 일 완료하기" as UC07
+  usecase "UC-08\n할 일 완료\n취소하기" as UC08
+  usecase "UC-09\n달력으로\n일정 보기" as UC09
+  usecase "UC-10\n시간표로\n일정 보기" as UC10
+  usecase "UC-11\n할 일 자동\n배치하기" as UC11
+  usecase "UC-12\nURL에서\n일정 가져오기" as UC12
+  usecase "UC-13\n마감 알림 받기" as UC13
+  usecase "UC-14\n펫 방 보기" as UC14
+  usecase "UC-15\n아이템 사기" as UC15
+  usecase "UC-16\n아이템 놓기와\n치우기" as UC16
+  usecase "UC-18\n컴퓨터 켤 때\n실행 설정하기" as UC18
+  usecase "UC-19\n창 닫기와\n앱 끝내기" as UC19
+}
+
+User --> UC01
+User --> UC02
+User --> UC03
+User --> UC04
+User --> UC05
+User --> UC06
+User --> UC07
+User --> UC08
+User --> UC09
+User --> UC10
+User --> UC11
+User --> UC12
+User --> UC14
+User --> UC15
+User --> UC16
+User --> UC18
+User --> UC19
+Clock --> UC13
+
+UC01 <-- OS : 시작
+UC13 -- OS
+UC18 -- OS
+UC13 -- User
+UC12 -- Web
+
+UC17 .> UC01 : <<extend>>\n첫 실행
+UC12 .> UC03 : <<include>>
+@enduml
