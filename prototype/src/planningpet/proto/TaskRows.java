@@ -22,7 +22,7 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     }
 
-    /** 메인(D-31): 시각 있는 일정을 시각과 함께, 그 아래 "시간 안 정한 할 일". */
+    /** 메인(D-31): 시각 있는 일정을 시각과 함께, 그 아래 "시각 없는 할 일"(D-41). */
     public void showPlan(Store.DayPlan plan) {
         removeAll();
         if (plan.timed().isEmpty() && plan.untimed().isEmpty()) {
@@ -30,7 +30,7 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
         }
         plan.timed().forEach(t -> add(row(t, Store.timeText(t), false)));
         if (!plan.untimed().isEmpty()) {
-            JLabel head = Ui.hint("시간 안 정한 할 일");
+            JLabel head = Ui.hint("시각 없는 할 일");
             head.setBorder(BorderFactory.createEmptyBorder(10, 0, 2, 0));
             add(head);
             plan.untimed().forEach(t -> add(row(t, "", false)));
@@ -43,7 +43,7 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
     public void show(List<Task> tasks, boolean withDate) {
         removeAll();
         if (tasks.isEmpty()) {
-            add(Ui.hint("이번 주에 시간 안 정한 할 일이 없어요."));
+            add(Ui.hint("이번 주에 시각 없는 할 일이 없어요."));
         }
         tasks.forEach(t -> add(row(t, null, withDate)));
         revalidate();
@@ -72,11 +72,12 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
         }
         JPanel left = Ui.flow();
         if (time != null) {
-            JLabel when = new JLabel(time.isEmpty() ? "시간 정하기" : time);
+            // D-40: 시각 칸은 밑줄을 그어 누르는 곳임을 보인다.
+            JLabel when = new JLabel("<html><u>" + (time.isEmpty() ? "시각 정하기" : time) + "</u></html>");
             when.setPreferredSize(new Dimension(92, 20));
             when.setForeground(t.done || time.isEmpty() ? Theme.INK_DIM : Theme.INK);
             when.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
-            when.setToolTipText("눌러서 시간을 바꿔요");
+            when.setToolTipText("눌러서 시각을 바꿔요");
             when.addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
@@ -86,7 +87,9 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
             left.add(when);
         }
         left.add(mark);
-        String date = withDate ? t.date.getMonthValue() + "/" + t.date.getDayOfMonth() + " " : "";
+        // D-44: 일정관리 목록에서 오늘보다 앞선 날짜는 "지난 날"을 붙인다.
+        String past = withDate && t.date.isBefore(actions.today()) ? "<font color='#C0392B'>지난 날</font> " : "";
+        String date = withDate ? past + t.date.getMonthValue() + "/" + t.date.getDayOfMonth() + " " : "";
         String memoMark = t.memo.isBlank() ? "" : " <font size='2' color='#8A96A0'>메모</font>";
         JLabel label = new JLabel("<html>" + date + (t.done ? "<s>" + Ui.esc(t.title) + "</s>" : Ui.esc(t.title))
                 + memoMark + "</html>");
