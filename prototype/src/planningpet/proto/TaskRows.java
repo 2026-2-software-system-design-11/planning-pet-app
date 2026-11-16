@@ -1,7 +1,6 @@
 package planningpet.proto;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
@@ -34,9 +33,10 @@ public final class TaskRows extends JPanel {
             String title = t.done ? "<s>" + t.title + "</s>" : t.title;
             JLabel label = new JLabel("<html>" + when + title + "</html>");
             JLabel minutes = new JLabel(t.minutes + "분");
+            label.setFont(Theme.font(15));
             if (t.done) {
-                label.setForeground(Color.GRAY);
-                minutes.setForeground(Color.GRAY);
+                label.setForeground(Theme.INK_DIM);
+                minutes.setForeground(Theme.INK_DIM);
             }
             row.add(box, BorderLayout.WEST);
             row.add(label, BorderLayout.CENTER);

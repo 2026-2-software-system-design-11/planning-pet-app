@@ -1,14 +1,12 @@
 package planningpet.proto;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.GridLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.function.Consumer;
-import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -52,11 +50,13 @@ public final class CalendarPanel extends JPanel {
     }
 
     public void refresh() {
-        title.setText("<html><b>" + month.getYear() + "년 " + month.getMonthValue() + "월</b></html>");
+        title.setText(month.getYear() + "년 " + month.getMonthValue() + "월");
+        title.setFont(Theme.font(23));
         grid.removeAll();
         for (int i = 0; i < 7; i++) {
             JLabel day = new JLabel(String.valueOf(DAYS.charAt(i)), SwingConstants.CENTER);
-            day.setForeground(i == 0 ? new Color(0xC0392B) : i == 6 ? new Color(0x2E64C8) : Color.DARK_GRAY);
+            day.setForeground(i == 0 ? Theme.SUNDAY : i == 6 ? Theme.SATURDAY : Theme.INK);
+            day.setFont(Theme.font(16));
             grid.add(day);
         }
         int offset = month.atDay(1).getDayOfWeek().getValue() % 7;
@@ -70,16 +70,30 @@ public final class CalendarPanel extends JPanel {
 
     private JLabel cell(LocalDate date) {
         boolean open = store.forDate(date).stream().anyMatch(t -> !t.done);
-        String text = date.getDayOfMonth() + (open ? " <font color='#4A90D9' size='2'>●</font>" : "");
+        String text = date.getDayOfMonth() + (open ? " <font color='#28977F' size='2'>●</font>" : "");
         if (date.equals(selected)) {
             text = "<b>" + text + "</b>";
         }
-        JLabel label = new JLabel("<html>" + text + "</html>", SwingConstants.CENTER);
-        label.setBorder(BorderFactory.createLineBorder(new Color(0xE0E0E0)));
-        if (date.equals(store.today())) {
-            label.setOpaque(true);
-            label.setBackground(new Color(0xFFE58F));
-        }
+        boolean today = date.equals(store.today());
+        boolean picked = date.equals(selected);
+        JLabel label = new JLabel("<html>" + text + "</html>", SwingConstants.CENTER) {
+            @Override
+            protected void paintComponent(java.awt.Graphics graphics) {
+                java.awt.Graphics2D g = (java.awt.Graphics2D) graphics.create();
+                g.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+                g.setColor(today ? Theme.DAY_SELECTED : Theme.DAY);
+                g.fillRoundRect(1, 1, getWidth() - 3, getHeight() - 3, 18, 18);
+                if (picked) {
+                    g.setColor(Theme.MINT);
+                    g.setStroke(new java.awt.BasicStroke(2));
+                    g.drawRoundRect(1, 1, getWidth() - 3, getHeight() - 3, 18, 18);
+                }
+                g.dispose();
+                super.paintComponent(graphics);
+            }
+        };
+        int dow = date.getDayOfWeek().getValue() % 7;
+        label.setForeground(dow == 0 ? Theme.SUNDAY : dow == 6 ? Theme.SATURDAY : Theme.INK);
         label.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
