@@ -5,10 +5,14 @@
   --|--|--|--
   {#
     아이템 | 가격 | 상태 | .
-    화분 | 50P | 보유 중 | [<color:#AAAAAA>사기</color>]
-    러그 | 80P | . | [사기]
-    고양이 탑 | 200P | <color:#C0392B>80P 모자라요</color> | [<color:#AAAAAA>사기</color>]
-    조명 | 100P | . | [사기]
+    쿠션 | 50P | 보유 중 | [<color:#AAAAAA>사기</color>]
+    화분 | 80P | 보유 중 | [<color:#AAAAAA>사기</color>]
+    러그 | 100P | 보유 중 | [<color:#AAAAAA>사기</color>]
+    액자 | 120P | . | [사기]
+    조명 | 150P | <color:#C0392B>30P 모자라요</color> | [<color:#AAAAAA>사기</color>]
+    책장 | 200P | <color:#C0392B>80P 모자라요</color> | [<color:#AAAAAA>사기</color>]
+    책상 | 250P | <color:#C0392B>130P 모자라요</color> | [<color:#AAAAAA>사기</color>]
+    소파 | 300P | <color:#C0392B>180P 모자라요</color> | [<color:#AAAAAA>사기</color>]
   }
   --|--|--|--
   . | . | . | [닫기]
