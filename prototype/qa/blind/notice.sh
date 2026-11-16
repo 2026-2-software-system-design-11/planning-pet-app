@@ -1,10 +1,11 @@
 #!/bin/sh
 # 페르소나 한 명의 첫인상 답(단계 a)을 부품 목록과 맞춘다. 맞추는 세션은 도구가 없고 두 글만 본다.
-# 쓰기: qa/blind/notice.sh <페르소나 번호>   (prototype 폴더에서, blind.sh 다음에)
+# 쓰기: qa/blind/notice.sh <페르소나 번호> [단계 이름, 기본 a] [번호 열쇠, 기본 key.md]   (prototype 폴더에서)
 set -e
 n=$1
-OUT="out-blind/p$n-a"
-python3 - out-blind/key.md "$OUT/answer.md" qa/blind/notice.md > "$OUT/notice-prompt.md" <<'PY'
+OUT="out-blind/p$n-${2:-a}"
+KEY="${3:-out-blind/key.md}"
+python3 - "$KEY" "$OUT/answer.md" qa/blind/notice.md > "$OUT/notice-prompt.md" <<'PY'
 import sys
 key = open(sys.argv[1], encoding="utf-8").read().split("\n", 3)[3]
 answer = open(sys.argv[2], encoding="utf-8").read()

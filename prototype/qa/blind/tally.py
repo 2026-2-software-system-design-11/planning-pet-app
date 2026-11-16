@@ -1,6 +1,6 @@
 """판정 결과를 실제 동작 줄마다 모은다.
 
-쓰기: python3 tally.py <out-blind> <결과.md>
+쓰기: python3 tally.py <out-blind> <결과.md> [단계 이름, 기본 b]
 줄마다 같음, 다름, 판정 못 함, 예측 없음을 세고, 다름이 많은 줄부터 그 예측 문장을 그대로 붙인다.
 """
 import collections
@@ -8,19 +8,20 @@ import re
 import sys
 
 base, out = sys.argv[1], sys.argv[2]
+phase = sys.argv[3] if len(sys.argv) > 3 else "b"
 rows = {}
 count = collections.defaultdict(collections.Counter)
 diff = collections.defaultdict(list)
 for n in range(1, 11):
     pairs = {}
-    for line in open(f"{base}/p{n}-b/pairs.tsv", encoding="utf-8"):
+    for line in open(f"{base}/p{n}-{phase}/pairs.tsv", encoding="utf-8"):
         i, screen, no, op, pred, real = line.rstrip("\n").split("\t")
         rows[i] = (screen, int(no), op, real)
         pairs[i] = pred
         if not pred:
             count[i]["예측 없음"] += 1
     seen = set()
-    for line in open(f"{base}/p{n}-b/judge.md", encoding="utf-8"):
+    for line in open(f"{base}/p{n}-{phase}/judge.md", encoding="utf-8"):
         c = [x.strip() for x in line.strip().strip("|").split("|")]
         if len(c) >= 2 and re.match(r"\d+$", c[0]) and c[0] in pairs and pairs[c[0]] and c[0] not in seen:
             seen.add(c[0])
