@@ -15,6 +15,7 @@ class QaDrive extends QaCore {
     PetScreen pet;
     String lastQuestion;
     String lastOptions;
+    String lastTitle;
 
     QaDrive(String flow) {
         super(flow);
@@ -107,7 +108,8 @@ class QaDrive extends QaCore {
 
     /** 삭제 확인 창에서 answer번째 버튼을 누른다. 물어본 문장은 lastQuestion에 남는다. */
     boolean delete(Task t, int answer) {
-        app.actions.chooser = (message, options) -> {
+        app.actions.chooser = (title, message, options) -> {
+            lastTitle = title;
             lastQuestion = message;
             lastOptions = String.join(", ", options);
             return answer;

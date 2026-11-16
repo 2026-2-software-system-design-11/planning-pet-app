@@ -21,6 +21,8 @@ public final class PetScreen extends JPanel {
     private String said;
     private boolean wasVisible;
     final JLabel decoText = new JLabel();
+    /** D-45: 상점 버튼은 아이템 줄과 떨어진 오른쪽 끝이다. */
+    final JButton shopButton = new JButton("상점");
     private final JProgressBar decoBar = new JProgressBar(0, Game.ITEMS.size());
 
     public PetScreen(App app) {
@@ -40,7 +42,11 @@ public final class PetScreen extends JPanel {
         decoBar.setPreferredSize(new Dimension(90, 10));
         bottom.add(Ui.flow(new JLabel("<html><b>내 아이템</b></html>"), Ui.hint("누르면 방에 놓거나 치워요"), decoText, decoBar),
                 BorderLayout.NORTH);
-        bottom.add(items, BorderLayout.CENTER);
+        JPanel row = new JPanel(new BorderLayout());
+        row.add(items, BorderLayout.CENTER);
+        shopButton.addActionListener(e -> ShopDialog.open(app, this));
+        row.add(Ui.flow(shopButton), BorderLayout.EAST);
+        bottom.add(row, BorderLayout.CENTER);
         bottom.add(Ui.hint(Ui.POINT_GUIDE), BorderLayout.SOUTH);
         bottom.setPreferredSize(new Dimension(0, 130));
         add(bottom, BorderLayout.SOUTH);
@@ -66,7 +72,7 @@ public final class PetScreen extends JPanel {
             room.bubble = done > 0 ? "오늘 " + done + "개 끝냈어." : "오늘은 아직 끝낸 일이 없어.";
         }
         wasVisible = "pet".equals(app.current());
-        decoText.setText("꾸미기 " + s.owned.size() + " / " + Game.ITEMS.size());
+        decoText.setText("가진 아이템 " + s.owned.size() + " / " + Game.ITEMS.size());
         decoBar.setValue(s.owned.size());
         items.removeAll();
         items.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 6, 4));
@@ -76,7 +82,6 @@ public final class PetScreen extends JPanel {
             }
             boolean placed = s.placed.contains(item);
             JToggleButton b = new JToggleButton(placed ? item + " ✓" : item, placed);
-            b.putClientProperty(RoundButtonUI.DIM, !placed);
             b.addActionListener(e -> {
                 if (!s.placed.remove(item)) {
                     s.placed.add(item);
@@ -85,9 +90,6 @@ public final class PetScreen extends JPanel {
             });
             items.add(b);
         }
-        JButton shop = new JButton("상점");
-        shop.addActionListener(e -> ShopDialog.open(app, this));
-        items.add(shop);
         items.revalidate();
         room.repaint();
     }

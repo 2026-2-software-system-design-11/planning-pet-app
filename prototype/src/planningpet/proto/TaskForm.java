@@ -25,7 +25,13 @@ public final class TaskForm {
     final java.util.Map<String, JLabel> errors = new java.util.LinkedHashMap<>();
     final JLabel repeatHint = Ui.hint("반복은 고정 일정만 할 수 있어요");
     final JLabel endLabel = new JLabel();
+    /** D-43: 추가 창에서 걸리는 시간이 30일 때만 보인다. */
+    final JLabel minutesHint = Ui.hint("안 바꾸면 30분으로 들어가요");
     private final boolean editing;
+    /** 저장을 한 번 누른 뒤에는 칸을 고칠 때마다 다시 검사한다(D-43). */
+    private boolean checked;
+    /** 오류 글이 늘거나 줄면 창 크기를 다시 맞춘다. 창 없이 만들 때는 아무것도 하지 않는다. */
+    Runnable relayout = () -> { };
     private int row;
 
     public TaskForm(Task t, LocalDate defaultDate, java.time.LocalDateTime now) {
@@ -35,8 +41,8 @@ public final class TaskForm {
         ButtonGroup kinds = new ButtonGroup();
         kinds.add(task);
         kinds.add(fixed);
-        date.setEditor(new JSpinner.DateEditor(date, "yyyy-MM-dd (E)"));
-        repeatEnd.setEditor(new JSpinner.DateEditor(repeatEnd, "yyyy-MM-dd"));
+        Ui.dayEditor(date, "yyyy-MM-dd (E)");
+        Ui.dayEditor(repeatEnd, "yyyy-MM-dd");
         start.setValue(TimeEditor.defaultStart(defaultDate, now).toString());
         for (String k : new String[] {"제목", "시작 시각", "걸리는 시간", "메모", "반복"}) {
             JLabel l = new JLabel();
@@ -52,7 +58,7 @@ public final class TaskForm {
         line("", errors.get("시작 시각"));
         line("걸리는 시간 (분)", Ui.flow(minutes, endLabel));
         line("", errors.get("걸리는 시간"));
-        line("", Ui.hint("안 바꾸면 30분으로 들어가요"));
+        line("", minutesHint);
         line("반복", Ui.flow(repeat, repeatEnd));
         line("", errors.get("반복"));
         line("", repeatHint);
@@ -77,6 +83,23 @@ public final class TaskForm {
         repeat.addActionListener(e -> sync());
         start.addChangeListener(e -> sync());
         minutes.addChangeListener(e -> sync());
+        title.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            @Override
+            public void insertUpdate(javax.swing.event.DocumentEvent e) {
+                sync();
+            }
+
+            @Override
+            public void removeUpdate(javax.swing.event.DocumentEvent e) {
+                sync();
+            }
+
+            @Override
+            public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                sync();
+            }
+        });
+        repeatEnd.addChangeListener(e -> sync());
         date.addChangeListener(e -> {
             if (!repeat.isSelected() && !editing) {
                 Ui.setDate(repeatEnd, Ui.dateOf(date).plusWeeks(15));
@@ -97,15 +120,31 @@ public final class TaskForm {
             repeat.setSelected(false);
         }
         repeat.setEnabled(isFixed && !editing);
-        repeatEnd.setEnabled(repeat.isSelected());
+        repeatEnd.setEnabled(repeat.isSelected() && !editing);
         repeatHint.setVisible(!isFixed);
+        minutesHint.setVisible(!editing && (int) minutes.getValue() == 30);
         LocalTime s = startTime();
         int end = s == null ? 0 : s.getHour() * 60 + s.getMinute() + (int) minutes.getValue();
         endLabel.setText(s == null ? "" : String.format("끝 %02d:%02d", end / 60, end % 60));
+        if (checked) {
+            showErrors(TaskCheck.check(this));
+        }
+    }
+
+    boolean editing() {
+        return editing;
+    }
+
+    /** D-42: 반복 사본을 고칠 때 반복 칸을 켠 채(비활성) 그 반복의 마지막 날짜를 보인다. */
+    void showSeries(LocalDate end) {
+        repeat.setSelected(true);
+        Ui.setDate(repeatEnd, end);
+        sync();
     }
 
     /** 검사 결과를 칸 아래에 보인다. 고친 칸의 오류는 지운다. */
     void showErrors(java.util.List<String[]> problems) {
+        checked = true;
         errors.values().forEach(l -> {
             l.setText("");
             l.setVisible(false);
@@ -114,6 +153,7 @@ public final class TaskForm {
             errors.get(p[0]).setText(p[1]);
             errors.get(p[0]).setVisible(true);
         }
+        relayout.run();
     }
 
     /** 보이는 오류 글을 칸 순서대로 " / "로 잇는다. */

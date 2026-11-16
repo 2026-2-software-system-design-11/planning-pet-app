@@ -22,7 +22,7 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     }
 
-    /** 메인(D-31): 시각 있는 일정을 시각과 함께, 그 아래 "시간 안 정한 할 일". */
+    /** 메인(D-31): 시각 있는 일정을 시각과 함께, 그 아래 "시각 없는 할 일"(D-41). */
     public void showPlan(Store.DayPlan plan) {
         removeAll();
         if (plan.timed().isEmpty() && plan.untimed().isEmpty()) {
@@ -30,7 +30,7 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
         }
         plan.timed().forEach(t -> add(row(t, Store.timeText(t), false)));
         if (!plan.untimed().isEmpty()) {
-            JLabel head = Ui.hint("시간 안 정한 할 일");
+            JLabel head = Ui.hint("시각 없는 할 일");
             head.setBorder(BorderFactory.createEmptyBorder(10, 0, 2, 0));
             add(head);
             plan.untimed().forEach(t -> add(row(t, "", false)));
@@ -43,7 +43,7 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
     public void show(List<Task> tasks, boolean withDate) {
         removeAll();
         if (tasks.isEmpty()) {
-            add(Ui.hint("이번 주에 시간 안 정한 할 일이 없어요."));
+            add(Ui.hint("이번 주에 시각 없는 할 일이 없어요."));
         }
         tasks.forEach(t -> add(row(t, null, withDate)));
         revalidate();
@@ -72,11 +72,13 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
         }
         JPanel left = Ui.flow();
         if (time != null) {
-            JLabel when = new JLabel(time.isEmpty() ? "시간 정하기" : time);
+            // D-40: 시각 칸은 밑줄을 그어 누르는 곳임을 보인다.
+            // HTML 글은 setForeground를 따르지 않아 흐린 색(메모 표시와 같은 색)을 HTML 안에 넣는다.
+            String color = t.done || time.isEmpty() ? "<font color='#8A96A0'>" : "<font>";
+            JLabel when = new JLabel("<html>" + color + "<u>" + (time.isEmpty() ? "시각 정하기" : time) + "</u></font></html>");
             when.setPreferredSize(new Dimension(92, 20));
-            when.setForeground(t.done || time.isEmpty() ? Theme.INK_DIM : Theme.INK);
             when.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
-            when.setToolTipText("눌러서 시간을 바꿔요");
+            when.setToolTipText("눌러서 시각을 바꿔요");
             when.addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
@@ -109,7 +111,16 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
             JPanel buttons = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 4, 0));
             buttons.add(edit);
             buttons.add(delete);
-            row.add(buttons, BorderLayout.SOUTH);
+            // D-44: 오늘보다 앞선 날짜는 둘째 줄 왼쪽에 "지난 날". 제목 줄에 붙이면 좁은 목록에서 제목이 잘린다.
+            JPanel second = new JPanel(new BorderLayout());
+            if (t.date.isBefore(actions.today())) {
+                JLabel past = new JLabel("지난 날");
+                past.setForeground(new java.awt.Color(0xC0392B));
+                past.setFont(Theme.font(12));
+                second.add(past, BorderLayout.WEST);
+            }
+            second.add(buttons, BorderLayout.EAST);
+            row.add(second, BorderLayout.SOUTH);
             row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 58));
         } else {
             row.add(Ui.flow(minutes, edit, delete), BorderLayout.EAST);

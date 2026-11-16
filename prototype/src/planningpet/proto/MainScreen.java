@@ -23,6 +23,9 @@ public final class MainScreen extends JPanel {
     private final javax.swing.JProgressBar levelBar = new javax.swing.JProgressBar(0, 1000);
     final JLabel levelText = new JLabel();
     final JTextField quick = new JTextField();
+    /** D-40: 칸 옆 "추가"는 Enter와 같다. "일정 추가"는 목록 제목 줄 오른쪽이다. */
+    final JButton quickButton = new JButton("추가");
+    final JButton addButton = new JButton("일정 추가");
 
     public MainScreen(App app) {
         super(new BorderLayout(0, 8));
@@ -33,7 +36,11 @@ public final class MainScreen extends JPanel {
 
         JPanel list = new Card(new BorderLayout(0, 6));
         listTitle.setFont(Theme.font(23));
-        list.add(listTitle, BorderLayout.NORTH);
+        addButton.addActionListener(e -> app.actions.add(calendar.selected()));
+        JPanel head = new JPanel(new BorderLayout());
+        head.add(listTitle, BorderLayout.CENTER);
+        head.add(addButton, BorderLayout.EAST);
+        list.add(head, BorderLayout.NORTH);
         JScrollPane scroll = new JScrollPane(rows, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scroll.setBorder(BorderFactory.createEmptyBorder());
         list.add(scroll, BorderLayout.CENTER);
@@ -58,10 +65,8 @@ public final class MainScreen extends JPanel {
 
     private JPanel quickAdd() {
         JPanel panel = new JPanel(new BorderLayout(6, 2));
-        JButton add = new JButton("일정 추가");
-        add.addActionListener(e -> app.actions.add(calendar.selected()));
         Ui.limit(quick, 100);
-        quick.addActionListener(e -> {
+        Runnable put = () -> {
             String title = quick.getText().strip();
             if (title.isEmpty() || title.length() > 100) {
                 return;
@@ -69,12 +74,35 @@ public final class MainScreen extends JPanel {
             app.store.add(Task.Kind.TASK, title, calendar.selected(), null, 30, "", null);
             quick.setText("");
             app.store.changed();
+        };
+        quick.addActionListener(e -> put.run());
+        quickButton.addActionListener(e -> put.run());
+        quickButton.setEnabled(false);
+        quick.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            private void sync() {
+                quickButton.setEnabled(!quick.getText().isBlank());
+            }
+
+            @Override
+            public void insertUpdate(javax.swing.event.DocumentEvent e) {
+                sync();
+            }
+
+            @Override
+            public void removeUpdate(javax.swing.event.DocumentEvent e) {
+                sync();
+            }
+
+            @Override
+            public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                sync();
+            }
         });
-        JLabel hint = new JLabel("시간을 안 쓰면 30분으로 들어가요");
+        JLabel hint = new JLabel("제목을 쓰고 Enter나 추가를 누르면 30분짜리 할 일로 들어가요");
         hint.setForeground(Theme.INK_DIM);
         hint.setFont(Theme.font(12));
         panel.add(quick, BorderLayout.CENTER);
-        panel.add(add, BorderLayout.EAST);
+        panel.add(quickButton, BorderLayout.EAST);
         panel.add(hint, BorderLayout.SOUTH);
         return panel;
     }

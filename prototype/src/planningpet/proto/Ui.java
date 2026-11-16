@@ -34,6 +34,19 @@ public final class Ui {
         });
     }
 
+    /**
+     * D-43: 날짜 칸. 화살표가 커서 자리(처음에는 연도) 대신 늘 하루씩 바꾸도록 DateEditor가 아닌 기본 편집기에
+     * 날짜 형식을 붙인다. SpinnerDateModel의 기본 단위가 하루다.
+     */
+    static void dayEditor(javax.swing.JSpinner s, String pattern) {
+        javax.swing.JSpinner.DefaultEditor editor = new javax.swing.JSpinner.DefaultEditor(s);
+        javax.swing.JFormattedTextField field = editor.getTextField();
+        field.setEditable(true);
+        field.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(
+                new javax.swing.text.DateFormatter(new java.text.SimpleDateFormat(pattern))));
+        s.setEditor(editor);
+    }
+
     public static JLabel hint(String text) {
         JLabel l = new JLabel(text);
         l.setForeground(Theme.INK_DIM);
@@ -68,7 +81,7 @@ public final class Ui {
     }
 
     /** 포인트 얻는 법(D-33). pet 화면과 상점 창이 같이 쓴다. */
-    public static final String POINT_GUIDE = "포인트 얻는 법: 할 일 끝내기 +10P(하루 20번까지), 출석 +20P";
+    public static final String POINT_GUIDE = "포인트 얻는 법: 할 일과 고정 일정 끝내기 +10P(하루 20번까지), 출석 +20P. 끝내면 경험치도 10 올라요";
 
     /** 펫 말풍선. */
     public static JLabel bubble() {

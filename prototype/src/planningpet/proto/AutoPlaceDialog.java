@@ -29,7 +29,13 @@ public final class AutoPlaceDialog {
         LocalTime fromTime = start.toLocalTime();
         LocalDate to = monday.plusDays(6);
         JLabel head = new JLabel(day(from) + " " + fromTime + "부터 " + day(to) + "까지, 할 일마다 그 날짜 안의 빈 시간에 놓았어요");
-        DefaultTableModel model = new DefaultTableModel(new Object[] {"할 일", "날짜", "시각", "걸리는 시간"}, 0);
+        // D-43: 결과 표는 보기만 한다. 칸을 고치거나 열을 옮길 수 없다.
+        DefaultTableModel model = new DefaultTableModel(new Object[] {"할 일", "날짜", "시각", "걸리는 시간"}, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
         for (Planner.Placed x : p.placed()) {
             LocalTime end = x.start().plusMinutes(x.task().minutes);
             model.addRow(new Object[] {x.task().title, day(x.task().date), x.start() + " ~ " + (end.equals(LocalTime.MIDNIGHT) ? "24:00" : end), x.task().minutes + "분"});
@@ -38,6 +44,7 @@ public final class AutoPlaceDialog {
             model.addRow(new Object[] {t.title, "놓지 못함", "그날 빈 시간이 모자라요", t.minutes + "분"});
         }
         JTable table = new JTable(model);
+        table.getTableHeader().setReorderingAllowed(false);
         int firstUnplaced = p.placed().size();
         table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             @Override
@@ -55,7 +62,9 @@ public final class AutoPlaceDialog {
         root.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10));
         root.add(head, BorderLayout.NORTH);
         root.add(scroll, BorderLayout.CENTER);
-        root.add(Ui.flow(cancel, apply), BorderLayout.SOUTH);
+        JPanel buttons = new JPanel(new BorderLayout());
+        buttons.add(Ui.flow(cancel, apply), BorderLayout.EAST);
+        root.add(buttons, BorderLayout.SOUTH);
         return root;
     }
 

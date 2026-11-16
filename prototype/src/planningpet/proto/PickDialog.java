@@ -61,6 +61,7 @@ public final class PickDialog {
             d.dispose();
         });
         d.setContentPane(panel);
+        d.getRootPane().setDefaultButton(start);
         d.pack();
         d.setLocationRelativeTo(null);
         d.setVisible(true);

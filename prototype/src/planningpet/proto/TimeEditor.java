@@ -11,6 +11,7 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.KeyStroke;
 import javax.swing.SpinnerListModel;
@@ -21,7 +22,7 @@ public final class TimeEditor {
     final JSpinner start = new JSpinner(new SpinnerListModel(Ui.times()));
     final JSpinner minutes;
     final JLabel error = new JLabel(" ");
-    final JButton clear = new JButton("시간 빼기");
+    final JButton clear = new JButton("시각 빼기");
     final JButton cancel = new JButton("취소");
     final JButton save = new JButton("저장");
     public final Card panel = new Card(new BorderLayout(0, 6), Theme.BUBBLE_RADIUS);
@@ -33,10 +34,18 @@ public final class TimeEditor {
         error.setForeground(Theme.SUNDAY);
         error.setFont(Theme.font(12));
         panel.setBorder(BorderFactory.createEmptyBorder(12, 14, 12, 14));
-        panel.add(Ui.flow(new JLabel("시작"), start, new JLabel("걸리는 시간"), minutes, new JLabel("분")), BorderLayout.NORTH);
+        // D-43: 맨 위에 할 일 제목, 버튼은 오른쪽 아래에 취소, 저장 순이고 시각 빼기는 왼쪽 아래다.
+        JLabel name = new JLabel("<html><b>" + Ui.esc(t.title) + "</b></html>");
+        JPanel fields = new JPanel(new BorderLayout(0, 4));
+        fields.add(name, BorderLayout.NORTH);
+        fields.add(Ui.flow(new JLabel("시작 시각"), start, new JLabel("걸리는 시간"), minutes, new JLabel("분")), BorderLayout.CENTER);
+        panel.add(fields, BorderLayout.NORTH);
         panel.add(error, BorderLayout.CENTER);
         clear.setVisible(t.timed() && t.kind == Task.Kind.TASK);
-        panel.add(Ui.flow(clear, cancel, save), BorderLayout.SOUTH);
+        JPanel buttons = new JPanel(new BorderLayout());
+        buttons.add(Ui.flow(clear), BorderLayout.WEST);
+        buttons.add(Ui.flow(cancel, save), BorderLayout.EAST);
+        panel.add(buttons, BorderLayout.SOUTH);
     }
 
     /** 06의 14번. 오늘이면 지금을 5분 단위로 올린 시각과 09:00 중 늦은 것(23:55까지), 다른 날이면 09:00. */
@@ -65,13 +74,20 @@ public final class TimeEditor {
             e.error.setText(problem);
             return false;
         }
+        int scope = app.actions.editScope(t);
+        if (scope < 0) {
+            return false;
+        }
         t.start = LocalTime.parse((String) e.start.getValue());
         t.minutes = (int) e.minutes.getValue();
+        if (scope == 1) {
+            app.store.applyToSeries(t, t.date, true);
+        }
         app.store.changed();
         return true;
     }
 
-    /** 시간 빼기 버튼과 같다. */
+    /** 시각 빼기 버튼과 같다. */
     static void clear(App app, Task t) {
         t.start = null;
         app.store.changed();

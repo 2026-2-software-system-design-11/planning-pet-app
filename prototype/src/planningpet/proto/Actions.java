@@ -11,17 +11,25 @@ public final class Actions {
 
     Actions(App app) {
         this.app = app;
+        this.opener = (t, date) -> TaskDialog.open(app, t, date);
     }
 
     /** 삭제 확인 창. 고른 버튼의 번호를 돌려준다. QA는 이것을 바꿔 끼운다. */
     interface Chooser {
-        int choose(String message, String[] options);
+        int choose(String title, String message, String[] options);
     }
 
     Chooser chooser = this::ask;
 
-    private int ask(String message, String[] options) {
-        return JOptionPane.showOptionDialog(app.root, message, "일정 삭제",
+    /** 일정 입력 창을 연다. editing이 null이면 추가다. QA는 이것을 바꿔 끼운다. */
+    interface Opener {
+        void open(Task editing, LocalDate date);
+    }
+
+    Opener opener;
+
+    private int ask(String title, String message, String[] options) {
+        return JOptionPane.showOptionDialog(app.root, message, title,
                 JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[options.length - 1]);
     }
 
@@ -43,14 +51,14 @@ public final class Actions {
     public boolean delete(Task t) {
         boolean deleted = false;
         if (t.seriesId == null) {
-            int answer = chooser.choose("'" + t.title + "'" + josa(t.title, "을", "를") + " 지울까요?",
-                    new String[] {"지우기", "취소"});
+            int answer = chooser.choose("일정 삭제", "'" + t.title + "'" + josa(t.title, "을", "를") + " 삭제할까요?",
+                    new String[] {"삭제", "취소"});
             if (answer == 0) {
                 app.store.delete(t, false);
                 deleted = true;
             }
         } else {
-            int answer = chooser.choose("'" + t.title + "'" + josa(t.title, "은", "는") + " 매주 반복 일정이에요.",
+            int answer = chooser.choose("일정 삭제", "'" + t.title + "'" + josa(t.title, "은", "는") + " 매주 반복 일정이에요.",
                     new String[] {"이 일정만", "이후 반복 모두", "취소"});
             if (answer == 0 || answer == 1) {
                 app.store.delete(t, answer == 1);
@@ -61,14 +69,28 @@ public final class Actions {
         return deleted;
     }
 
+    LocalDate today() {
+        return app.store.today();
+    }
+
+    /** D-42. 반복 사본을 저장할 때 범위를 묻는다. 0 이 일정만, 1 이후 반복 모두, -1 취소. 반복이 아니면 묻지 않고 0. */
+    int editScope(Task t) {
+        if (t.seriesId == null) {
+            return 0;
+        }
+        int answer = chooser.choose("반복 일정 저장", "'" + t.title + "'" + josa(t.title, "은", "는") + " 매주 반복 일정이에요. 어디까지 바꿀까요?",
+                new String[] {"이 일정만", "이후 반복 모두", "취소"});
+        return answer == 0 || answer == 1 ? answer : -1;
+    }
+
     /** UC-05. */
     public void edit(Task t) {
-        TaskDialog.open(app, t, t.date);
+        opener.open(t, t.date);
     }
 
     /** UC-03. 날짜는 띄운 화면이 고른다(06의 14번). */
     public void add(LocalDate date) {
-        TaskDialog.open(app, null, date);
+        opener.open(null, date);
     }
 
     /** D-32. 메인 시각 칸을 누르면 그 아래에 시각 고치기 창을 연다. */
