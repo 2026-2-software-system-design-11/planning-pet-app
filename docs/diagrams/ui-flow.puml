@@ -1,0 +1,39 @@
+@startuml ui-flow
+skinparam defaultFontName "Apple SD Gothic Neo"
+skinparam defaultFontSize 13
+skinparam dpi 130
+skinparam shadowing false
+skinparam ArrowColor #4A5568
+skinparam state {
+  BackgroundColor #F7F9FC
+  BorderColor #4A5568
+}
+hide empty description
+
+state "반려동물 고르기" as Pick
+state "트레이" as Tray
+state "메인 창" as Win {
+  state "메인" as Main
+  state "일정관리" as Sched
+  state "pet" as Pet
+  state "설정" as Set
+  state "통계 (비활성)" as Stat #EEEEEE
+}
+state "일정 입력" as Form
+state "URL에서 가져오기" as Url
+state "자동 배치 결과" as Place
+state "상점" as Shop
+
+[*] --> Pick : 첫 실행
+[*] --> Main : 데이터 있음
+Pick --> Main : 시작하기
+Main --> Form : 일정 추가, 두 번 누르기
+Sched --> Form : 일정 추가, 두 번 누르기
+Form --> Url : URL에서 가져오기
+Url --> Form : 입력칸 채움
+Sched --> Place : 자동 배치
+Pet --> Shop : 상점
+Win --> Tray : 창 닫기
+Tray --> Win : 아이콘 누르기, 알림 누르기
+Tray --> [*] : 끝내기
+@enduml
