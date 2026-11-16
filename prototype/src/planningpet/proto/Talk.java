@@ -64,7 +64,7 @@ public final class Talk {
     }
 
     public String otherDate(LocalDate date) {
-        int n = s.forDate(date).size();
+        int n = s.checkables(date).size();
         String day = date.getMonthValue() + "월 " + date.getDayOfMonth() + "일";
         return n > 0 ? day + " 할 일은 " + n + "개야." : day + "은 할 일이 없어.";
     }

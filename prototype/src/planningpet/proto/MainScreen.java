@@ -34,7 +34,7 @@ public final class MainScreen extends JPanel {
         JPanel list = new Card(new BorderLayout(0, 6));
         listTitle.setFont(Theme.font(23));
         list.add(listTitle, BorderLayout.NORTH);
-        JScrollPane scroll = new JScrollPane(rows);
+        JScrollPane scroll = new JScrollPane(rows, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scroll.setBorder(BorderFactory.createEmptyBorder());
         list.add(scroll, BorderLayout.CENTER);
         list.add(quickAdd(), BorderLayout.SOUTH);
@@ -81,7 +81,7 @@ public final class MainScreen extends JPanel {
 
     /** UC-09. 오늘이 아닌 날을 고르면 펫이 그날 할 일 수를 말한다. */
     private void select(LocalDate date) {
-        app.store.talk = date.equals(app.store.today()) ? app.talk.usual() : app.talk.otherDate(date);
+        app.store.say(date.equals(app.store.today()) ? app.talk.usual() : app.talk.otherDate(date));
         app.store.changed();
     }
 

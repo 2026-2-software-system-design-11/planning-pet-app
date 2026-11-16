@@ -19,10 +19,10 @@ public final class Actions {
             int points = t.rewardPoints;
             int before = Rules.level(app.store.exp);
             app.game.uncomplete(t);
-            app.store.talk = app.talk.uncompleted(points, before, Rules.level(app.store.exp));
+            app.store.say(app.talk.uncompleted(points, before, Rules.level(app.store.exp)));
         } else {
             RewardResult r = app.game.complete(t);
-            app.store.talk = app.talk.completed(r, t);
+            app.store.say(app.talk.completed(r, t));
         }
         app.store.changed();
     }

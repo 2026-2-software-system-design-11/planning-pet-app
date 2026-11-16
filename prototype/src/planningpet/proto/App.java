@@ -51,7 +51,7 @@ public final class App {
         root.setPreferredSize(new Dimension(1000, 680));
         attend.addActionListener(e -> {
             if (game.attend()) {
-                store.talk = "출석했어! +20P";
+                store.say("출석했어! +20P");
                 store.changed();
             }
         });

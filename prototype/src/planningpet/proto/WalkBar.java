@@ -62,7 +62,8 @@ public final class WalkBar extends JComponent {
         int h = lines.size() * fm.getHeight() + 14;
         int bottom = petTop - 8;
         int x = Math.max(4, Math.min(petX - w / 2, getWidth() - w - 4));
-        int top = bottom - h;
+        int top = Math.max(2, bottom - h);
+        h = bottom - top;
         int tail = Math.max(x + 14, Math.min(petX, x + w - 14));
         java.awt.Polygon arrow = new java.awt.Polygon(new int[] {tail - 7, tail + 7, petX}, new int[] {bottom - 1, bottom - 1, petTop - 1}, 3);
         g.setStroke(new BasicStroke(1));
@@ -84,6 +85,19 @@ public final class WalkBar extends JComponent {
         java.util.List<String> lines = new java.util.ArrayList<>();
         StringBuilder line = new StringBuilder();
         for (String word : text.split(" ")) {
+            while (fm.stringWidth(word) > max) {
+                // 띄어쓰기 없이 긴 글은 글자 단위로 자른다.
+                int cut = word.length() - 1;
+                while (cut > 1 && fm.stringWidth(word.substring(0, cut)) > max) {
+                    cut--;
+                }
+                if (line.length() > 0) {
+                    lines.add(line.toString());
+                    line = new StringBuilder();
+                }
+                lines.add(word.substring(0, cut));
+                word = word.substring(cut);
+            }
             String next = line.length() == 0 ? word : line + " " + word;
             if (fm.stringWidth(next) > max && line.length() > 0) {
                 lines.add(line.toString());

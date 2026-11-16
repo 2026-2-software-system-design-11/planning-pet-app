@@ -11,6 +11,7 @@ import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 
 /** 일정관리의 일주일 시간표(05 일정관리). 0시부터 24시까지 그린다. */
 public final class TimetablePanel extends JComponent {
@@ -28,11 +29,19 @@ public final class TimetablePanel extends JComponent {
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
+                // 체크박스는 왼쪽 버튼 한 번으로만 바뀐다. 나중에 그린(위에 있는) 블록의 것을 먼저 본다.
+                Task boxed = null;
                 for (Map.Entry<Rectangle, Task> b : boxes.entrySet()) {
                     if (b.getKey().contains(e.getPoint())) {
-                        actions.check(b.getValue());
-                        return;
+                        boxed = b.getValue();
                     }
+                }
+                if (boxed != null && SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 1) {
+                    actions.check(boxed);
+                    return;
+                }
+                if (boxed != null && e.getClickCount() == 1) {
+                    return;
                 }
                 Task t = at(e);
                 if (t != null && e.getClickCount() == 2) {
@@ -111,7 +120,7 @@ public final class TimetablePanel extends JComponent {
                 int tx = r.x + 4;
                 {
                     // D-35: 고정 일정 블록에도 체크박스를 둔다.
-                    Rectangle box = new Rectangle(r.x + 4, r.y + 4, 12, 12);
+                    Rectangle box = new Rectangle(r.x + 4, r.y + 4, 12, 12).intersection(r);
                     boxes.put(box, t);
                     text.setColor(Theme.CARD_TOP);
                     text.fill(box);

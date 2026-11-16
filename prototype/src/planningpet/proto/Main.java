@@ -27,7 +27,7 @@ public final class Main {
             frame.pack();
             frame.setLocationRelativeTo(null);
             frame.setVisible(true);
-            app.store.talk = app.talk.onWindowShown(app.game);
+            app.store.say(app.talk.onWindowShown(app.game));
             app.store.changed();
         });
     }

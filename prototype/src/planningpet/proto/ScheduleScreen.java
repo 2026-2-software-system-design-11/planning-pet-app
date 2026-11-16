@@ -24,7 +24,7 @@ public final class ScheduleScreen extends JPanel {
     private final TaskRows untimed;
     private final JLabel bubble = Ui.bubble();
     private LocalDate monday;
-    private String lastTalk = "";
+    private int lastTalk;
     private boolean wasVisible;
     private boolean showHint = true;
 
@@ -104,9 +104,9 @@ public final class ScheduleScreen extends JPanel {
         showHint |= "일정관리".equals(app.current()) && !wasVisible;
         wasVisible = "일정관리".equals(app.current());
         String text = null;
-        if (!app.store.talk.equals(lastTalk)) {
-            lastTalk = app.store.talk;
-            text = "일정관리".equals(app.current()) ? lastTalk : null;
+        if (app.store.talkSeq != lastTalk) {
+            lastTalk = app.store.talkSeq;
+            text = "일정관리".equals(app.current()) ? app.store.talk : null;
         }
         if (showHint && "일정관리".equals(app.current())) {
             showHint = false;

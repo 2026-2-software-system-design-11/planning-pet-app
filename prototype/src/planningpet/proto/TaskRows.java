@@ -14,7 +14,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 /** 할 일 줄 목록. 메인의 하루 시간표와 일정관리의 시각 없는 할 일 목록이 같이 쓴다. */
-public final class TaskRows extends JPanel {
+public final class TaskRows extends JPanel implements javax.swing.Scrollable {
     private final Actions actions;
 
     public TaskRows(Actions actions) {
@@ -90,6 +90,8 @@ public final class TaskRows extends JPanel {
         JLabel label = new JLabel("<html>" + date + (t.done ? "<s>" + Ui.esc(t.title) + "</s>" : Ui.esc(t.title))
                 + memoMark + "</html>");
         label.setToolTipText(memoTip(t));
+        row.setToolTipText(memoTip(t));
+        label.setMinimumSize(new Dimension(0, 0));
         label.setFont(Theme.font(15));
         JLabel minutes = new JLabel(t.minutes + "분");
         label.setForeground(t.done ? Theme.INK_DIM : Theme.INK);
@@ -150,6 +152,32 @@ public final class TaskRows extends JPanel {
             return null;
         }
         String m = t.memo.length() > 200 ? t.memo.substring(0, 200) + "…" : t.memo;
-        return "<html>" + Ui.esc(m).replace("\n", "<br>") + "</html>";
+        return "<html><div style='width:280px'>" + Ui.esc(m).replace("\n", "<br>") + "</div></html>";
+    }
+
+    /** 목록 너비를 보이는 칸에 맞춰서 긴 제목이 버튼을 밀어내지 않게 한다. 제목은 남는 폭에서 잘린다. */
+    @Override
+    public boolean getScrollableTracksViewportWidth() {
+        return true;
+    }
+
+    @Override
+    public boolean getScrollableTracksViewportHeight() {
+        return false;
+    }
+
+    @Override
+    public Dimension getPreferredScrollableViewportSize() {
+        return getPreferredSize();
+    }
+
+    @Override
+    public int getScrollableUnitIncrement(java.awt.Rectangle r, int orientation, int direction) {
+        return 16;
+    }
+
+    @Override
+    public int getScrollableBlockIncrement(java.awt.Rectangle r, int orientation, int direction) {
+        return 64;
     }
 }
