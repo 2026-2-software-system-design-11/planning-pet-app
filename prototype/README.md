@@ -12,6 +12,7 @@ JDK 21이 필요하다.
 prototype/run.sh                 # 목 데이터로 연다
 prototype/run.sh --first-run     # 데이터 없이 반려동물 고르기부터 연다
 prototype/snap.sh                # 창 없이 모든 화면을 screenshots/에 그린다
+prototype/check.sh               # 06 검사 표 가운데 프로토타입이 따르는 줄을 확인한다
 ```
 
 Windows는 `prototype\run.bat`이다.
