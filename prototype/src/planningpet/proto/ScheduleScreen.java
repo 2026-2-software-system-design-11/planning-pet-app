@@ -57,7 +57,10 @@ public final class ScheduleScreen extends JPanel {
         JPanel side = new Card(new BorderLayout(0, 8));
         side.setPreferredSize(new Dimension(240, 0));
         side.add(new JLabel("<html><b>시각 없는 할 일</b></html>"), BorderLayout.NORTH);
-        side.add(new JScrollPane(untimed), BorderLayout.CENTER);
+        JScrollPane sideScroll = new JScrollPane(untimed, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        sideScroll.setBorder(BorderFactory.createEmptyBorder());
+        side.add(sideScroll, BorderLayout.CENTER);
         JPanel petCorner = new JPanel(new BorderLayout());
         petCorner.add(bubble, BorderLayout.NORTH);
         petCorner.add(new PetView(app.store, 1), BorderLayout.CENTER);
