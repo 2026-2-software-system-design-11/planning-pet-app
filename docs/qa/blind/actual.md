@@ -151,3 +151,54 @@
 | 12 | 누르기 | 검사를 통과하면 고친 값이 저장되고 창이 닫힌다 | TaskDialog.java:45 |
 | 13 | 누르기 | "'자소서 초안'을 지울까요?" 창이 뜬다. 지우기를 누르면 일정이 지워지고 수정 창도 닫힌다. 취소를 누르면 수정 창으로 돌아온다 | TaskDialog.java:48, Actions.java:43 |
 
+## screen-07.png
+
+| 번호 | 조작 | 실제 결과 | 근거 |
+|---|---|---|---|
+| 1 | 누르기 | 화살표로 시작 시각이 5분씩 바뀐다 | TimeEditor.java:36 |
+| 1 | 글 쓰고 Enter | 목록에 있는 시각(5분 단위)이면 그 값이 된다. 저장까지 되는지는 창 없이 확인 못 함 | TimeEditor.java:100 |
+| 2 | 누르기 | 화살표로 걸리는 시간이 5분씩 바뀐다 | TimeEditor.java:32 |
+| 3 | 누르기 | 그 할 일의 시각이 지워져 목록의 "시간 안 정한 할 일" 아래로 옮겨지고 창이 닫힌다 | TimeEditor.java:91, TimeEditor.java:75 |
+| 4 | 누르기 | 창이 닫히고 아무것도 안 바뀐다 | TimeEditor.java:90 |
+| 4 | Esc | 취소와 같다 | TimeEditor.java:101 |
+| 5 | 누르기 | 바꾼 시각과 시간이 저장되고 목록이 시각 순서로 다시 놓인다. 끝이 24:00을 넘으면 창 아래에 "하루 안에 끝나야 해요"가 뜨고 저장되지 않는다 | TimeEditor.java:95, TimeEditor.java:60 |
+
+## screen-08.png
+
+| 번호 | 조작 | 실제 결과 | 근거 |
+|---|---|---|---|
+| 1 | 누르기 | 누른 줄이 골라져 색이 바뀐다. 다른 일은 없다 | AutoPlaceDialog.java:40 |
+| 1 | 두 번 누르기 | 그 칸의 글을 고칠 수 있는 입력 상태가 된다. 고친 글은 적용에 쓰이지 않는다 | AutoPlaceDialog.java:32(DefaultTableModel은 칸을 고칠 수 있다), AutoPlaceDialog.java:80 |
+| 2 | 누르기 | 아무 일도 없다. 정렬되지 않는다. 끌면 열 순서가 바뀐다 | AutoPlaceDialog.java:40 |
+| 3 | 누르기 | 창이 닫히고 아무것도 안 바뀐다 | AutoPlaceDialog.java:68 |
+| 4 | 누르기 | 표의 시각대로 할 일에 시각이 들어가 시간표에 블록으로 나타나고 오른쪽 목록에서 빠진다. 창이 닫힌다 | AutoPlaceDialog.java:69, AutoPlaceDialog.java:80 |
+| 4 | Esc | Esc는 이 창에 걸려 있지 않아 아무 일도 없다 | AutoPlaceDialog.java:66 |
+
+## screen-09.png
+
+| 번호 | 조작 | 실제 결과 | 근거 |
+|---|---|---|---|
+| 1 | 누르기 | 흐린 상태라 아무 일도 없다. 이미 가진 쿠션이다 | ShopDialog.java:37 |
+| 2 | 누르기 | 상점 창이 닫힌다 | ShopDialog.java:65 |
+| 2 | Esc | 닫기와 같다 | ShopDialog.java:76 |
+
+## screen-10.png
+
+| 번호 | 조작 | 실제 결과 | 근거 |
+|---|---|---|---|
+| 1 | 누르기 | 고양이가 골라진다 | PickDialog.java:16 |
+| 2 | 누르기 | 강아지가 골라진다 | PickDialog.java:16 |
+| 3 | 누르기 | 이름을 쓸 수 있다. 10자까지 써진다 | PickDialog.java:23 |
+| 3 | 글 쓰고 Enter | 아무 일도 없다 | PickDialog.java:18(칸에 동작이 없고 기본 버튼도 없다) |
+| 3 | 글 쓰고 가까운 버튼 누르기 | "시작하기"를 누르면 쓴 이름으로 펫이 정해지고 메인 창이 열린다 | PickDialog.java:58 |
+| 4 | 누르기 | 고른 동물과 이름(비워 두면 고양이는 나비, 강아지는 바둑이)으로 시작해 메인 창이 열린다. 펫이 첫인사를 한다 | PickDialog.java:58, PickDialog.java:47 |
+| 4 | Esc | Esc는 걸려 있지 않아 아무 일도 없다 | PickDialog.java:56 |
+
+## screen-11.png
+
+| 번호 | 조작 | 실제 결과 | 근거 |
+|---|---|---|---|
+| 1 | 누르기 | 그 날짜의 자료구조 하나만 지워지고 창이 닫힌다 | Actions.java:55 |
+| 2 | 누르기 | 그 날짜와 그 뒤의 같은 반복 자료구조가 모두 지워지고 창이 닫힌다. 앞 날짜는 남는다 | Actions.java:55, Store.java:77 |
+| 3 | 누르기 | 창이 닫히고 아무것도 지워지지 않는다 | Actions.java:55 |
+| 3 | Esc | 취소와 같다 | JOptionPane 기본 동작 |
