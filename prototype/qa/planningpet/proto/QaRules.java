@@ -93,3 +93,98 @@ final class QaRules {
                 f.postActionEvent();
                 return f;
             });
+            List<JButton> near = all(fields.get(i).getParent(), JButton.class);
+            for (int b = 0; b < near.size(); b++) {
+                int bi = b;
+                String label = near.get(b).getText();
+                String click = effect(app -> {
+                    JTextField f = editable(app).get(fi);
+                    f.setText("규칙 검사");
+                    all(f.getParent(), JButton.class).get(bi).doClick();
+                    return f;
+                });
+                if (click.contains("글 남음") && !click.contains("할 일 +")) {
+                    found.add(new String[] {"1 입력 보존", "홈 글 칸 옆 \"" + label + "\"", "글을 쓰고 누르면 " + click
+                            + ". 쓴 글이 쓰이지도 지워지지도 않는다"});
+                }
+                if (!click.equals(enter)) {
+                    found.add(new String[] {"2 Enter와 옆 버튼", "홈 글 칸과 \"" + label + "\"", "Enter: " + enter + ". 버튼: " + click});
+                }
+            }
+        }
+    }
+
+    private static List<JTextField> editable(App app) {
+        return all(app.root, JTextField.class).stream()
+                .filter(f -> f.isEditable() && SwingUtilities.getAncestorOfClass(JSpinner.class, f) == null).toList();
+    }
+
+    /** 새 앱에서 동작을 하고, 할 일 수와 칸 글과 창이 떴는지를 한 줄로 돌려준다. */
+    private static String effect(Function<App, JTextField> act) {
+        App app = fresh();
+        int before = app.store.tasks.size();
+        String window = "";
+        JTextField f = null;
+        try {
+            f = act.apply(app);
+        } catch (java.awt.HeadlessException e) {
+            window = ", 창을 연다";
+            f = editable(app).get(0);
+        }
+        int delta = app.store.tasks.size() - before;
+        String text = f.getText().isEmpty() ? "글 비움" : "글 남음";
+        return (delta != 0 ? "할 일 +" + delta : "할 일 그대로") + ", " + text + window;
+    }
+
+    /** 규칙 3: 화면 글자를 모으고, qa/terms.tsv에 적은 같은 뜻 묶음에서 둘 이상의 말이 보이면 어긋남이다. */
+    private void terms(Map<String, JComponent> screens, File termsFile) throws Exception {
+        Map<String, List<String>> where = new TreeMap<>();
+        screens.forEach((name, root) -> {
+            for (Component c : all(root, JComponent.class)) {
+                String t = c instanceof JLabel l ? Qa.plain(l.getText()) : c instanceof AbstractButton b ? b.getText() : null;
+                if (t != null && !t.isBlank() && shown(c, root)) {
+                    where.computeIfAbsent(t.strip(), k -> new ArrayList<>()).add(name);
+                }
+            }
+        });
+        // 용어집에는 화면이 정한 말만 둔다. 숫자로 시작하는 글(날짜, 시각, 포인트)과 일정 제목이 든 글은 데이터라 뺀다.
+        java.util.Set<String> titles = new java.util.HashSet<>();
+        MockData.sample().tasks.forEach(x -> titles.add(x.title));
+        where.keySet().removeIf(t -> t.matches("^[0-9<>~].*") || titles.stream().anyMatch(t::contains));
+        where.forEach((t, s) -> glossary.add("| " + t.replace("|", "/") + " | " + String.join(", ", s.stream().distinct().toList()) + " |"));
+        for (String line : Files.readAllLines(termsFile.toPath(), StandardCharsets.UTF_8)) {
+            if (line.isBlank() || line.startsWith("#")) {
+                continue;
+            }
+            String[] p = line.split("\t");
+            List<String> seen = new ArrayList<>();
+            for (String variant : p[1].split("\\|")) {
+                Pattern rx = Pattern.compile(Pattern.quote(variant));
+                where.forEach((t, s) -> {
+                    if (rx.matcher(t).find()) {
+                        seen.add("\"" + variant + "\"(" + String.join(", ", s.stream().distinct().toList()) + ")");
+                    }
+                });
+            }
+            List<String> distinct = seen.stream().distinct().toList();
+            if (distinct.stream().map(x -> x.substring(0, x.indexOf('('))).distinct().count() > 1) {
+                found.add(new String[] {"3 용어", p[0], String.join(", ", distinct)});
+            }
+        }
+    }
+
+    /** 규칙 4: 같은 글의 버튼이 화면마다 같은 자리(묶음 판 안의 위, 아래, 왼쪽, 오른쪽)에 있는지 본다. */
+    private void places(Map<String, JComponent> screens) {
+        Map<String, List<String>> at = new TreeMap<>();
+        screens.forEach((name, root) -> {
+            for (JButton b : all(root, JButton.class)) {
+                if (b.getText().isBlank() || !shown(b, root)) {
+                    continue;
+                }
+                // 목록 줄 안의 버튼은 그 줄 안의 자리, 나머지는 묶음 판(Card) 안의 자리를 본다.
+                Container rows = (Container) SwingUtilities.getAncestorOfClass(TaskRows.class, b);
+                Container box = (Container) SwingUtilities.getAncestorOfClass(Card.class, b);
+                Container frame = rows != null ? rowOf(rows, b) : box != null ? box : root;
+                Point p = SwingUtilities.convertPoint(b, b.getWidth() / 2, b.getHeight() / 2, frame);
+                String v = p.y < frame.getHeight() / 3 ? "위" : p.y > frame.getHeight() * 2 / 3 ? "아래" : "가운데";
+                String h = p.x < frame.getWidth() / 3 ? "왼쪽" : p.x > frame.getWidth() * 2 / 3 ? "오른쪽" : "가운데";
