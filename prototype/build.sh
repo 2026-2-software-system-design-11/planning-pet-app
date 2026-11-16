@@ -4,5 +4,5 @@ set -e
 cd "$(dirname "$0")"
 rm -rf out
 javac -encoding UTF-8 -d out $(find src -name '*.java')
-jar --create --file planningpet-prototype.jar --main-class planningpet.proto.Main -C out .
+jar --create --file planningpet-prototype.jar --main-class planningpet.proto.Main -C out . assets
 echo "만들었다: prototype/planningpet-prototype.jar"
