@@ -65,14 +65,22 @@ public final class TaskRows extends JPanel {
         }
         JPanel left = Ui.flow();
         if (time != null) {
-            JLabel when = new JLabel(time);
+            JLabel when = new JLabel(time.isEmpty() ? "시간 정하기" : time);
             when.setPreferredSize(new Dimension(92, 20));
-            when.setForeground(t.done ? Theme.INK_DIM : Theme.INK);
+            when.setForeground(t.done || time.isEmpty() ? Theme.INK_DIM : Theme.INK);
+            when.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
+            when.setToolTipText("눌러서 시간을 바꿔요");
+            when.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    actions.editTime(t, when);
+                }
+            });
             left.add(when);
         }
         left.add(mark);
         String date = withDate ? t.date.getMonthValue() + "/" + t.date.getDayOfMonth() + " " : "";
-        JLabel label = new JLabel("<html>" + date + (t.done ? "<s>" + t.title + "</s>" : t.title) + "</html>");
+        JLabel label = new JLabel("<html>" + date + (t.done ? "<s>" + Ui.esc(t.title) + "</s>" : Ui.esc(t.title)) + "</html>");
         label.setFont(Theme.font(15));
         JLabel minutes = new JLabel(t.minutes + "분");
         label.setForeground(t.done ? Theme.INK_DIM : Theme.INK);

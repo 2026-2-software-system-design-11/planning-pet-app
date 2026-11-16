@@ -20,6 +20,7 @@ public final class PickDialog {
     public final JPanel panel = new JPanel(new BorderLayout(0, 10));
 
     public PickDialog() {
+        Ui.limit(name, 10);
         ButtonGroup group = new ButtonGroup();
         group.add(cat);
         group.add(dog);

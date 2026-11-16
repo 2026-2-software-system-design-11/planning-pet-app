@@ -57,6 +57,7 @@ public final class MainScreen extends JPanel {
         JPanel panel = new JPanel(new BorderLayout(6, 2));
         JButton add = new JButton("일정 추가");
         add.addActionListener(e -> app.actions.add(calendar.selected()));
+        Ui.limit(quick, 100);
         quick.addActionListener(e -> {
             String title = quick.getText().strip();
             if (title.isEmpty() || title.length() > 100) {

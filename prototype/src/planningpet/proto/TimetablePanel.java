@@ -48,8 +48,13 @@ public final class TimetablePanel extends JComponent {
     }
 
     private Task at(MouseEvent e) {
-        return blocks.entrySet().stream().filter(b -> b.getKey().contains(e.getPoint()))
-                .map(Map.Entry::getValue).findFirst().orElse(null);
+        Task hit = null;
+        for (Map.Entry<Rectangle, Task> b : blocks.entrySet()) {
+            if (b.getKey().contains(e.getPoint())) {
+                hit = b.getValue();
+            }
+        }
+        return hit;
     }
 
     @Override
@@ -84,13 +89,14 @@ public final class TimetablePanel extends JComponent {
                 g.fillRoundRect(r.x, r.y, r.width, r.height, 10, 10);
                 g.setColor(t.done ? Theme.CARD_LINE : t.kind == Task.Kind.FIXED ? Theme.CARD_LINE : Theme.MINT_LINE);
                 g.drawRoundRect(r.x, r.y, r.width - 1, r.height - 1, 10, 10);
-                g.setColor(t.done ? Theme.INK_DIM : Theme.INK);
-                g.setClip(r);
-                g.drawString(t.title, r.x + 4, r.y + 14);
+                Graphics2D text = (Graphics2D) g.create();
+                text.clipRect(r.x, r.y, r.width, r.height);
+                text.setColor(t.done ? Theme.INK_DIM : Theme.INK);
+                text.drawString(t.title, r.x + 4, r.y + 14);
                 if (t.done) {
-                    g.drawLine(r.x + 4, r.y + 10, r.x + 4 + g.getFontMetrics().stringWidth(t.title), r.y + 10);
+                    text.drawLine(r.x + 4, r.y + 10, r.x + 4 + text.getFontMetrics().stringWidth(t.title), r.y + 10);
                 }
-                g.setClip(null);
+                text.dispose();
             }
         }
         g.dispose();

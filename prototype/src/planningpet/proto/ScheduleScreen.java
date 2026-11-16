@@ -24,6 +24,9 @@ public final class ScheduleScreen extends JPanel {
     private final TaskRows untimed;
     private final JLabel bubble = Ui.bubble();
     private LocalDate monday;
+    private String lastTalk = "";
+    private boolean wasVisible;
+    private boolean showHint = true;
 
     public ScheduleScreen(App app) {
         super(new BorderLayout(8, 8));
@@ -54,7 +57,10 @@ public final class ScheduleScreen extends JPanel {
         JPanel side = new Card(new BorderLayout(0, 8));
         side.setPreferredSize(new Dimension(240, 0));
         side.add(new JLabel("<html><b>시각 없는 할 일</b></html>"), BorderLayout.NORTH);
-        side.add(untimed, BorderLayout.CENTER);
+        JScrollPane sideScroll = new JScrollPane(untimed, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        sideScroll.setBorder(BorderFactory.createEmptyBorder());
+        side.add(sideScroll, BorderLayout.CENTER);
         JPanel petCorner = new JPanel(new BorderLayout());
         petCorner.add(bubble, BorderLayout.NORTH);
         petCorner.add(new PetView(app.store, 1), BorderLayout.CENTER);
@@ -71,6 +77,7 @@ public final class ScheduleScreen extends JPanel {
 
     private void move(LocalDate newMonday) {
         monday = newMonday;
+        showHint = true;
         app.store.changed();
     }
 
@@ -93,8 +100,21 @@ public final class ScheduleScreen extends JPanel {
         untimed.show(app.store.untimedOfWeek(monday), true);
         int n = Planner.targets(app.store, monday).size();
         autoPlace.setEnabled(n > 0);
-        bubble.setText("<html><div style='width:150px'>" + (n > 0 ? "시간이 안 정해진 할 일이 " + n + "개 있어. 자동 배치를 눌러 볼래?"
-                : "이번 주 할 일은 모두 시간이 정해졌어.") + "</div></html>");
+        // 화면을 열거나 주를 옮기면 SCHEDULE_HINT, 그 밖에는 새로 생긴 펫 말(완료, 상한, 레벨 업)을 보인다.
+        showHint |= isVisible() && !wasVisible;
+        wasVisible = isVisible();
+        String text = null;
+        if (!app.store.talk.equals(lastTalk)) {
+            lastTalk = app.store.talk;
+            text = isVisible() ? lastTalk : null;
+        }
+        if (showHint && isVisible()) {
+            showHint = false;
+            text = n > 0 ? "시간이 안 정해진 할 일이 " + n + "개 있어. 자동 배치를 눌러 볼래?" : "지금 자동 배치할 할 일은 없어.";
+        }
+        if (text != null) {
+            bubble.setText("<html><div style='width:150px'>" + Ui.esc(text) + "</div></html>");
+        }
         table.repaint();
         header.revalidate();
     }

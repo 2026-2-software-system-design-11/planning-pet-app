@@ -28,11 +28,13 @@ public final class Snap {
             save(app.root, new Dimension(1000, 680), new File(dir, screen[1] + ".png"));
         }
         LocalDate monday = Store.mondayOf(app.store.today());
-        save(TaskDialog.content(new TaskForm(null, app.store.today()), false), null, new File(dir, "3-form.png"));
+        save(TaskDialog.content(new TaskForm(null, app.store.today(), app.store.now), new JButton("취소"), new JButton("저장"), null), null, new File(dir, "3-form.png"));
         save(AutoPlaceDialog.content(app.store, monday, Planner.place(app.store, monday), new JButton("취소"),
                 new JButton("적용")), null, new File(dir, "4-autoplace.png"));
         save(ShopDialog.content(app.store, item -> { }, new JButton("닫기")), null, new File(dir, "6-shop.png"));
         save(new PickDialog().panel, null, new File(dir, "7-pick.png"));
+        Task essay = app.store.dayPlan(app.store.today()).timed().get(1);
+        save(new TimeEditor(essay, app.store.now).panel, null, new File(dir, "9-time-edit.png"));
         System.out.println("그렸다: " + dir.getPath());
     }
 

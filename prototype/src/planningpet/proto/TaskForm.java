@@ -24,23 +24,26 @@ public final class TaskForm {
     final JSpinner repeatEnd = new JSpinner(new SpinnerDateModel());
     final JTextArea memo = new JTextArea(3, 22);
     final JLabel error = new JLabel(" ");
+    final JLabel endLabel = new JLabel();
     private final boolean editing;
     private int row;
 
-    public TaskForm(Task t, LocalDate defaultDate) {
+    public TaskForm(Task t, LocalDate defaultDate, java.time.LocalDateTime now) {
         editing = t != null;
+        Ui.limit(title, 100);
+        Ui.limit(memo, 1000);
         ButtonGroup kinds = new ButtonGroup();
         kinds.add(task);
         kinds.add(fixed);
         date.setEditor(new JSpinner.DateEditor(date, "yyyy-MM-dd (E)"));
         repeatEnd.setEditor(new JSpinner.DateEditor(repeatEnd, "yyyy-MM-dd"));
-        start.setValue("09:00");
+        start.setValue(TimeEditor.defaultStart(defaultDate, now).toString());
         error.setForeground(Theme.SUNDAY);
         line("종류", Ui.flow(task, fixed));
         line("제목", title);
         line("날짜", date);
         line("시작 시각", Ui.flow(timed, start));
-        line("걸리는 시간 (분)", minutes);
+        line("걸리는 시간 (분)", Ui.flow(minutes, endLabel));
         line("", Ui.hint("안 바꾸면 30분으로 들어가요"));
         line("반복", Ui.flow(repeat, repeatEnd));
         line("", Ui.hint("반복은 고정 일정만 할 수 있어요"));
@@ -63,6 +66,13 @@ public final class TaskForm {
         fixed.addActionListener(e -> sync());
         timed.addActionListener(e -> sync());
         repeat.addActionListener(e -> sync());
+        start.addChangeListener(e -> sync());
+        minutes.addChangeListener(e -> sync());
+        date.addChangeListener(e -> {
+            if (!repeat.isSelected() && !editing) {
+                Ui.setDate(repeatEnd, Ui.dateOf(date).plusWeeks(15));
+            }
+        });
         sync();
     }
 
@@ -79,6 +89,9 @@ public final class TaskForm {
         }
         repeat.setEnabled(isFixed && !editing);
         repeatEnd.setEnabled(repeat.isSelected());
+        LocalTime s = startTime();
+        int end = s == null ? 0 : s.getHour() * 60 + s.getMinute() + (int) minutes.getValue();
+        endLabel.setText(s == null ? "" : String.format("끝 %02d:%02d", end / 60, end % 60));
     }
 
     LocalTime startTime() {

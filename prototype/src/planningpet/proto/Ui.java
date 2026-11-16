@@ -30,6 +30,24 @@ public final class Ui {
         return p;
     }
 
+    /** HTML 라벨에 넣을 글자. 제목의 꺾쇠와 앰퍼샌드가 태그로 읽히지 않게 한다. */
+    public static String esc(String s) {
+        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+    }
+
+    /** 칸에 max자를 넘게 써지지 않게 한다(붙여 넣으면 max자에서 자른다). */
+    public static void limit(javax.swing.text.JTextComponent c, int max) {
+        ((javax.swing.text.AbstractDocument) c.getDocument()).setDocumentFilter(new javax.swing.text.DocumentFilter() {
+            @Override
+            public void replace(FilterBypass fb, int off, int len, String text, javax.swing.text.AttributeSet a)
+                    throws javax.swing.text.BadLocationException {
+                int room = max - fb.getDocument().getLength() + len;
+                String t = text == null ? "" : text;
+                super.replace(fb, off, len, t.length() > room ? t.substring(0, Math.max(0, room)) : t, a);
+            }
+        });
+    }
+
     /** 펫 말풍선. */
     public static JLabel bubble() {
         JLabel l = new JLabel() {

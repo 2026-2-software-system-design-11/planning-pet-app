@@ -15,6 +15,8 @@ import javax.swing.plaf.basic.BasicGraphicsUtils;
 public final class RoundButtonUI extends BasicButtonUI {
     /** 내비게이션 버튼에 붙이는 표시. 고르면 MINT_SELECTED, 아니면 MINT_PALE. */
     public static final String NAV = "planningpet.nav";
+    /** 치운 아이템처럼 글자를 흐리게 보일 때 붙이는 표시. */
+    public static final String DIM = "planningpet.dim";
 
     public static ComponentUI createUI(JComponent c) {
         return new RoundButtonUI();
@@ -52,7 +54,7 @@ public final class RoundButtonUI extends BasicButtonUI {
 
     @Override
     protected void paintText(Graphics g, AbstractButton b, java.awt.Rectangle r, String text) {
-        g.setColor(b.isEnabled() ? Theme.INK : Theme.INK_DIM);
+        g.setColor(b.isEnabled() && !Boolean.TRUE.equals(b.getClientProperty(DIM)) ? Theme.INK : Theme.INK_DIM);
         g.setFont(b.getFont());
         int mnemonic = b.getDisplayedMnemonicIndex();
         BasicGraphicsUtils.drawStringUnderlineCharAt(b, (Graphics2D) g, text, mnemonic, r.x, r.y + g.getFontMetrics().getAscent());
