@@ -59,6 +59,7 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
         // D-35: 고정 일정도 체크한다. 체크박스 옆에 "고정" 표시를 둔다.
         JCheckBox box = new JCheckBox();
         box.setSelected(t.done);
+        box.putClientProperty(Task.class, t);
         box.addActionListener(e -> actions.check(t));
         JComponent mark = box;
         if (t.kind == Task.Kind.FIXED) {

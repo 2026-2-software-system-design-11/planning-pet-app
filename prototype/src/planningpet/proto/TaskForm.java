@@ -23,7 +23,7 @@ public final class TaskForm {
     final JTextArea memo = new JTextArea(3, 22);
     /** 칸 아래 빨간 오류 글(05). 칸 순서다. */
     final java.util.Map<String, JLabel> errors = new java.util.LinkedHashMap<>();
-    private final JLabel repeatHint = Ui.hint("반복은 고정 일정만 할 수 있어요");
+    final JLabel repeatHint = Ui.hint("반복은 고정 일정만 할 수 있어요");
     final JLabel endLabel = new JLabel();
     private final boolean editing;
     private int row;
