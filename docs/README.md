@@ -5,7 +5,7 @@
 | 순서 | 문서 | 양식의 절 |
 |---|---|---|
 | 01 | [개요와 요구사항](01-requirements.md) | CHARACTERISTICS, REQUIREMENT LISTS |
-| 02 | 유스케이스 | USECASES |
+| 02 | [유스케이스](02-usecases.md) | USECASES |
 | 03 | 유스케이스 다이어그램 | USECASE DIAGRAM |
 | 04 | 시퀀스 다이어그램 | SEQUENCE DIAGRAM |
 | 05 | 화면 설계 | USER INTERFACE DESIGNS |
