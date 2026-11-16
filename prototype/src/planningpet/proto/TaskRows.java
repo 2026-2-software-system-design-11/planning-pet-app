@@ -73,9 +73,10 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
         JPanel left = Ui.flow();
         if (time != null) {
             // D-40: 시각 칸은 밑줄을 그어 누르는 곳임을 보인다.
-            JLabel when = new JLabel("<html><u>" + (time.isEmpty() ? "시각 정하기" : time) + "</u></html>");
+            // HTML 글은 setForeground를 따르지 않아 흐린 색(메모 표시와 같은 색)을 HTML 안에 넣는다.
+            String color = t.done || time.isEmpty() ? "<font color='#8A96A0'>" : "<font>";
+            JLabel when = new JLabel("<html>" + color + "<u>" + (time.isEmpty() ? "시각 정하기" : time) + "</u></font></html>");
             when.setPreferredSize(new Dimension(92, 20));
-            when.setForeground(t.done || time.isEmpty() ? Theme.INK_DIM : Theme.INK);
             when.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
             when.setToolTipText("눌러서 시각을 바꿔요");
             when.addMouseListener(new MouseAdapter() {
@@ -87,9 +88,7 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
             left.add(when);
         }
         left.add(mark);
-        // D-44: 일정관리 목록에서 오늘보다 앞선 날짜는 "지난 날"을 붙인다.
-        String past = withDate && t.date.isBefore(actions.today()) ? "<font color='#C0392B'>지난 날</font> " : "";
-        String date = withDate ? past + t.date.getMonthValue() + "/" + t.date.getDayOfMonth() + " " : "";
+        String date = withDate ? t.date.getMonthValue() + "/" + t.date.getDayOfMonth() + " " : "";
         String memoMark = t.memo.isBlank() ? "" : " <font size='2' color='#8A96A0'>메모</font>";
         JLabel label = new JLabel("<html>" + date + (t.done ? "<s>" + Ui.esc(t.title) + "</s>" : Ui.esc(t.title))
                 + memoMark + "</html>");
@@ -112,7 +111,16 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
             JPanel buttons = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 4, 0));
             buttons.add(edit);
             buttons.add(delete);
-            row.add(buttons, BorderLayout.SOUTH);
+            // D-44: 오늘보다 앞선 날짜는 둘째 줄 왼쪽에 "지난 날". 제목 줄에 붙이면 좁은 목록에서 제목이 잘린다.
+            JPanel second = new JPanel(new BorderLayout());
+            if (t.date.isBefore(actions.today())) {
+                JLabel past = new JLabel("지난 날");
+                past.setForeground(new java.awt.Color(0xC0392B));
+                past.setFont(Theme.font(12));
+                second.add(past, BorderLayout.WEST);
+            }
+            second.add(buttons, BorderLayout.EAST);
+            row.add(second, BorderLayout.SOUTH);
             row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 58));
         } else {
             row.add(Ui.flow(minutes, edit, delete), BorderLayout.EAST);
