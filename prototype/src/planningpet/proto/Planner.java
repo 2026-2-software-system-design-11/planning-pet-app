@@ -30,9 +30,14 @@ public final class Planner {
                 .toList();
     }
 
-    public static Placement place(Store s, LocalDate monday) {
+    /** 지금을 10분 단위로 올린 시각. 이보다 앞에는 놓지 않는다. */
+    public static LocalDateTime earliest(Store s) {
         LocalDateTime now = s.now.truncatedTo(ChronoUnit.MINUTES);
-        LocalDateTime earliest = now.plusMinutes((10 - now.getMinute() % 10) % 10);
+        return now.plusMinutes((10 - now.getMinute() % 10) % 10);
+    }
+
+    public static Placement place(Store s, LocalDate monday) {
+        LocalDateTime earliest = earliest(s);
         List<Placed> placed = new ArrayList<>();
         List<Task> unplaced = new ArrayList<>();
         for (Task t : targets(s, monday)) {
