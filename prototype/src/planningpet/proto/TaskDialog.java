@@ -34,6 +34,9 @@ public final class TaskDialog {
 
     public static void open(App app, Task editing, LocalDate defaultDate) {
         TaskForm f = new TaskForm(editing, defaultDate, app.store.now);
+        if (editing != null && editing.seriesId != null) {
+            f.showSeries(app.store.seriesEnd(editing));
+        }
         JButton cancel = new JButton("취소");
         JButton saveButton = new JButton("저장");
         JButton delete = editing == null ? null : new JButton("삭제");
@@ -75,16 +78,24 @@ public final class TaskDialog {
             return false;
         }
         String title = f.title.getText().strip();
+        int scope = editing == null ? 0 : app.actions.editScope(editing);
+        if (scope < 0) {
+            return false;
+        }
         if (editing == null) {
             Task.Kind kind = f.fixed.isSelected() ? Task.Kind.FIXED : Task.Kind.TASK;
             app.store.add(kind, title, Ui.dateOf(f.date), f.startTime(), (int) f.minutes.getValue(),
                     f.memo.getText(), f.repeat.isSelected() ? Ui.dateOf(f.repeatEnd) : null);
         } else {
+            LocalDate originalDate = editing.date;
             editing.title = title;
             editing.date = Ui.dateOf(f.date);
             editing.start = f.startTime();
             editing.minutes = (int) f.minutes.getValue();
             editing.memo = f.memo.getText();
+            if (scope == 1) {
+                app.store.applyToSeries(editing, originalDate);
+            }
         }
         app.store.changed();
         return true;
