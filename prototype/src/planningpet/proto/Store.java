@@ -90,6 +90,24 @@ public final class Store {
         return new DayPlan(timed, untimed);
     }
 
+    /** 06의 26번(D-33). 달력 칸의 첫 할 일 제목과 끝내지 않은 일이 있는지. 할 일이 없으면 null. */
+    public record CellPreview(String title, boolean open) {
+    }
+
+    public CellPreview cellPreview(LocalDate date) {
+        DayPlan plan = dayPlan(date);
+        List<Task> list = new ArrayList<>(plan.timed().stream().filter(t -> t.kind == Task.Kind.TASK).toList());
+        list.addAll(plan.untimed());
+        if (list.isEmpty()) {
+            return null;
+        }
+        String title = list.get(0).title;
+        if (title.length() > 5) {
+            title = title.substring(0, 5).stripTrailing() + "…";
+        }
+        return new CellPreview(title, list.stream().anyMatch(t -> !t.done));
+    }
+
     /** "10:00~11:00". 자정에 끝나면 "24:00". */
     public static String timeText(Task t) {
         int end = t.endMinute();
