@@ -23,6 +23,7 @@ public final class ProtoCheck {
         eq("T-VIS-2", 5, s.streak);
         eq("T-SHOP-1", "0 0", g.buy("액자") + " " + s.points);
         eq("T-SHOP-2, T-SHOP-4", "150 -1", g.buy("조명") + " " + g.buy("쿠션"));
+        eq("삭제 확인 조사", "을 는", Actions.josa("자소서 초안", "을", "를") + " " + Actions.josa("자료구조", "은", "는"));
         System.out.println(failed == 0 ? "모두 통과" : failed + "개 실패");
         System.exit(failed == 0 ? 0 : 1);
     }
