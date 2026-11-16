@@ -131,6 +131,10 @@ public final class TaskForm {
         }
     }
 
+    boolean editing() {
+        return editing;
+    }
+
     /** D-42: 반복 사본을 고칠 때 반복 칸을 켠 채(비활성) 그 반복의 마지막 날짜를 보인다. */
     void showSeries(LocalDate end) {
         repeat.setSelected(true);

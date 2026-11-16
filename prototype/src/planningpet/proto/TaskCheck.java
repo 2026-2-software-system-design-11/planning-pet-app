@@ -30,7 +30,8 @@ public final class TaskCheck {
         if (f.memo.getText().length() > 1000) {
             out.add(new String[] {"메모", "메모는 1000자까지예요"});
         }
-        if (f.repeat.isSelected()) {
+        // D-42: 수정할 때 반복 칸은 보이기만 하므로 검사하지 않는다(사본을 반복 끝 밖으로 옮겨도 된다).
+        if (f.repeat.isSelected() && !f.editing()) {
             LocalDate from = Ui.dateOf(f.date);
             LocalDate to = Ui.dateOf(f.repeatEnd);
             if (to.isBefore(from)) {
