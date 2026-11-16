@@ -77,8 +77,6 @@ public final class Actions {
 
     /** 마지막 글자에 받침이 있으면 withBatchim, 없으면 without. */
     static String josa(String word, String withBatchim, String without) {
-        char last = word.charAt(word.length() - 1);
-        boolean batchim = last >= 0xAC00 && last <= 0xD7A3 && (last - 0xAC00) % 28 != 0;
-        return batchim ? withBatchim : without;
+        return Rules.hasBatchim(word) ? withBatchim : without;
     }
 }

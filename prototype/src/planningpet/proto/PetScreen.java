@@ -19,6 +19,7 @@ public final class PetScreen extends JPanel {
     private final RoomView room;
     private final JPanel items = new JPanel();
     private String said;
+    private boolean wasVisible;
 
     public PetScreen(App app) {
         super(new BorderLayout(0, 8));
@@ -54,8 +55,13 @@ public final class PetScreen extends JPanel {
         expBar.setValue((int) (Rules.expRatio(s.exp) * 1000));
         expText.setText(Rules.expText(s.exp));
         long done = s.forDate(s.today()).stream().filter(t -> t.done).count();
-        room.bubble = said != null ? said : done > 0 ? "오늘 " + done + "개 끝냈어." : "오늘은 아직 끝낸 일이 없어.";
-        said = null;
+        if (said != null) {
+            room.bubble = said;
+            said = null;
+        } else if (isVisible() && !wasVisible) {
+            room.bubble = done > 0 ? "오늘 " + done + "개 끝냈어." : "오늘은 아직 끝낸 일이 없어.";
+        }
+        wasVisible = isVisible();
         items.removeAll();
         items.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 6, 4));
         for (String item : Game.ITEMS.keySet()) {
@@ -64,6 +70,7 @@ public final class PetScreen extends JPanel {
             }
             boolean placed = s.placed.contains(item);
             JToggleButton b = new JToggleButton(placed ? item + " ✓" : item, placed);
+            b.putClientProperty(RoundButtonUI.DIM, !placed);
             b.addActionListener(e -> {
                 if (!s.placed.remove(item)) {
                     s.placed.add(item);

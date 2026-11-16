@@ -22,10 +22,11 @@ public final class AutoPlaceDialog {
     public static JPanel content(Store s, LocalDate monday, Planner.Placement p, JButton cancel, JButton apply) {
         LocalDate today = s.today();
         boolean thisWeek = Store.mondayOf(today).equals(monday);
-        LocalDate from = thisWeek ? today : monday;
-        LocalTime nine = LocalTime.of(9, 0);
-        LocalTime soonest = Planner.earliest(s).toLocalTime();
-        LocalTime fromTime = thisWeek && soonest.isAfter(nine) ? soonest : nine;
+        java.time.LocalDateTime soonest = Planner.earliest(s);
+        java.time.LocalDateTime start = thisWeek && soonest.toLocalTime().isAfter(LocalTime.of(9, 0)) ? soonest
+                : (thisWeek ? soonest.toLocalDate() : monday).atTime(9, 0);
+        LocalDate from = start.toLocalDate();
+        LocalTime fromTime = start.toLocalTime();
         LocalDate to = monday.plusDays(6);
         JLabel head = new JLabel(day(from) + " " + fromTime + "부터 " + day(to) + "까지, 할 일마다 그 날짜 안의 빈 시간에 놓았어요");
         DefaultTableModel model = new DefaultTableModel(new Object[] {"할 일", "날짜", "시각", "걸리는 시간"}, 0);

@@ -53,9 +53,16 @@ public final class Rules {
 
     /** 이름 마지막 글자가 받침 있는 한글이면 "이야", 그 밖은 "야". */
     public static String iya(String name) {
-        char last = name.charAt(name.length() - 1);
-        boolean hangul = last >= 0xAC00 && last <= 0xD7A3;
-        return hangul && (last - 0xAC00) % 28 != 0 ? "이야" : "야";
+        return hasBatchim(name) ? "이야" : "야";
+    }
+
+    /** 마지막 글자를 읽을 때 받침이 있는지. 한글과 숫자(영, 일, 삼, 육, 칠, 팔)만 본다. */
+    public static boolean hasBatchim(String word) {
+        char last = word.charAt(word.length() - 1);
+        if (last >= 0xAC00 && last <= 0xD7A3) {
+            return (last - 0xAC00) % 28 != 0;
+        }
+        return "013678".indexOf(last) >= 0;
     }
 
     /** 15자를 넘으면 앞 14자 뒤에 "…". */
