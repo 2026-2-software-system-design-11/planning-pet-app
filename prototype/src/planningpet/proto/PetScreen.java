@@ -16,11 +16,11 @@ public final class PetScreen extends JPanel {
     private final JLabel name = new JLabel();
     private final JProgressBar expBar = new JProgressBar(0, 1000);
     private final JLabel expText = new JLabel();
-    private final RoomView room;
-    private final JPanel items = new JPanel();
+    final RoomView room;
+    final JPanel items = new JPanel();
     private String said;
     private boolean wasVisible;
-    private final JLabel decoText = new JLabel();
+    final JLabel decoText = new JLabel();
     private final JProgressBar decoBar = new JProgressBar(0, Game.ITEMS.size());
 
     public PetScreen(App app) {

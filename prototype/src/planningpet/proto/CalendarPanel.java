@@ -17,7 +17,7 @@ public final class CalendarPanel extends JPanel {
     private static final String DAYS = "일월화수목금토";
     private final Store store;
     private final Consumer<LocalDate> onSelect;
-    private final JPanel grid = new JPanel(new GridLayout(7, 7, 2, 2));
+    final JPanel grid = new JPanel(new GridLayout(7, 7, 2, 2));
     private final JLabel title = new JLabel("", SwingConstants.CENTER);
     private YearMonth month;
     private LocalDate selected;
@@ -42,6 +42,11 @@ public final class CalendarPanel extends JPanel {
 
     public LocalDate selected() {
         return selected;
+    }
+
+    void pick(LocalDate date) {
+        selected = date;
+        month = YearMonth.from(date);
     }
 
     private void move(int months) {

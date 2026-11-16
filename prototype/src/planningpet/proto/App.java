@@ -32,9 +32,9 @@ public final class App {
     private final JPanel center = new JPanel(cards);
     private final JPanel nav = new JPanel(new GridLayout(0, 1, 0, 6));
     private final ButtonGroup navGroup = new ButtonGroup();
-    private final JLabel streak = new JLabel();
-    private final JLabel points = new JLabel();
-    private final JButton attend = new JButton();
+    final JLabel streak = new JLabel();
+    final JLabel points = new JLabel();
+    final JButton attend = new JButton();
 
     public App(Store store) {
         this.store = store;
