@@ -47,7 +47,12 @@ public final class ScheduleScreen extends JPanel {
         JPanel bar = new JPanel(new BorderLayout());
         bar.add(Ui.flow(prev, range, next, today), BorderLayout.WEST);
         bar.add(Ui.flow(autoPlace, add), BorderLayout.EAST);
-        add(bar, BorderLayout.NORTH);
+        // D-44: 시간표 블록 색의 뜻.
+        JPanel top = new JPanel(new BorderLayout(0, 4));
+        top.add(bar, BorderLayout.NORTH);
+        top.add(Ui.flow(swatch(Theme.TRACK, "고정 일정"), swatch(Theme.MINT_SOFT, "할 일"), swatch(Theme.DAY, "끝냄")),
+                BorderLayout.SOUTH);
+        add(top, BorderLayout.NORTH);
         JScrollPane scroll = new JScrollPane(table, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scroll.setColumnHeaderView(header);
         scroll.getViewport().setViewPosition(new Point(0, 8 * TimetablePanel.HOUR));
@@ -77,6 +82,30 @@ public final class ScheduleScreen extends JPanel {
 
     LocalDate monday() {
         return monday;
+    }
+
+    private static JLabel swatch(java.awt.Color color, String text) {
+        JLabel l = new JLabel(text, new javax.swing.Icon() {
+            @Override
+            public void paintIcon(java.awt.Component c, java.awt.Graphics g, int x, int y) {
+                g.setColor(color);
+                g.fillRect(x, y, 12, 12);
+                g.setColor(Theme.CARD_LINE);
+                g.drawRect(x, y, 11, 11);
+            }
+
+            @Override
+            public int getIconWidth() {
+                return 12;
+            }
+
+            @Override
+            public int getIconHeight() {
+                return 12;
+            }
+        }, JLabel.LEFT);
+        l.setFont(Theme.font(12));
+        return l;
     }
 
     void move(LocalDate newMonday) {
@@ -112,7 +141,7 @@ public final class ScheduleScreen extends JPanel {
         String text = null;
         if (visible) {
             text = !wasVisible || showHint || !newTalk
-                    ? (n > 0 ? "시간이 안 정해진 할 일이 " + n + "개 있어. 자동 배치를 눌러 볼래?" : "지금 자동 배치할 할 일은 없어.")
+                    ? (n > 0 ? "이번 주 남은 날의 시각 없는 할 일이 " + n + "개 있어. 자동 배치를 눌러 볼래?" : "지금 자동 배치할 할 일은 없어.")
                     : app.store.talk;
             showHint = false;
         }
