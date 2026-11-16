@@ -1,0 +1,16 @@
+@startsalt ui-shop
+!include ui-common.iuml
+{+
+  <b>상점</b> | . | . | 보유 <b>120P</b>
+  --|--|--|--
+  {#
+    아이템 | 가격 | 상태 | .
+    화분 | 50P | 보유 중 | [<color:#AAAAAA>사기</color>]
+    러그 | 80P | . | [사기]
+    고양이 탑 | 200P | <color:#C0392B>80P 모자라요</color> | [<color:#AAAAAA>사기</color>]
+    조명 | 100P | . | [사기]
+  }
+  --|--|--|--
+  . | . | . | [닫기]
+}
+@endsalt

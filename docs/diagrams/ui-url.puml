@@ -1,0 +1,11 @@
+@startsalt ui-url
+!include ui-common.iuml
+{+
+  <b>URL에서 가져오기</b> | .
+  --|--
+  주소 | "https://example.com/notice/123      "
+  . | <size:11><color:#666666>페이지에서 제목과 날짜를 찾아 입력칸을 채워요. 저장은 확인한 뒤에 해요</color></size>
+  --|--
+  . | { [취소] | [<b>가져오기</b>] }
+}
+@endsalt
