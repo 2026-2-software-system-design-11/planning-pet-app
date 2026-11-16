@@ -58,3 +58,46 @@ public final class BlindStates {
                     "상점 창(300P, 살 수 있는 것 있음)");
             app.store.add(Task.Kind.TASK, "기말 프로젝트", today, null, 600, "", null);
             LocalDate monday = Store.mondayOf(today);
+            BlindShots.shoot(AutoPlaceDialog.content(app.store, monday, Planner.place(app.store, monday), new JButton("취소"),
+                    new JButton("적용")), null, "자동 배치 결과", images, key, n++, out, "자동 배치 결과 창(놓지 못한 할 일 있음)");
+            BlindShots.shoot(menuOver(MockData.sample()), new Dimension(1000, 680), null, images, key, n++, out,
+                    "홈, 할 일 줄에서 오른쪽 버튼을 누른 뒤");
+            Task untimed = app.store.dayPlan(today).untimed().get(0);
+            BlindShots.shoot(new TimeEditor(untimed, app.store.now).panel, null, null, images, key, n++, out,
+                    "시각 고치기 창(시각 없는 할 일)");
+        }
+        System.out.println("그렸다: " + images.getPath() + ", 열쇠: " + key.getPath());
+        System.exit(0);
+    }
+
+    /** 홈 그림 위, 둘째 할 일 줄 자리에 오른쪽 버튼 메뉴를 얹는다. 홈 그림은 눌러지지 않는 그림이다. */
+    private static JLayeredPane menuOver(Store s) throws Exception {
+        App app = Main.create(s);
+        app.store.say(app.talk.onWindowShown(app.game));
+        app.show("홈");
+        app.store.changed();
+        Dimension size = new Dimension(1000, 680);
+        File tmp = File.createTempFile("home", ".png");
+        Snap.save(app.root, size, tmp);
+        BufferedImage home = javax.imageio.ImageIO.read(tmp);
+        tmp.delete();
+        JLayeredPane pane = new JLayeredPane();
+        pane.setPreferredSize(size);
+        JLabel picture = new JLabel(new ImageIcon(home));
+        picture.setBounds(0, 0, size.width, size.height);
+        pane.add(picture, JLayeredPane.DEFAULT_LAYER);
+        Task essay = s.dayPlan(s.today()).timed().get(1);
+        // 창 없이는 팝업을 띄울 수 없어서, 메뉴의 항목(같은 부품, 같은 동작)을 메뉴 모양 판에 옮겨 담는다.
+        JPopupMenu menu = app.actions.menu(essay);
+        javax.swing.JPanel look = new javax.swing.JPanel();
+        look.setLayout(new javax.swing.BoxLayout(look, javax.swing.BoxLayout.Y_AXIS));
+        look.setBorder(javax.swing.BorderFactory.createLineBorder(java.awt.Color.GRAY));
+        for (java.awt.Component item : menu.getComponents()) {
+            look.add(item);
+        }
+        look.setSize(look.getPreferredSize().width + 40, look.getPreferredSize().height);
+        look.setLocation(720, 200);
+        pane.add(look, JLayeredPane.POPUP_LAYER);
+        return pane;
+    }
+}
