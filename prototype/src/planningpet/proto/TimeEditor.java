@@ -61,6 +61,25 @@ public final class TimeEditor {
         return s.getHour() * 60 + s.getMinute() + (int) minutes.getValue() > 24 * 60 ? "하루 안에 끝나야 해요" : null;
     }
 
+    /** 저장 버튼과 같다. 통과하면 true, 아니면 창 아래 문장을 채우고 false. */
+    static boolean save(App app, Task t, TimeEditor e) {
+        String problem = e.check();
+        if (problem != null) {
+            e.error.setText(problem);
+            return false;
+        }
+        t.start = LocalTime.parse((String) e.start.getValue());
+        t.minutes = (int) e.minutes.getValue();
+        app.store.changed();
+        return true;
+    }
+
+    /** 시간 빼기 버튼과 같다. */
+    static void clear(App app, Task t) {
+        t.start = null;
+        app.store.changed();
+    }
+
     public static void open(App app, Task t, Component anchor) {
         TimeEditor e = new TimeEditor(t, app.store.now);
         JDialog d = new JDialog(SwingUtilities.getWindowAncestor(app.root), JDialog.ModalityType.APPLICATION_MODAL);
@@ -73,20 +92,13 @@ public final class TimeEditor {
         d.setContentPane(e.panel);
         e.cancel.addActionListener(x -> d.dispose());
         e.clear.addActionListener(x -> {
-            t.start = null;
+            clear(app, t);
             d.dispose();
-            app.store.changed();
         });
         e.save.addActionListener(x -> {
-            String problem = e.check();
-            if (problem != null) {
-                e.error.setText(problem);
-                return;
+            if (save(app, t, e)) {
+                d.dispose();
             }
-            t.start = LocalTime.parse((String) e.start.getValue());
-            t.minutes = (int) e.minutes.getValue();
-            d.dispose();
-            app.store.changed();
         });
         d.getRootPane().setDefaultButton(e.save);
         d.getRootPane().registerKeyboardAction(x -> d.dispose(),

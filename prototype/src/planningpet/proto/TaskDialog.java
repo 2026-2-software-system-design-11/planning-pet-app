@@ -60,10 +60,17 @@ public final class TaskDialog {
 
     /** UC-03 5a: 검사를 통과하지 못하면 창 아래에 문장을 보이고 닫지 않는다. */
     private static void save(App app, TaskForm f, Task editing, JDialog d) {
+        if (trySave(app, f, editing)) {
+            d.dispose();
+        }
+    }
+
+    /** 저장 버튼과 같다. 검사를 통과하면 저장하고 true, 아니면 창 아래 문장을 채우고 false. */
+    static boolean trySave(App app, TaskForm f, Task editing) {
         String problem = TaskCheck.check(f);
         if (problem != null) {
             f.error.setText(problem);
-            return;
+            return false;
         }
         String title = f.title.getText().strip();
         if (editing == null) {
@@ -77,7 +84,7 @@ public final class TaskDialog {
             editing.minutes = (int) f.minutes.getValue();
             editing.memo = f.memo.getText();
         }
-        d.dispose();
         app.store.changed();
+        return true;
     }
 }
