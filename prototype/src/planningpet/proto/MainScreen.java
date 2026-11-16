@@ -1,0 +1,91 @@
+package planningpet.proto;
+
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.FlowLayout;
+import java.awt.GridLayout;
+import java.time.LocalDate;
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
+
+/** 메인(05 메인). 하루는 이 화면에서 끝난다. */
+public final class MainScreen extends JPanel {
+    private static final String WEEK = "월화수목금토일";
+    private final App app;
+    private final CalendarPanel calendar;
+    private final TaskRows rows;
+    private final JLabel listTitle = new JLabel();
+    private final JLabel bubble = new JLabel();
+    private final JTextField quick = new JTextField();
+
+    public MainScreen(App app) {
+        super(new BorderLayout(0, 8));
+        this.app = app;
+        setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 12));
+        calendar = new CalendarPanel(app.store, this::select);
+        rows = new TaskRows(app.actions);
+
+        JPanel list = new JPanel(new BorderLayout(0, 6));
+        list.add(listTitle, BorderLayout.NORTH);
+        JScrollPane scroll = new JScrollPane(rows);
+        scroll.setBorder(BorderFactory.createEmptyBorder());
+        list.add(scroll, BorderLayout.CENTER);
+        list.add(quickAdd(), BorderLayout.SOUTH);
+
+        JPanel body = new JPanel(new GridLayout(1, 2, 24, 0));
+        body.add(calendar);
+        body.add(list);
+        add(body, BorderLayout.CENTER);
+
+        JPanel bottom = new JPanel(new BorderLayout());
+        JPanel bubbleRow = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        bubble.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(0x999999), 1, true),
+                BorderFactory.createEmptyBorder(6, 10, 6, 10)));
+        bubbleRow.add(bubble);
+        bottom.add(bubbleRow, BorderLayout.NORTH);
+        bottom.add(new WalkBar(app.store), BorderLayout.CENTER);
+        add(bottom, BorderLayout.SOUTH);
+        app.store.onChange(this::refresh);
+    }
+
+    private JPanel quickAdd() {
+        JPanel panel = new JPanel(new BorderLayout(6, 2));
+        JButton add = new JButton("일정 추가");
+        add.addActionListener(e -> app.actions.add(calendar.selected()));
+        quick.addActionListener(e -> {
+            String title = quick.getText().strip();
+            if (title.isEmpty() || title.length() > 100) {
+                return;
+            }
+            app.store.add(Task.Kind.TASK, title, calendar.selected(), null, 30, "", null);
+            quick.setText("");
+            app.store.changed();
+        });
+        JLabel hint = new JLabel("시간을 안 쓰면 30분으로 들어가요");
+        hint.setForeground(Color.GRAY);
+        panel.add(quick, BorderLayout.CENTER);
+        panel.add(add, BorderLayout.EAST);
+        panel.add(hint, BorderLayout.SOUTH);
+        return panel;
+    }
+
+    /** UC-09. 오늘이 아닌 날을 고르면 펫이 그날 할 일 수를 말한다. */
+    private void select(LocalDate date) {
+        app.store.talk = date.equals(app.store.today()) ? app.talk.usual() : app.talk.otherDate(date);
+        app.store.changed();
+    }
+
+    private void refresh() {
+        LocalDate date = calendar.selected();
+        listTitle.setText("<html><b>" + date.getMonthValue() + "월 " + date.getDayOfMonth() + "일 ("
+                + WEEK.charAt(date.getDayOfWeek().getValue() - 1) + ") 할 일</b></html>");
+        rows.show(app.store.forDate(date), false);
+        calendar.refresh();
+        bubble.setText(app.store.talk);
+    }
+}
