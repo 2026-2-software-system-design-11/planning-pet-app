@@ -19,7 +19,6 @@ public final class MainScreen extends JPanel {
     private final CalendarPanel calendar;
     private final TaskRows rows;
     private final JLabel listTitle = new JLabel();
-    private final JLabel bubble = Ui.bubble();
     private final JLabel levelName = new JLabel();
     private final javax.swing.JProgressBar levelBar = new javax.swing.JProgressBar(0, 1000);
     private final JLabel levelText = new JLabel();
@@ -48,10 +47,7 @@ public final class MainScreen extends JPanel {
         add(body, BorderLayout.CENTER);
 
         JPanel bottom = new Card(new BorderLayout());
-        JPanel bubbleRow = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        bubbleRow.add(bubble);
         JPanel top = new JPanel(new BorderLayout());
-        top.add(bubbleRow, BorderLayout.CENTER);
         levelBar.setPreferredSize(new java.awt.Dimension(110, 10));
         top.add(Ui.flow(levelName, levelBar, levelText), BorderLayout.EAST);
         bottom.add(top, BorderLayout.NORTH);
@@ -95,7 +91,6 @@ public final class MainScreen extends JPanel {
                 + WEEK.charAt(date.getDayOfWeek().getValue() - 1) + ") 할 일");
         rows.showPlan(app.store.dayPlan(date));
         calendar.refresh();
-        bubble.setText(app.store.talk);
         levelName.setText(app.store.petName + " Lv." + Rules.level(app.store.exp));
         levelName.setFont(Theme.bold(15));
         levelBar.setValue((int) (Rules.expRatio(app.store.exp) * 1000));

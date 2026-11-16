@@ -15,7 +15,7 @@ public final class WalkBar extends JComponent {
     public WalkBar(Store store) {
         this.store = store;
         store.onChange(this::repaint);
-        setPreferredSize(new Dimension(600, 72));
+        setPreferredSize(new Dimension(600, 140));
     }
 
     @Override
@@ -46,6 +46,53 @@ public final class WalkBar extends JComponent {
             g.drawOval(x - 5, y - 5, 10, 10);
         }
         Pet.drawAt(g, store, catX, y - 6, 56);
+        drawBubble(g, catX, y - 6 - 56);
         g.dispose();
+    }
+
+    /** D-34. 펫 바로 위의 말풍선. 꼬리는 펫을 가리키고, 양 끝에서는 말풍선만 안쪽으로 맞춘다. */
+    private void drawBubble(Graphics2D g, int petX, int petTop) {
+        if (store.talk == null || store.talk.isBlank()) {
+            return;
+        }
+        g.setFont(Theme.font(14));
+        java.awt.FontMetrics fm = g.getFontMetrics();
+        java.util.List<String> lines = wrap(store.talk, fm, 380);
+        int w = lines.stream().mapToInt(fm::stringWidth).max().orElse(0) + 28;
+        int h = lines.size() * fm.getHeight() + 14;
+        int bottom = petTop - 8;
+        int x = Math.max(4, Math.min(petX - w / 2, getWidth() - w - 4));
+        int top = bottom - h;
+        int tail = Math.max(x + 14, Math.min(petX, x + w - 14));
+        java.awt.Polygon arrow = new java.awt.Polygon(new int[] {tail - 7, tail + 7, petX}, new int[] {bottom - 1, bottom - 1, petTop - 1}, 3);
+        g.setStroke(new BasicStroke(1));
+        g.setColor(Theme.CARD_TOP);
+        g.fillRoundRect(x, top, w, h, Theme.BUBBLE_RADIUS, Theme.BUBBLE_RADIUS);
+        g.fillPolygon(arrow);
+        g.setColor(Theme.CARD_LINE);
+        g.drawRoundRect(x, top, w, h, Theme.BUBBLE_RADIUS, Theme.BUBBLE_RADIUS);
+        g.drawLine(tail - 7, bottom, petX, petTop - 1);
+        g.drawLine(tail + 7, bottom, petX, petTop - 1);
+        g.setColor(Theme.INK);
+        for (int i = 0; i < lines.size(); i++) {
+            g.drawString(lines.get(i), x + 14, top + 7 + fm.getAscent() + i * fm.getHeight());
+        }
+    }
+
+    /** 띄어쓰기 단위로 max 너비에서 줄을 바꾼다. */
+    static java.util.List<String> wrap(String text, java.awt.FontMetrics fm, int max) {
+        java.util.List<String> lines = new java.util.ArrayList<>();
+        StringBuilder line = new StringBuilder();
+        for (String word : text.split(" ")) {
+            String next = line.length() == 0 ? word : line + " " + word;
+            if (fm.stringWidth(next) > max && line.length() > 0) {
+                lines.add(line.toString());
+                line = new StringBuilder(word);
+            } else {
+                line = new StringBuilder(next);
+            }
+        }
+        lines.add(line.toString());
+        return lines;
     }
 }
