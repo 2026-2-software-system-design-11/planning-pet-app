@@ -114,6 +114,8 @@ for n in 1 2 3 4 5 6 7 8 9 10; do qa/blind/judge.sh $n; qa/blind/notice.sh $n; d
 python3 qa/blind/tally.py out-blind ../docs/qa/blind/judged.md
 ```
 
+2차는 `./usability.sh`(예측 a2, b2, 걸음 단위 점검, 10원칙 평가) 뒤에 페르소나마다 `qa/blind/judge.sh $n b2 ../docs/qa/blind/actual2.md`와 `qa/blind/notice.sh $n a2 out-blind/key2.md`를 돌리고, `merge.py`로 만든 지시문을 `qa/blind/ask.sh`로 묻는다.
+
 예측을 잠그기 전에 실제 동작 표를 먼저 커밋하고, 판정을 돌리기 전에 예측을 커밋한다.
 
 ## 7. 2차(#79): 자동 규칙
