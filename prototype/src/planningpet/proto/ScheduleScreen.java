@@ -20,9 +20,9 @@ public final class ScheduleScreen extends JPanel {
     private final TimetablePanel table;
     private final JPanel header = new JPanel(new GridLayout(1, 7));
     private final JLabel range = new JLabel("", SwingConstants.CENTER);
-    private final JButton autoPlace = new JButton("자동 배치");
-    private final TaskRows untimed;
-    private final JLabel bubble = Ui.bubble();
+    final JButton autoPlace = new JButton("자동 배치");
+    final TaskRows untimed;
+    final JLabel bubble = Ui.bubble();
     private LocalDate monday;
     private int lastTalk;
     private boolean wasVisible;
@@ -70,12 +70,16 @@ public final class ScheduleScreen extends JPanel {
     }
 
     /** 06의 14번: 보이는 주에 오늘이 있으면 오늘, 없으면 그 주 월요일. */
-    private LocalDate defaultDate() {
+    LocalDate defaultDate() {
         LocalDate today = app.store.today();
         return Store.mondayOf(today).equals(monday) ? today : monday;
     }
 
-    private void move(LocalDate newMonday) {
+    LocalDate monday() {
+        return monday;
+    }
+
+    void move(LocalDate newMonday) {
         monday = newMonday;
         showHint = true;
         app.store.changed();

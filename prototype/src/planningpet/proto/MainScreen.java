@@ -16,13 +16,13 @@ import javax.swing.JTextField;
 public final class MainScreen extends JPanel {
     private static final String WEEK = "월화수목금토일";
     private final App app;
-    private final CalendarPanel calendar;
-    private final TaskRows rows;
+    final CalendarPanel calendar;
+    final TaskRows rows;
     private final JLabel listTitle = new JLabel();
-    private final JLabel levelName = new JLabel();
+    final JLabel levelName = new JLabel();
     private final javax.swing.JProgressBar levelBar = new javax.swing.JProgressBar(0, 1000);
-    private final JLabel levelText = new JLabel();
-    private final JTextField quick = new JTextField();
+    final JLabel levelText = new JLabel();
+    final JTextField quick = new JTextField();
 
     public MainScreen(App app) {
         super(new BorderLayout(0, 8));
@@ -80,6 +80,12 @@ public final class MainScreen extends JPanel {
     }
 
     /** UC-09. 오늘이 아닌 날을 고르면 펫이 그날 할 일 수를 말한다. */
+    /** 달력에서 날짜를 누른 것과 같다(QA가 부른다). */
+    void selectDate(LocalDate date) {
+        calendar.pick(date);
+        select(date);
+    }
+
     private void select(LocalDate date) {
         app.store.say(date.equals(app.store.today()) ? app.talk.usual() : app.talk.otherDate(date));
         app.store.changed();

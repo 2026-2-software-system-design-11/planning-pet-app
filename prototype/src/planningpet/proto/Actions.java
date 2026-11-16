@@ -13,6 +13,18 @@ public final class Actions {
         this.app = app;
     }
 
+    /** 삭제 확인 창. 고른 버튼의 번호를 돌려준다. QA는 이것을 바꿔 끼운다. */
+    interface Chooser {
+        int choose(String message, String[] options);
+    }
+
+    Chooser chooser = this::ask;
+
+    private int ask(String message, String[] options) {
+        return JOptionPane.showOptionDialog(app.root, message, "일정 삭제",
+                JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[options.length - 1]);
+    }
+
     /** UC-07, UC-08. */
     public void check(Task t) {
         if (t.done) {
@@ -31,17 +43,15 @@ public final class Actions {
     public boolean delete(Task t) {
         boolean deleted = false;
         if (t.seriesId == null) {
-            int answer = JOptionPane.showOptionDialog(app.root, "'" + t.title + "'" + josa(t.title, "을", "를") + " 지울까요?",
-                    "일정 삭제", JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null,
-                    new String[] {"지우기", "취소"}, "취소");
+            int answer = chooser.choose("'" + t.title + "'" + josa(t.title, "을", "를") + " 지울까요?",
+                    new String[] {"지우기", "취소"});
             if (answer == 0) {
                 app.store.delete(t, false);
                 deleted = true;
             }
         } else {
-            int answer = JOptionPane.showOptionDialog(app.root, "'" + t.title + "'" + josa(t.title, "은", "는") + " 매주 반복 일정이에요.",
-                    "일정 삭제", JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null,
-                    new String[] {"이 일정만", "이후 반복 모두", "취소"}, "취소");
+            int answer = chooser.choose("'" + t.title + "'" + josa(t.title, "은", "는") + " 매주 반복 일정이에요.",
+                    new String[] {"이 일정만", "이후 반복 모두", "취소"});
             if (answer == 0 || answer == 1) {
                 app.store.delete(t, answer == 1);
                 deleted = true;
