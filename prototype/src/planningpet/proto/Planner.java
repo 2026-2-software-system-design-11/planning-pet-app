@@ -30,10 +30,10 @@ public final class Planner {
                 .toList();
     }
 
-    /** 지금을 10분 단위로 올린 시각. 이보다 앞에는 놓지 않는다. */
+    /** 지금을 5분 단위로 올린 시각(D-38). 이보다 앞에는 놓지 않는다. */
     public static LocalDateTime earliest(Store s) {
         LocalDateTime now = s.now.truncatedTo(ChronoUnit.MINUTES).plusMinutes(s.now.getSecond() > 0 ? 1 : 0);
-        return now.plusMinutes((10 - now.getMinute() % 10) % 10);
+        return now.plusMinutes((5 - now.getMinute() % 5) % 5);
     }
 
     public static Placement place(Store s, LocalDate monday) {
@@ -48,7 +48,7 @@ public final class Planner {
                 busy.add(new int[] {from, from + p.task().minutes});
             });
             Placed found = null;
-            for (int m = 9 * 60; m + t.minutes <= 24 * 60 && found == null; m += 10) {
+            for (int m = 9 * 60; m + t.minutes <= 24 * 60 && found == null; m += 5) {
                 int start = m;
                 boolean free = busy.stream().noneMatch(b -> start < b[1] && b[0] < start + t.minutes);
                 if (free && !t.date.atTime(m / 60, m % 60).isBefore(earliest)) {
