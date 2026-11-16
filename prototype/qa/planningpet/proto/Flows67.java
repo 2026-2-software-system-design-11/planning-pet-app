@@ -142,4 +142,66 @@ final class Flows67 {
         }
         return q.save(f, null);
     }
+
+    static Qa uf72(Qa q) {
+        uf71(q);
+        q.step("1", "일정관리를 연다");
+        q.app.show("일정관리");
+        q.eq("오른쪽 목록", "이번 주에 시간 안 정한 할 일이 없어요.", q.schedRows());
+        q.eq("자동 배치 버튼, 펫", "false 지금 자동 배치할 할 일은 없어.", q.sched.autoPlace.isEnabled() + " " + q.schedBubble());
+        q.step("2", "대학수학 화 09:00 75분을 매주 반복(끝 그대로)으로 넣는다");
+        q.eq("기본 날짜", "2027-03-02", q.sched.defaultDate());
+        q.yes("저장", fixed(q, "대학수학", "2027-03-02", "09:00", 75, null));
+        q.eq("화요일 개수", 16, Flows345.dates(q, "대학수학", DayOfWeek.TUESDAY).split(",").length);
+        q.step("3", "대학수학 목, 글쓰기 수를 넣는다");
+        q.yes("목", fixed(q, "대학수학", "2027-03-04", "09:00", 75, "2027-06-17"));
+        q.yes("수", fixed(q, "글쓰기", "2027-03-03", "13:00", 100, "2027-06-16"));
+        q.eq("목, 수 개수", "16 16", Flows345.dates(q, "대학수학", DayOfWeek.THURSDAY).split(",").length + " "
+                + Flows345.dates(q, "글쓰기", DayOfWeek.WEDNESDAY).split(",").length);
+        q.step("4", "홈으로 간다");
+        q.app.show("홈");
+        q.eq("목록", "09:00~10:15 [ ] 고정 대학수학 75분", q.rows());
+        q.eq("성취도, 달력 2", "0/1 2", q.progress() + " " + q.cell(2));
+        q.end();
+        return q;
+    }
+
+    static Qa uf73(Qa q, boolean levelUp) {
+        uf72(q);
+        q.step("1", "빠른 추가에 '  과제  '를 쓰고 Enter");
+        q.quick("  과제  ");
+        q.eq("칸", "", q.main.quick.getText());
+        q.has("목록", "시간 정하기 [ ] 과제 30분", q.rows());
+        q.step("2", "동아리 신청서, 책 사기, 기숙사 짐 정리를 넣는다");
+        q.quick("동아리 신청서");
+        q.quick("책 사기");
+        q.quick("기숙사 짐 정리");
+        q.has("넣은 순", "과제 30분 / 시간 정하기 [ ] 동아리 신청서 30분 / 시간 정하기 [ ] 책 사기 30분"
+                + " / 시간 정하기 [ ] 기숙사 짐 정리 30분", q.rows());
+        q.step("3", "대학수학, 과제, 동아리 신청서, 책 사기를 체크한다");
+        for (String t : new String[] {"과제", "동아리 신청서", "책 사기"}) {
+            q.check(q.task(t));
+        }
+        q.check(q.task("대학수학", "2027-03-02"));
+        q.eq("상태", "40P 경험치40 횟수4 성취도4/5", st(q));
+        q.eq("레벨", "콩 Lv.1 경험치 40 / 50", q.level());
+        if (levelUp) {
+            q.step("4", "기숙사 짐 정리를 체크한다");
+            q.check(q.task("기숙사 짐 정리"));
+            q.eq("상태", "50P 경험치50 횟수5 성취도5/5", st(q));
+            q.eq("말풍선", "잘했어! 레벨이 올랐어. 이제 Lv.2", q.app.store.talk);
+            q.eq("레벨", "콩 Lv.2 경험치 0 / 80", q.level());
+        }
+        q.end();
+        return q;
+    }
+
+    static void uf74() {
+        Qa q = uf73(new Qa("UF-7-4"), false);
+        q.step("1", "pet에서 상점을 연다(40P)");
+        q.app.show("pet");
+        q.eq("상점", "쿠션 10P 모자라요 꺼짐 / 화분 40P 모자라요 꺼짐 / 러그 60P 모자라요 꺼짐 / 액자 80P 모자라요 꺼짐"
+                + " / 조명 110P 모자라요 꺼짐 / 책장 160P 모자라요 꺼짐 / 책상 210P 모자라요 꺼짐 / 소파 260P 모자라요 꺼짐", q.shop());
+        q.end();
+    }
 }
