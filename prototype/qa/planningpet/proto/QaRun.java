@@ -16,6 +16,7 @@ final class QaRun {
         Flows12.add(flows);
         Flows345.add(flows);
         Flows67.add(flows);
+        Flows8910.add(flows);
         for (Map.Entry<String, Runnable> f : flows.entrySet()) {
             try {
                 f.getValue().run();

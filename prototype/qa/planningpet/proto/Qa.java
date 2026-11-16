@@ -17,6 +17,14 @@ final class Qa extends QaDrive {
         super(flow);
     }
 
+    /** 이어지는 흐름: 앞 흐름의 단계를 "앞" 표시로 먼저 돈다. */
+    Qa after(java.util.function.UnaryOperator<Qa> earlier) {
+        depth++;
+        earlier.apply(this);
+        depth--;
+        return this;
+    }
+
     static String plain(String html) {
         return html == null ? "" : html.replaceAll("(?i)<br>", " ").replaceAll("<[^>]+>", "")
                 .replace("&lt;", "<").replace("&gt;", ">").replace("&amp;", "&").replaceAll("\\s+", " ").strip();
