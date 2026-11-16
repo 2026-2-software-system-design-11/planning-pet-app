@@ -42,7 +42,7 @@ public final class AutoPlaceDialog {
             @Override
             public java.awt.Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean f, int row, int col) {
                 java.awt.Component c = super.getTableCellRendererComponent(t, v, sel, f, row, col);
-                c.setForeground(row >= firstUnplaced && (col == 1 || col == 2) ? new Color(0xC0392B) : Color.DARK_GRAY);
+                c.setForeground(row >= firstUnplaced && (col == 1 || col == 2) ? Theme.SUNDAY : Theme.INK);
                 return c;
             }
         });

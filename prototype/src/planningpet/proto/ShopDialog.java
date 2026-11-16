@@ -32,7 +32,7 @@ public final class ShopDialog {
             boolean owned = s.owned.contains(e.getKey());
             int lack = e.getValue() - s.points;
             JLabel state = new JLabel(owned ? "보유 중" : lack > 0 ? lack + "P 모자라요" : "");
-            state.setForeground(!owned && lack > 0 ? new Color(0xC0392B) : Color.DARK_GRAY);
+            state.setForeground(!owned && lack > 0 ? Theme.SUNDAY : Theme.INK);
             JButton buy = new JButton("사기");
             buy.setEnabled(!owned && lack <= 0);
             buy.addActionListener(x -> onBuy.accept(e.getKey()));

@@ -35,7 +35,7 @@ public final class TaskForm {
         date.setEditor(new JSpinner.DateEditor(date, "yyyy-MM-dd (E)"));
         repeatEnd.setEditor(new JSpinner.DateEditor(repeatEnd, "yyyy-MM-dd"));
         start.setValue("09:00");
-        error.setForeground(new Color(0xC0392B));
+        error.setForeground(Theme.SUNDAY);
         line("종류", Ui.flow(task, fixed));
         line("제목", title);
         line("날짜", date);
