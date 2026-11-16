@@ -198,3 +198,102 @@ public final class BlindShots {
             path = "/" + p.getComponentZOrder(k) + path;
         }
         return null;
+    }
+
+    /** 사람이 누르거나 쓸 수 있으면 부품 설명을, 아니면 null을 돌려준다. */
+    private static String interactive(Component c) {
+        String text = c instanceof AbstractButton b ? b.getText() : c instanceof JLabel l ? Qa.plain(l.getText()) : "";
+        String kind = c.getClass().getSimpleName().isEmpty() ? c.getClass().getSuperclass().getSimpleName()
+                : c.getClass().getSimpleName();
+        String state = c.isEnabled() ? "" : " 비활성";
+        if (c instanceof AbstractButton || c instanceof JSpinner || c instanceof JComboBox || c instanceof JTable
+                || c instanceof JList || c instanceof JTextComponent tc && tc.isEditable()) {
+            return kind + " \"" + text + "\"" + state;
+        }
+        if (c instanceof JComponent j && (c.getMouseListeners().length > 0 && !(c instanceof JTextComponent))) {
+            String tip = j.getToolTipText();
+            return kind + " \"" + text + "\"" + (tip != null ? " (마우스를 올리면 설명)" : "") + state;
+        }
+        return null;
+    }
+
+    /** 같은 모양이 되풀이되면 처음 하나만 찍는다. 글자의 숫자와 한글은 모양으로 바꿔 비교한다. */
+    private void add(Component c, JComponent root, String what) {
+        String slot = slot(c);
+        if (slot != null) {
+            String shape = c instanceof AbstractButton && !(c instanceof javax.swing.JCheckBox) ? what : what.replaceAll("[0-9]+", "#").replaceAll("[가-힣][가-힣# …~:]*", "가");
+            boolean tip = c instanceof JComponent j && j.getToolTipText() != null;
+            if (!seen.add(c.getClass().getName() + shape + "@" + slot + (tip ? " 설명" : ""))) {
+                return;
+            }
+        }
+        Point p = SwingUtilities.convertPoint(c, 0, 0, root);
+        Rectangle visible = c instanceof JComponent j ? j.getVisibleRect() : new Rectangle(c.getSize());
+        if (visible.isEmpty()) {
+            return;
+        }
+        marks.add(new Mark(marks.size() + 1, new Rectangle(p.x + visible.x, p.y + visible.y, visible.width,
+                visible.height), what));
+    }
+
+    /** 시간표 블록은 부품이 아니라 그림이라 블록 자리와 체크박스 자리를 따로 찍는다. */
+    private void timetable(TimetablePanel t, JComponent root) {
+        Rectangle view = t.getVisibleRect();
+        for (Map.Entry<Rectangle, Task> e : t.boxAreas().entrySet()) {
+            Task task = e.getValue();
+            String kind = (task.kind == Task.Kind.FIXED ? "고정 일정" : "할 일") + (task.done ? ", 끝냄" : "");
+            if (!view.contains(e.getKey()) || !seen.add("box " + kind)) {
+                continue;
+            }
+            Rectangle r = SwingUtilities.convertRectangle(t, e.getKey(), root);
+            marks.add(new Mark(marks.size() + 1, r,
+                    "시간표 블록의 체크박스 (" + kind + ", " + task.title + ")"));
+        }
+        Set<String> blocks = new HashSet<>();
+        for (Map.Entry<Rectangle, Task> e : t.blockAreas().entrySet()) {
+            Task task = e.getValue();
+            String kind = (task.kind == Task.Kind.FIXED ? "고정 일정" : "할 일") + (task.done ? ", 끝냄" : "");
+            if (!view.contains(e.getKey().getLocation()) || !blocks.add(kind)) {
+                continue;
+            }
+            Rectangle r = SwingUtilities.convertRectangle(t, e.getKey(), root);
+            marks.add(new Mark(marks.size() + 1, r, "시간표 블록 (" + kind + ", " + task.title + ")", true));
+        }
+        Rectangle empty = SwingUtilities.convertRectangle(t, new Rectangle(TimetablePanel.GUTTER,
+                16 * TimetablePanel.HOUR, (t.getWidth() - TimetablePanel.GUTTER) / 7, TimetablePanel.HOUR), root);
+        marks.add(new Mark(marks.size() + 1, empty, "시간표의 빈 칸"));
+    }
+
+    private static void badge(Graphics2D g, int no, int x, int y, int maxW, int maxH) {
+        String s = String.valueOf(no);
+        g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 11));
+        int w = Math.max(16, g.getFontMetrics().stringWidth(s) + 8);
+        int bx = Math.max(0, Math.min(x - w + 4, maxW - w));
+        int by = Math.max(0, Math.min(y - 12, maxH - 16));
+        g.setColor(new Color(0xD7263D));
+        g.fillOval(bx, by, w, 16);
+        g.setColor(Color.WHITE);
+        g.setStroke(new BasicStroke(1.5f));
+        g.drawOval(bx, by, w, 16);
+        g.drawString(s, bx + (w - g.getFontMetrics().stringWidth(s)) / 2, by + 12);
+    }
+
+    private static void layout(Component c) {
+        c.doLayout();
+        if (c instanceof Container k) {
+            for (Component child : k.getComponents()) {
+                layout(child);
+            }
+        }
+    }
+
+    private static void morning(Component c) {
+        if (c instanceof javax.swing.JScrollPane s && s.getViewport().getView() instanceof TimetablePanel) {
+            s.getViewport().setViewPosition(new Point(0, 8 * TimetablePanel.HOUR));
+        } else if (c instanceof Container k) {
+            for (Component child : k.getComponents()) {
+                morning(child);
+            }
+        }
+    }
+}
