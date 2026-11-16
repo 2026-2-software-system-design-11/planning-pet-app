@@ -98,3 +98,103 @@ public final class BlindShots {
         morning(c);
         BufferedImage body = new BufferedImage(d.width, d.height, BufferedImage.TYPE_INT_RGB);
         Graphics2D g = body.createGraphics();
+        c.paint(g);
+        g.dispose();
+        BlindShots b = new BlindShots();
+        b.walk(c, c);
+        int top = title == null ? 0 : 28;
+        BufferedImage img = new BufferedImage(d.width, d.height + top, BufferedImage.TYPE_INT_RGB);
+        g = img.createGraphics();
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        if (title != null) {
+            // 운영체제가 그리는 창 제목 줄을 흉내 낸다. 사용자가 보는 단서이기 때문이다.
+            g.setColor(new Color(0xE6E6E6));
+            g.fillRect(0, 0, d.width, top);
+            g.setColor(new Color(0x333333));
+            g.setFont(Theme.font(13));
+            int w = g.getFontMetrics().stringWidth(title);
+            g.drawString(title, (d.width - w) / 2, 19);
+        }
+        g.drawImage(body, 0, top, null);
+        String file = String.format("screen-%02d.png", n);
+        ImageIO.write(img, "png", new File(images, file));
+        // 번호 그림: 번호가 글자를 가리므로 깨끗한 그림을 같이 준다.
+        g.setColor(new Color(0xD7263D));
+        g.setStroke(new BasicStroke(1.5f));
+        for (Mark m : b.marks) {
+            g.drawRect(m.at.x, m.at.y + top, m.at.width, m.at.height);
+        }
+        for (Mark m : b.marks) {
+            if (m.low) {
+                // 블록 안 오른쪽 아래. 옆 블록 경계에 걸리지 않게 한다.
+                badge(g, m.no, m.at.x + m.at.width - 2, m.at.y + m.at.height + top - 4, d.width, d.height + top);
+            } else {
+                badge(g, m.no, m.at.x, m.at.y + top, d.width, d.height + top);
+            }
+        }
+        g.dispose();
+        ImageIO.write(img, "png", new File(images, String.format("screen-%02d-numbered.png", n)));
+        out.println();
+        out.println("## " + file + " " + name);
+        out.println();
+        out.println("| 번호 | 부품 |");
+        out.println("|---|---|");
+        for (Mark m : b.marks) {
+            out.println("| " + m.no + " | " + m.what.replace("|", "/") + " |");
+        }
+    }
+
+    private void walk(Component c, JComponent root) {
+        if (!c.isShowing() && !c.isVisible() || c.getWidth() == 0 || c instanceof JScrollBar) {
+            return;
+        }
+        if (c instanceof TimetablePanel t) {
+            timetable(t, root);
+            return;
+        }
+        String what = interactive(c);
+        // 줄 묶음에 마우스가 걸려 있어도 안에 누를 것이 있으면 안쪽 것만 찍는다.
+        if (what != null && (c.getClass() == javax.swing.JPanel.class) && hasInner(c)) {
+            what = null;
+        }
+        if (what != null) {
+            add(c, root, what);
+            if (c instanceof JSpinner || c instanceof JComboBox || c instanceof AbstractButton) {
+                return;
+            }
+        }
+        if (c instanceof Container k) {
+            for (Component child : k.getComponents()) {
+                walk(child, root);
+            }
+        }
+    }
+
+    private static boolean hasInner(Component c) {
+        if (c instanceof Container k) {
+            for (Component child : k.getComponents()) {
+                if (child.isVisible() && (interactive(child) != null || hasInner(child))) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 목록 줄, 달력 칸, 상점 표처럼 같은 모양이 되풀이되는 곳 안이면, 되풀이 단위 안에서의 자리를 돌려준다.
+     * 아니면 null이다. 자리는 단위에서 부품까지 내려가는 순번이다.
+     */
+    private static String slot(Component c) {
+        String path = "";
+        for (Component k = c; k.getParent() != null; k = k.getParent()) {
+            Container p = k.getParent();
+            if (p instanceof TaskRows
+                    || p instanceof javax.swing.JPanel q && q.getLayout() instanceof java.awt.GridLayout l
+                            && (l.getColumns() == 4 || l.getColumns() == 7)) {
+                return path;
+            }
+            path = "/" + p.getComponentZOrder(k) + path;
+        }
+        return null;
