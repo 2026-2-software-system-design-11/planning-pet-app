@@ -44,14 +44,14 @@ public final class Actions {
         app.store.changed();
     }
 
-    /** UC-05. 일정 입력 창은 3부에서 붙인다. */
+    /** UC-05. */
     public void edit(Task t) {
-        JOptionPane.showMessageDialog(app.root, "일정 입력 창은 다음 단계에서 붙여요.");
+        TaskDialog.open(app, t, t.date);
     }
 
-    /** UC-03. 일정 입력 창은 3부에서 붙인다. */
+    /** UC-03. 날짜는 띄운 화면이 고른다(06의 14번). */
     public void add(LocalDate date) {
-        JOptionPane.showMessageDialog(app.root, "일정 입력 창은 다음 단계에서 붙여요.");
+        TaskDialog.open(app, null, date);
     }
 
     /** 오른쪽 버튼 메뉴: 수정, 삭제. */
