@@ -39,7 +39,7 @@ final class Flows8910 {
         q.at("2026-11-20T23:55");
         Task t = q.task("원가회계");
         TimeEditor e = new TimeEditor(t, q.app.store.now);
-        q.eq("시작", "23:50", e.start.getValue());
+        q.eq("시작", "23:55", e.start.getValue());
         q.step("4", "그대로 저장한다");
         q.eq("저장", "false 하루 안에 끝나야 해요", TimeEditor.save(q.app, t, e) + " " + e.error.getText());
         q.step("5", "11-21 01:00에 자동 배치를 누른다");
@@ -138,6 +138,18 @@ final class Flows8910 {
         return b.toString();
     }
 
+    /** 숫자 칸에 글을 쳐 넣고 칸을 벗어난 뒤 남은 값. 칸이 받지 않으면 이전 값이다. */
+    static Object type(JSpinner spinner, String text) {
+        var field = ((JSpinner.DefaultEditor) spinner.getEditor()).getTextField();
+        field.setText(text);
+        try {
+            field.commitEdit();
+        } catch (java.text.ParseException ignored) {
+            // 범위 밖이면 받지 않는다.
+        }
+        return spinner.getValue();
+    }
+
     static TaskForm timed(Qa q, String title, String start, int minutes) {
         TaskForm f = q.form("2026-11-17");
         f.title.setText(title);
@@ -157,7 +169,7 @@ final class Flows8910 {
         q.has("목록", "23:30~24:00 [ ] 논문 읽기 30분", q.rows());
         q.step("2", "논문 정리 23:30 40분으로 저장한다");
         TaskForm g = timed(q, "논문 정리", "23:30", 40);
-        q.eq("끝, 저장", "끝 24:10 false 하루 안에 끝나야 해요", g.endLabel.getText() + " " + q.save(g, null) + " " + g.error.getText());
+        q.eq("끝, 저장", "끝 24:10 false 하루 안에 끝나야 해요", g.endLabel.getText() + " " + q.save(g, null) + " " + g.errorText());
         q.step("3", "실험 정리 720분으로 저장한다");
         TaskForm h = q.form("2026-11-17");
         h.title.setText("실험 정리");
@@ -167,14 +179,7 @@ final class Flows8910 {
         q.step("4", "실험 정리 걸리는 시간에 730을 쳐 넣고 칸을 벗어난다");
         Task exp = q.task("실험 정리");
         TaskForm edit = new TaskForm(exp, exp.date, q.app.store.now);
-        var field = ((JSpinner.DefaultEditor) edit.minutes.getEditor()).getTextField();
-        field.setText("730");
-        try {
-            field.commitEdit();
-        } catch (java.text.ParseException ignored) {
-            // 범위 밖이면 받지 않는다.
-        }
-        q.eq("걸리는 시간", 720, edit.minutes.getValue());
+        q.eq("걸리는 시간", 720, type(edit.minutes, "730"));
         q.step("5", "메모 칸에 1001자를 붙여 넣는다");
         edit.memo.setText("메".repeat(1001));
         q.eq("메모 길이", 1000, edit.memo.getText().length());
