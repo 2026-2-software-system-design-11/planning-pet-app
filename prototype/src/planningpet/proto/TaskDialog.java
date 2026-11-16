@@ -62,14 +62,16 @@ public final class TaskDialog {
     private static void save(App app, TaskForm f, Task editing, JDialog d) {
         if (trySave(app, f, editing)) {
             d.dispose();
+        } else {
+            d.pack();
         }
     }
 
-    /** 저장 버튼과 같다. 검사를 통과하면 저장하고 true, 아니면 창 아래 문장을 채우고 false. */
+    /** 저장 버튼과 같다. 검사를 통과하면 저장하고 true, 아니면 칸 아래에 오류를 모두 보이고 false. */
     static boolean trySave(App app, TaskForm f, Task editing) {
-        String problem = TaskCheck.check(f);
-        if (problem != null) {
-            f.error.setText(problem);
+        var problems = TaskCheck.check(f);
+        f.showErrors(problems);
+        if (!problems.isEmpty()) {
             return false;
         }
         String title = f.title.getText().strip();

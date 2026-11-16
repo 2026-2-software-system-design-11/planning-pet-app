@@ -6,7 +6,6 @@ import java.awt.Point;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.stream.IntStream;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -15,13 +14,11 @@ import javax.swing.JLabel;
 import javax.swing.JSpinner;
 import javax.swing.KeyStroke;
 import javax.swing.SpinnerListModel;
-import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 
 /** 시각 고치기 창(05, D-32). 메인 시각 칸 아래에 떠서 시작 시각과 걸리는 시간만 고친다. */
 public final class TimeEditor {
-    final JSpinner start = new JSpinner(new SpinnerListModel(IntStream.range(0, 144)
-            .mapToObj(i -> String.format("%02d:%02d", i / 6, i % 6 * 10)).toList()));
+    final JSpinner start = new JSpinner(new SpinnerListModel(Ui.times()));
     final JSpinner minutes;
     final JLabel error = new JLabel(" ");
     final JButton clear = new JButton("시간 빼기");
@@ -32,7 +29,7 @@ public final class TimeEditor {
     public TimeEditor(Task t, LocalDateTime now) {
         LocalTime from = t.timed() ? t.start : defaultStart(t.date, now);
         start.setValue(from.toString());
-        minutes = new JSpinner(new SpinnerNumberModel(t.minutes, 10, 720, 10));
+        minutes = Ui.minutes(t.minutes);
         error.setForeground(Theme.SUNDAY);
         error.setFont(Theme.font(12));
         panel.setBorder(BorderFactory.createEmptyBorder(12, 14, 12, 14));
@@ -42,20 +39,20 @@ public final class TimeEditor {
         panel.add(Ui.flow(clear, cancel, save), BorderLayout.SOUTH);
     }
 
-    /** 06의 14번. 오늘이면 지금을 10분 단위로 올린 시각과 09:00 중 늦은 것, 다른 날이면 09:00. */
+    /** 06의 14번. 오늘이면 지금을 5분 단위로 올린 시각과 09:00 중 늦은 것(23:55까지), 다른 날이면 09:00. */
     public static LocalTime defaultStart(LocalDate date, LocalDateTime now) {
         if (!date.equals(now.toLocalDate())) {
             return LocalTime.of(9, 0);
         }
         int m = now.getHour() * 60 + now.getMinute() + (now.getSecond() > 0 ? 1 : 0);
-        m = Math.min(Math.max((m + 9) / 10 * 10, 9 * 60), 23 * 60 + 50);
+        m = Math.min(Math.max((m + 4) / 5 * 5, 9 * 60), 23 * 60 + 55);
         return LocalTime.of(m / 60, m % 60);
     }
 
     /** 끝이 24:00을 넘으면 문장, 아니면 null. */
     String check() {
-        if ((int) minutes.getValue() % 10 != 0) {
-            return "10분부터 720분까지, 10분 단위예요";
+        if ((int) minutes.getValue() % 5 != 0) {
+            return "10분부터 720분까지, 5분 단위예요";
         }
         LocalTime s = LocalTime.parse((String) start.getValue());
         return s.getHour() * 60 + s.getMinute() + (int) minutes.getValue() > 24 * 60 ? "하루 안에 끝나야 해요" : null;

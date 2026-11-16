@@ -15,6 +15,25 @@ public final class Ui {
     private Ui() {
     }
 
+    /** 시작 시각 목록. 00:00부터 23:55까지 5분 간격(D-38). */
+    static java.util.List<String> times() {
+        return java.util.stream.IntStream.range(0, 288)
+                .mapToObj(i -> String.format("%02d:%02d", i / 12, i % 12 * 5)).toList();
+    }
+
+    /** 걸리는 시간 칸(D-38). 10분부터 720분, 5분 단위가 아닌 값은 받지 않아 이전 값으로 돌아간다(05). */
+    static javax.swing.JSpinner minutes(int value) {
+        return new javax.swing.JSpinner(new javax.swing.SpinnerNumberModel(value, 10, 720, 5) {
+            @Override
+            public void setValue(Object v) {
+                if (v instanceof Number n && n.intValue() % 5 != 0) {
+                    throw new IllegalArgumentException("5분 단위가 아님");
+                }
+                super.setValue(v);
+            }
+        });
+    }
+
     public static JLabel hint(String text) {
         JLabel l = new JLabel(text);
         l.setForeground(Theme.INK_DIM);

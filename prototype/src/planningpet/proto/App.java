@@ -35,6 +35,8 @@ public final class App {
     final JLabel streak = new JLabel();
     final JLabel points = new JLabel();
     final JButton attend = new JButton();
+    /** 06의 23번. Main.create가 넣는다. */
+    DayWatcher watcher;
 
     public App(Store store) {
         this.store = store;

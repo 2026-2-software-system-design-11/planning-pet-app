@@ -26,13 +26,15 @@ public final class ProtoCheck {
         eq("T-SHOP-2, T-SHOP-4", "150 -1", g.buy("조명") + " " + g.buy("쿠션"));
         eq("삭제 확인 조사", "을 는", Actions.josa("자소서 초안", "을", "를") + " " + Actions.josa("자료구조", "은", "는"));
         TaskForm f = new TaskForm(null, s.today(), s.now);
-        eq("T-VAL-2", "제목을 써 주세요", TaskCheck.check(f));
+        eq("T-VAL-2", "제목을 써 주세요", msgs(f));
         f.title.setText("밤 과제");
         f.timed.setSelected(true);
         f.start.setValue("23:30");
-        eq("T-VAL-7", null, TaskCheck.check(f));
+        eq("T-VAL-7", null, msgs(f));
         f.minutes.setValue(40);
-        eq("T-VAL-8", "하루 안에 끝나야 해요", TaskCheck.check(f));
+        eq("T-VAL-8", "하루 안에 끝나야 해요", msgs(f));
+        f.title.setText("");
+        eq("T-VAL-14", "제목을 써 주세요 / 하루 안에 끝나야 해요", msgs(f));
         java.time.LocalDate nov16 = java.time.LocalDate.of(2026, 11, 16);
         Store p = MockData.empty();
         p.now = nov16.atTime(15, 23);
@@ -68,9 +70,9 @@ public final class ProtoCheck {
         Task late = at.apply("늦게", java.time.LocalTime.of(23, 30));
         eq("T-LIST-2", "23:30~24:00", Store.timeText(late));
         java.time.LocalDateTime t1523 = nov16.atTime(15, 23);
-        eq("T-DEF-6~9", "15:30 09:00 09:00 23:50", TimeEditor.defaultStart(nov16, t1523) + " "
+        eq("T-DEF-6~9", "15:25 09:00 09:00 23:55", TimeEditor.defaultStart(nov16, t1523) + " "
                 + TimeEditor.defaultStart(nov16, nov16.atTime(7, 0)) + " " + TimeEditor.defaultStart(nov16.plusDays(1), t1523)
-                + " " + TimeEditor.defaultStart(nov16, nov16.atTime(23, 55)));
+                + " " + TimeEditor.defaultStart(nov16, nov16.atTime(23, 57)));
         TimeEditor longOne = new TimeEditor(late, t1523);
         longOne.minutes.setValue(40);
         eq("시각 고치기 하루 넘김", "하루 안에 끝나야 해요", longOne.check());
@@ -92,7 +94,7 @@ public final class ProtoCheck {
         r.delete(x, false);
         eq("T-DEL-1", "10 1", r.points + " " + r.rewardCount);
         eq("숫자 조사", "을 를", Actions.josa("과제 1", "을", "를") + " " + Actions.josa("과제 2", "을", "를"));
-        eq("10분 단위", "10분부터 720분까지, 10분 단위예요", tenMinute());
+        eq("D-38 5분 단위", "30 null 75", fiveMinute());
         Store c = MockData.sample();
         java.time.LocalDate nov = java.time.LocalDate.of(2026, 11, 1);
         Store.CellPreview c14 = c.cellPreview(nov.withDayOfMonth(14));
@@ -136,10 +138,23 @@ public final class ProtoCheck {
         System.exit(failed == 0 ? 0 : 1);
     }
 
-    private static String tenMinute() {
+    /** 27은 칸이 받지 않아 30 그대로, 75는 받아서 검사를 통과한다. */
+    private static String fiveMinute() {
         TaskForm f = new TaskForm(null, java.time.LocalDate.of(2026, 11, 16), java.time.LocalDateTime.of(2026, 11, 16, 9, 0));
         f.title.setText("과제");
-        f.minutes.setValue(25);
-        return TaskCheck.check(f);
+        try {
+            f.minutes.setValue(27);
+        } catch (IllegalArgumentException ignored) {
+            // 받지 않는다.
+        }
+        Object kept = f.minutes.getValue();
+        f.minutes.setValue(75);
+        return kept + " " + msgs(f) + " " + f.minutes.getValue();
+    }
+
+    /** 검사 문장을 칸 순서대로 " / "로 잇는다. 통과면 null. */
+    private static String msgs(TaskForm f) {
+        var p = TaskCheck.check(f);
+        return p.isEmpty() ? null : String.join(" / ", p.stream().map(x -> x[1]).toList());
     }
 }
