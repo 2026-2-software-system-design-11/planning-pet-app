@@ -5,7 +5,7 @@ public final class ProtoCheck {
     private static int failed;
 
     static void eq(String id, Object want, Object got) {
-        if (!String.valueOf(want).equals(String.valueOf(got))) {
+        if (!java.util.Objects.equals(want == null ? null : String.valueOf(want), got == null ? null : String.valueOf(got))) {
             failed++;
             System.out.println("실패 " + id + ": 기대 " + want + ", 실제 " + got);
         }
@@ -21,6 +21,7 @@ public final class ProtoCheck {
         eq("T-TALK-3", "콩이야 나비야", "콩" + Rules.iya("콩") + " 나비" + Rules.iya("나비"));
         eq("메인 브리핑", "오늘 할 일 3개 남았어. '은행 서류' 마감이 내일이야.", t.onWindowShown(g));
         eq("T-VIS-2", 5, s.streak);
+        eq("T-ATT-1", "true 120", g.attend() + " " + s.points);
         eq("T-SHOP-1", "0 0", g.buy("액자") + " " + s.points);
         eq("T-SHOP-2, T-SHOP-4", "150 -1", g.buy("조명") + " " + g.buy("쿠션"));
         eq("삭제 확인 조사", "을 는", Actions.josa("자소서 초안", "을", "를") + " " + Actions.josa("자료구조", "은", "는"));
@@ -40,6 +41,7 @@ public final class ProtoCheck {
         Task a = p.add(Task.Kind.TASK, "A", nov16, null, 60, "", null).get(0);
         Task b = p.add(Task.Kind.TASK, "B", nov16, null, 120, "", null).get(0);
         var placed = Planner.place(p, nov16).placed();
+        eq("T-AUTO-3 개수", 2, placed.size());
         eq("T-AUTO-3", "B 19:00 A 21:00", placed.get(0).task().title + " " + placed.get(0).start() + " "
                 + placed.get(1).task().title + " " + placed.get(1).start());
         a.start = java.time.LocalTime.of(9, 0);
@@ -74,7 +76,31 @@ public final class ProtoCheck {
         eq("시각 고치기 하루 넘김", "하루 안에 끝나야 해요", longOne.check());
         eq("시간 빼기는 할 일만", "true false", longOne.clear.isVisible() + " "
                 + new TimeEditor(d.dayPlan(nov16).timed().get(1), t1523).clear.isVisible());
+        Store r = MockData.empty();
+        r.now = nov16.atTime(15, 0);
+        Game rg = new Game(r);
+        Task x = r.add(Task.Kind.TASK, "과제", nov16, null, 30, "", null).get(0);
+        RewardResult done1 = rg.complete(x);
+        eq("T-RWD-1", "REWARDED 10 10 1", done1.outcome() + " " + r.points + " " + r.exp + " " + r.rewardCount);
+        rg.uncomplete(x);
+        eq("T-UNDO-1", "0 0 0 false", r.points + " " + r.exp + " " + r.rewardCount + " " + x.done);
+        r.rewardCount = 20;
+        eq("T-RWD-5", "CAPPED 0", rg.complete(x).outcome() + " " + r.points);
+        rg.uncomplete(x);
+        r.rewardCount = 0;
+        rg.complete(x);
+        r.delete(x, false);
+        eq("T-DEL-1", "10 1", r.points + " " + r.rewardCount);
+        eq("숫자 조사", "을 를", Actions.josa("과제 1", "을", "를") + " " + Actions.josa("과제 2", "을", "를"));
+        eq("10분 단위", "10분부터 720분까지, 10분 단위예요", tenMinute());
         System.out.println(failed == 0 ? "모두 통과" : failed + "개 실패");
         System.exit(failed == 0 ? 0 : 1);
+    }
+
+    private static String tenMinute() {
+        TaskForm f = new TaskForm(null, java.time.LocalDate.of(2026, 11, 16), java.time.LocalDateTime.of(2026, 11, 16, 9, 0));
+        f.title.setText("과제");
+        f.minutes.setValue(25);
+        return TaskCheck.check(f);
     }
 }

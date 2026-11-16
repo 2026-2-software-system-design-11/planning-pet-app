@@ -24,8 +24,8 @@ public final class MockData {
 
     public static Store sample() {
         Store s = empty();
-        s.points = 120;
-        s.exp = 200;
+        s.points = 100;
+        s.exp = 210;
         s.streak = 4;
         s.lastOpenDay = LocalDate.of(2026, 11, 13);
         s.rewardCountDay = LocalDate.of(2026, 11, 14);
