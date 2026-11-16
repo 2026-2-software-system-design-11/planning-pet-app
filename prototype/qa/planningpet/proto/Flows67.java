@@ -92,4 +92,54 @@ final class Flows67 {
         q.has("목록", "시간 정하기 [ ] 국시 모의고사 30분", q.rows());
         q.end();
     }
+
+    static Qa uf71(Qa q) {
+        Store s = Personas.p7();
+        q.step("1", "앱을 연다(반려동물 고르기 창)");
+        PickDialog pd = new PickDialog();
+        q.eq("고양이 골라짐, 이름 칸", "true ''", pd.cat.isSelected() + " '" + pd.name.getText() + "'");
+        q.eq("안내", "비워 두면 나비, 바둑이로 불러요", Qa.plain(hint(pd.panel)));
+        q.step("2", "이름 콩을 쓰고 시작하기를 누른다");
+        pd.name.setText("콩");
+        pd.apply(s);
+        q.start(s);
+        q.open();
+        q.eq("말풍선", "안녕, 나는 콩이야. 일정관리에서 이번 학기 수업부터 넣어 볼까?", q.app.store.talk);
+        q.eq("위 막대", "연속 접속 1일, 보유 0P, 출석 +20P", q.top());
+        q.eq("레벨", "콩 Lv.1 경험치 0 / 50", q.level());
+        q.eq("목록", "아직 일정이 없어요. 작은 계획을 추가해 보세요.", q.rows());
+        q.eq("성취도", "비어 있음", q.progress());
+        q.step("3", "pet을 연다");
+        q.app.show("pet");
+        q.eq("pet", "꾸미기 0 / 8, 오늘은 아직 끝낸 일이 없어., 상점", q.pet());
+        q.end();
+        return q;
+    }
+
+    /** 반려동물 고르기 창에서 "나비"가 들어간 안내 글. */
+    static String hint(java.awt.Container c) {
+        for (java.awt.Component k : c.getComponents()) {
+            if (k instanceof javax.swing.JLabel l && l.getText().contains("나비")) {
+                return l.getText();
+            }
+            if (k instanceof java.awt.Container inner && !hint(inner).isEmpty()) {
+                return hint(inner);
+            }
+        }
+        return "";
+    }
+
+    static boolean fixed(Qa q, String title, String date, String time, int minutes, String end) {
+        TaskForm f = q.form(q.sched.defaultDate().toString());
+        f.fixed.doClick();
+        f.title.setText(title);
+        Ui.setDate(f.date, LocalDate.parse(date));
+        f.start.setValue(time);
+        f.minutes.setValue(minutes);
+        f.repeat.doClick();
+        if (end != null) {
+            Ui.setDate(f.repeatEnd, LocalDate.parse(end));
+        }
+        return q.save(f, null);
+    }
 }
