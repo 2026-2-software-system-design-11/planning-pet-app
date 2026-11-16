@@ -30,6 +30,8 @@ public final class TaskForm {
 
     public TaskForm(Task t, LocalDate defaultDate, java.time.LocalDateTime now) {
         editing = t != null;
+        Ui.limit(title, 100);
+        Ui.limit(memo, 1000);
         ButtonGroup kinds = new ButtonGroup();
         kinds.add(task);
         kinds.add(fixed);

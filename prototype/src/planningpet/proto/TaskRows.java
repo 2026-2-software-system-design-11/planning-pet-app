@@ -80,7 +80,7 @@ public final class TaskRows extends JPanel {
         }
         left.add(mark);
         String date = withDate ? t.date.getMonthValue() + "/" + t.date.getDayOfMonth() + " " : "";
-        JLabel label = new JLabel("<html>" + date + (t.done ? "<s>" + t.title + "</s>" : t.title) + "</html>");
+        JLabel label = new JLabel("<html>" + date + (t.done ? "<s>" + Ui.esc(t.title) + "</s>" : Ui.esc(t.title)) + "</html>");
         label.setFont(Theme.font(15));
         JLabel minutes = new JLabel(t.minutes + "분");
         label.setForeground(t.done ? Theme.INK_DIM : Theme.INK);
