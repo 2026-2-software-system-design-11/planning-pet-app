@@ -77,6 +77,25 @@ public final class Store {
                 .toList();
     }
 
+    /** 06의 6번(D-31). 메인 목록의 하루 시간표: 시각 있는 할 일과 고정 일정, 그 아래 시각 없는 할 일. */
+    public record DayPlan(List<Task> timed, List<Task> untimed) {
+    }
+
+    public DayPlan dayPlan(LocalDate date) {
+        List<Task> timed = tasks.stream()
+                .filter(t -> t.timed() && t.date.equals(date))
+                .sorted(Comparator.comparing((Task t) -> t.start).thenComparingLong(t -> t.seq))
+                .toList();
+        List<Task> untimed = forDate(date).stream().filter(t -> !t.timed()).toList();
+        return new DayPlan(timed, untimed);
+    }
+
+    /** "10:00~11:00". 자정에 끝나면 "24:00". */
+    public static String timeText(Task t) {
+        int end = t.endMinute();
+        return t.start + "~" + String.format("%02d:%02d", end / 60, end % 60);
+    }
+
     /** 06의 7번. 일정관리 오른쪽 목록. */
     public List<Task> untimedOfWeek(LocalDate monday) {
         return tasks.stream()
