@@ -14,7 +14,7 @@ public final class WalkBar extends JComponent {
 
     public WalkBar(Store store) {
         this.store = store;
-        setPreferredSize(new Dimension(600, 56));
+        setPreferredSize(new Dimension(600, 72));
     }
 
     @Override
@@ -26,24 +26,25 @@ public final class WalkBar extends JComponent {
         int left = 70;
         int right = getWidth() - 60;
         int y = getHeight() - 16;
-        g.setColor(Color.DARK_GRAY);
+        g.setColor(Theme.INK);
+        g.setFont(Theme.bold(14));
         g.drawString("성취도", 8, y + 5);
         g.drawString(today.isEmpty() ? "-" : done + "/" + today.size(), right + 14, y + 5);
         g.setStroke(new BasicStroke(3));
-        g.setColor(new Color(0xCCCCCC));
+        g.setColor(Theme.TRACK);
         g.drawLine(left, y, right, y);
         double ratio = today.isEmpty() ? 0 : done / (double) today.size();
         int catX = left + (int) ((right - left) * ratio);
-        g.setColor(new Color(0x4A90D9));
+        g.setColor(Theme.MINT);
         g.drawLine(left, y, catX, y);
         for (int i = 1; i <= today.size(); i++) {
             int x = left + (right - left) * i / today.size();
-            g.setColor(i <= done ? new Color(0x4A90D9) : Color.WHITE);
+            g.setColor(i <= done ? Theme.MINT : Color.WHITE);
             g.fillOval(x - 5, y - 5, 10, 10);
-            g.setColor(new Color(0x4A90D9));
+            g.setColor(Theme.MINT);
             g.drawOval(x - 5, y - 5, 10, 10);
         }
-        Pet.draw(g, store.petKind, catX, y - 4, 1, !today.isEmpty());
+        Pet.drawAt(g, store, catX, y - 6, 56);
         g.dispose();
     }
 }

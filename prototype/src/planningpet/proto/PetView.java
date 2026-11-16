@@ -21,9 +21,7 @@ public final class PetView extends JComponent {
     protected void paintComponent(Graphics graphics) {
         Graphics2D g = (Graphics2D) graphics.create();
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g.translate(getWidth() / 2, getHeight() - 6);
-        g.scale(scale, scale);
-        Pet.draw(g, store.petKind, 0, 0, Rules.stage(Rules.level(store.exp)), false);
+        Pet.drawAt(g, store, getWidth() / 2, getHeight() - 4, Math.min(getWidth(), getHeight()) - 8);
         g.dispose();
     }
 }
