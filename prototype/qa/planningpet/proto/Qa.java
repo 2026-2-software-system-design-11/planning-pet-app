@@ -120,7 +120,7 @@ final class Qa extends QaDrive {
     String pet() {
         List<String> items = new ArrayList<>();
         for (Component c : pet.items.getComponents()) {
-            if (c instanceof JButton b) {
+            if (c instanceof javax.swing.AbstractButton b) {
                 items.add(b.getText() + (Boolean.TRUE.equals(b.getClientProperty(RoundButtonUI.DIM)) ? "(흐림)" : ""));
             }
         }
