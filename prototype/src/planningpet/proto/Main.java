@@ -29,7 +29,7 @@ public final class Main {
     public static App create(Store store) {
         javax.swing.UIManager.put("swing.boldMetal", Boolean.FALSE);
         App app = new App(store);
-        app.addScreen("홈", soon());
+        app.addScreen("홈", new MainScreen(app));
         app.addScreen("일정관리", soon());
         app.addScreen("pet", soon());
         app.addScreen("통계", null);

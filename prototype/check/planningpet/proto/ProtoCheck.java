@@ -24,6 +24,14 @@ public final class ProtoCheck {
         eq("T-SHOP-1", "0 0", g.buy("액자") + " " + s.points);
         eq("T-SHOP-2, T-SHOP-4", "150 -1", g.buy("조명") + " " + g.buy("쿠션"));
         eq("삭제 확인 조사", "을 는", Actions.josa("자소서 초안", "을", "를") + " " + Actions.josa("자료구조", "은", "는"));
+        TaskForm f = new TaskForm(null, s.today());
+        eq("T-VAL-2", "제목을 써 주세요", TaskCheck.check(f));
+        f.title.setText("밤 과제");
+        f.timed.setSelected(true);
+        f.start.setValue("23:30");
+        eq("T-VAL-7", null, TaskCheck.check(f));
+        f.minutes.setValue(40);
+        eq("T-VAL-8", "하루 안에 끝나야 해요", TaskCheck.check(f));
         System.out.println(failed == 0 ? "모두 통과" : failed + "개 실패");
         System.exit(failed == 0 ? 0 : 1);
     }
