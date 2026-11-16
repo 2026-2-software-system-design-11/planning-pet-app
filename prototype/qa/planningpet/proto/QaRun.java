@@ -15,6 +15,7 @@ final class QaRun {
         Map<String, Runnable> flows = new LinkedHashMap<>();
         Flows12.add(flows);
         Flows345.add(flows);
+        Flows67.add(flows);
         for (Map.Entry<String, Runnable> f : flows.entrySet()) {
             try {
                 f.getValue().run();
