@@ -11,6 +11,8 @@
 | 05 | [화면 설계](05-ui-design.md) | USER INTERFACE DESIGNS |
 | 06 | [함수 명세와 검사 표](06-functions.md) | FUNCTION SPECIFICATION |
 | 07 | 클래스 다이어그램 | 개인과제 CP4 |
+| - | [페르소나](personas.md) | 양식에 없음. 사용자 열 명과 고정 데이터(D-37) |
+| - | [페르소나 선정 근거](research/personas.md) | 양식에 없음. 통계, 채널, 점수 |
 | - | [디자인 시스템](design-system.md) | 양식에 없음. 색, 글꼴, 모양, 그림(D-30) |
 | - | [결정 기록](decisions.md) | 양식에 없음. 무엇을 왜 정했는지 |
 | - | [저장 방식 측정](research/storage.md) | 양식에 없음. D-08의 근거 |
