@@ -17,7 +17,8 @@ public final class Ui {
 
     public static JLabel hint(String text) {
         JLabel l = new JLabel(text);
-        l.setForeground(Color.GRAY);
+        l.setForeground(Theme.INK_DIM);
+        l.setFont(Theme.font(12));
         return l;
     }
 
@@ -31,10 +32,20 @@ public final class Ui {
 
     /** 펫 말풍선. */
     public static JLabel bubble() {
-        JLabel l = new JLabel();
-        l.setBorder(javax.swing.BorderFactory.createCompoundBorder(
-                javax.swing.BorderFactory.createLineBorder(new Color(0x999999), 1, true),
-                javax.swing.BorderFactory.createEmptyBorder(6, 10, 6, 10)));
+        JLabel l = new JLabel() {
+            @Override
+            protected void paintComponent(java.awt.Graphics graphics) {
+                java.awt.Graphics2D g = (java.awt.Graphics2D) graphics.create();
+                g.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+                g.setColor(Theme.CARD_TOP);
+                g.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, Theme.BUBBLE_RADIUS, Theme.BUBBLE_RADIUS);
+                g.setColor(Theme.CARD_LINE);
+                g.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, Theme.BUBBLE_RADIUS, Theme.BUBBLE_RADIUS);
+                g.dispose();
+                super.paintComponent(graphics);
+            }
+        };
+        l.setBorder(javax.swing.BorderFactory.createEmptyBorder(8, 14, 8, 14));
         return l;
     }
 
