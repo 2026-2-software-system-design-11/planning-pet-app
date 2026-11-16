@@ -20,7 +20,8 @@ for line in open(log, encoding="utf-8"):
         for c in e["message"]["content"]:
             if c.get("type") == "tool_use":
                 path = os.path.realpath(c["input"].get("file_path", ""))
-                if c["name"] != "Read" or not path.startswith(allowed + os.sep):
+                # 허용 폴더 자체를 여는 것(목록 보기)은 밖이 아니다.
+                if c["name"] != "Read" or not (path == allowed or path.startswith(allowed + os.sep)):
                     problems.append(f"{c['name']} {c['input']}")
     if e.get("type") == "result":
         text.append(e.get("result", ""))
