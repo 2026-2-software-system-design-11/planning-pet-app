@@ -27,7 +27,7 @@ public final class Main {
             frame.pack();
             frame.setLocationRelativeTo(null);
             frame.setVisible(true);
-            app.store.talk = app.talk.onWindowShown(app.game);
+            app.store.say(app.talk.onWindowShown(app.game));
             app.store.changed();
         });
     }
@@ -35,11 +35,12 @@ public final class Main {
     /** 화면을 모두 붙인 앱. 창 없이 그릴 때도 이것을 쓴다. */
     public static App create(Store store) {
         App app = new App(store);
-        app.addScreen("홈", new MainScreen(app));
-        app.addScreen("일정관리", new ScheduleScreen(app));
-        app.addScreen("pet", new PetScreen(app));
-        app.addScreen("통계", null);
-        app.addScreen("설정", new SettingsScreen());
+        app.addScreen("홈", "오늘도 계획을 세우고, 조금씩 성장해요!", new MainScreen(app));
+        app.addScreen("일정관리", "내 일정을 한눈에 확인하고, 체계적으로 관리해요!", new ScheduleScreen(app));
+        app.addScreen("pet", ("DOG".equals(store.petKind) ? "강아지" : "고양이") + "와 함께 성장하고, 작은 성취를 모아 보세요!",
+                new PetScreen(app));
+        app.addScreen("통계", "", null);
+        app.addScreen("설정", "플래닝펫을 내게 맞게 바꿔요.", new SettingsScreen());
         store.onChange(() -> Theme.clear(app.root));
         Theme.clear(app.root);
         return app;

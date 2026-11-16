@@ -27,6 +27,8 @@ public final class Store {
     public final Set<String> owned = new LinkedHashSet<>();
     public final Set<String> placed = new LinkedHashSet<>();
     public String talk = "";
+    /** 펫이 새 말을 할 때마다 1씩 는다. 같은 문장을 다시 말해도 새 말로 알아본다. */
+    public int talkSeq;
     private long nextSeq = 1;
     private final List<Runnable> listeners = new ArrayList<>();
 
@@ -36,6 +38,17 @@ public final class Store {
 
     public void onChange(Runnable listener) {
         listeners.add(listener);
+    }
+
+    /** 변경 알림을 받는 부품 수(검사용). */
+    public int listenerCount() {
+        return listeners.size();
+    }
+
+    /** 펫이 새 말을 한다. */
+    public void say(String line) {
+        talk = line;
+        talkSeq++;
     }
 
     public void changed() {
@@ -77,6 +90,11 @@ public final class Store {
                 .toList();
     }
 
+    /** 그날 체크할 수 있는 일정(할 일과 고정 일정, D-35). 성취도 막대와 남은 수가 센다. */
+    public List<Task> checkables(LocalDate date) {
+        return tasks.stream().filter(t -> t.date.equals(date)).toList();
+    }
+
     /** 06의 6번(D-31). 메인 목록의 하루 시간표: 시각 있는 할 일과 고정 일정, 그 아래 시각 없는 할 일. */
     public record DayPlan(List<Task> timed, List<Task> untimed) {
     }
@@ -88,6 +106,24 @@ public final class Store {
                 .toList();
         List<Task> untimed = forDate(date).stream().filter(t -> !t.timed()).toList();
         return new DayPlan(timed, untimed);
+    }
+
+    /** 06의 26번(D-33). 달력 칸의 첫 할 일 제목과 끝내지 않은 일이 있는지. 할 일이 없으면 null. */
+    public record CellPreview(String title, boolean open) {
+    }
+
+    public CellPreview cellPreview(LocalDate date) {
+        DayPlan plan = dayPlan(date);
+        List<Task> list = new ArrayList<>(plan.timed().stream().filter(t -> t.kind == Task.Kind.TASK).toList());
+        list.addAll(plan.untimed());
+        if (list.isEmpty()) {
+            return null;
+        }
+        String title = list.get(0).title;
+        if (title.length() > 5) {
+            title = title.substring(0, 5).stripTrailing() + "…";
+        }
+        return new CellPreview(title, list.stream().anyMatch(t -> !t.done));
     }
 
     /** "10:00~11:00". 자정에 끝나면 "24:00". */

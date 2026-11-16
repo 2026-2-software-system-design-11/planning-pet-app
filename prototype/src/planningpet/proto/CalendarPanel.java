@@ -69,11 +69,10 @@ public final class CalendarPanel extends JPanel {
     }
 
     private JLabel cell(LocalDate date) {
-        boolean open = store.forDate(date).stream().anyMatch(t -> !t.done);
-        String text = date.getDayOfMonth() + (open ? " <font color='#28977F' size='2'>●</font>" : "");
-        if (date.equals(selected)) {
-            text = "<b>" + text + "</b>";
-        }
+        Store.CellPreview preview = store.cellPreview(date);
+        String day = date.equals(selected) ? "<b>" + date.getDayOfMonth() + "</b>" : String.valueOf(date.getDayOfMonth());
+        String text = "<center>" + day + (preview == null ? "" : "<br><font size='2' color='"
+                + (preview.open() ? "#28977F" : "#8A96A0") + "'>" + Ui.esc(preview.title()) + "</font>") + "</center>";
         boolean today = date.equals(store.today());
         boolean picked = date.equals(selected);
         JLabel label = new JLabel("<html>" + text + "</html>", SwingConstants.CENTER) {

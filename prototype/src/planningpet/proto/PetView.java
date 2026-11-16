@@ -13,6 +13,7 @@ public final class PetView extends JComponent {
 
     public PetView(Store store, int scale) {
         this.store = store;
+        store.onChange(this::repaint);
         this.scale = scale;
         setPreferredSize(new Dimension(80 * scale, 60 * scale));
     }

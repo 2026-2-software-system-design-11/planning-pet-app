@@ -20,6 +20,8 @@ public final class PetScreen extends JPanel {
     private final JPanel items = new JPanel();
     private String said;
     private boolean wasVisible;
+    private final JLabel decoText = new JLabel();
+    private final JProgressBar decoBar = new JProgressBar(0, Game.ITEMS.size());
 
     public PetScreen(App app) {
         super(new BorderLayout(0, 8));
@@ -35,10 +37,12 @@ public final class PetScreen extends JPanel {
         roomCard.add(room);
         add(roomCard, BorderLayout.CENTER);
         JPanel bottom = new Card(new BorderLayout());
-        bottom.add(Ui.flow(new JLabel("<html><b>내 아이템</b></html>"), Ui.hint("누르면 방에 놓거나 치워요")),
+        decoBar.setPreferredSize(new Dimension(90, 10));
+        bottom.add(Ui.flow(new JLabel("<html><b>내 아이템</b></html>"), Ui.hint("누르면 방에 놓거나 치워요"), decoText, decoBar),
                 BorderLayout.NORTH);
         bottom.add(items, BorderLayout.CENTER);
-        bottom.setPreferredSize(new Dimension(0, 110));
+        bottom.add(Ui.hint(Ui.POINT_GUIDE), BorderLayout.SOUTH);
+        bottom.setPreferredSize(new Dimension(0, 130));
         add(bottom, BorderLayout.SOUTH);
         app.store.onChange(this::refresh);
     }
@@ -54,14 +58,16 @@ public final class PetScreen extends JPanel {
         name.setFont(Theme.font(23));
         expBar.setValue((int) (Rules.expRatio(s.exp) * 1000));
         expText.setText(Rules.expText(s.exp));
-        long done = s.forDate(s.today()).stream().filter(t -> t.done).count();
+        long done = s.checkables(s.today()).stream().filter(t -> t.done).count();
         if (said != null) {
             room.bubble = said;
             said = null;
-        } else if (isVisible() && !wasVisible) {
+        } else if ("pet".equals(app.current()) && !wasVisible) {
             room.bubble = done > 0 ? "오늘 " + done + "개 끝냈어." : "오늘은 아직 끝낸 일이 없어.";
         }
-        wasVisible = isVisible();
+        wasVisible = "pet".equals(app.current());
+        decoText.setText("꾸미기 " + s.owned.size() + " / " + Game.ITEMS.size());
+        decoBar.setValue(s.owned.size());
         items.removeAll();
         items.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 6, 4));
         for (String item : Game.ITEMS.keySet()) {

@@ -43,6 +43,7 @@ public final class ShopDialog {
         }
         root.add(table, BorderLayout.CENTER);
         JPanel bottom = new JPanel(new BorderLayout());
+        bottom.add(Ui.hint(Ui.POINT_GUIDE), BorderLayout.WEST);
         bottom.add(close, BorderLayout.EAST);
         root.add(bottom, BorderLayout.SOUTH);
         return root;

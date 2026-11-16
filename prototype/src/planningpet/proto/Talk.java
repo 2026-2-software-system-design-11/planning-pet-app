@@ -25,7 +25,7 @@ public final class Talk {
             return "안녕, 나는 " + s.petName + Rules.iya(s.petName) + ". 일정관리에서 이번 학기 수업부터 넣어 볼까?";
         }
         if (ChronoUnit.DAYS.between(before, today) >= 8) {
-            int n = s.forDate(today).size();
+            int n = s.checkables(today).size();
             return "오랜만이야! 다시 와서 반가워." + (n > 0 ? " 오늘 할 일은 " + n + "개야." : "");
         }
         return briefing();
@@ -48,14 +48,14 @@ public final class Talk {
             b.append(" '").append(Rules.shortTitle(near.title)).append("' 마감이 ")
                     .append(when[(int) ChronoUnit.DAYS.between(today, near.date)]).append(".");
         }
-        if (s.forDate(today).isEmpty() && near == null) {
+        if (s.checkables(today).isEmpty() && near == null) {
             b.append(" 아래 칸에 하나 적어 볼까?");
         }
         return b.toString();
     }
 
     public String usual() {
-        List<Task> list = s.forDate(s.today());
+        List<Task> list = s.checkables(s.today());
         long left = list.stream().filter(t -> !t.done).count();
         if (list.isEmpty()) {
             return "오늘은 할 일이 없어.";
@@ -64,9 +64,17 @@ public final class Talk {
     }
 
     public String otherDate(LocalDate date) {
-        int n = s.forDate(date).size();
+        int n = s.checkables(date).size();
         String day = date.getMonthValue() + "월 " + date.getDayOfMonth() + "일";
         return n > 0 ? day + " 할 일은 " + n + "개야." : day + "은 할 일이 없어.";
+    }
+
+    /** D-36. 완료 취소 때 빠진 보상을 말한다. */
+    public String uncompleted(int points, int levelBefore, int levelAfter) {
+        if (points == 0) {
+            return "체크를 풀었어.";
+        }
+        return "체크를 풀었어. -" + points + "P" + (levelAfter < levelBefore ? ", 이제 Lv." + levelAfter : "");
     }
 
     /** 완료 하나가 여러 상황이면 STAGE_UP, LEVEL_UP, CAPPED, ALL_DONE, COMPLETED 순으로 하나만. */
@@ -80,7 +88,7 @@ public final class Talk {
         if (r.outcome() == RewardResult.Outcome.CAPPED) {
             return "잘했어! 오늘 보상은 다 받았지만 체크는 계속 돼.";
         }
-        boolean allDone = t.date.equals(s.today()) && s.forDate(s.today()).stream().allMatch(x -> x.done);
+        boolean allDone = t.date.equals(s.today()) && s.checkables(s.today()).stream().allMatch(x -> x.done);
         return allDone ? "오늘 할 일을 다 끝냈어! 푹 쉬어." : "잘했어! +10P";
     }
 }
