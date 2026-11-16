@@ -30,12 +30,22 @@ import javax.swing.SwingUtilities;
 final class QaRules {
     private final List<String[]> found = new ArrayList<>();
     private final List<String> glossary = new ArrayList<>();
+    /** 규칙 4에서 까닭이 있어 받아들인 것(qa/places-ok.tsv). */
+    private final Map<String, String> allowed = new java.util.HashMap<>();
+    private final List<String[]> accepted = new ArrayList<>();
 
     public static void main(String[] args) throws Exception {
         QaRules r = new QaRules();
         r.inputs();
         Map<String, JComponent> screens = r.screens();
         r.terms(screens, new File(args[1]));
+        File ok = new File(new File(args[1]).getParentFile(), "places-ok.tsv");
+        for (String line : Files.readAllLines(ok.toPath(), StandardCharsets.UTF_8)) {
+            if (!line.isBlank() && !line.startsWith("#")) {
+                String[] p = line.split("\t");
+                r.allowed.put(p[0], p[1]);
+            }
+        }
         r.places(screens);
         r.write(new File(args[0]));
         System.out.println("규칙 어긋남 " + r.found.size() + "개");
@@ -188,14 +198,20 @@ final class QaRules {
                 Point p = SwingUtilities.convertPoint(b, b.getWidth() / 2, b.getHeight() / 2, frame);
                 String v = p.y < frame.getHeight() / 3 ? "위" : p.y > frame.getHeight() * 2 / 3 ? "아래" : "가운데";
                 String h = p.x < frame.getWidth() / 3 ? "왼쪽" : p.x > frame.getWidth() * 2 / 3 ? "오른쪽" : "가운데";
-                at.computeIfAbsent(b.getText(), k -> new ArrayList<>()).add(name + " " + v + " " + h);
+                at.computeIfAbsent(b.getText(), k -> new ArrayList<>()).add(name + "|" + v + " " + h);
             }
         });
         at.forEach((text, places) -> {
-            List<String> spots = places.stream().map(s -> s.substring(s.indexOf(' ') + 1)).distinct().toList();
-            List<String> names = places.stream().map(s -> s.substring(0, s.indexOf(' '))).distinct().toList();
+            List<String> spots = places.stream().map(s -> s.substring(s.indexOf('|') + 1)).distinct().toList();
+            List<String> names = places.stream().map(s -> s.substring(0, s.indexOf('|'))).distinct().toList();
             if (names.size() > 1 && spots.size() > 1) {
-                found.add(new String[] {"4 같은 이름 버튼의 자리", "\"" + text + "\"", String.join(", ", places.stream().distinct().toList())});
+                String where = String.join(", ", places.stream().distinct().map(s -> s.replace('|', ' ')).toList());
+                String why = allowed.get(text);
+                if (why == null) {
+                    found.add(new String[] {"4 같은 이름 버튼의 자리", "\"" + text + "\"", where});
+                } else {
+                    accepted.add(new String[] {"\"" + text + "\"", where, why});
+                }
             }
         });
     }
@@ -211,6 +227,14 @@ final class QaRules {
         lines.add("| 규칙 | 어디 | 무엇 |");
         lines.add("|---|---|---|");
         found.forEach(f -> lines.add("| " + f[0] + " | " + f[1] + " | " + f[2] + " |"));
+        lines.add("");
+        lines.add("## 받아들인 자리 차이");
+        lines.add("");
+        lines.add("규칙 4에서 까닭이 있어 받아들인 것이다(`prototype/qa/places-ok.tsv`).");
+        lines.add("");
+        lines.add("| 버튼 | 자리 | 까닭 |");
+        lines.add("|---|---|---|");
+        accepted.forEach(a -> lines.add("| " + a[0] + " | " + a[1] + " | " + a[2] + " |"));
         lines.add("");
         lines.add("## 화면 글자(용어집)");
         lines.add("");

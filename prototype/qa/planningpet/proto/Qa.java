@@ -110,7 +110,7 @@ final class Qa extends QaDrive {
         return head.getText() + " / " + String.join(" / ", out);
     }
 
-    /** 상점 표를 "이름 가격 상태 사기(켜짐 또는 꺼짐)"으로 읽는다. */
+    /** 상점 표를 "이름 상태 사기(켜짐, 꺼짐, 버튼 없음)"으로 읽는다. */
     String shop() {
         JPanel root = ShopDialog.content(app.store, x -> { }, new JButton("닫기"));
         List<String> out = new ArrayList<>();
@@ -119,7 +119,7 @@ final class Qa extends QaDrive {
         for (int i = 4; i + 3 < cells.length; i += 4) {
             String state = plain(((JLabel) cells[i + 2]).getText());
             out.add(plain(((JLabel) cells[i]).getText()) + " " + (state.isEmpty() ? "-" : state)
-                    + (((JButton) cells[i + 3]).isEnabled() ? " 켜짐" : " 꺼짐"));
+                    + (cells[i + 3] instanceof JButton b ? (b.isEnabled() ? " 켜짐" : " 꺼짐") : " 버튼 없음"));
         }
         return String.join(" / ", out);
     }

@@ -134,8 +134,86 @@ public final class ProtoCheck {
         Talk ft = new Talk(f2);
         eq("T-TALK-7", "체크를 풀었어. -10P, 이제 Lv.1", ft.uncompleted(10, 2, 1));
         eq("T-TALK-8", "체크를 풀었어.", ft.uncompleted(0, 1, 1));
+        eq("T-EDIT-7", "10:30 10:30 13:00 13:00 13:00 13:00 13:00", series(false));
+        eq("T-EDIT-8", "대학수학 대학수학 대학수학 보강@12-01 대학수학 보강 대학수학 보강 대학수학 보강 대학수학 보강", series(true));
+        eq("D-43 날짜 화살표는 하루씩", "2026-11-15", dayArrow());
+        eq("D-43 오류 글 다시 검사, 30분 안내", "하루 안에 끝나야 해요 / true false", recheck());
+        eq("D-42 반복 끝 밖으로 옮겨 저장, 반복 표시", "true true 2026-12-29", moveLastCopy());
+        eq("D-42 시각 창의 이후 반복 모두는 시각만", "11:00 보강 11:00", timeOnly());
         System.out.println(failed == 0 ? "모두 통과" : failed + "개 실패");
         System.exit(failed == 0 ? 0 : 1);
+    }
+
+    /** T-ADD-3의 사본 7개에서 11-30 사본을 THIS_AND_AFTER로 고친다(06의 4번, D-42). */
+    private static String series(boolean moveAndRename) {
+        Store s = MockData.empty();
+        java.util.List<Task> copies = s.add(Task.Kind.FIXED, "대학수학", java.time.LocalDate.of(2026, 11, 16),
+                java.time.LocalTime.of(10, 30), 75, "", java.time.LocalDate.of(2026, 12, 28));
+        Task t = copies.get(2);
+        java.time.LocalDate original = t.date;
+        if (moveAndRename) {
+            t.date = java.time.LocalDate.of(2026, 12, 1);
+            t.title = "대학수학 보강";
+        } else {
+            t.start = java.time.LocalTime.of(13, 0);
+        }
+        s.applyToSeries(t, original);
+        StringBuilder out = new StringBuilder();
+        for (Task c : copies) {
+            out.append(moveAndRename ? c.title + (c == t ? "@" + c.date.toString().substring(5) : "") : c.start.toString()).append(" ");
+        }
+        return out.toString().strip();
+    }
+
+    /** 반복의 마지막 사본을 수정 창에서 하루 뒤로 옮겨 이 일정만으로 저장한다. 수정할 때 반복 칸은 검사하지 않는다. */
+    private static String moveLastCopy() {
+        App app = Main.create(MockData.empty());
+        java.util.List<Task> copies = app.store.add(Task.Kind.FIXED, "대학수학", java.time.LocalDate.of(2026, 11, 16),
+                java.time.LocalTime.of(10, 30), 75, "", java.time.LocalDate.of(2026, 12, 28));
+        Task last = copies.get(copies.size() - 1);
+        TaskForm f = new TaskForm(last, last.date, app.store.now);
+        f.showSeries(app.store.seriesEnd(last));
+        boolean shown = f.repeat.isSelected() && !f.repeat.isEnabled();
+        Ui.setDate(f.date, java.time.LocalDate.of(2026, 12, 29));
+        app.actions.chooser = (title, message, options) -> 0;
+        boolean saved = TaskDialog.trySave(app, f, last);
+        return shown + " " + saved + " " + last.date;
+    }
+
+    /** 뒤 사본의 제목을 따로 고쳐 둔 뒤, 앞 사본을 시각 고치기 창에서 이후 반복 모두로 고친다. */
+    private static String timeOnly() {
+        App app = Main.create(MockData.empty());
+        java.util.List<Task> copies = app.store.add(Task.Kind.FIXED, "대학수학", java.time.LocalDate.of(2026, 11, 16),
+                java.time.LocalTime.of(10, 30), 75, "", java.time.LocalDate.of(2026, 11, 30));
+        copies.get(1).title = "보강";
+        TimeEditor e = new TimeEditor(copies.get(0), app.store.now);
+        e.start.setValue("11:00");
+        app.actions.chooser = (title, message, options) -> 1;
+        TimeEditor.save(app, copies.get(0), e);
+        return copies.get(0).start + " " + copies.get(1).title + " " + copies.get(1).start;
+    }
+
+    /** 일정 입력 창 날짜 칸의 위 화살표가 바꿀 값. DateEditor가 아니라서 커서 자리와 관계없이 하루다. */
+    private static String dayArrow() {
+        TaskForm f = new TaskForm(null, java.time.LocalDate.of(2026, 11, 14), java.time.LocalDateTime.of(2026, 11, 14, 15, 23));
+        boolean dateEditor = f.date.getEditor() instanceof javax.swing.JSpinner.DateEditor;
+        java.util.Date next = (java.util.Date) f.date.getNextValue();
+        return dateEditor ? "DateEditor" : next.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate().toString();
+    }
+
+    /** 저장 뒤 오류 글이 칸을 고칠 때 다시 정해지는지, 30분 안내가 값이 30일 때만 보이는지. */
+    private static String recheck() {
+        TaskForm f = new TaskForm(null, java.time.LocalDate.of(2026, 11, 16), java.time.LocalDateTime.of(2026, 11, 16, 9, 0));
+        f.timed.setSelected(true);
+        f.sync();
+        f.start.setValue("23:30");
+        f.minutes.setValue(40);
+        f.showErrors(TaskCheck.check(f));
+        f.title.setText("밤 공부");
+        String afterTitle = f.errorText();
+        boolean hintAt30 = f.minutesHint.isVisible();
+        f.minutes.setValue(30);
+        return afterTitle + " / " + f.minutesHint.isVisible() + " " + hintAt30;
     }
 
     /** 27은 칸이 받지 않아 30 그대로, 75는 받아서 검사를 통과한다. */
