@@ -38,6 +38,11 @@ public final class Store {
         listeners.add(listener);
     }
 
+    /** 변경 알림을 받는 부품 수(검사용). */
+    public int listenerCount() {
+        return listeners.size();
+    }
+
     public void changed() {
         listeners.forEach(Runnable::run);
     }

@@ -14,6 +14,7 @@ public final class WalkBar extends JComponent {
 
     public WalkBar(Store store) {
         this.store = store;
+        store.onChange(this::repaint);
         setPreferredSize(new Dimension(600, 72));
     }
 

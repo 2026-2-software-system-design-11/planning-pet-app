@@ -102,6 +102,11 @@ public final class ProtoCheck {
         eq("T-CAL-2", null, c.cellPreview(nov.withDayOfMonth(16)));
         eq("T-CAL-3", "토익 스터… false", c13.title() + " " + c13.open());
         eq("T-CAL-4", "은행 서류 true", c15.title() + " " + c15.open());
+        Store w = MockData.sample();
+        int before = w.listenerCount();
+        new WalkBar(w);
+        new PetView(w, 1);
+        eq("T-SAVE-5 다시 그리기 연결", 2, w.listenerCount() - before);
         System.out.println(failed == 0 ? "모두 통과" : failed + "개 실패");
         System.exit(failed == 0 ? 0 : 1);
     }
