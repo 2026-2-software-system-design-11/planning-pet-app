@@ -147,4 +147,54 @@ final class Flows12 {
         }
         throw new IllegalStateException("버튼 없음: " + name);
     }
+
+    static Qa uf21(Qa q) {
+        q.start(Personas.p2());
+        q.step("1", "앱을 연다");
+        q.open();
+        q.eq("목록", "15:00~16:40 [ ] 고정 졸업 세미나 100분 / 19:00~21:00 [ ] B사 자소서 1번 120분 / 시간 안 정한 할 일"
+                + " / 시간 정하기 [ ] C사 서류 결과 확인 30분", q.rows());
+        q.eq("말풍선", "오늘 할 일 3개 남았어. 어제 못 끝낸 일 1개는 달력에 남아 있어. 'B사 자소서 제출' 마감이 내일이야.",
+                q.app.store.talk);
+        q.eq("위 막대", "연속 접속 10일, 보유 340P, 출석 +20P", q.top());
+        q.eq("성취도", "0/3", q.progress());
+        q.eq("레벨", "모카 Lv.5 경험치 140 / 170", q.level());
+        q.eq("달력", "15 A사 인적…(진함), 16 B사 자소…(진함), 17 B사 자소…(진함), 19 2026…(진함), 24 D사 면접…(진함)",
+                q.cell(15) + ", " + q.cell(16) + ", " + q.cell(17) + ", " + q.cell(19) + ", " + q.cell(24));
+        q.end();
+        return q;
+    }
+
+    static Qa uf22() {
+        Qa q = uf21(new Qa("UF-2-2"));
+        q.step("1", "달력 15를 누른다");
+        q.select("2026-11-15");
+        q.eq("목록", "시간 안 정한 할 일 / 시간 정하기 [ ] A사 인적성 대비 60분", q.rows());
+        q.eq("말풍선", "11월 15일 할 일은 1개야.", q.app.store.talk);
+        q.step("2", "A사 인적성 대비를 체크한다");
+        q.check(q.task("A사 인적성 대비"));
+        q.eq("상태", "350P 경험치530 횟수1 성취도0/3", st(q));
+        q.eq("말풍선", "잘했어! +10P", q.app.store.talk);
+        q.step("3", "달력 17을 누르고 B사 자소서 제출을 체크한다");
+        q.select("2026-11-17");
+        q.check(q.task("B사 자소서 제출"));
+        q.eq("상태", "360P 경험치540 횟수2 성취도0/3", st(q));
+        q.step("4", "달력을 본다");
+        q.eq("달력 15", "15 A사 인적…(흐림)", q.cell(15));
+        q.end();
+        return q;
+    }
+
+    static void uf23() {
+        Qa q = uf22();
+        Qa n = new Qa("UF-2-3");
+        n.start(q.app.store);
+        n.at("2026-11-17T20:00");
+        n.step("1", "앱을 연다");
+        n.open();
+        n.eq("말풍선", "오늘 할 일은 다 끝냈어! 어제 못 끝낸 일 2개는 달력에 남아 있어. '2026 하반기 공채 자기…' 마감이 모레야.",
+                n.app.store.talk);
+        n.eq("위 막대", "연속 접속 11일, 보유 360P, 출석 +20P", n.top());
+        n.end();
+    }
 }
