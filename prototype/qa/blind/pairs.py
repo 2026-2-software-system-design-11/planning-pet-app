@@ -22,9 +22,9 @@ def tables(path):
     """그림 이름 제목 아래의 표 줄을 (그림, 칸들)로 돌려준다."""
     screen = None
     for line in open(path, encoding="utf-8"):
-        m = re.search(r"screen-(\d\d)", line)
+        m = re.search(r"(?:screen-|화면\s*)(\d\d?)\b", line)
         if line.lstrip().startswith("#") and m:
-            screen = "screen-" + m.group(1) + ".png"
+            screen = "screen-%02d.png" % int(m.group(1))
             continue
         if screen and line.startswith("|") and not re.match(r"\|\s*-", line):
             cells = [c.strip() for c in line.strip().strip("|").split("|")]
