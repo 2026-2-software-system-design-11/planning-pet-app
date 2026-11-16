@@ -48,6 +48,9 @@ public final class Ui {
         });
     }
 
+    /** 포인트 얻는 법(D-33). pet 화면과 상점 창이 같이 쓴다. */
+    public static final String POINT_GUIDE = "포인트 얻는 법: 할 일 끝내기 +10P(하루 20번까지), 출석 +20P";
+
     /** 펫 말풍선. */
     public static JLabel bubble() {
         JLabel l = new JLabel() {

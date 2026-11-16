@@ -20,6 +20,9 @@ public final class MainScreen extends JPanel {
     private final TaskRows rows;
     private final JLabel listTitle = new JLabel();
     private final JLabel bubble = Ui.bubble();
+    private final JLabel levelName = new JLabel();
+    private final javax.swing.JProgressBar levelBar = new javax.swing.JProgressBar(0, 1000);
+    private final JLabel levelText = new JLabel();
     private final JTextField quick = new JTextField();
 
     public MainScreen(App app) {
@@ -47,7 +50,11 @@ public final class MainScreen extends JPanel {
         JPanel bottom = new Card(new BorderLayout());
         JPanel bubbleRow = new JPanel(new FlowLayout(FlowLayout.CENTER));
         bubbleRow.add(bubble);
-        bottom.add(bubbleRow, BorderLayout.NORTH);
+        JPanel top = new JPanel(new BorderLayout());
+        top.add(bubbleRow, BorderLayout.CENTER);
+        levelBar.setPreferredSize(new java.awt.Dimension(110, 10));
+        top.add(Ui.flow(levelName, levelBar, levelText), BorderLayout.EAST);
+        bottom.add(top, BorderLayout.NORTH);
         bottom.add(new WalkBar(app.store), BorderLayout.CENTER);
         add(bottom, BorderLayout.SOUTH);
         app.store.onChange(this::refresh);
@@ -89,5 +96,9 @@ public final class MainScreen extends JPanel {
         rows.showPlan(app.store.dayPlan(date));
         calendar.refresh();
         bubble.setText(app.store.talk);
+        levelName.setText(app.store.petName + " Lv." + Rules.level(app.store.exp));
+        levelName.setFont(Theme.bold(15));
+        levelBar.setValue((int) (Rules.expRatio(app.store.exp) * 1000));
+        levelText.setText(Rules.expText(app.store.exp));
     }
 }

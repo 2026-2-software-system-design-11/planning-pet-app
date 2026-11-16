@@ -101,8 +101,18 @@ public final class TaskRows extends JPanel {
         edit.addActionListener(e -> actions.edit(t));
         JButton delete = small("삭제");
         delete.addActionListener(e -> actions.delete(t));
-        row.add(Ui.flow(minutes, edit, delete), BorderLayout.EAST);
-        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
+        if (withDate) {
+            // 일정관리 오른쪽 목록은 좁아서 버튼을 둘째 줄 오른쪽에 둔다.
+            row.add(minutes, BorderLayout.EAST);
+            JPanel buttons = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 4, 0));
+            buttons.add(edit);
+            buttons.add(delete);
+            row.add(buttons, BorderLayout.SOUTH);
+            row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 58));
+        } else {
+            row.add(Ui.flow(minutes, edit, delete), BorderLayout.EAST);
+            row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
+        }
         MouseAdapter mouse = new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
