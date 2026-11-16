@@ -81,7 +81,7 @@ public final class TimeEditor {
         t.start = LocalTime.parse((String) e.start.getValue());
         t.minutes = (int) e.minutes.getValue();
         if (scope == 1) {
-            app.store.applyToSeries(t, t.date);
+            app.store.applyToSeries(t, t.date, true);
         }
         app.store.changed();
         return true;
