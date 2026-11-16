@@ -107,6 +107,20 @@ public final class ProtoCheck {
         new WalkBar(w);
         new PetView(w, 1);
         eq("T-SAVE-5 다시 그리기 연결", 2, w.listenerCount() - before);
+        Store f2 = MockData.empty();
+        f2.now = nov16.atTime(9, 0);
+        Task cls = f2.add(Task.Kind.FIXED, "수업", nov16, java.time.LocalTime.of(10, 0), 75, "", null).get(0);
+        f2.add(Task.Kind.FIXED, "수업2", nov16, java.time.LocalTime.of(13, 0), 75, "", null);
+        Task hw = f2.add(Task.Kind.TASK, "과제", nov16, null, 30, "", null).get(0);
+        f2.add(Task.Kind.TASK, "운동", nov16, null, 30, "", null);
+        Game fg = new Game(f2);
+        eq("T-RWD-7", "REWARDED 10 10", fg.complete(cls).outcome() + " " + f2.points + " " + f2.exp);
+        fg.complete(hw);
+        long doneCount = f2.checkables(nov16).stream().filter(z -> z.done).count();
+        eq("T-PRG-3", "2/4", doneCount + "/" + f2.checkables(nov16).size());
+        Talk ft = new Talk(f2);
+        eq("T-TALK-7", "체크를 풀었어. -10P, 이제 Lv.1", ft.uncompleted(10, 2, 1));
+        eq("T-TALK-8", "체크를 풀었어.", ft.uncompleted(0, 1, 1));
         System.out.println(failed == 0 ? "모두 통과" : failed + "개 실패");
         System.exit(failed == 0 ? 0 : 1);
     }
