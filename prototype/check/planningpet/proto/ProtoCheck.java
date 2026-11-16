@@ -107,6 +107,17 @@ public final class ProtoCheck {
         new WalkBar(w);
         new PetView(w, 1);
         eq("T-SAVE-5 다시 그리기 연결", 2, w.listenerCount() - before);
+        App main = Main.create(MockData.sample());
+        Task essay = main.store.dayPlan(main.store.today()).timed().get(1);
+        int seq = main.store.talkSeq;
+        main.actions.check(essay);
+        long doneToday = main.store.checkables(main.store.today()).stream().filter(z -> z.done).count();
+        eq("T-SAVE-5", "110 2/4 잘했어! +10P 1", main.store.points + " " + doneToday + "/"
+                + main.store.checkables(main.store.today()).size() + " " + main.store.talk + " " + (main.store.talkSeq - seq));
+        main.actions.check(essay);
+        eq("T-TALK-7 화면에서", "100 체크를 풀었어. -10P", main.store.points + " " + main.store.talk);
+        Store od = MockData.sample();
+        eq("T-TALK-9", "11월 16일 할 일은 2개야.", new Talk(od).otherDate(java.time.LocalDate.of(2026, 11, 16)));
         Store f2 = MockData.empty();
         f2.now = nov16.atTime(9, 0);
         Task cls = f2.add(Task.Kind.FIXED, "수업", nov16, java.time.LocalTime.of(10, 0), 75, "", null).get(0);
