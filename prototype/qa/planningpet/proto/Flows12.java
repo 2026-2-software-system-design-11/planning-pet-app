@@ -18,6 +18,8 @@ final class Flows12 {
         flows.put("UF-2-1", () -> uf21(new Qa("UF-2-1")));
         flows.put("UF-2-2", Flows12::uf22);
         flows.put("UF-2-3", Flows12::uf23);
+        flows.put("UF-2-4", Flows12::uf24);
+        flows.put("UF-2-5", Flows12::uf25);
     }
 
     static void uf11() {
@@ -194,5 +196,54 @@ final class Flows12 {
                 n.app.store.talk);
         n.eq("위 막대", "연속 접속 11일, 보유 360P, 출석 +20P", n.top());
         n.end();
+    }
+
+    static void uf24() {
+        Qa q = new Qa("UF-2-4");
+        q.start(Personas.p2());
+        q.open();
+        q.step("1", "C사 서류 결과 확인의 시간 정하기를 누른다");
+        Task c = q.task("C사 서류 결과 확인");
+        TimeEditor e = new TimeEditor(c, q.app.store.now);
+        q.eq("창", "20:10 30", e.start.getValue() + " " + e.minutes.getValue());
+        q.step("2", "저장한다");
+        q.yes("저장됨", TimeEditor.save(q.app, c, e));
+        q.eq("목록", "15:00~16:40 [ ] 고정 졸업 세미나 100분 / 19:00~21:00 [ ] B사 자소서 1번 120분"
+                + " / 20:10~20:40 [ ] C사 서류 결과 확인 30분", q.rows());
+        q.step("3", "20:10~20:40을 누르고 시간 빼기를 누른다");
+        q.yes("시간 빼기 보임", new TimeEditor(c, q.app.store.now).clear.isVisible());
+        TimeEditor.clear(q.app, c);
+        q.has("목록", "시간 안 정한 할 일 / 시간 정하기 [ ] C사 서류 결과 확인 30분", q.rows());
+        q.step("4", "달력 17의 B사 자소서 제출 시간 정하기를 누른다");
+        q.select("2026-11-17");
+        q.eq("시작", "09:00", new TimeEditor(q.task("B사 자소서 제출"), q.app.store.now).start.getValue());
+        q.step("5", "졸업 세미나의 15:00~16:40을 누른다");
+        q.eq("시간 빼기 보임", false, new TimeEditor(q.task("졸업 세미나", "2026-11-16"), q.app.store.now).clear.isVisible());
+        q.step("6", "B사 자소서 1번 시작을 22:30으로 바꿔 저장한다");
+        Task b = q.task("B사 자소서 1번");
+        TimeEditor late = new TimeEditor(b, q.app.store.now);
+        late.start.setValue("22:30");
+        q.eq("저장됨", false, TimeEditor.save(q.app, b, late));
+        q.eq("창 아래", "하루 안에 끝나야 해요", late.error.getText());
+        q.end();
+    }
+
+    static void uf25() {
+        Qa q = new Qa("UF-2-5");
+        q.start(Personas.p2());
+        q.open();
+        q.app.show("일정관리");
+        q.step("1", "일정관리에서 일정 추가를 누른다");
+        q.eq("날짜", "2026-11-16", q.sched.defaultDate());
+        q.step("2", "다음 주로 옮겨 일정 추가를 누른다");
+        q.sched.move(QaDrive.d("2026-11-23"));
+        q.eq("날짜", "2026-11-23", q.sched.defaultDate());
+        q.step("3", "자동 배치를 누른다");
+        q.eq("결과 창", "11월 23일 09:00부터 11월 29일까지, 할 일마다 그 날짜 안의 빈 시간에 놓았어요"
+                + " / D사 면접 준비|11월 24일|09:00 ~ 10:00|60분", q.placement(q.place()));
+        q.step("4", "이전 주를 두 번 눌러 일정 추가를 누른다");
+        q.sched.move(QaDrive.d("2026-11-09"));
+        q.eq("날짜", "2026-11-09", q.sched.defaultDate());
+        q.end();
     }
 }

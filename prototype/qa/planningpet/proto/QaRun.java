@@ -14,6 +14,7 @@ final class QaRun {
         QaCore.shots = new File(args.length > 1 ? args[1] : "qa-out");
         Map<String, Runnable> flows = new LinkedHashMap<>();
         Flows12.add(flows);
+        Flows345.add(flows);
         for (Map.Entry<String, Runnable> f : flows.entrySet()) {
             try {
                 f.getValue().run();
