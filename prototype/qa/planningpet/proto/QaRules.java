@@ -188,3 +188,75 @@ final class QaRules {
                 Point p = SwingUtilities.convertPoint(b, b.getWidth() / 2, b.getHeight() / 2, frame);
                 String v = p.y < frame.getHeight() / 3 ? "위" : p.y > frame.getHeight() * 2 / 3 ? "아래" : "가운데";
                 String h = p.x < frame.getWidth() / 3 ? "왼쪽" : p.x > frame.getWidth() * 2 / 3 ? "오른쪽" : "가운데";
+                at.computeIfAbsent(b.getText(), k -> new ArrayList<>()).add(name + " " + v + " " + h);
+            }
+        });
+        at.forEach((text, places) -> {
+            List<String> spots = places.stream().map(s -> s.substring(s.indexOf(' ') + 1)).distinct().toList();
+            List<String> names = places.stream().map(s -> s.substring(0, s.indexOf(' '))).distinct().toList();
+            if (names.size() > 1 && spots.size() > 1) {
+                found.add(new String[] {"4 같은 이름 버튼의 자리", "\"" + text + "\"", String.join(", ", places.stream().distinct().toList())});
+            }
+        });
+    }
+
+    private void write(File out) throws Exception {
+        List<String> lines = new ArrayList<>();
+        lines.add("# 사용성 자동 규칙");
+        lines.add("");
+        lines.add("`prototype/qa.sh`가 `QaRules`로 만든다. 손으로 고치지 않는다. 규칙과 까닭은 [blind/README.md](blind/README.md) 7절에 있다.");
+        lines.add("");
+        lines.add("## 어긋남");
+        lines.add("");
+        lines.add("| 규칙 | 어디 | 무엇 |");
+        lines.add("|---|---|---|");
+        found.forEach(f -> lines.add("| " + f[0] + " | " + f[1] + " | " + f[2] + " |"));
+        lines.add("");
+        lines.add("## 화면 글자(용어집)");
+        lines.add("");
+        lines.add("| 글자 | 화면 |");
+        lines.add("|---|---|");
+        lines.addAll(glossary);
+        Files.write(out.toPath(), lines, StandardCharsets.UTF_8);
+    }
+
+    /** 그 부품과 위의 모든 판이 보이는가. 카드 레이아웃이 숨긴 화면의 부품은 빼야 한다. */
+    private static boolean shown(Component c, Component root) {
+        for (Component x = c; x != null && x != root; x = x.getParent()) {
+            if (!x.isVisible()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static Container rowOf(Container rows, Component b) {
+        Component x = b;
+        while (x.getParent() != rows) {
+            x = x.getParent();
+        }
+        return (Container) x;
+    }
+
+    private static void lay(Component c, Dimension size) {
+        c.setSize(size);
+        for (int i = 0; i < 2; i++) {
+            for (Component x : all(c, Component.class)) {
+                x.doLayout();
+            }
+        }
+    }
+
+    static <T> List<T> all(Component root, Class<T> type) {
+        List<T> out = new ArrayList<>();
+        if (type.isInstance(root)) {
+            out.add(type.cast(root));
+        }
+        if (root instanceof Container k) {
+            for (Component c : k.getComponents()) {
+                out.addAll(all(c, type));
+            }
+        }
+        return out;
+    }
+}
