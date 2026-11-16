@@ -130,4 +130,72 @@ final class Flows345 {
                 + " " + dates(q, "편의점 알바", java.time.DayOfWeek.THURSDAY).split(",").length);
         q.end();
     }
+
+    static Qa uf41(Qa q) {
+        q.start(Personas.p4());
+        q.step("1", "앱을 연다");
+        q.open();
+        q.eq("말풍선", "오늘 할 일 3개 남았어.", q.app.store.talk);
+        q.eq("위 막대", "연속 접속 30일, 보유 600P, 출석 완료(비활성)", q.top());
+        q.eq("성취도, 레벨", "19/22 보리 Lv.3 경험치 100 / 110", q.progress() + " " + q.level());
+        q.has("목록", "시간 안 정한 할 일 / 시간 정하기 [x] 국어 문법 1 30분", q.rows());
+        q.step("2", "행정법 기출을 체크한다");
+        q.check(q.task("행정법 기출"));
+        q.eq("상태", "610P 경험치240 횟수20 성취도20/22", st(q));
+        q.eq("말풍선", "잘했어! 레벨이 올랐어. 이제 Lv.4, 나 좀 자란 것 같아.", q.app.store.talk);
+        q.eq("레벨", "보리 Lv.4 경험치 0 / 140", q.level());
+        q.step("3", "한국사 회독을 체크한다");
+        q.check(q.task("한국사 회독"));
+        q.eq("상태", "610P 경험치240 횟수20 성취도21/22", st(q));
+        q.eq("말풍선", "잘했어! 오늘 보상은 다 받았지만 체크는 계속 돼.", q.app.store.talk);
+        q.step("4", "한국사 회독 체크를 푼다");
+        q.check(q.task("한국사 회독"));
+        q.eq("상태", "610P 경험치240 횟수20 성취도20/22", st(q));
+        q.eq("말풍선", "체크를 풀었어.", q.app.store.talk);
+        q.end();
+        return q;
+    }
+
+    static void uf42() {
+        Qa q = uf41(new Qa("UF-4-2"));
+        q.step("1", "01:30에 오답 정리를 체크한다");
+        q.at("2026-11-18T01:30");
+        q.check(q.task("오답 정리"));
+        q.eq("말풍선", "잘했어! 오늘 보상은 다 받았지만 체크는 계속 돼.", q.app.store.talk);
+        q.eq("상태", "610P 경험치240 횟수20 성취도21/22", st(q));
+        q.step("2", "창을 켜 둔 채 04:00을 넘긴다");
+        q.at("2026-11-18T04:00:30");
+        q.eq("말풍선", "오늘은 할 일이 없어. 어제 못 끝낸 일 1개는 달력에 남아 있어. 아래 칸에 하나 적어 볼까?", q.app.store.talk);
+        q.eq("위 막대", "연속 접속 31일, 보유 610P, 출석 +20P", q.top());
+        q.eq("고른 날짜", "2026-11-18", q.main.calendar.selected());
+        q.step("3", "출석한다");
+        q.attend();
+        q.eq("포인트", 630, q.app.store.points);
+        q.step("4", "국어 문법 5를 넣고 체크한다");
+        q.quick("국어 문법 5");
+        q.check(q.task("국어 문법 5"));
+        q.eq("상태", "640P 경험치250 횟수1 성취도1/1", st(q));
+        q.eq("말풍선", "오늘 할 일을 다 끝냈어! 푹 쉬어.", q.app.store.talk);
+        q.end();
+    }
+
+    static void uf43() {
+        Qa q = new Qa("UF-4-3");
+        q.start(Personas.p4());
+        q.open();
+        q.step("1", "일정관리를 연다");
+        q.app.show("일정관리");
+        q.eq("펫", "시간이 안 정해진 할 일이 3개 있어. 자동 배치를 눌러 볼래?", q.schedBubble());
+        q.step("2", "자동 배치를 누른다");
+        Planner.Placement p = q.place();
+        q.eq("결과 창", "11월 17일 21:40부터 11월 22일까지, 할 일마다 그 날짜 안의 빈 시간에 놓았어요"
+                + " / 행정법 기출|11월 17일|21:40 ~ 22:40|60분 / 한국사 회독|11월 17일|22:40 ~ 23:40|60분"
+                + " / 오답 정리|놓지 못함|그날 빈 시간이 모자라요|30분", q.placement(p));
+        q.step("3", "적용을 누른다");
+        q.apply(p);
+        q.app.show("홈");
+        q.has("목록 위쪽", "21:40~22:40 [ ] 행정법 기출 60분 / 22:40~23:40 [ ] 한국사 회독 60분 / 시간 안 정한 할 일", q.rows());
+        q.has("오답 정리는 그대로", "시간 정하기 [ ] 오답 정리 30분", q.rows());
+        q.end();
+    }
 }
