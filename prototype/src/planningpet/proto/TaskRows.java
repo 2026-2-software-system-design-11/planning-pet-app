@@ -56,19 +56,18 @@ public final class TaskRows extends JPanel {
         row.setBorder(BorderFactory.createEmptyBorder(3, 0, 3, 0));
         row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
         row.setAlignmentX(LEFT_ALIGNMENT);
-        JComponent mark;
+        // D-35: 고정 일정도 체크한다. 체크박스 옆에 "고정" 표시를 둔다.
+        JCheckBox box = new JCheckBox();
+        box.setSelected(t.done);
+        box.addActionListener(e -> actions.check(t));
+        JComponent mark = box;
         if (t.kind == Task.Kind.FIXED) {
             JLabel tag = new JLabel("고정");
             tag.setFont(Theme.font(11));
             tag.setOpaque(true);
             tag.setBackground(Theme.TRACK);
             tag.setBorder(BorderFactory.createLineBorder(Theme.CARD_LINE));
-            mark = tag;
-        } else {
-            JCheckBox box = new JCheckBox();
-            box.setSelected(t.done);
-            box.addActionListener(e -> actions.check(t));
-            mark = box;
+            mark = Ui.flow(box, tag);
         }
         JPanel left = Ui.flow();
         if (time != null) {

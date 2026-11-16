@@ -16,7 +16,10 @@ public final class Actions {
     /** UC-07, UC-08. */
     public void check(Task t) {
         if (t.done) {
+            int points = t.rewardPoints;
+            int before = Rules.level(app.store.exp);
             app.game.uncomplete(t);
+            app.store.talk = app.talk.uncompleted(points, before, Rules.level(app.store.exp));
         } else {
             RewardResult r = app.game.complete(t);
             app.store.talk = app.talk.completed(r, t);

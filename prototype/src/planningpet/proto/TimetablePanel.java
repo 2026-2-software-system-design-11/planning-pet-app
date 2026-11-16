@@ -109,7 +109,8 @@ public final class TimetablePanel extends JComponent {
                 text.clipRect(r.x, r.y, r.width, r.height);
                 text.setColor(t.done ? Theme.INK_DIM : Theme.INK);
                 int tx = r.x + 4;
-                if (t.kind == Task.Kind.TASK) {
+                {
+                    // D-35: 고정 일정 블록에도 체크박스를 둔다.
                     Rectangle box = new Rectangle(r.x + 4, r.y + 4, 12, 12);
                     boxes.put(box, t);
                     text.setColor(Theme.CARD_TOP);

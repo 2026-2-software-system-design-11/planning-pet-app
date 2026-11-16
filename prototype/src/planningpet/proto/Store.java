@@ -82,6 +82,11 @@ public final class Store {
                 .toList();
     }
 
+    /** 그날 체크할 수 있는 일정(할 일과 고정 일정, D-35). 성취도 막대와 남은 수가 센다. */
+    public List<Task> checkables(LocalDate date) {
+        return tasks.stream().filter(t -> t.date.equals(date)).toList();
+    }
+
     /** 06의 6번(D-31). 메인 목록의 하루 시간표: 시각 있는 할 일과 고정 일정, 그 아래 시각 없는 할 일. */
     public record DayPlan(List<Task> timed, List<Task> untimed) {
     }
