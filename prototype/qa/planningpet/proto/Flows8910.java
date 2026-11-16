@@ -30,12 +30,12 @@ final class Flows8910 {
         q.open();
         q.step("1", "일정관리를 연다");
         q.app.show("일정관리");
-        q.eq("펫", "시간이 안 정해진 할 일이 4개 있어. 자동 배치를 눌러 볼래?", q.schedBubble());
+        q.eq("펫", "이번 주 남은 날의 시각 없는 할 일이 4개 있어. 자동 배치를 눌러 볼래?", q.schedBubble());
         q.step("2", "자동 배치를 누른다");
         q.eq("결과 창", "11월 20일 23:40부터 11월 22일까지, 할 일마다 그 날짜 안의 빈 시간에 놓았어요"
                 + " / 세법 요약|11월 20일|23:40 ~ 24:00|20분 / 재무회계|11월 21일|09:00 ~ 10:00|60분"
                 + " / 경영학|11월 21일|10:00 ~ 11:00|60분 / 원가회계|" + UNPLACED + "|30분", q.placement(q.place()));
-        q.step("3", "23:55에 원가회계의 시간 정하기를 누른다");
+        q.step("3", "23:55에 원가회계의 시각 정하기를 누른다");
         q.at("2026-11-20T23:55");
         Task t = q.task("원가회계");
         TimeEditor e = new TimeEditor(t, q.app.store.now);
@@ -59,7 +59,7 @@ final class Flows8910 {
         q.open();
         q.eq("말풍선", "오늘은 할 일이 없어. 아래 칸에 하나 적어 볼까?", q.app.store.talk);
         q.has("위 막대", "연속 접속 1일", q.top());
-        q.step("2", "기출 1회독을 넣고 시간 정하기를 누른다");
+        q.step("2", "기출 1회독을 넣고 시각 정하기를 누른다");
         q.quick("기출 1회독");
         q.eq("시작", "09:00", new TimeEditor(q.task("기출 1회독"), q.app.store.now).start.getValue());
         q.step("3", "일정관리에서 자동 배치를 누른다");
@@ -97,16 +97,16 @@ final class Flows8910 {
         q.step("1", "달력 13을 누른다");
         q.select("2026-11-13");
         q.eq("달력 13", "13 토익 RC(흐림)", q.cell(13));
-        q.eq("목록", "시간 안 정한 할 일 / 시간 정하기 [x] 토익 RC 60분", q.rows());
+        q.eq("목록", "시각 없는 할 일 / 시각 정하기 [x] 토익 RC 60분", q.rows());
         q.eq("말풍선", "11월 13일 할 일은 1개야.", q.app.store.talk);
         q.step("2", "pet에서 쿠션을 두 번 누른다");
         q.app.show("pet");
         Flows12.press(q, "쿠션");
-        q.has("첫 번째", "쿠션(흐림)", q.pet());
+        q.has("첫 번째", "없어., 쿠션", q.pet());
         Flows12.press(q, "쿠션");
         q.has("두 번째", "쿠션 ✓", q.pet());
         q.step("3", "상점을 연다");
-        q.has("상점", "쿠션 보유 중 꺼짐 / 화분 - 켜짐", q.shop());
+        q.has("상점", "쿠션 보유 중 버튼 없음 / 화분 살 수 있어요 켜짐", q.shop());
         q.end();
     }
 
@@ -175,7 +175,7 @@ final class Flows8910 {
         h.title.setText("실험 정리");
         h.minutes.setValue(720);
         q.yes("저장", q.save(h, null));
-        q.has("목록", "시간 정하기 [ ] 실험 정리 720분", q.rows());
+        q.has("목록", "시각 정하기 [ ] 실험 정리 720분", q.rows());
         q.step("4", "실험 정리 걸리는 시간에 730을 쳐 넣고 칸을 벗어난다");
         Task exp = q.task("실험 정리");
         TaskForm edit = new TaskForm(exp, exp.date, q.app.store.now);
@@ -205,7 +205,7 @@ final class Flows8910 {
         q.step("3", "달력 20에서 논문 읽기를 삭제한다");
         q.select("2026-11-20");
         q.yes("지움", q.delete(t, 0));
-        q.eq("확인 창", "'논문 읽기'를 지울까요?", q.lastQuestion);
+        q.eq("확인 창", "'논문 읽기'를 삭제할까요?", q.lastQuestion);
         q.eq("상태", "10P 경험치10 횟수1 있음 false", q.app.store.points + "P 경험치" + q.app.store.exp + " 횟수" + q.count()
                 + " 있음 " + q.app.store.tasks.contains(t));
         q.end();
