@@ -74,19 +74,24 @@ final class Flows67 {
         q.open();
         TaskForm f = q.form(q.main.calendar.selected().toString());
         q.step("1", "제목을 비우고 저장한다");
-        q.eq("저장", "false 제목을 써 주세요", q.save(f, null) + " " + f.error.getText());
+        q.eq("저장", "false 제목을 써 주세요", q.save(f, null) + " " + f.errorText());
         q.step("2", "제목 칸에 101자를 붙여 넣는다");
         f.title.setText("가".repeat(101));
         q.eq("제목 길이", 100, f.title.getText().length());
-        q.step("3", "국시 모의고사, 걸리는 시간 25로 저장한다");
+        q.step("3", "국시 모의고사, 걸리는 시간 칸에 27을 쳐 넣고 칸을 벗어난다");
         f.title.setText("국시 모의고사");
-        f.minutes.setValue(25);
-        q.eq("저장", "false 10분부터 720분까지, 10분 단위예요", q.save(f, null) + " " + f.error.getText());
-        q.step("4", "제목을 비우고 25인 채로 저장한다");
+        q.eq("걸리는 시간", 30, Flows8910.type(f.minutes, "27"));
+        q.step("4", "제목을 비우고 시작 시각 23:30, 40분으로 저장한다");
         f.title.setText("");
-        q.eq("오류 두 개(칸 순서)", "false 제목을 써 주세요 / 10분부터 720분까지, 10분 단위예요", q.save(f, null) + " " + f.error.getText());
-        q.step("5", "국시 모의고사, 30분으로 저장한다");
+        f.timed.doClick();
+        f.start.setValue("23:30");
+        f.minutes.setValue(40);
+        q.eq("오류 두 개(칸 순서)", "false 제목을 써 주세요 / 하루 안에 끝나야 해요", q.save(f, null) + " " + f.errorText());
+        q.eq("오류가 보이는 칸", "true true false", f.errors.get("제목").isVisible() + " " + f.errors.get("시작 시각").isVisible()
+                + " " + f.errors.get("걸리는 시간").isVisible());
+        q.step("5", "국시 모의고사, 시작 시각 끄고 30분으로 저장한다");
         f.title.setText("국시 모의고사");
+        f.timed.doClick();
         f.minutes.setValue(30);
         q.yes("저장", q.save(f, null));
         q.has("목록", "시간 정하기 [ ] 국시 모의고사 30분", q.rows());
@@ -152,12 +157,12 @@ final class Flows67 {
         q.step("2", "대학수학 화 09:00 75분을 매주 반복(끝 그대로)으로 넣는다");
         q.eq("기본 날짜", "2027-03-02", q.sched.defaultDate());
         q.yes("저장", fixed(q, "대학수학", "2027-03-02", "09:00", 75, null));
-        q.eq("화요일 개수", 16, Flows345.dates(q, "대학수학", DayOfWeek.TUESDAY).split(",").length);
+        q.eq("화요일 개수", 16, Flows345.count(q, "대학수학", DayOfWeek.TUESDAY));
         q.step("3", "대학수학 목, 글쓰기 수를 넣는다");
         q.yes("목", fixed(q, "대학수학", "2027-03-04", "09:00", 75, "2027-06-17"));
         q.yes("수", fixed(q, "글쓰기", "2027-03-03", "13:00", 100, "2027-06-16"));
-        q.eq("목, 수 개수", "16 16", Flows345.dates(q, "대학수학", DayOfWeek.THURSDAY).split(",").length + " "
-                + Flows345.dates(q, "글쓰기", DayOfWeek.WEDNESDAY).split(",").length);
+        q.eq("목, 수 개수", "16 16", Flows345.count(q, "대학수학", DayOfWeek.THURSDAY) + " "
+                + Flows345.count(q, "글쓰기", DayOfWeek.WEDNESDAY));
         q.step("4", "홈으로 간다");
         q.app.show("홈");
         q.eq("목록", "09:00~10:15 [ ] 고정 대학수학 75분", q.rows());

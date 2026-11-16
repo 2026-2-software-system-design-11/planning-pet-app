@@ -5,12 +5,16 @@ import java.awt.Container;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-/** QA 동작. 사람이 누르는 버튼과 칸을 같은 길로 부른다. 창(JDialog)은 띄우지 않고 그 안의 함수를 부른다. */
+/**
+ * QA 동작. 체크, 빠른 추가, 출석, 화면 바꾸기는 사람이 누르는 버튼과 칸을 누른다. 창(JDialog) 안의 동작은 창을 띄우지 않고
+ * 그 창의 칸을 채운 뒤 창의 버튼이 부르는 함수를 부른다.
+ */
 class QaDrive extends QaCore {
     MainScreen main;
     ScheduleScreen sched;
     PetScreen pet;
     String lastQuestion;
+    String lastOptions;
 
     QaDrive(String flow) {
         super(flow);
@@ -58,8 +62,36 @@ class QaDrive extends QaCore {
                 .findFirst().orElseThrow();
     }
 
+    /** 보이는 화면의 목록 줄에서 그 일의 체크박스를 누른다. 홈이면 메인 목록, 일정관리면 오른쪽 목록. */
     void check(Task t) {
-        app.actions.check(t);
+        Container list = "일정관리".equals(app.current()) ? sched.untimed : main.rows;
+        javax.swing.JCheckBox box = boxOf(list, t);
+        if (box == null) {
+            yes("'" + t.title + "' 체크박스가 화면 목록에 있음", false);
+            return;
+        }
+        box.doClick();
+    }
+
+    static javax.swing.JCheckBox boxOf(Component c, Task t) {
+        if (c instanceof javax.swing.JCheckBox b && b.getClientProperty(Task.class) == t) {
+            return b;
+        }
+        if (c instanceof Container k) {
+            for (Component child : k.getComponents()) {
+                javax.swing.JCheckBox b = boxOf(child, t);
+                if (b != null) {
+                    return b;
+                }
+            }
+        }
+        return null;
+    }
+
+    /** 시계를 옮기고 30초 타이머가 한 번 돈 것처럼 날 바뀜을 확인한다(06의 23번). */
+    void tick(String dateTime) {
+        at(dateTime);
+        app.watcher.tick();
     }
     void select(String date) {
         app.show("홈");
@@ -77,6 +109,7 @@ class QaDrive extends QaCore {
     boolean delete(Task t, int answer) {
         app.actions.chooser = (message, options) -> {
             lastQuestion = message;
+            lastOptions = String.join(", ", options);
             return answer;
         };
         return app.actions.delete(t);

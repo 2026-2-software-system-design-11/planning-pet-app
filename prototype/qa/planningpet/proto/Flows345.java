@@ -43,6 +43,11 @@ final class Flows345 {
                 .map(t -> t.date.toString()).sorted().collect(Collectors.joining(","));
     }
 
+    /** 그 제목, 그 요일의 일정 수. 없으면 0이다. */
+    static long count(Qa q, String title, java.time.DayOfWeek dow) {
+        return q.app.store.tasks.stream().filter(t -> t.title.equals(title) && t.date.getDayOfWeek() == dow).count();
+    }
+
     /** 일정관리에서 일정 추가로 고정 일정을 매주 반복으로 넣는다. */
     static boolean shift(Qa q, String date, String time, int minutes, String end) {
         TaskForm f = q.form(q.sched.defaultDate().toString());
@@ -64,6 +69,7 @@ final class Flows345 {
         TaskForm f = q.form(q.sched.defaultDate().toString());
         q.eq("날짜, 종류, 반복 칸", "2026-11-16 할 일 false",
                 Ui.dateOf(f.date) + (f.task.isSelected() ? " 할 일 " : " 고정 일정 ") + f.repeat.isEnabled());
+        q.eq("반복 안내", "true 반복은 고정 일정만 할 수 있어요", f.repeatHint.isVisible() + " " + f.repeatHint.getText());
         q.step("2", "종류를 고정 일정으로 바꾼다");
         f.fixed.doClick();
         q.eq("시작 시각 정하기(켜짐, 활성), 반복 칸", "true false true",
@@ -77,10 +83,10 @@ final class Flows345 {
         q.eq("끝 시각, 반복 끝", "끝 22:00 2027-03-02", f.endLabel.getText() + " " + Ui.dateOf(f.repeatEnd));
         q.step("4", "끝 날짜를 2026-11-10으로 바꿔 저장한다");
         Ui.setDate(f.repeatEnd, QaDrive.d("2026-11-10"));
-        q.eq("저장", "false 끝 날짜가 시작 날짜보다 앞이에요", q.save(f, null) + " " + f.error.getText());
+        q.eq("저장", "false 끝 날짜가 시작 날짜보다 앞이에요", q.save(f, null) + " " + f.errorText());
         q.step("5", "끝 날짜를 2027-05-18로 바꿔 저장한다");
         Ui.setDate(f.repeatEnd, QaDrive.d("2027-05-18"));
-        q.eq("저장", "false 반복은 26번까지예요", q.save(f, null) + " " + f.error.getText());
+        q.eq("저장", "false 반복은 26번까지예요", q.save(f, null) + " " + f.errorText());
         q.step("6", "끝 날짜를 2026-12-15로 바꿔 저장한다");
         Ui.setDate(f.repeatEnd, QaDrive.d("2026-12-15"));
         q.yes("저장", q.save(f, null));
@@ -88,7 +94,7 @@ final class Flows345 {
                 dates(q, "편의점 알바", java.time.DayOfWeek.TUESDAY));
         q.step("7", "목요일 알바를 넣는다");
         q.yes("저장", shift(q, "2026-11-19", "18:00", 240, "2026-12-17"));
-        q.eq("목요일 개수", 5, dates(q, "편의점 알바", java.time.DayOfWeek.THURSDAY).split(",").length);
+        q.eq("목요일 개수", 5, count(q, "편의점 알바", java.time.DayOfWeek.THURSDAY));
         q.step("8", "토요일 알바를 넣는다(끝은 일요일)");
         q.yes("저장", shift(q, "2026-11-21", "10:00", 360, "2026-12-20"));
         q.eq("토요일", "2026-11-21,2026-11-28,2026-12-05,2026-12-12,2026-12-19",
@@ -120,14 +126,14 @@ final class Flows345 {
         q.sched.move(QaDrive.d("2026-11-23"));
         q.step("2", "이후 반복 모두를 누른다");
         q.yes("지움", q.delete(q.task("편의점 알바", "2026-11-28"), 1));
-        q.eq("확인 창", "'편의점 알바'는 매주 반복 일정이에요.", q.lastQuestion);
+        q.eq("확인 창", "'편의점 알바'는 매주 반복 일정이에요. / 이 일정만, 이후 반복 모두, 취소", q.lastQuestion + " / " + q.lastOptions);
         q.eq("토요일", "2026-11-21", dates(q, "편의점 알바", java.time.DayOfWeek.SATURDAY));
         q.step("3", "토 21을 이 일정만으로 삭제한다");
         q.sched.move(QaDrive.d("2026-11-16"));
         q.yes("지움", q.delete(q.task("편의점 알바", "2026-11-21"), 0));
-        q.eq("토, 화, 목 개수", "0 5 5", (dates(q, "편의점 알바", java.time.DayOfWeek.SATURDAY).isEmpty() ? 0 : -1)
-                + " " + dates(q, "편의점 알바", java.time.DayOfWeek.TUESDAY).split(",").length
-                + " " + dates(q, "편의점 알바", java.time.DayOfWeek.THURSDAY).split(",").length);
+        q.eq("토, 화, 목 개수", "0 5 5", count(q, "편의점 알바", java.time.DayOfWeek.SATURDAY)
+                + " " + count(q, "편의점 알바", java.time.DayOfWeek.TUESDAY)
+                + " " + count(q, "편의점 알바", java.time.DayOfWeek.THURSDAY));
         q.end();
     }
 
@@ -164,10 +170,11 @@ final class Flows345 {
         q.eq("말풍선", "잘했어! 오늘 보상은 다 받았지만 체크는 계속 돼.", q.app.store.talk);
         q.eq("상태", "610P 경험치240 횟수20 성취도21/22", st(q));
         q.step("2", "창을 켜 둔 채 04:00을 넘긴다");
-        q.at("2026-11-18T04:00:30");
+        q.tick("2026-11-18T04:00:30");
         q.eq("말풍선", "오늘은 할 일이 없어. 어제 못 끝낸 일 1개는 달력에 남아 있어. 아래 칸에 하나 적어 볼까?", q.app.store.talk);
         q.eq("위 막대", "연속 접속 31일, 보유 610P, 출석 +20P", q.top());
         q.eq("고른 날짜", "2026-11-18", q.main.calendar.selected());
+        q.eq("성취도", "비어 있음", q.progress());
         q.step("3", "출석한다");
         q.attend();
         q.eq("포인트", 630, q.app.store.points);
