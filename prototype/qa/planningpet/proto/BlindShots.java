@@ -89,7 +89,7 @@ public final class BlindShots {
         System.exit(0);
     }
 
-    private static void shoot(JComponent c, Dimension size, String title, File images, File key, int n, PrintWriter out,
+    static void shoot(JComponent c, Dimension size, String title, File images, File key, int n, PrintWriter out,
             String name) throws Exception {
         Dimension d = size != null ? size : c.getPreferredSize();
         c.setSize(d);

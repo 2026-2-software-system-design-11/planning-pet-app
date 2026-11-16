@@ -13,6 +13,9 @@ class QaCore {
     static final List<Check> CHECKS = new ArrayList<>();
     static File shots = new File("qa-out");
     static final List<String> SHOTS = new ArrayList<>();
+    /** 걸음 단위 점검용: 이 폴더가 있으면 단계마다 동작 전 화면을 그리고 동작 글을 STEPS에 남긴다. */
+    static File stepShots;
+    static final List<String> STEPS = new ArrayList<>();
 
     App app;
     final String flow;
@@ -29,6 +32,15 @@ class QaCore {
     /** 다음 단계를 시작한다. 앞 단계에서 틀린 값이 있었으면 그 화면을 그려 둔다. */
     void step(String no, String what) {
         finishStep();
+        if (stepShots != null && depth == 0 && app != null) {
+            try {
+                stepShots.mkdirs();
+                Snap.save(app.root, new Dimension(1000, 680), new File(stepShots, flow + "-" + no + ".png"));
+                STEPS.add(flow + "\t" + no + "\t" + what);
+            } catch (Exception e) {
+                System.out.println("단계 화면을 그리지 못함: " + flow + " " + no + " " + e);
+            }
+        }
         step = depth > 0 ? "앞" + no : no;
         action = what;
         stepFailed = false;

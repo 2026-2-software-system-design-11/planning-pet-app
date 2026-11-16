@@ -12,6 +12,9 @@ final class QaRun {
     public static void main(String[] args) throws Exception {
         File report = new File(args.length > 0 ? args[0] : "qa-out/report.md");
         QaCore.shots = new File(args.length > 1 ? args[1] : "qa-out");
+        if (args.length > 2) {
+            QaCore.stepShots = new File(args[2]);
+        }
         Map<String, Runnable> flows = new LinkedHashMap<>();
         Flows12.add(flows);
         Flows345.add(flows);
@@ -25,6 +28,9 @@ final class QaRun {
             }
         }
         QaReport.write(report, flows.keySet());
+        if (QaCore.stepShots != null) {
+            java.nio.file.Files.write(new File(QaCore.stepShots, "steps.tsv").toPath(), QaCore.STEPS);
+        }
         long failed = QaCore.CHECKS.stream().filter(c -> !c.ok()).count();
         System.out.println("흐름 " + flows.size() + "개, 확인 " + QaCore.CHECKS.size() + "개, 실패 " + failed + "개");
     }
