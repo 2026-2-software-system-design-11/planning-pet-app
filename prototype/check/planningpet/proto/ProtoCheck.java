@@ -93,6 +93,15 @@ public final class ProtoCheck {
         eq("T-DEL-1", "10 1", r.points + " " + r.rewardCount);
         eq("숫자 조사", "을 를", Actions.josa("과제 1", "을", "를") + " " + Actions.josa("과제 2", "을", "를"));
         eq("10분 단위", "10분부터 720분까지, 10분 단위예요", tenMinute());
+        Store c = MockData.sample();
+        java.time.LocalDate nov = java.time.LocalDate.of(2026, 11, 1);
+        Store.CellPreview c14 = c.cellPreview(nov.withDayOfMonth(14));
+        Store.CellPreview c13 = c.cellPreview(nov.withDayOfMonth(13));
+        Store.CellPreview c15 = c.cellPreview(nov.withDayOfMonth(15));
+        eq("T-CAL-1", "알고리즘… true", c14.title() + " " + c14.open());
+        eq("T-CAL-2", null, c.cellPreview(nov.withDayOfMonth(16)));
+        eq("T-CAL-3", "토익 스터… false", c13.title() + " " + c13.open());
+        eq("T-CAL-4", "은행 서류 true", c15.title() + " " + c15.open());
         System.out.println(failed == 0 ? "모두 통과" : failed + "개 실패");
         System.exit(failed == 0 ? 0 : 1);
     }
