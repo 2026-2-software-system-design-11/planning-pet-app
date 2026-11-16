@@ -35,7 +35,12 @@ public final class PickDialog {
         panel.setBorder(BorderFactory.createEmptyBorder(14, 16, 14, 16));
         panel.add(new JLabel("<html><b>함께할 반려동물을 골라 주세요</b></html>"), BorderLayout.NORTH);
         panel.add(animals, BorderLayout.CENTER);
-        panel.add(Ui.flow(new JLabel("이름"), name, Ui.hint("비우면 나비, 바둑이"), start), BorderLayout.SOUTH);
+        JPanel bottom = new JPanel(new BorderLayout(0, 2));
+        bottom.add(Ui.flow(new JLabel("이름"), name, start), BorderLayout.NORTH);
+        JLabel hint = Ui.hint("비워 두면 나비, 바둑이로 불러요");
+        hint.setBorder(BorderFactory.createEmptyBorder(0, 44, 0, 0));
+        bottom.add(hint, BorderLayout.SOUTH);
+        panel.add(bottom, BorderLayout.SOUTH);
     }
 
     /** 시작하기 버튼과 같다. 고른 동물과 이름(비우면 나비, 바둑이)을 넣는다. */
