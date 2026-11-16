@@ -19,7 +19,15 @@ public final class App {
     public final Game game;
     public final Talk talk;
     public final Actions actions;
-    public final JPanel root = new JPanel(new BorderLayout());
+    public final JPanel root = new JPanel(new BorderLayout()) {
+        @Override
+        protected void paintComponent(java.awt.Graphics g) {
+            super.paintComponent(g);
+            if (Images.LANDSCAPE != null) {
+                g.drawImage(Images.LANDSCAPE, 0, 0, getWidth(), getHeight(), null);
+            }
+        }
+    };
     private final CardLayout cards = new CardLayout();
     private final JPanel center = new JPanel(cards);
     private final JPanel nav = new JPanel(new GridLayout(0, 1, 0, 6));
@@ -34,10 +42,11 @@ public final class App {
         this.talk = new Talk(store);
         this.actions = new Actions(this);
         root.add(topBar(), BorderLayout.NORTH);
-        JPanel navWrap = new JPanel(new BorderLayout());
-        navWrap.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+        JPanel navWrap = new Card(new BorderLayout(), Theme.CARD_RADIUS).filled(Theme.SIDE);
+        navWrap.setBorder(BorderFactory.createEmptyBorder(12, 10, 12, 10));
         navWrap.add(nav, BorderLayout.NORTH);
         root.add(navWrap, BorderLayout.WEST);
+        root.setBorder(BorderFactory.createEmptyBorder(0, 12, 12, 12));
         root.add(center, BorderLayout.CENTER);
         root.setPreferredSize(new Dimension(1000, 680));
         attend.addActionListener(e -> {
@@ -52,7 +61,8 @@ public final class App {
     private JPanel topBar() {
         JPanel bar = new JPanel(new BorderLayout());
         bar.setBorder(BorderFactory.createEmptyBorder(6, 12, 6, 12));
-        JLabel name = new JLabel("<html><b>플래닝펫</b></html>");
+        JLabel name = new JLabel("플래닝펫");
+        name.setFont(Theme.bold(23));
         bar.add(name, BorderLayout.WEST);
         JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 16, 0));
         right.add(streak);
@@ -65,6 +75,8 @@ public final class App {
     /** 내비게이션 버튼과 화면을 함께 넣는다. screen이 null이면 비활성 버튼(통계, D-05)이다. */
     public void addScreen(String name, JComponent screen) {
         JToggleButton b = new JToggleButton(name);
+        b.putClientProperty(RoundButtonUI.NAV, Boolean.TRUE);
+        b.setFont(Theme.bold(20));
         navGroup.add(b);
         nav.add(b);
         if (screen == null) {

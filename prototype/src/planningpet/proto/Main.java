@@ -6,7 +6,7 @@ import javax.swing.SwingUtilities;
 /** 프로토타입 실행 진입점. --first-run이면 반려동물 고르기부터 한다. 창을 닫으면 끝난다(트레이는 뺐다). */
 public final class Main {
     static {
-        javax.swing.UIManager.put("swing.boldMetal", Boolean.FALSE);
+        Theme.install();
     }
 
     private Main() {
@@ -40,6 +40,8 @@ public final class Main {
         app.addScreen("pet", new PetScreen(app));
         app.addScreen("통계", null);
         app.addScreen("설정", new SettingsScreen());
+        store.onChange(() -> Theme.clear(app.root));
+        Theme.clear(app.root);
         return app;
     }
 }
