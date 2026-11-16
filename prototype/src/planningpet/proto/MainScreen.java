@@ -85,7 +85,7 @@ public final class MainScreen extends JPanel {
         LocalDate date = calendar.selected();
         listTitle.setText(date.getMonthValue() + "월 " + date.getDayOfMonth() + "일 ("
                 + WEEK.charAt(date.getDayOfWeek().getValue() - 1) + ") 할 일");
-        rows.show(app.store.forDate(date), false);
+        rows.showPlan(app.store.dayPlan(date));
         calendar.refresh();
         bubble.setText(app.store.talk);
     }

@@ -35,52 +35,10 @@ public final class TaskRows extends JPanel {
         repaint();
     }
 
-    /** 끝낸 할 일도 제자리에 남고 회색 취소선이 된다(05 메인). */
+    /** 일정관리 오른쪽 목록: 날짜를 붙인다. */
     public void show(List<Task> tasks, boolean withDate) {
         removeAll();
-        for (Task t : tasks) {
-            JPanel row = new JPanel(new BorderLayout(6, 0));
-            row.setBorder(BorderFactory.createEmptyBorder(3, 0, 3, 0));
-            row.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, 30));
-            JCheckBox box = new JCheckBox();
-            box.setSelected(t.done);
-            box.addActionListener(e -> actions.check(t));
-            String when = withDate ? t.date.getMonthValue() + "/" + t.date.getDayOfMonth() + " " : "";
-            String title = t.done ? "<s>" + t.title + "</s>" : t.title;
-            JLabel label = new JLabel("<html>" + when + title + "</html>");
-            JLabel minutes = new JLabel(t.minutes + "분");
-            label.setFont(Theme.font(15));
-            if (t.done) {
-                label.setForeground(Theme.INK_DIM);
-                minutes.setForeground(Theme.INK_DIM);
-            }
-            row.add(box, BorderLayout.WEST);
-            row.add(label, BorderLayout.CENTER);
-            row.add(minutes, BorderLayout.EAST);
-            MouseAdapter mouse = new MouseAdapter() {
-                @Override
-                public void mousePressed(MouseEvent e) {
-                    if (e.isPopupTrigger()) {
-                        actions.menu(t).show(e.getComponent(), e.getX(), e.getY());
-                    }
-                }
-
-                @Override
-                public void mouseReleased(MouseEvent e) {
-                    mousePressed(e);
-                }
-
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    if (e.getClickCount() == 2) {
-                        actions.edit(t);
-                    }
-                }
-            };
-            label.addMouseListener(mouse);
-            row.addMouseListener(mouse);
-            add(row);
-        }
+        tasks.forEach(t -> add(row(t, null, withDate)));
         revalidate();
         repaint();
     }
