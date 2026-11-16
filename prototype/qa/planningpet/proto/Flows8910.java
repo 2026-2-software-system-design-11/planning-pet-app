@@ -109,4 +109,100 @@ final class Flows8910 {
         q.has("상점", "쿠션 보유 중 꺼짐 / 화분 - 켜짐", q.shop());
         q.end();
     }
+
+    static Qa uf101(Qa q) {
+        Store s = Personas.p10();
+        q.step("1", "강아지를 고르고 이름을 비운 채 시작하기");
+        PickDialog pd = new PickDialog();
+        pd.dog.setSelected(true);
+        pd.apply(s);
+        q.start(s);
+        q.open();
+        q.eq("말풍선", "안녕, 나는 바둑이야. 일정관리에서 이번 학기 수업부터 넣어 볼까?", q.app.store.talk);
+        q.step("2", "pet을 연다");
+        q.app.show("pet");
+        q.yes("부제", text(q.app.root).contains("강아지와 함께 성장하고, 작은 성취를 모아 보세요!"));
+        q.end();
+        return q;
+    }
+
+    static String text(java.awt.Container c) {
+        StringBuilder b = new StringBuilder();
+        for (java.awt.Component k : c.getComponents()) {
+            if (k instanceof javax.swing.JLabel l) {
+                b.append(l.getText()).append('\n');
+            } else if (k instanceof java.awt.Container inner) {
+                b.append(text(inner));
+            }
+        }
+        return b.toString();
+    }
+
+    static TaskForm timed(Qa q, String title, String start, int minutes) {
+        TaskForm f = q.form("2026-11-17");
+        f.title.setText(title);
+        f.timed.doClick();
+        f.start.setValue(start);
+        f.minutes.setValue(minutes);
+        return f;
+    }
+
+    static Qa uf102(Qa q) {
+        q.after(Flows8910::uf101);
+        q.app.show("홈");
+        q.step("1", "논문 읽기 23:30 30분");
+        TaskForm f = timed(q, "논문 읽기", "23:30", 30);
+        q.eq("끝", "끝 24:00", f.endLabel.getText());
+        q.yes("저장", q.save(f, null));
+        q.has("목록", "23:30~24:00 [ ] 논문 읽기 30분", q.rows());
+        q.step("2", "논문 정리 23:30 40분으로 저장한다");
+        TaskForm g = timed(q, "논문 정리", "23:30", 40);
+        q.eq("끝, 저장", "끝 24:10 false 하루 안에 끝나야 해요", g.endLabel.getText() + " " + q.save(g, null) + " " + g.error.getText());
+        q.step("3", "실험 정리 720분으로 저장한다");
+        TaskForm h = q.form("2026-11-17");
+        h.title.setText("실험 정리");
+        h.minutes.setValue(720);
+        q.yes("저장", q.save(h, null));
+        q.has("목록", "시간 정하기 [ ] 실험 정리 720분", q.rows());
+        q.step("4", "실험 정리 걸리는 시간에 730을 쳐 넣고 칸을 벗어난다");
+        Task exp = q.task("실험 정리");
+        TaskForm edit = new TaskForm(exp, exp.date, q.app.store.now);
+        var field = ((JSpinner.DefaultEditor) edit.minutes.getEditor()).getTextField();
+        field.setText("730");
+        try {
+            field.commitEdit();
+        } catch (java.text.ParseException ignored) {
+            // 범위 밖이면 받지 않는다.
+        }
+        q.eq("걸리는 시간", 720, edit.minutes.getValue());
+        q.step("5", "메모 칸에 1001자를 붙여 넣는다");
+        edit.memo.setText("메".repeat(1001));
+        q.eq("메모 길이", 1000, edit.memo.getText().length());
+        q.end();
+        return q;
+    }
+
+    static void uf103() {
+        Qa q = new Qa("UF-10-3").after(Flows8910::uf102);
+        Task t = q.task("논문 읽기");
+        q.step("1", "논문 읽기를 체크한다");
+        q.check(t);
+        q.eq("상태", "10P 경험치10 횟수1 성취도1/2", st(q));
+        q.eq("말풍선", "잘했어! +10P", q.app.store.talk);
+        q.step("2", "수정으로 11-20, 20:00, 120분으로 저장한다");
+        TaskForm f = new TaskForm(t, t.date, q.app.store.now);
+        Ui.setDate(f.date, QaDrive.d("2026-11-20"));
+        f.start.setValue("20:00");
+        f.minutes.setValue(120);
+        q.yes("저장", q.save(f, t));
+        q.eq("17일 목록에 없음, 달력 20", "true 20 논문 읽기(흐림)", !q.rows().contains("논문 읽기") + " " + q.cell(20));
+        q.eq("보상 그대로", "10P 횟수1 끝냄 true", q.app.store.points + "P 횟수" + q.count() + " 끝냄 " + t.done);
+        q.step("3", "달력 20에서 논문 읽기를 삭제한다");
+        q.select("2026-11-20");
+        q.yes("지움", q.delete(t, 0));
+        q.eq("확인 창", "'논문 읽기'를 지울까요?", q.lastQuestion);
+        q.eq("상태", "10P 경험치10 횟수1 있음 false", q.app.store.points + "P 경험치" + q.app.store.exp + " 횟수" + q.count()
+                + " 있음 " + q.app.store.tasks.contains(t));
+        q.end();
+    }
 }
