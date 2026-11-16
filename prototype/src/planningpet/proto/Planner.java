@@ -1,0 +1,100 @@
+package planningpet.proto;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+/** 자동 배치(06의 18번)와 시간표 열 나누기(06의 19번). */
+public final class Planner {
+    public record Placed(Task task, LocalTime start) {
+    }
+
+    public record Placement(List<Placed> placed, List<Task> unplaced) {
+    }
+
+    private Planner() {
+    }
+
+    public static List<Task> targets(Store s, LocalDate monday) {
+        return s.untimedOfWeek(monday).stream()
+                .filter(t -> !t.done && !t.date.isBefore(s.today()))
+                .sorted(Comparator.comparing((Task t) -> t.date)
+                        .thenComparing(t -> -t.minutes)
+                        .thenComparingLong(t -> t.seq))
+                .toList();
+    }
+
+    /** 지금을 10분 단위로 올린 시각. 이보다 앞에는 놓지 않는다. */
+    public static LocalDateTime earliest(Store s) {
+        LocalDateTime now = s.now.truncatedTo(ChronoUnit.MINUTES);
+        return now.plusMinutes((10 - now.getMinute() % 10) % 10);
+    }
+
+    public static Placement place(Store s, LocalDate monday) {
+        LocalDateTime earliest = earliest(s);
+        List<Placed> placed = new ArrayList<>();
+        List<Task> unplaced = new ArrayList<>();
+        for (Task t : targets(s, monday)) {
+            List<int[]> busy = new ArrayList<>();
+            s.timedOn(t.date).forEach(x -> busy.add(new int[] {x.startMinute(), x.endMinute()}));
+            placed.stream().filter(p -> p.task().date.equals(t.date)).forEach(p -> {
+                int from = p.start().getHour() * 60 + p.start().getMinute();
+                busy.add(new int[] {from, from + p.task().minutes});
+            });
+            Placed found = null;
+            for (int m = 9 * 60; m + t.minutes <= 24 * 60 && found == null; m += 10) {
+                int start = m;
+                boolean free = busy.stream().noneMatch(b -> start < b[1] && b[0] < start + t.minutes);
+                if (free && !t.date.atTime(m / 60, m % 60).isBefore(earliest)) {
+                    found = new Placed(t, LocalTime.of(m / 60, m % 60));
+                }
+            }
+            if (found == null) {
+                unplaced.add(t);
+            } else {
+                placed.add(found);
+            }
+        }
+        return new Placement(placed, unplaced);
+    }
+
+    /** 일정마다 {열 번호, 무리의 열 수}. 겹침으로 이어진 일정끼리 한 무리다. */
+    public static Map<Task, int[]> columns(List<Task> dayTasks) {
+        List<Task> sorted = dayTasks.stream()
+                .sorted(Comparator.comparingInt(Task::startMinute)
+                        .thenComparing(t -> -t.minutes)
+                        .thenComparingLong(t -> t.seq))
+                .toList();
+        Map<Task, int[]> result = new HashMap<>();
+        List<Task> cluster = new ArrayList<>();
+        List<Integer> columnEnds = new ArrayList<>();
+        int clusterEnd = -1;
+        for (Task t : sorted) {
+            if (t.startMinute() >= clusterEnd) {
+                cluster.forEach(c -> result.get(c)[1] = columnEnds.size());
+                cluster.clear();
+                columnEnds.clear();
+            }
+            int col = 0;
+            while (col < columnEnds.size() && columnEnds.get(col) > t.startMinute()) {
+                col++;
+            }
+            if (col == columnEnds.size()) {
+                columnEnds.add(t.endMinute());
+            } else {
+                columnEnds.set(col, t.endMinute());
+            }
+            result.put(t, new int[] {col, 0});
+            cluster.add(t);
+            clusterEnd = Math.max(clusterEnd, t.endMinute());
+        }
+        cluster.forEach(c -> result.get(c)[1] = columnEnds.size());
+        return result;
+    }
+}

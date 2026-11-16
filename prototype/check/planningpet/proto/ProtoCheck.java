@@ -32,6 +32,20 @@ public final class ProtoCheck {
         eq("T-VAL-7", null, TaskCheck.check(f));
         f.minutes.setValue(40);
         eq("T-VAL-8", "하루 안에 끝나야 해요", TaskCheck.check(f));
+        java.time.LocalDate nov16 = java.time.LocalDate.of(2026, 11, 16);
+        Store p = MockData.empty();
+        p.now = nov16.atTime(15, 23);
+        p.add(Task.Kind.FIXED, "수업", nov16, java.time.LocalTime.of(16, 0), 90, "", null);
+        p.add(Task.Kind.TASK, "끝낸 일", nov16, java.time.LocalTime.of(18, 0), 60, "", null).get(0).done = true;
+        Task a = p.add(Task.Kind.TASK, "A", nov16, null, 60, "", null).get(0);
+        Task b = p.add(Task.Kind.TASK, "B", nov16, null, 120, "", null).get(0);
+        var placed = Planner.place(p, nov16).placed();
+        eq("T-AUTO-3", "B 19:00 A 21:00", placed.get(0).task().title + " " + placed.get(0).start() + " "
+                + placed.get(1).task().title + " " + placed.get(1).start());
+        a.start = java.time.LocalTime.of(9, 0);
+        b.start = java.time.LocalTime.of(9, 0);
+        var cols = Planner.columns(java.util.List.of(a, b));
+        eq("T-TT-5", "1/2 0/2", cols.get(a)[0] + "/" + cols.get(a)[1] + " " + cols.get(b)[0] + "/" + cols.get(b)[1]);
         System.out.println(failed == 0 ? "모두 통과" : failed + "개 실패");
         System.exit(failed == 0 ? 0 : 1);
     }

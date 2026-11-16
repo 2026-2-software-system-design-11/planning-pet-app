@@ -19,7 +19,7 @@ public final class MainScreen extends JPanel {
     private final CalendarPanel calendar;
     private final TaskRows rows;
     private final JLabel listTitle = new JLabel();
-    private final JLabel bubble = new JLabel();
+    private final JLabel bubble = Ui.bubble();
     private final JTextField quick = new JTextField();
 
     public MainScreen(App app) {
@@ -43,9 +43,6 @@ public final class MainScreen extends JPanel {
 
         JPanel bottom = new JPanel(new BorderLayout());
         JPanel bubbleRow = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        bubble.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(0x999999), 1, true),
-                BorderFactory.createEmptyBorder(6, 10, 6, 10)));
         bubbleRow.add(bubble);
         bottom.add(bubbleRow, BorderLayout.NORTH);
         bottom.add(new WalkBar(app.store), BorderLayout.CENTER);

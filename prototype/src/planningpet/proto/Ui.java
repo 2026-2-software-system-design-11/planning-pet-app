@@ -29,6 +29,15 @@ public final class Ui {
         return p;
     }
 
+    /** 펫 말풍선. */
+    public static JLabel bubble() {
+        JLabel l = new JLabel();
+        l.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+                javax.swing.BorderFactory.createLineBorder(new Color(0x999999), 1, true),
+                javax.swing.BorderFactory.createEmptyBorder(6, 10, 6, 10)));
+        return l;
+    }
+
     public static LocalDate dateOf(JSpinner s) {
         return ((Date) s.getValue()).toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
     }
