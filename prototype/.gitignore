@@ -2,3 +2,5 @@ out/
 planningpet-prototype.jar
 sources.txt
 out-check/
+out-qa/
+qa-out/
