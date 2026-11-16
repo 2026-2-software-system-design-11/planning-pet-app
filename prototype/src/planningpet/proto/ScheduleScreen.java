@@ -104,18 +104,19 @@ public final class ScheduleScreen extends JPanel {
         untimed.show(app.store.untimedOfWeek(monday), true);
         int n = Planner.targets(app.store, monday).size();
         autoPlace.setEnabled(n > 0);
-        // 화면을 열거나 주를 옮기면 SCHEDULE_HINT, 그 밖에는 새로 생긴 펫 말(완료, 상한, 레벨 업)을 보인다.
-        showHint |= "일정관리".equals(app.current()) && !wasVisible;
-        wasVisible = "일정관리".equals(app.current());
+        // 화면을 열거나 주를 옮기면 SCHEDULE_HINT. 보이는 중에 바뀌면 새 펫 말(완료, 취소, 상한, 레벨 업)이
+        // 있을 때 그 말, 없으면 SCHEDULE_HINT를 다시 정한다(D-39).
+        boolean visible = "일정관리".equals(app.current());
+        boolean newTalk = app.store.talkSeq != lastTalk;
+        lastTalk = app.store.talkSeq;
         String text = null;
-        if (app.store.talkSeq != lastTalk) {
-            lastTalk = app.store.talkSeq;
-            text = "일정관리".equals(app.current()) ? app.store.talk : null;
-        }
-        if (showHint && "일정관리".equals(app.current())) {
+        if (visible) {
+            text = !wasVisible || showHint || !newTalk
+                    ? (n > 0 ? "시간이 안 정해진 할 일이 " + n + "개 있어. 자동 배치를 눌러 볼래?" : "지금 자동 배치할 할 일은 없어.")
+                    : app.store.talk;
             showHint = false;
-            text = n > 0 ? "시간이 안 정해진 할 일이 " + n + "개 있어. 자동 배치를 눌러 볼래?" : "지금 자동 배치할 할 일은 없어.";
         }
+        wasVisible = visible;
         if (text != null) {
             bubble.setText("<html><div style='width:150px'>" + Ui.esc(text) + "</div></html>");
         }
