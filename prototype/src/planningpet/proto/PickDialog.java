@@ -38,15 +38,20 @@ public final class PickDialog {
         panel.add(Ui.flow(new JLabel("이름"), name, Ui.hint("비우면 나비, 바둑이"), start), BorderLayout.SOUTH);
     }
 
+    /** 시작하기 버튼과 같다. 고른 동물과 이름(비우면 나비, 바둑이)을 넣는다. */
+    void apply(Store s) {
+        String n = name.getText().strip();
+        n = n.length() > 10 ? n.substring(0, 10) : n;
+        s.petKind = dog.isSelected() ? "DOG" : "CAT";
+        s.petName = n.isEmpty() ? (dog.isSelected() ? "바둑이" : "나비") : n;
+    }
+
     /** 고르면 true. 닫기 버튼으로 닫으면 false이고 앱은 아무것도 저장하지 않고 끝난다. */
     public boolean ask(Store s) {
         JDialog d = new JDialog((java.awt.Frame) null, "플래닝펫 시작", true);
         boolean[] picked = {false};
         start.addActionListener(e -> {
-            String n = name.getText().strip();
-            n = n.length() > 10 ? n.substring(0, 10) : n;
-            s.petKind = dog.isSelected() ? "DOG" : "CAT";
-            s.petName = n.isEmpty() ? (dog.isSelected() ? "바둑이" : "나비") : n;
+            apply(s);
             picked[0] = true;
             d.dispose();
         });

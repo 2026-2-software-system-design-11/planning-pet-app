@@ -49,6 +49,16 @@ public final class ShopDialog {
         return root;
     }
 
+    /** 사기 버튼과 같다. 샀으면 true. */
+    static boolean buy(App app, PetScreen pet, String item) {
+        if (app.game.buy(item) != 0) {
+            return false;
+        }
+        pet.say(item + " 고마워!");
+        app.store.changed();
+        return true;
+    }
+
     public static void open(App app, PetScreen pet) {
         JDialog d = new JDialog(SwingUtilities.getWindowAncestor(app.root), "상점", JDialog.ModalityType.APPLICATION_MODAL);
         JButton close = new JButton("닫기");
@@ -56,9 +66,7 @@ public final class ShopDialog {
         Runnable[] rebuild = new Runnable[1];
         rebuild[0] = () -> {
             d.setContentPane(content(app.store, item -> {
-                if (app.game.buy(item) == 0) {
-                    pet.say(item + " 고마워!");
-                    app.store.changed();
+                if (buy(app, pet, item)) {
                     rebuild[0].run();
                 }
             }, close));

@@ -67,13 +67,18 @@ public final class AutoPlaceDialog {
         d.setContentPane(content(app.store, monday, p, cancel, apply));
         cancel.addActionListener(e -> d.dispose());
         apply.addActionListener(e -> {
-            p.placed().forEach(x -> x.task().start = x.start());
+            apply(app, p);
             d.dispose();
-            app.store.changed();
         });
         d.pack();
         d.setLocationRelativeTo(app.root);
         d.setVisible(true);
+    }
+
+    /** 적용 버튼과 같다. */
+    static void apply(App app, Planner.Placement p) {
+        p.placed().forEach(x -> x.task().start = x.start());
+        app.store.changed();
     }
 
     private static String day(LocalDate d) {
