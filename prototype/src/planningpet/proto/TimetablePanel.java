@@ -56,17 +56,18 @@ public final class TimetablePanel extends JComponent {
     protected void paintComponent(Graphics graphics) {
         Graphics2D g = (Graphics2D) graphics.create();
         int day = (getWidth() - GUTTER) / 7;
-        g.setColor(Color.WHITE);
+        g.setColor(Theme.CARD_TOP);
         g.fillRect(0, 0, getWidth(), getHeight());
+        g.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
         int today = (int) (store.today().toEpochDay() - monday.toEpochDay());
         if (today >= 0 && today < 7) {
-            g.setColor(new Color(0xFFFBE6));
+            g.setColor(Theme.DAY);
             g.fillRect(GUTTER + today * day, 0, day, getHeight());
         }
         for (int h = 0; h < 24; h++) {
-            g.setColor(new Color(0xE6E6E6));
+            g.setColor(Theme.CARD_LINE);
             g.drawLine(GUTTER, h * HOUR, getWidth(), h * HOUR);
-            g.setColor(Color.GRAY);
+            g.setColor(Theme.INK_DIM);
             g.drawString(String.format("%02d:00", h), 6, h * HOUR + 14);
         }
         blocks.clear();
@@ -79,9 +80,11 @@ public final class TimetablePanel extends JComponent {
                 Rectangle r = new Rectangle(GUTTER + i * day + c[0] * w + 1, t.startMinute() * HOUR / 60,
                         w - 2, Math.max(t.minutes * HOUR / 60, 16));
                 blocks.put(r, t);
-                g.setColor(t.done ? new Color(0xE6E6E6) : t.kind == Task.Kind.FIXED ? new Color(0xD6E4F5) : new Color(0xFFF1C9));
-                g.fill(r);
-                g.setColor(t.done ? Color.GRAY : Color.DARK_GRAY);
+                g.setColor(t.done ? Theme.DAY : t.kind == Task.Kind.FIXED ? Theme.TRACK : Theme.MINT_SOFT);
+                g.fillRoundRect(r.x, r.y, r.width, r.height, 10, 10);
+                g.setColor(t.done ? Theme.CARD_LINE : t.kind == Task.Kind.FIXED ? Theme.CARD_LINE : Theme.MINT_LINE);
+                g.drawRoundRect(r.x, r.y, r.width - 1, r.height - 1, 10, 10);
+                g.setColor(t.done ? Theme.INK_DIM : Theme.INK);
                 g.setClip(r);
                 g.drawString(t.title, r.x + 4, r.y + 14);
                 if (t.done) {

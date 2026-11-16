@@ -25,18 +25,19 @@ public final class PetScreen extends JPanel {
         this.app = app;
         setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 12));
         room = new RoomView(app.store);
-        room.setBorder(BorderFactory.createLineBorder(Color.GRAY));
         JPanel top = new JPanel(new BorderLayout(12, 0));
         top.add(name, BorderLayout.WEST);
         top.add(expBar, BorderLayout.CENTER);
         top.add(expText, BorderLayout.EAST);
         add(top, BorderLayout.NORTH);
-        add(room, BorderLayout.CENTER);
-        JPanel bottom = new JPanel(new BorderLayout());
+        Card roomCard = new Card(new BorderLayout());
+        roomCard.add(room);
+        add(roomCard, BorderLayout.CENTER);
+        JPanel bottom = new Card(new BorderLayout());
         bottom.add(Ui.flow(new JLabel("<html><b>내 아이템</b></html>"), Ui.hint("누르면 방에 놓거나 치워요")),
                 BorderLayout.NORTH);
         bottom.add(items, BorderLayout.CENTER);
-        bottom.setPreferredSize(new Dimension(0, 80));
+        bottom.setPreferredSize(new Dimension(0, 110));
         add(bottom, BorderLayout.SOUTH);
         app.store.onChange(this::refresh);
     }
@@ -48,7 +49,8 @@ public final class PetScreen extends JPanel {
 
     private void refresh() {
         Store s = app.store;
-        name.setText("<html><b>" + s.petName + "</b> Lv." + Rules.level(s.exp) + "</html>");
+        name.setText(s.petName + " Lv." + Rules.level(s.exp));
+        name.setFont(Theme.font(23));
         expBar.setValue((int) (Rules.expRatio(s.exp) * 1000));
         expText.setText(Rules.expText(s.exp));
         long done = s.forDate(s.today()).stream().filter(t -> t.done).count();
@@ -62,7 +64,6 @@ public final class PetScreen extends JPanel {
             }
             boolean placed = s.placed.contains(item);
             JToggleButton b = new JToggleButton(placed ? item + " ✓" : item, placed);
-            b.setForeground(placed ? Color.DARK_GRAY : Color.GRAY);
             b.addActionListener(e -> {
                 if (!s.placed.remove(item)) {
                     s.placed.add(item);
@@ -71,7 +72,7 @@ public final class PetScreen extends JPanel {
             });
             items.add(b);
         }
-        JButton shop = new JButton("<html><b>상점</b></html>");
+        JButton shop = new JButton("상점");
         shop.addActionListener(e -> ShopDialog.open(app, this));
         items.add(shop);
         items.revalidate();

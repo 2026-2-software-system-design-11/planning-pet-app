@@ -29,19 +29,22 @@ public final class MainScreen extends JPanel {
         calendar = new CalendarPanel(app.store, this::select);
         rows = new TaskRows(app.actions);
 
-        JPanel list = new JPanel(new BorderLayout(0, 6));
+        JPanel list = new Card(new BorderLayout(0, 6));
+        listTitle.setFont(Theme.font(23));
         list.add(listTitle, BorderLayout.NORTH);
         JScrollPane scroll = new JScrollPane(rows);
         scroll.setBorder(BorderFactory.createEmptyBorder());
         list.add(scroll, BorderLayout.CENTER);
         list.add(quickAdd(), BorderLayout.SOUTH);
 
-        JPanel body = new JPanel(new GridLayout(1, 2, 24, 0));
-        body.add(calendar);
+        JPanel body = new JPanel(new GridLayout(1, 2, 16, 0));
+        Card calendarCard = new Card(new BorderLayout());
+        calendarCard.add(calendar);
+        body.add(calendarCard);
         body.add(list);
         add(body, BorderLayout.CENTER);
 
-        JPanel bottom = new JPanel(new BorderLayout());
+        JPanel bottom = new Card(new BorderLayout());
         JPanel bubbleRow = new JPanel(new FlowLayout(FlowLayout.CENTER));
         bubbleRow.add(bubble);
         bottom.add(bubbleRow, BorderLayout.NORTH);
@@ -64,7 +67,8 @@ public final class MainScreen extends JPanel {
             app.store.changed();
         });
         JLabel hint = new JLabel("시간을 안 쓰면 30분으로 들어가요");
-        hint.setForeground(Color.GRAY);
+        hint.setForeground(Theme.INK_DIM);
+        hint.setFont(Theme.font(12));
         panel.add(quick, BorderLayout.CENTER);
         panel.add(add, BorderLayout.EAST);
         panel.add(hint, BorderLayout.SOUTH);
@@ -79,8 +83,8 @@ public final class MainScreen extends JPanel {
 
     private void refresh() {
         LocalDate date = calendar.selected();
-        listTitle.setText("<html><b>" + date.getMonthValue() + "월 " + date.getDayOfMonth() + "일 ("
-                + WEEK.charAt(date.getDayOfWeek().getValue() - 1) + ") 할 일</b></html>");
+        listTitle.setText(date.getMonthValue() + "월 " + date.getDayOfMonth() + "일 ("
+                + WEEK.charAt(date.getDayOfWeek().getValue() - 1) + ") 할 일");
         rows.show(app.store.forDate(date), false);
         calendar.refresh();
         bubble.setText(app.store.talk);

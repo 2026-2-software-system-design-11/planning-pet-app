@@ -48,9 +48,11 @@ public final class ScheduleScreen extends JPanel {
         JScrollPane scroll = new JScrollPane(table, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scroll.setColumnHeaderView(header);
         scroll.getViewport().setViewPosition(new Point(0, 8 * TimetablePanel.HOUR));
-        add(scroll, BorderLayout.CENTER);
-        JPanel side = new JPanel(new BorderLayout(0, 8));
-        side.setPreferredSize(new Dimension(220, 0));
+        Card tableCard = new Card(new BorderLayout());
+        tableCard.add(scroll);
+        add(tableCard, BorderLayout.CENTER);
+        JPanel side = new Card(new BorderLayout(0, 8));
+        side.setPreferredSize(new Dimension(240, 0));
         side.add(new JLabel("<html><b>시각 없는 할 일</b></html>"), BorderLayout.NORTH);
         side.add(untimed, BorderLayout.CENTER);
         JPanel petCorner = new JPanel(new BorderLayout());
@@ -84,15 +86,15 @@ public final class ScheduleScreen extends JPanel {
             JLabel label = new JLabel(WEEK.charAt(i) + " " + d.getDayOfMonth(), SwingConstants.CENTER);
             if (d.equals(app.store.today())) {
                 label.setOpaque(true);
-                label.setBackground(new Color(0xFFE58F));
+                label.setBackground(Theme.DAY_SELECTED);
             }
             header.add(label);
         }
         untimed.show(app.store.untimedOfWeek(monday), true);
         int n = Planner.targets(app.store, monday).size();
         autoPlace.setEnabled(n > 0);
-        bubble.setText("<html>" + (n > 0 ? "시간이 안 정해진 할 일이 " + n + "개 있어.<br>자동 배치를 눌러 볼래?"
-                : "이번 주 할 일은 모두<br>시간이 정해졌어.") + "</html>");
+        bubble.setText("<html><div style='width:150px'>" + (n > 0 ? "시간이 안 정해진 할 일이 " + n + "개 있어. 자동 배치를 눌러 볼래?"
+                : "이번 주 할 일은 모두 시간이 정해졌어.") + "</div></html>");
         table.repaint();
         header.revalidate();
     }

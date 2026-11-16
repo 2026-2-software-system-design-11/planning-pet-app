@@ -9,6 +9,22 @@ public final class Pet {
     private Pet() {
     }
 
+    /** 고양이는 디자인 시스템의 그림(모습 단계별), 강아지는 임시 그림. size는 그림 상자의 한 변. */
+    public static void drawAt(Graphics2D g, Store s, int x, int ground, int size) {
+        int stage = Rules.stage(Rules.level(s.exp));
+        java.awt.image.BufferedImage im = "CAT".equals(s.petKind) ? Images.cat(stage) : null;
+        if (im != null) {
+            Images.fit(g, im, x - size / 2, ground - size, size, size);
+        } else {
+            Graphics2D h = (Graphics2D) g.create();
+            h.translate(x, ground);
+            double k = size / 50.0;
+            h.scale(k, k);
+            draw(h, s.petKind, 0, 0, stage, false);
+            h.dispose();
+        }
+    }
+
     /** (x, ground)는 발이 닿는 가운데 점이다. walking이면 다리를 벌린다. */
     public static void draw(Graphics2D g, String kind, int x, int ground, int stage, boolean walking) {
         int s = 14 + stage * 6;
