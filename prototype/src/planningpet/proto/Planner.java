@@ -32,7 +32,7 @@ public final class Planner {
 
     /** 지금을 10분 단위로 올린 시각. 이보다 앞에는 놓지 않는다. */
     public static LocalDateTime earliest(Store s) {
-        LocalDateTime now = s.now.truncatedTo(ChronoUnit.MINUTES);
+        LocalDateTime now = s.now.truncatedTo(ChronoUnit.MINUTES).plusMinutes(s.now.getSecond() > 0 ? 1 : 0);
         return now.plusMinutes((10 - now.getMinute() % 10) % 10);
     }
 

@@ -54,6 +54,9 @@ public final class TimeEditor {
 
     /** 끝이 24:00을 넘으면 문장, 아니면 null. */
     String check() {
+        if ((int) minutes.getValue() % 10 != 0) {
+            return "10분부터 720분까지, 10분 단위예요";
+        }
         LocalTime s = LocalTime.parse((String) start.getValue());
         return s.getHour() * 60 + s.getMinute() + (int) minutes.getValue() > 24 * 60 ? "하루 안에 끝나야 해요" : null;
     }

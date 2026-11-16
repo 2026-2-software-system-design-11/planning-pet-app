@@ -17,6 +17,12 @@ public final class TaskCheck {
         if (f.title.getText().strip().length() > 100) {
             return "제목은 100자까지예요";
         }
+        if ((int) f.minutes.getValue() % 10 != 0) {
+            return "10분부터 720분까지, 10분 단위예요";
+        }
+        if (f.memo.getText().length() > 1000) {
+            return "메모는 1000자까지예요";
+        }
         LocalTime start = f.startTime();
         if (start != null && start.getHour() * 60 + start.getMinute() + (int) f.minutes.getValue() > 24 * 60) {
             return "하루 안에 끝나야 해요";
