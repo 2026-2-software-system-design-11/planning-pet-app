@@ -16,39 +16,40 @@ public final class TaskDialog {
     private TaskDialog() {
     }
 
-    public static JPanel content(TaskForm form, boolean editing) {
+    /** delete가 null이면 추가 창이다(삭제 버튼 없음). */
+    public static JPanel content(TaskForm form, JButton cancel, JButton save, JButton delete) {
         JPanel root = new JPanel(new BorderLayout());
         root.add(form.panel, BorderLayout.CENTER);
         JPanel buttons = new JPanel(new BorderLayout());
         JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        right.add(new JButton("취소"));
-        right.add(new JButton("저장"));
+        right.add(cancel);
+        right.add(save);
         buttons.add(right, BorderLayout.EAST);
-        if (editing) {
-            buttons.add(Ui.flow(new JButton("삭제")), BorderLayout.WEST);
+        if (delete != null) {
+            buttons.add(Ui.flow(delete), BorderLayout.WEST);
         }
         root.add(buttons, BorderLayout.SOUTH);
         return root;
     }
 
     public static void open(App app, Task editing, LocalDate defaultDate) {
-        TaskForm f = new TaskForm(editing, defaultDate);
-        JPanel root = content(f, editing != null);
+        TaskForm f = new TaskForm(editing, defaultDate, app.store.now);
+        JButton cancel = new JButton("취소");
+        JButton saveButton = new JButton("저장");
+        JButton delete = editing == null ? null : new JButton("삭제");
+        JPanel root = content(f, cancel, saveButton, delete);
         JDialog d = new JDialog(SwingUtilities.getWindowAncestor(app.root),
                 editing == null ? "일정 추가" : "일정 수정", JDialog.ModalityType.APPLICATION_MODAL);
         d.setContentPane(root);
-        for (JButton b : buttons(root)) {
-            switch (b.getText()) {
-                case "취소" -> b.addActionListener(e -> d.dispose());
-                case "삭제" -> b.addActionListener(e -> {
+        cancel.addActionListener(e -> d.dispose());
+        saveButton.addActionListener(e -> save(app, f, editing, d));
+        d.getRootPane().setDefaultButton(saveButton);
+        if (delete != null) {
+            delete.addActionListener(e -> {
+                if (app.actions.delete(editing)) {
                     d.dispose();
-                    app.actions.delete(editing);
-                });
-                default -> {
-                    d.getRootPane().setDefaultButton(b);
-                    b.addActionListener(e -> save(app, f, editing, d));
                 }
-            }
+            });
         }
         d.getRootPane().registerKeyboardAction(e -> d.dispose(),
                 KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
@@ -78,17 +79,5 @@ public final class TaskDialog {
         }
         d.dispose();
         app.store.changed();
-    }
-
-    private static java.util.List<JButton> buttons(java.awt.Container c) {
-        java.util.List<JButton> found = new java.util.ArrayList<>();
-        for (java.awt.Component k : c.getComponents()) {
-            if (k instanceof JButton b) {
-                found.add(b);
-            } else if (k instanceof java.awt.Container inner) {
-                found.addAll(buttons(inner));
-            }
-        }
-        return found;
     }
 }

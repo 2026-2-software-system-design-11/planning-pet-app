@@ -24,14 +24,16 @@ public final class Actions {
         app.store.changed();
     }
 
-    /** UC-06. 반복 사본이면 범위를 묻는다. */
-    public void delete(Task t) {
+    /** UC-06. 반복 사본이면 범위를 묻는다. 지웠으면 true. */
+    public boolean delete(Task t) {
+        boolean deleted = false;
         if (t.seriesId == null) {
             int answer = JOptionPane.showOptionDialog(app.root, "'" + t.title + "'" + josa(t.title, "을", "를") + " 지울까요?",
                     "일정 삭제", JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null,
                     new String[] {"지우기", "취소"}, "취소");
             if (answer == 0) {
                 app.store.delete(t, false);
+                deleted = true;
             }
         } else {
             int answer = JOptionPane.showOptionDialog(app.root, "'" + t.title + "'" + josa(t.title, "은", "는") + " 매주 반복 일정이에요.",
@@ -39,9 +41,11 @@ public final class Actions {
                     new String[] {"이 일정만", "이후 반복 모두", "취소"}, "취소");
             if (answer == 0 || answer == 1) {
                 app.store.delete(t, answer == 1);
+                deleted = true;
             }
         }
         app.store.changed();
+        return deleted;
     }
 
     /** UC-05. */
