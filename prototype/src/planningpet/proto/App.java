@@ -72,8 +72,15 @@ public final class App {
         return bar;
     }
 
-    /** 내비게이션 버튼과 화면을 함께 넣는다. screen이 null이면 비활성 버튼(통계, D-05)이다. */
-    public void addScreen(String name, JComponent screen) {
+    private String current = "";
+
+    /** 지금 보이는 화면의 이름. */
+    public String current() {
+        return current;
+    }
+
+    /** 내비게이션 버튼과 화면을 함께 넣는다. 화면 위에 제목과 부제를 둔다(D-33). screen이 null이면 비활성 버튼(통계, D-05)이다. */
+    public void addScreen(String name, String subtitle, JComponent screen) {
         JToggleButton b = new JToggleButton(name);
         b.putClientProperty(RoundButtonUI.NAV, Boolean.TRUE);
         b.setFont(Theme.bold(20));
@@ -84,14 +91,26 @@ public final class App {
             b.setToolTipText("다음 버전에서 열려요");
             return;
         }
-        center.add(screen, name);
+        JPanel page = new JPanel(new BorderLayout());
+        JLabel title = new JLabel(name);
+        title.setFont(Theme.bold(36));
+        JLabel sub = new JLabel(subtitle);
+        sub.setFont(Theme.font(19));
+        sub.setForeground(Theme.INK_DIM);
+        JPanel head = Ui.flow(title, sub);
+        head.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
+        page.add(head, BorderLayout.NORTH);
+        page.add(screen, BorderLayout.CENTER);
+        center.add(page, name);
         b.addActionListener(e -> show(name));
         if (navGroup.getButtonCount() == 1) {
             b.setSelected(true);
+            current = name;
         }
     }
 
     public void show(String name) {
+        current = name;
         cards.show(center, name);
         for (var c : nav.getComponents()) {
             JToggleButton b = (JToggleButton) c;

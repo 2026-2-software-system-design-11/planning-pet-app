@@ -58,10 +58,10 @@ public final class PetScreen extends JPanel {
         if (said != null) {
             room.bubble = said;
             said = null;
-        } else if (isVisible() && !wasVisible) {
+        } else if ("pet".equals(app.current()) && !wasVisible) {
             room.bubble = done > 0 ? "오늘 " + done + "개 끝냈어." : "오늘은 아직 끝낸 일이 없어.";
         }
-        wasVisible = isVisible();
+        wasVisible = "pet".equals(app.current());
         items.removeAll();
         items.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 6, 4));
         for (String item : Game.ITEMS.keySet()) {

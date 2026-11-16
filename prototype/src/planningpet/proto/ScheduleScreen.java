@@ -101,14 +101,14 @@ public final class ScheduleScreen extends JPanel {
         int n = Planner.targets(app.store, monday).size();
         autoPlace.setEnabled(n > 0);
         // 화면을 열거나 주를 옮기면 SCHEDULE_HINT, 그 밖에는 새로 생긴 펫 말(완료, 상한, 레벨 업)을 보인다.
-        showHint |= isVisible() && !wasVisible;
-        wasVisible = isVisible();
+        showHint |= "일정관리".equals(app.current()) && !wasVisible;
+        wasVisible = "일정관리".equals(app.current());
         String text = null;
         if (!app.store.talk.equals(lastTalk)) {
             lastTalk = app.store.talk;
-            text = isVisible() ? lastTalk : null;
+            text = "일정관리".equals(app.current()) ? lastTalk : null;
         }
-        if (showHint && isVisible()) {
+        if (showHint && "일정관리".equals(app.current())) {
             showHint = false;
             text = n > 0 ? "시간이 안 정해진 할 일이 " + n + "개 있어. 자동 배치를 눌러 볼래?" : "지금 자동 배치할 할 일은 없어.";
         }
