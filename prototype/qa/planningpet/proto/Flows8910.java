@@ -68,4 +68,45 @@ final class Flows8910 {
                 + " / 기출 1회독|11월 23일|09:00 ~ 09:30|30분", q.placement(q.place()));
         q.end();
     }
+
+    static Qa uf91(Qa q) {
+        q.start(Personas.p9());
+        q.step("1", "앱을 연다");
+        q.open();
+        q.eq("말풍선", "오랜만이야! 다시 와서 반가워. 오늘 할 일은 1개야.", q.app.store.talk);
+        q.eq("위 막대", "연속 접속 1일, 보유 260P, 출석 +20P", q.top());
+        q.eq("레벨", "호두 Lv.3 경험치 20 / 110", q.level());
+        q.end();
+        return q;
+    }
+
+    static void uf92() {
+        Qa q = new Qa("UF-9-2");
+        Store s = Personas.p9();
+        s.lastOpenDay = QaDrive.d("2026-11-09");
+        q.start(s);
+        q.step("1", "앱을 연다");
+        q.open();
+        q.eq("말풍선", "오늘 할 일 1개 남았어.", q.app.store.talk);
+        q.has("위 막대", "연속 접속 1일", q.top());
+        q.end();
+    }
+
+    static void uf93() {
+        Qa q = new Qa("UF-9-3").after(Flows8910::uf91);
+        q.step("1", "달력 13을 누른다");
+        q.select("2026-11-13");
+        q.eq("달력 13", "13 토익 RC(흐림)", q.cell(13));
+        q.eq("목록", "시간 안 정한 할 일 / 시간 정하기 [x] 토익 RC 60분", q.rows());
+        q.eq("말풍선", "11월 13일 할 일은 1개야.", q.app.store.talk);
+        q.step("2", "pet에서 쿠션을 두 번 누른다");
+        q.app.show("pet");
+        Flows12.press(q, "쿠션");
+        q.has("첫 번째", "쿠션(흐림)", q.pet());
+        Flows12.press(q, "쿠션");
+        q.has("두 번째", "쿠션 ✓", q.pet());
+        q.step("3", "상점을 연다");
+        q.has("상점", "쿠션 보유 중 꺼짐 / 화분 - 켜짐", q.shop());
+        q.end();
+    }
 }
