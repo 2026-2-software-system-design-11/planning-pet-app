@@ -27,8 +27,8 @@ final class Flows12 {
         q.start(Personas.p1());
         q.step("1", "앱을 연다");
         q.open();
-        q.eq("목록", "10:00~11:00 [x] 알고리즘 과제 2번 60분 / 14:00~15:30 [ ] 자소서 초안 메모 90분 / 시간 안 정한 할 일"
-                + " / 시간 정하기 [ ] 토익 단어 30분 / 시간 정하기 [ ] 운동 30분", q.rows());
+        q.eq("목록", "10:00~11:00 [x] 알고리즘 과제 2번 60분 / 14:00~15:30 [ ] 자소서 초안 메모 90분 / 시각 없는 할 일"
+                + " / 시각 정하기 [ ] 토익 단어 30분 / 시각 정하기 [ ] 운동 30분", q.rows());
         q.eq("말풍선", "오늘 할 일 3개 남았어. '은행 서류' 마감이 내일이야.", q.app.store.talk);
         q.eq("위 막대", "연속 접속 5일, 보유 100P, 출석 +20P", q.top());
         q.eq("성취도", "1/4", q.progress());
@@ -68,7 +68,7 @@ final class Flows12 {
         q.has("위 막대", "연속 접속 5일", q.top());
         q.step("9", "달력 18을 누르고 일정 추가를 누른다");
         q.select("2026-11-18");
-        q.eq("목록", "09:00~10:15 [ ] 고정 자료구조 75분 / 시간 안 정한 할 일 / 시간 정하기 [ ] 통계 레포트 120분", q.rows());
+        q.eq("목록", "09:00~10:15 [ ] 고정 자료구조 75분 / 시각 없는 할 일 / 시각 정하기 [ ] 통계 레포트 120분", q.rows());
         q.eq("말풍선", "11월 18일 할 일은 2개야.", q.app.store.talk);
         TaskForm f = new TaskForm(null, q.main.calendar.selected(), q.app.store.now);
         q.eq("입력 창 날짜", "2026-11-18", Ui.dateOf(f.date));
@@ -82,9 +82,9 @@ final class Flows12 {
         q.open();
         q.step("1", "일정관리를 연다");
         q.app.show("일정관리");
-        q.eq("오른쪽 목록", "[ ] 11/10 빨래 30분 / [ ] 11/12 도서관 책 반납 30분 / [ ] 11/14 토익 단어 30분"
+        q.eq("오른쪽 목록", "[ ] 지난 날 11/10 빨래 30분 / [ ] 지난 날 11/12 도서관 책 반납 30분 / [ ] 11/14 토익 단어 30분"
                 + " / [ ] 11/14 운동 30분 / [ ] 11/15 은행 서류 30분", q.schedRows());
-        q.eq("펫", "시간이 안 정해진 할 일이 3개 있어. 자동 배치를 눌러 볼래?", q.schedBubble());
+        q.eq("펫", "이번 주 남은 날의 시각 없는 할 일이 3개 있어. 자동 배치를 눌러 볼래?", q.schedBubble());
         q.step("2", "자동 배치를 누른다");
         Planner.Placement p = q.place();
         q.eq("결과 창", "11월 14일 15:25부터 11월 15일까지, 할 일마다 그 날짜 안의 빈 시간에 놓았어요"
@@ -92,7 +92,7 @@ final class Flows12 {
                 + " / 은행 서류|11월 15일|09:00 ~ 09:30|30분", q.placement(p));
         q.step("3", "적용을 누른다");
         q.apply(p);
-        q.eq("오른쪽 목록", "[ ] 11/10 빨래 30분 / [ ] 11/12 도서관 책 반납 30분", q.schedRows());
+        q.eq("오른쪽 목록", "[ ] 지난 날 11/10 빨래 30분 / [ ] 지난 날 11/12 도서관 책 반납 30분", q.schedRows());
         q.eq("자동 배치 버튼", false, q.sched.autoPlace.isEnabled());
         q.eq("펫(D-39)", "지금 자동 배치할 할 일은 없어.", q.schedBubble());
         q.step("4", "홈으로 간다");
@@ -111,15 +111,15 @@ final class Flows12 {
         q.eq("포인트", 120, q.app.store.points);
         q.step("2", "pet을 연다");
         q.app.show("pet");
-        q.eq("pet", "꾸미기 3 / 8, 오늘 1개 끝냈어., 쿠션 ✓ 화분 ✓ 러그(흐림) 상점", q.pet());
+        q.eq("pet", "가진 아이템 3 / 8, 오늘 1개 끝냈어., 쿠션 ✓ 화분 ✓ 러그", q.pet());
         q.yes("포인트 얻는 법 문장", Flows8910.text(q.app.root).contains(Ui.POINT_GUIDE));
         q.step("3", "상점을 연다");
-        q.eq("상점", "쿠션 보유 중 꺼짐 / 화분 보유 중 꺼짐 / 러그 보유 중 꺼짐 / 액자 - 켜짐 / 조명 30P 모자라요 꺼짐"
+        q.eq("상점", "쿠션 보유 중 버튼 없음 / 화분 보유 중 버튼 없음 / 러그 보유 중 버튼 없음 / 액자 살 수 있어요 켜짐 / 조명 30P 모자라요 꺼짐"
                 + " / 책장 80P 모자라요 꺼짐 / 책상 130P 모자라요 꺼짐 / 소파 180P 모자라요 꺼짐", q.shop());
         q.step("4", "액자를 산다");
         q.yes("샀음", q.buy("액자"));
         q.eq("포인트", 0, q.app.store.points);
-        q.eq("pet", "꾸미기 4 / 8, 액자 고마워!, 쿠션 ✓ 화분 ✓ 러그(흐림) 액자 ✓ 상점", q.pet());
+        q.eq("pet", "가진 아이템 4 / 8, 액자 고마워!, 쿠션 ✓ 화분 ✓ 러그 액자 ✓", q.pet());
         q.step("5", "홈에서 알고리즘 과제 2번 체크를 푼다");
         q.app.show("홈");
         q.check(q.task("알고리즘 과제 2번"));
@@ -134,7 +134,7 @@ final class Flows12 {
         press(q, "러그");
         q.has("첫 번째", "러그 ✓", q.pet());
         press(q, "러그");
-        q.has("두 번째", "러그(흐림)", q.pet());
+        q.has("두 번째", "러그 액자 ✓", q.pet());
         q.end();
     }
 
@@ -153,8 +153,8 @@ final class Flows12 {
         q.start(Personas.p2());
         q.step("1", "앱을 연다");
         q.open();
-        q.eq("목록", "15:00~16:40 [ ] 고정 졸업 세미나 100분 / 19:00~21:00 [ ] B사 자소서 1번 120분 / 시간 안 정한 할 일"
-                + " / 시간 정하기 [ ] C사 서류 결과 확인 30분", q.rows());
+        q.eq("목록", "15:00~16:40 [ ] 고정 졸업 세미나 100분 / 19:00~21:00 [ ] B사 자소서 1번 120분 / 시각 없는 할 일"
+                + " / 시각 정하기 [ ] C사 서류 결과 확인 30분", q.rows());
         q.eq("말풍선", "오늘 할 일 3개 남았어. 어제 못 끝낸 일 1개는 달력에 남아 있어. 'B사 자소서 제출' 마감이 내일이야.",
                 q.app.store.talk);
         q.eq("위 막대", "연속 접속 10일, 보유 340P, 출석 +20P", q.top());
@@ -170,7 +170,7 @@ final class Flows12 {
         q.after(Flows12::uf21);
         q.step("1", "달력 15를 누른다");
         q.select("2026-11-15");
-        q.eq("목록", "시간 안 정한 할 일 / 시간 정하기 [ ] A사 인적성 대비 60분", q.rows());
+        q.eq("목록", "시각 없는 할 일 / 시각 정하기 [ ] A사 인적성 대비 60분", q.rows());
         q.eq("말풍선", "11월 15일 할 일은 1개야.", q.app.store.talk);
         q.step("2", "A사 인적성 대비를 체크한다");
         q.check(q.task("A사 인적성 대비"));
@@ -201,7 +201,7 @@ final class Flows12 {
         Qa q = new Qa("UF-2-4");
         q.start(Personas.p2());
         q.open();
-        q.step("1", "C사 서류 결과 확인의 시간 정하기를 누른다");
+        q.step("1", "C사 서류 결과 확인의 시각 정하기를 누른다");
         Task c = q.task("C사 서류 결과 확인");
         TimeEditor e = new TimeEditor(c, q.app.store.now);
         q.eq("창", "20:10 30", e.start.getValue() + " " + e.minutes.getValue());
@@ -209,15 +209,15 @@ final class Flows12 {
         q.yes("저장됨", TimeEditor.save(q.app, c, e));
         q.eq("목록", "15:00~16:40 [ ] 고정 졸업 세미나 100분 / 19:00~21:00 [ ] B사 자소서 1번 120분"
                 + " / 20:10~20:40 [ ] C사 서류 결과 확인 30분", q.rows());
-        q.step("3", "20:10~20:40을 누르고 시간 빼기를 누른다");
-        q.yes("시간 빼기 보임", new TimeEditor(c, q.app.store.now).clear.isVisible());
+        q.step("3", "20:10~20:40을 누르고 시각 빼기를 누른다");
+        q.yes("시각 빼기 보임", new TimeEditor(c, q.app.store.now).clear.isVisible());
         TimeEditor.clear(q.app, c);
-        q.has("목록", "시간 안 정한 할 일 / 시간 정하기 [ ] C사 서류 결과 확인 30분", q.rows());
-        q.step("4", "달력 17의 B사 자소서 제출 시간 정하기를 누른다");
+        q.has("목록", "시각 없는 할 일 / 시각 정하기 [ ] C사 서류 결과 확인 30분", q.rows());
+        q.step("4", "달력 17의 B사 자소서 제출 시각 정하기를 누른다");
         q.select("2026-11-17");
         q.eq("시작", "09:00", new TimeEditor(q.task("B사 자소서 제출"), q.app.store.now).start.getValue());
         q.step("5", "졸업 세미나의 15:00~16:40을 누른다");
-        q.eq("시간 빼기 보임", false, new TimeEditor(q.task("졸업 세미나", "2026-11-16"), q.app.store.now).clear.isVisible());
+        q.eq("시각 빼기 보임", false, new TimeEditor(q.task("졸업 세미나", "2026-11-16"), q.app.store.now).clear.isVisible());
         q.step("6", "B사 자소서 1번 시작을 22:30으로 바꿔 저장한다");
         Task b = q.task("B사 자소서 1번");
         TimeEditor late = new TimeEditor(b, q.app.store.now);
