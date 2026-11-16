@@ -198,4 +198,50 @@ final class Flows345 {
         q.has("오답 정리는 그대로", "시간 정하기 [ ] 오답 정리 30분", q.rows());
         q.end();
     }
+
+    static Qa uf51(Qa q) {
+        q.start(Personas.p5());
+        q.step("1", "앱을 연다");
+        q.open();
+        q.eq("말풍선", "오늘 할 일은 다 끝냈어!", q.app.store.talk);
+        q.eq("위 막대", "연속 접속 3일, 보유 5P, 출석 +20P", q.top());
+        q.eq("성취도, 레벨", "1/1 초코 Lv.2 경험치 5 / 80", q.progress() + " " + q.level());
+        q.step("2", "잡코리아 공고 정리 체크를 푼다");
+        q.check(q.task("잡코리아 공고 정리"));
+        q.eq("상태", "-5P 경험치45 횟수0 성취도0/1", st(q));
+        q.eq("말풍선", "체크를 풀었어. -10P, 이제 Lv.1", q.app.store.talk);
+        q.eq("레벨", "초코 Lv.1 경험치 45 / 50", q.level());
+        q.step("3", "달력 17에서 포트폴리오 정리 체크를 푼다");
+        q.select("2026-11-17");
+        q.check(q.task("포트폴리오 정리"));
+        q.eq("상태", "-15P 경험치35 횟수0 성취도0/1", st(q));
+        q.eq("말풍선", "체크를 풀었어. -10P", q.app.store.talk);
+        q.end();
+        return q;
+    }
+
+    static Qa uf52(Qa q) {
+        uf51(q);
+        q.step("1", "달력 18에서 잡코리아 공고 정리를 다시 체크한다");
+        q.select("2026-11-18");
+        q.check(q.task("잡코리아 공고 정리"));
+        q.eq("상태", "-5P 경험치45 횟수1 성취도1/1", st(q));
+        q.eq("말풍선", "오늘 할 일을 다 끝냈어! 푹 쉬어.", q.app.store.talk);
+        q.end();
+        return q;
+    }
+
+    static void uf53() {
+        Qa q = uf52(new Qa("UF-5-3"));
+        q.step("1", "출석한다");
+        q.attend();
+        q.eq("포인트, 말풍선", "15 출석했어! +20P", q.app.store.points + " " + q.app.store.talk);
+        q.step("2", "pet을 연다");
+        q.app.show("pet");
+        q.eq("pet", "꾸미기 1 / 8, 오늘 1개 끝냈어., 쿠션 ✓ 상점", q.pet());
+        q.step("3", "상점을 연다");
+        q.eq("상점", "쿠션 보유 중 꺼짐 / 화분 65P 모자라요 꺼짐 / 러그 85P 모자라요 꺼짐 / 액자 105P 모자라요 꺼짐"
+                + " / 조명 135P 모자라요 꺼짐 / 책장 185P 모자라요 꺼짐 / 책상 235P 모자라요 꺼짐 / 소파 285P 모자라요 꺼짐", q.shop());
+        q.end();
+    }
 }
