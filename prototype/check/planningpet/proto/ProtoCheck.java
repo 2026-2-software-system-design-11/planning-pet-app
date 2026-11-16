@@ -46,6 +46,11 @@ public final class ProtoCheck {
         b.start = java.time.LocalTime.of(9, 0);
         var cols = Planner.columns(java.util.List.of(a, b));
         eq("T-TT-5", "1/2 0/2", cols.get(a)[0] + "/" + cols.get(a)[1] + " " + cols.get(b)[0] + "/" + cols.get(b)[1]);
+        Store first = MockData.empty();
+        first.petKind = "DOG";
+        first.petName = "바둑이";
+        eq("T-BRF-6, FIRST_RUN", "안녕, 나는 바둑이야. 일정관리에서 이번 학기 수업부터 넣어 볼까? 1",
+                new Talk(first).onWindowShown(new Game(first)) + " " + first.streak);
         System.out.println(failed == 0 ? "모두 통과" : failed + "개 실패");
         System.exit(failed == 0 ? 0 : 1);
     }
