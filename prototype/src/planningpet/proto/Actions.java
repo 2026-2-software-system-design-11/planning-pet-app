@@ -54,6 +54,11 @@ public final class Actions {
         TaskDialog.open(app, null, date);
     }
 
+    /** D-32. 메인 시각 칸을 누르면 그 아래에 시각 고치기 창을 연다. */
+    public void editTime(Task t, java.awt.Component anchor) {
+        TimeEditor.open(app, t, anchor);
+    }
+
     /** 오른쪽 버튼 메뉴: 수정, 삭제. */
     public JPopupMenu menu(Task t) {
         JPopupMenu menu = new JPopupMenu();
