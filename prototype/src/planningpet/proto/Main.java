@@ -29,13 +29,16 @@ public final class Main {
             frame.setVisible(true);
             app.store.say(app.talk.onWindowShown(app.game));
             app.store.changed();
+            new javax.swing.Timer(30_000, e -> app.watcher.tick()).start();
         });
     }
 
     /** 화면을 모두 붙인 앱. 창 없이 그릴 때도 이것을 쓴다. */
     public static App create(Store store) {
         App app = new App(store);
-        app.addScreen("홈", "오늘도 계획을 세우고, 조금씩 성장해요!", new MainScreen(app));
+        MainScreen main = new MainScreen(app);
+        app.addScreen("홈", "오늘도 계획을 세우고, 조금씩 성장해요!", main);
+        app.watcher = new DayWatcher(app, main);
         app.addScreen("일정관리", "내 일정을 한눈에 확인하고, 체계적으로 관리해요!", new ScheduleScreen(app));
         app.addScreen("pet", ("DOG".equals(store.petKind) ? "강아지" : "고양이") + "와 함께 성장하고, 작은 성취를 모아 보세요!",
                 new PetScreen(app));
