@@ -31,7 +31,8 @@ public final class ShopDialog {
         for (Map.Entry<String, Integer> e : Game.ITEMS.entrySet()) {
             boolean owned = s.owned.contains(e.getKey());
             int lack = e.getValue() - s.points;
-            JLabel state = new JLabel(owned ? "보유 중" : lack > 0 ? lack + "P 모자라요" : "");
+            // D-45: 이미 산 줄에는 사기 버튼이 없고, 살 수 있으면 "살 수 있어요"를 보인다.
+            JLabel state = new JLabel(owned ? "보유 중" : lack > 0 ? lack + "P 모자라요" : "살 수 있어요");
             state.setForeground(!owned && lack > 0 ? Theme.SUNDAY : Theme.INK);
             JButton buy = new JButton("사기");
             buy.setEnabled(!owned && lack <= 0);
@@ -39,7 +40,7 @@ public final class ShopDialog {
             table.add(new JLabel(e.getKey()));
             table.add(new JLabel(e.getValue() + "P"));
             table.add(state);
-            table.add(buy);
+            table.add(owned ? new JLabel() : buy);
         }
         root.add(table, BorderLayout.CENTER);
         JPanel bottom = new JPanel(new BorderLayout());
