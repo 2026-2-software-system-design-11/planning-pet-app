@@ -38,7 +38,7 @@ public final class Snap {
         System.out.println("그렸다: " + dir.getPath());
     }
 
-    private static void save(JComponent c, Dimension size, File file) throws Exception {
+    static void save(JComponent c, Dimension size, File file) throws Exception {
         Dimension d = size != null ? size : c.getPreferredSize();
         c.setSize(d);
         layout(c);

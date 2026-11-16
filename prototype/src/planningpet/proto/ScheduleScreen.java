@@ -21,7 +21,7 @@ public final class ScheduleScreen extends JPanel {
     private final JPanel header = new JPanel(new GridLayout(1, 7));
     private final JLabel range = new JLabel("", SwingConstants.CENTER);
     final JButton autoPlace = new JButton("자동 배치");
-    private final TaskRows untimed;
+    final TaskRows untimed;
     final JLabel bubble = Ui.bubble();
     private LocalDate monday;
     private int lastTalk;

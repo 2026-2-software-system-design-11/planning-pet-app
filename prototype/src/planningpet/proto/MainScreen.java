@@ -19,7 +19,7 @@ public final class MainScreen extends JPanel {
     final CalendarPanel calendar;
     final TaskRows rows;
     private final JLabel listTitle = new JLabel();
-    private final JLabel levelName = new JLabel();
+    final JLabel levelName = new JLabel();
     private final javax.swing.JProgressBar levelBar = new javax.swing.JProgressBar(0, 1000);
     final JLabel levelText = new JLabel();
     final JTextField quick = new JTextField();
