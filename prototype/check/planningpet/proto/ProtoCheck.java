@@ -65,6 +65,15 @@ public final class ProtoCheck {
                 + plan.untimed().stream().map(x -> x.title).reduce("", String::concat));
         Task late = at.apply("늦게", java.time.LocalTime.of(23, 30));
         eq("T-LIST-2", "23:30~24:00", Store.timeText(late));
+        java.time.LocalDateTime t1523 = nov16.atTime(15, 23);
+        eq("T-DEF-6~9", "15:30 09:00 09:00 23:50", TimeEditor.defaultStart(nov16, t1523) + " "
+                + TimeEditor.defaultStart(nov16, nov16.atTime(7, 0)) + " " + TimeEditor.defaultStart(nov16.plusDays(1), t1523)
+                + " " + TimeEditor.defaultStart(nov16, nov16.atTime(23, 55)));
+        TimeEditor longOne = new TimeEditor(late, t1523);
+        longOne.minutes.setValue(40);
+        eq("시각 고치기 하루 넘김", "하루 안에 끝나야 해요", longOne.check());
+        eq("시간 빼기는 할 일만", "true false", longOne.clear.isVisible() + " "
+                + new TimeEditor(d.dayPlan(nov16).timed().get(1), t1523).clear.isVisible());
         System.out.println(failed == 0 ? "모두 통과" : failed + "개 실패");
         System.exit(failed == 0 ? 0 : 1);
     }

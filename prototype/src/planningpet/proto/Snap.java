@@ -33,6 +33,8 @@ public final class Snap {
                 new JButton("적용")), null, new File(dir, "4-autoplace.png"));
         save(ShopDialog.content(app.store, item -> { }, new JButton("닫기")), null, new File(dir, "6-shop.png"));
         save(new PickDialog().panel, null, new File(dir, "7-pick.png"));
+        Task essay = app.store.dayPlan(app.store.today()).timed().get(1);
+        save(new TimeEditor(essay, app.store.now).panel, null, new File(dir, "9-time-edit.png"));
         System.out.println("그렸다: " + dir.getPath());
     }
 

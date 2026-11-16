@@ -40,3 +40,4 @@ Windows는 `prototype\run.bat`이다.
 | 상점 창 | ![상점](screenshots/6-shop.png) |
 | 반려동물 고르기 창 | ![고르기](screenshots/7-pick.png) |
 | 설정 | ![설정](screenshots/8-settings.png) |
+| 시각 고치기 창(메인 시각 칸을 누름) | ![시각 고치기](screenshots/9-time-edit.png) |
