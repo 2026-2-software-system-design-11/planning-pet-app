@@ -22,12 +22,14 @@ state "메인 창" as Win {
 state "일정 입력" as Form
 state "자동 배치 결과" as Place
 state "상점" as Shop
+state "시각 고치기" as Time
 
 [*] --> Pick : 첫 실행
 [*] --> Main : 데이터 있음
 [*] --> Tray : 컴퓨터 켤 때 실행
 Pick --> Main : 시작하기
 Main --> Form : 일정 추가, 두 번 누르기
+Main --> Time : 시각 칸 누르기
 Sched --> Form : 일정 추가, 두 번 누르기
 Sched --> Place : 자동 배치
 Pet --> Shop : 상점
