@@ -64,6 +64,15 @@ public final class TimetablePanel extends JComponent {
         });
     }
 
+    /** 마지막으로 그린 블록과 체크박스 자리. 블라인드 검사가 번호를 찍는다. */
+    Map<Rectangle, Task> blockAreas() {
+        return blocks;
+    }
+
+    Map<Rectangle, Task> boxAreas() {
+        return boxes;
+    }
+
     private Task at(MouseEvent e) {
         Task hit = null;
         for (Map.Entry<Rectangle, Task> b : blocks.entrySet()) {
