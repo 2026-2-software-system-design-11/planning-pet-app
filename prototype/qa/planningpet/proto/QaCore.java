@@ -19,6 +19,8 @@ class QaCore {
     private String step;
     private String action;
     private boolean stepFailed;
+    /** 앞 흐름을 다시 도는 중이면 0보다 크다. 그 단계는 "앞1"처럼 적는다. */
+    int depth;
 
     QaCore(String flow) {
         this.flow = flow;
@@ -27,7 +29,7 @@ class QaCore {
     /** 다음 단계를 시작한다. 앞 단계에서 틀린 값이 있었으면 그 화면을 그려 둔다. */
     void step(String no, String what) {
         finishStep();
-        step = no;
+        step = depth > 0 ? "앞" + no : no;
         action = what;
         stepFailed = false;
     }

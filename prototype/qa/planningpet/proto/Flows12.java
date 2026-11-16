@@ -16,7 +16,7 @@ final class Flows12 {
         flows.put("UF-1-2", Flows12::uf12);
         flows.put("UF-1-3", Flows12::uf13);
         flows.put("UF-2-1", () -> uf21(new Qa("UF-2-1")));
-        flows.put("UF-2-2", Flows12::uf22);
+        flows.put("UF-2-2", () -> uf22(new Qa("UF-2-2")));
         flows.put("UF-2-3", Flows12::uf23);
         flows.put("UF-2-4", Flows12::uf24);
         flows.put("UF-2-5", Flows12::uf25);
@@ -165,8 +165,8 @@ final class Flows12 {
         return q;
     }
 
-    static Qa uf22() {
-        Qa q = uf21(new Qa("UF-2-2"));
+    static Qa uf22(Qa q) {
+        q.after(Flows12::uf21);
         q.step("1", "달력 15를 누른다");
         q.select("2026-11-15");
         q.eq("목록", "시간 안 정한 할 일 / 시간 정하기 [ ] A사 인적성 대비 60분", q.rows());
@@ -186,9 +186,7 @@ final class Flows12 {
     }
 
     static void uf23() {
-        Qa q = uf22();
-        Qa n = new Qa("UF-2-3");
-        n.start(q.app.store);
+        Qa n = new Qa("UF-2-3").after(Flows12::uf22);
         n.at("2026-11-17T20:00");
         n.step("1", "앱을 연다");
         n.open();

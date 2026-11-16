@@ -144,7 +144,7 @@ final class Flows67 {
     }
 
     static Qa uf72(Qa q) {
-        uf71(q);
+        q.after(Flows67::uf71);
         q.step("1", "일정관리를 연다");
         q.app.show("일정관리");
         q.eq("오른쪽 목록", "이번 주에 시간 안 정한 할 일이 없어요.", q.schedRows());
@@ -167,7 +167,7 @@ final class Flows67 {
     }
 
     static Qa uf73(Qa q, boolean levelUp) {
-        uf72(q);
+        q.after(Flows67::uf72);
         q.step("1", "빠른 추가에 '  과제  '를 쓰고 Enter");
         q.quick("  과제  ");
         q.eq("칸", "", q.main.quick.getText());
@@ -197,7 +197,7 @@ final class Flows67 {
     }
 
     static void uf74() {
-        Qa q = uf73(new Qa("UF-7-4"), false);
+        Qa q = new Qa("UF-7-4").after(x -> uf73(x, false));
         q.step("1", "pet에서 상점을 연다(40P)");
         q.app.show("pet");
         q.eq("상점", "쿠션 10P 모자라요 꺼짐 / 화분 40P 모자라요 꺼짐 / 러그 60P 모자라요 꺼짐 / 액자 80P 모자라요 꺼짐"

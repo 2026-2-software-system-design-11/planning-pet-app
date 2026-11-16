@@ -101,7 +101,7 @@ final class Flows345 {
     }
 
     static void uf32() {
-        Qa q = uf31(new Qa("UF-3-2"));
+        Qa q = new Qa("UF-3-2").after(Flows345::uf31);
         q.step("1", "목 19 칸을 본다");
         q.eq("열", "팀 회의 0/2, 편의점 알바 1/2", cols(q, "2026-11-19"));
         q.step("2", "자동 배치를 누른다");
@@ -115,7 +115,7 @@ final class Flows345 {
     }
 
     static void uf33() {
-        Qa q = uf31(new Qa("UF-3-3"));
+        Qa q = new Qa("UF-3-3").after(Flows345::uf31);
         q.step("1", "토 28 알바를 삭제한다");
         q.sched.move(QaDrive.d("2026-11-23"));
         q.step("2", "이후 반복 모두를 누른다");
@@ -157,7 +157,7 @@ final class Flows345 {
     }
 
     static void uf42() {
-        Qa q = uf41(new Qa("UF-4-2"));
+        Qa q = new Qa("UF-4-2").after(Flows345::uf41);
         q.step("1", "01:30에 오답 정리를 체크한다");
         q.at("2026-11-18T01:30");
         q.check(q.task("오답 정리"));
@@ -221,7 +221,7 @@ final class Flows345 {
     }
 
     static Qa uf52(Qa q) {
-        uf51(q);
+        q.after(Flows345::uf51);
         q.step("1", "달력 18에서 잡코리아 공고 정리를 다시 체크한다");
         q.select("2026-11-18");
         q.check(q.task("잡코리아 공고 정리"));
@@ -232,7 +232,7 @@ final class Flows345 {
     }
 
     static void uf53() {
-        Qa q = uf52(new Qa("UF-5-3"));
+        Qa q = new Qa("UF-5-3").after(Flows345::uf52);
         q.step("1", "출석한다");
         q.attend();
         q.eq("포인트, 말풍선", "15 출석했어! +20P", q.app.store.points + " " + q.app.store.talk);
