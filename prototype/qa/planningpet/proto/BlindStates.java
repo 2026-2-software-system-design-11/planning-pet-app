@@ -45,8 +45,8 @@ public final class BlindStates {
             BlindShots.shoot(TaskDialog.content(bad, new JButton("취소"), new JButton("저장"), null), null, "일정 추가",
                     images, key, n++, out, "일정 입력 창(추가), 저장을 누른 뒤 오류");
             Task exercise = app.store.dayPlan(today).untimed().get(1);
-            String[] two = {"지우기", "취소"};
-            BlindShots.shoot(new JOptionPane("'" + exercise.title + "'" + Actions.josa(exercise.title, "을", "를") + " 지울까요?",
+            String[] two = {"삭제", "취소"};
+            BlindShots.shoot(new JOptionPane("'" + exercise.title + "'" + Actions.josa(exercise.title, "을", "를") + " 삭제할까요?",
                     JOptionPane.QUESTION_MESSAGE, JOptionPane.DEFAULT_OPTION, null, two, two[1]), null, "일정 삭제",
                     images, key, n++, out, "일정 삭제 확인 창(반복 아님)");
             Task fixed = app.store.tasks.stream().filter(x -> x.kind == Task.Kind.FIXED).findFirst().orElseThrow();

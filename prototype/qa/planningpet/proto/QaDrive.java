@@ -15,6 +15,7 @@ class QaDrive extends QaCore {
     PetScreen pet;
     String lastQuestion;
     String lastOptions;
+    String lastTitle;
 
     QaDrive(String flow) {
         super(flow);
@@ -110,14 +111,17 @@ class QaDrive extends QaCore {
     /** 목록 제목 줄의 "일정 추가"를 누른다. 창 대신 무엇을 열었는지와 빠른 추가 칸에 남은 글을 돌려준다. */
     String addFromList() {
         String[] opened = {"안 열림"};
+        Actions.Opener real = app.actions.opener;
         app.actions.opener = (t, date) -> opened[0] = (t == null ? "새 일정 " : "수정 ") + date;
         main.addButton.doClick();
+        app.actions.opener = real;
         return opened[0] + ", 칸에 남은 글 " + main.quick.getText();
     }
 
     /** 반복 사본 저장의 범위 창에서 answer번째 버튼을 누르게 한다(D-42). 물어본 문장은 lastQuestion에 남는다. */
     void answer(int answer) {
-        app.actions.chooser = (message, options) -> {
+        app.actions.chooser = (title, message, options) -> {
+            lastTitle = title;
             lastQuestion = message;
             lastOptions = String.join(", ", options);
             return answer;
@@ -130,7 +134,8 @@ class QaDrive extends QaCore {
 
     /** 삭제 확인 창에서 answer번째 버튼을 누른다. 물어본 문장은 lastQuestion에 남는다. */
     boolean delete(Task t, int answer) {
-        app.actions.chooser = (message, options) -> {
+        app.actions.chooser = (title, message, options) -> {
+            lastTitle = title;
             lastQuestion = message;
             lastOptions = String.join(", ", options);
             return answer;

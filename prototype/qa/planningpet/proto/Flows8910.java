@@ -102,7 +102,7 @@ final class Flows8910 {
         q.step("2", "pet에서 쿠션을 두 번 누른다");
         q.app.show("pet");
         Flows12.press(q, "쿠션");
-        q.has("첫 번째", "없어., 쿠션", q.pet());
+        q.eq("첫 번째", "가진 아이템 1 / 8, 오늘은 아직 끝낸 일이 없어., 쿠션", q.pet());
         Flows12.press(q, "쿠션");
         q.has("두 번째", "쿠션 ✓", q.pet());
         q.step("3", "상점을 연다");
@@ -205,7 +205,7 @@ final class Flows8910 {
         q.step("3", "달력 20에서 논문 읽기를 삭제한다");
         q.select("2026-11-20");
         q.yes("지움", q.delete(t, 0));
-        q.eq("확인 창", "'논문 읽기'를 삭제할까요?", q.lastQuestion);
+        q.eq("확인 창", "일정 삭제 / '논문 읽기'를 삭제할까요? / 삭제, 취소", q.lastTitle + " / " + q.lastQuestion + " / " + q.lastOptions);
         q.eq("상태", "10P 경험치10 횟수1 있음 false", q.app.store.points + "P 경험치" + q.app.store.exp + " 횟수" + q.count()
                 + " 있음 " + q.app.store.tasks.contains(t));
         q.end();

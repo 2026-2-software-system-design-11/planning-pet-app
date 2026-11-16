@@ -63,8 +63,8 @@ final class Flows67 {
         e.start.setValue("09:00");
         q.answer(0);
         q.yes("저장", TimeEditor.save(q.app, t, e));
-        q.eq("범위 창", "'병원 실습'은 매주 반복 일정이에요. 어디까지 바꿀까요? / 이 일정만, 이후 반복 모두, 취소",
-                q.lastQuestion + " / " + q.lastOptions);
+        q.eq("범위 창", "반복 일정 저장 / '병원 실습'은 매주 반복 일정이에요. 어디까지 바꿀까요? / 이 일정만, 이후 반복 모두, 취소",
+                q.lastTitle + " / " + q.lastQuestion + " / " + q.lastOptions);
         q.eq("목록", "09:00~17:00 [ ] 고정 병원 실습 480분", q.rows());
         Task next = q.task("병원 실습", "2026-11-27");
         q.eq("다음 주 금 27, 같은 반복", "08:00 true", next.start + " " + next.seriesId.equals(t.seriesId));
