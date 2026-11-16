@@ -44,9 +44,9 @@ public final class Talk {
                 .min(Comparator.comparing((Task t) -> t.date).thenComparingLong(t -> t.seq))
                 .orElse(null);
         if (near != null) {
-            String[] when = {"", "내일", "모레", "사흘 뒤"};
+            String[] when = {"", "내일이야", "모레야", "사흘 뒤야"};
             b.append(" '").append(Rules.shortTitle(near.title)).append("' 마감이 ")
-                    .append(when[(int) ChronoUnit.DAYS.between(today, near.date)]).append("야.");
+                    .append(when[(int) ChronoUnit.DAYS.between(today, near.date)]).append(".");
         }
         if (s.forDate(today).isEmpty() && near == null) {
             b.append(" 아래 칸에 하나 적어 볼까?");
