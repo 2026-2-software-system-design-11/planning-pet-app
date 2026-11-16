@@ -44,6 +44,7 @@ public final class TaskDialog {
         JDialog d = new JDialog(SwingUtilities.getWindowAncestor(app.root),
                 editing == null ? "일정 추가" : "일정 수정", JDialog.ModalityType.APPLICATION_MODAL);
         d.setContentPane(root);
+        f.relayout = d::pack;
         cancel.addActionListener(e -> d.dispose());
         saveButton.addActionListener(e -> save(app, f, editing, d));
         d.getRootPane().setDefaultButton(saveButton);

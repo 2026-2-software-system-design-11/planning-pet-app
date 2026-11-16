@@ -30,6 +30,8 @@ public final class TaskForm {
     private final boolean editing;
     /** 저장을 한 번 누른 뒤에는 칸을 고칠 때마다 다시 검사한다(D-43). */
     private boolean checked;
+    /** 오류 글이 늘거나 줄면 창 크기를 다시 맞춘다. 창 없이 만들 때는 아무것도 하지 않는다. */
+    Runnable relayout = () -> { };
     private int row;
 
     public TaskForm(Task t, LocalDate defaultDate, java.time.LocalDateTime now) {
@@ -147,6 +149,7 @@ public final class TaskForm {
             errors.get(p[0]).setText(p[1]);
             errors.get(p[0]).setVisible(true);
         }
+        relayout.run();
     }
 
     /** 보이는 오류 글을 칸 순서대로 " / "로 잇는다. */
