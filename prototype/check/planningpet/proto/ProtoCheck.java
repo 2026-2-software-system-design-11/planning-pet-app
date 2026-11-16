@@ -51,6 +51,20 @@ public final class ProtoCheck {
         first.petName = "바둑이";
         eq("T-BRF-6, FIRST_RUN", "안녕, 나는 바둑이야. 일정관리에서 이번 학기 수업부터 넣어 볼까? 1",
                 new Talk(first).onWindowShown(new Game(first)) + " " + first.streak);
+        Store d = MockData.empty();
+        java.util.function.BiFunction<String, java.time.LocalTime, Task> at = (title, time) ->
+                d.add(Task.Kind.TASK, title, nov16, time, 30, "", null).get(0);
+        at.apply("B", null);
+        at.apply("D", java.time.LocalTime.of(15, 0));
+        at.apply("A", java.time.LocalTime.of(15, 0));
+        at.apply("C", java.time.LocalTime.of(9, 0));
+        at.apply("F", null).done = true;
+        d.add(Task.Kind.FIXED, "E", nov16, java.time.LocalTime.of(10, 30), 75, "", null);
+        Store.DayPlan plan = d.dayPlan(nov16);
+        eq("T-LIST-1", "CEDA BF", plan.timed().stream().map(x -> x.title).reduce("", String::concat) + " "
+                + plan.untimed().stream().map(x -> x.title).reduce("", String::concat));
+        Task late = at.apply("늦게", java.time.LocalTime.of(23, 30));
+        eq("T-LIST-2", "23:30~24:00", Store.timeText(late));
         System.out.println(failed == 0 ? "모두 통과" : failed + "개 실패");
         System.exit(failed == 0 ? 0 : 1);
     }
