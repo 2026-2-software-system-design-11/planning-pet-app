@@ -53,4 +53,48 @@ final class Personas {
         Fx.done(Fx.task(s, "2026-11-18", "잡코리아 공고 정리", null, 30), "2026-11-18");
         return s;
     }
+
+    static Store p6() {
+        Store s = Fx.store("2026-11-19T18:30", 150, 300, 12, "2026-11-19", "2026-11-19", 0, "CAT", "두부",
+                "쿠션,화분,러그,액자", "쿠션,화분,러그,액자");
+        for (String first : new String[] {"2026-11-02", "2026-11-03", "2026-11-04", "2026-11-05", "2026-11-06"}) {
+            Fx.weekly(s, "병원 실습", first, "08:00", 480, "2026-12-18");
+        }
+        Fx.task(s, "2026-11-19", "실습 일지", null, 60);
+        Fx.task(s, "2026-11-19", "간호사 국시 문제", null, 30);
+        return s;
+    }
+
+    /** ⑦ 오세린. 데이터 없음(첫 실행). */
+    static Store p7() {
+        Store s = new Store();
+        s.now = java.time.LocalDateTime.parse("2027-03-02T13:00");
+        return s;
+    }
+
+    static Store p8() {
+        Store s = Fx.store("2026-11-20T23:40", 500, 800, 40, "2026-11-20", "2026-11-20", 0, "CAT", "밤",
+                "쿠션,화분,러그,액자,조명", "쿠션,화분,러그,액자,조명");
+        Fx.weekly(s, "회계학 인강", "2026-11-06", "20:00", 120, "2026-12-18");
+        Fx.task(s, "2026-11-19", "감사 정리", null, 30);
+        Fx.task(s, "2026-11-20", "원가회계", null, 30);
+        Fx.task(s, "2026-11-20", "세법 요약", null, 20);
+        Fx.task(s, "2026-11-21", "재무회계", null, 60);
+        Fx.task(s, "2026-11-21", "경영학", null, 60);
+        return s;
+    }
+
+    static Store p9() {
+        Store s = Fx.store("2026-11-16T14:00", 260, 150, 3, "2026-11-08", null, 0, "CAT", "호두", "쿠션", "쿠션");
+        Fx.done(Fx.task(s, "2026-11-13", "토익 RC", null, 60), "2026-11-13");
+        Fx.task(s, "2026-11-16", "토익 LC", null, 60);
+        return s;
+    }
+
+    /** ⑩ 강민재. 데이터 없음(첫 실행). */
+    static Store p10() {
+        Store s = new Store();
+        s.now = java.time.LocalDateTime.parse("2026-11-17T22:00");
+        return s;
+    }
 }
