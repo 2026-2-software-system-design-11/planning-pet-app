@@ -3,52 +3,13 @@ package planningpet.common.model;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-/** 06의 작은 규칙들: 앱 날짜(1번), 레벨(10번), 대사의 글자 규칙(16번). */
+/** 06의 작은 규칙들: 앱 날짜(1번), 여러 도메인이 쓰는 글자 규칙(16번의 받침, 조사, 제목 줄임). */
 public final class Rules {
-    public static final int[] LEVEL_BASE = {0, 50, 130, 240, 380, 550, 750, 990, 1270, 1600};
-    public static final int DAILY_CAP = 20;
-    public static final int TASK_POINTS = 10;
-    public static final int TASK_EXP = 10;
-    public static final int ATTEND_POINTS = 20;
-
     private Rules() {
     }
 
     public static LocalDate appDay(LocalDateTime time) {
         return time.minusHours(4).toLocalDate();
-    }
-
-    public static int level(int exp) {
-        int level = 1;
-        for (int i = 0; i < LEVEL_BASE.length; i++) {
-            if (exp >= LEVEL_BASE[i]) {
-                level = i + 1;
-            }
-        }
-        return level;
-    }
-
-    public static int stage(int level) {
-        return level <= 3 ? 1 : level <= 6 ? 2 : 3;
-    }
-
-    /** pet 화면의 "경험치 70 / 110". 레벨 10이면 "최고 레벨". */
-    public static String expText(int exp) {
-        int level = level(exp);
-        if (level == 10) {
-            return "최고 레벨";
-        }
-        int base = LEVEL_BASE[level - 1];
-        return "경험치 " + (exp - base) + " / " + (LEVEL_BASE[level] - base);
-    }
-
-    public static double expRatio(int exp) {
-        int level = level(exp);
-        if (level == 10) {
-            return 1.0;
-        }
-        int base = LEVEL_BASE[level - 1];
-        return (exp - base) / (double) (LEVEL_BASE[level] - base);
     }
 
     /** 이름 마지막 글자가 받침 있는 한글이면 "이야", 그 밖은 "야". */
