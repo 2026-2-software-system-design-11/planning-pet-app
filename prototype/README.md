@@ -17,6 +17,14 @@ prototype/check.sh               # 06 검사 표 가운데 프로토타입이 �
 
 Windows는 `prototype\run.bat`이다.
 
+## 코드 구조
+
+06의 패키지 규칙(D-46)대로 `src/planningpet/` 아래를 도메인별로 나누고, 도메인 안을 `model`, `view`, `controller`로 나눈다.
+
+- `schedule`(일정), `reward`(보상), `pet`(펫), `shop`(상점), `home`(메인 화면), `settings`(설정), `app`(진입점, 창 틀, 앱 데이터 `Store`), `common`(앱 날짜와 글자 규칙, 디자인 시스템의 색과 부품)
+- `model`은 Swing과 AWT를 쓰지 않는다. `view`는 model을 읽어 그리고, 바꿀 때는 그 도메인의 `controller`를 부른다. controller가 model을 바꾸고 `Store.changed()`로 화면에 알린다
+- QA 코드는 `qa/planningpet/qa/`, 단위 검사는 `check/planningpet/check/`에 있다
+
 ## 목 데이터와 목 로직
 
 - 시계는 2026-11-14(토) 15:23에 멈춰 있다. 일정과 숫자는 05 와이어프레임과 같다.

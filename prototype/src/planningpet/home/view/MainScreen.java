@@ -116,8 +116,7 @@ public final class MainScreen extends JPanel {
     }
 
     private void select(LocalDate date) {
-        app.store.say(date.equals(app.store.today()) ? app.talk.usual() : app.talk.otherDate(date));
-        app.store.changed();
+        app.actions.selectDay(date);
     }
 
     private void refresh() {

@@ -3,9 +3,12 @@ package planningpet.app.view;
 import planningpet.app.controller.DayWatcher;
 import planningpet.app.model.Store;
 import planningpet.common.view.*;
+import planningpet.pet.controller.PetController;
 import planningpet.pet.model.Talk;
+import planningpet.reward.controller.RewardController;
 import planningpet.reward.model.Game;
 import planningpet.schedule.controller.TaskController;
+import planningpet.shop.controller.ShopController;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Dimension;
@@ -25,6 +28,9 @@ public final class App {
     public final Game game;
     public final Talk talk;
     public final TaskController actions;
+    public final RewardController rewards;
+    public final ShopController shop;
+    public final PetController pets;
     public final JPanel root = new JPanel(new BorderLayout()) {
         @Override
         protected void paintComponent(java.awt.Graphics g) {
@@ -49,6 +55,9 @@ public final class App {
         this.game = new Game(store);
         this.talk = new Talk(store);
         this.actions = new TaskController(this);
+        this.rewards = new RewardController(store, game);
+        this.shop = new ShopController(store);
+        this.pets = new PetController(store);
         root.add(topBar(), BorderLayout.NORTH);
         JPanel navWrap = new Card(new BorderLayout(), Theme.CARD_RADIUS).filled(Theme.SIDE);
         navWrap.setBorder(BorderFactory.createEmptyBorder(12, 10, 12, 10));
@@ -57,12 +66,7 @@ public final class App {
         root.setBorder(BorderFactory.createEmptyBorder(0, 12, 12, 12));
         root.add(center, BorderLayout.CENTER);
         root.setPreferredSize(new Dimension(1000, 680));
-        attend.addActionListener(e -> {
-            if (game.attend()) {
-                store.say("출석했어! +20P");
-                store.changed();
-            }
-        });
+        attend.addActionListener(e -> rewards.attend());
         store.onChange(this::refresh);
     }
 

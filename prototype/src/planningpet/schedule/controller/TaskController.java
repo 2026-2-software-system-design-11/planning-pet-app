@@ -158,6 +158,12 @@ public final class TaskController {
         app.store.changed();
     }
 
+    /** UC-09. 달력에서 날짜를 고르면 펫이 그 날을 말한다. */
+    public void selectDay(LocalDate date) {
+        app.store.say(date.equals(app.store.today()) ? app.talk.usual() : app.talk.otherDate(date));
+        app.store.changed();
+    }
+
     /** 자동 배치 결과 창의 적용(UC-11). */
     public void applyPlacement(Planner.Placement p) {
         p.placed().forEach(x -> x.task().start = x.start());
