@@ -1,5 +1,8 @@
-package planningpet.proto;
+package planningpet.qa;
 
+import planningpet.app.model.Store;
+import planningpet.common.model.Rules;
+import planningpet.schedule.model.Task;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;

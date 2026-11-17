@@ -1,5 +1,6 @@
-package planningpet.proto;
+package planningpet.qa;
 
+import planningpet.app.model.Store;
 import java.io.File;
 import java.util.LinkedHashMap;
 import java.util.Map;

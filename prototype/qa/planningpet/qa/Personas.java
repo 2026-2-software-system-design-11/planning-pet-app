@@ -1,4 +1,7 @@
-package planningpet.proto;
+package planningpet.qa;
+
+import planningpet.app.MockData;
+import planningpet.app.model.Store;
 
 /** docs/personas.md의 열 명. 각 함수는 그 사람의 처음 상태를 새로 만든다. */
 final class Personas {

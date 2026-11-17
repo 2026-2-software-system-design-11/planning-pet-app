@@ -1,4 +1,4 @@
-package planningpet.proto;
+package planningpet.qa;
 
 import java.io.File;
 import java.nio.file.Files;

@@ -1,4 +1,17 @@
-package planningpet.proto;
+package planningpet.check;
+
+import planningpet.app.*;
+import planningpet.app.model.Store;
+import planningpet.app.view.App;
+import planningpet.common.model.Rules;
+import planningpet.common.view.Ui;
+import planningpet.pet.model.Talk;
+import planningpet.pet.view.PetView;
+import planningpet.reward.model.*;
+import planningpet.reward.view.WalkBar;
+import planningpet.schedule.controller.Actions;
+import planningpet.schedule.model.*;
+import planningpet.schedule.view.*;
 
 /** 06 검사 표 가운데 프로토타입이 따르는 줄을 확인한다. JUnit 없이 java로 돌린다. */
 public final class ProtoCheck {

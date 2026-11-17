@@ -1,5 +1,13 @@
-package planningpet.proto;
+package planningpet.qa;
 
+import planningpet.app.*;
+import planningpet.app.model.Store;
+import planningpet.app.view.App;
+import planningpet.common.view.Card;
+import planningpet.pet.view.PickDialog;
+import planningpet.schedule.model.*;
+import planningpet.schedule.view.*;
+import planningpet.shop.view.ShopDialog;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;

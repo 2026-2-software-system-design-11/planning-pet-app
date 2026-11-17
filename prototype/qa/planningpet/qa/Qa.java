@@ -1,5 +1,9 @@
-package planningpet.proto;
+package planningpet.qa;
 
+import planningpet.common.view.RoundButtonUI;
+import planningpet.schedule.model.Planner;
+import planningpet.schedule.view.AutoPlaceDialog;
+import planningpet.shop.view.ShopDialog;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.GridLayout;
