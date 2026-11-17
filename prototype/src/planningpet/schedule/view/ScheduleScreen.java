@@ -38,8 +38,8 @@ public final class ScheduleScreen extends JPanel {
         this.app = app;
         setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 12));
         monday = Store.mondayOf(app.store.today());
-        table = new TimetablePanel(app.store, app.tasks);
-        untimed = new TaskRows(app.tasks);
+        table = new TimetablePanel(app.store, app.schedule);
+        untimed = new TaskRows(app.schedule);
         JButton prev = new JButton("<");
         JButton next = new JButton(">");
         JButton today = new JButton("오늘");
@@ -48,7 +48,7 @@ public final class ScheduleScreen extends JPanel {
         next.addActionListener(e -> move(monday.plusWeeks(1)));
         today.addActionListener(e -> move(Store.mondayOf(app.store.today())));
         autoPlace.addActionListener(e -> AutoPlaceDialog.open(app, monday));
-        add.addActionListener(e -> app.tasks.add(defaultDate()));
+        add.addActionListener(e -> app.schedule.add(defaultDate()));
         JPanel bar = new JPanel(new BorderLayout());
         bar.add(Ui.flow(prev, range, next, today), BorderLayout.WEST);
         bar.add(Ui.flow(autoPlace, add), BorderLayout.EAST);

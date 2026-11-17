@@ -90,7 +90,7 @@ public final class AutoPlaceDialog {
 
     /** 적용 버튼과 같다. */
     public static void apply(App app, Planner.Placement p) {
-        app.tasks.applyPlacement(p);
+        app.schedule.applyPlacement(p);
     }
 
     private static String day(LocalDate d) {

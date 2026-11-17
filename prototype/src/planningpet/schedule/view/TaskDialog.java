@@ -53,7 +53,7 @@ public final class TaskDialog {
         d.getRootPane().setDefaultButton(saveButton);
         if (delete != null) {
             delete.addActionListener(e -> {
-                if (app.tasks.delete(editing)) {
+                if (app.schedule.delete(editing)) {
                     d.dispose();
                 }
             });
@@ -81,6 +81,6 @@ public final class TaskDialog {
         if (!problems.isEmpty()) {
             return false;
         }
-        return app.tasks.save(editing, f.draft());
+        return app.schedule.save(editing, f.draft());
     }
 }

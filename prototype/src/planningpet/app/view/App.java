@@ -30,11 +30,11 @@ public final class App {
     public final Game game;
     public final Talk talk;
     public final AppController control;
-    public final TaskController tasks;
+    public final TaskController schedule;
     public final HomeController home;
     public final ShopController shop;
-    public final PetController pets;
-    private final RewardController rewards;
+    public final PetController pet;
+    private final RewardController reward;
     public final JPanel root = new JPanel(new BorderLayout()) {
         @Override
         protected void paintComponent(java.awt.Graphics g) {
@@ -60,11 +60,11 @@ public final class App {
         this.game = new Game(store);
         this.talk = new Talk(store);
         this.control = new AppController(store, talk);
-        this.tasks = new TaskController(this);
+        this.schedule = new TaskController(this);
         this.home = new HomeController(control, store, talk);
         this.shop = new ShopController(control, store);
-        this.pets = new PetController(control, store);
-        this.rewards = new RewardController(control, store, game);
+        this.pet = new PetController(control, store);
+        this.reward = new RewardController(control, store, game);
         root.add(topBar(), BorderLayout.NORTH);
         JPanel navWrap = new Card(new BorderLayout(), Theme.CARD_RADIUS).filled(Theme.SIDE);
         navWrap.setBorder(BorderFactory.createEmptyBorder(12, 10, 12, 10));
@@ -73,7 +73,7 @@ public final class App {
         root.setBorder(BorderFactory.createEmptyBorder(0, 12, 12, 12));
         root.add(center, BorderLayout.CENTER);
         root.setPreferredSize(new Dimension(1000, 680));
-        attend.addActionListener(e -> rewards.attend());
+        attend.addActionListener(e -> reward.attend());
         watch(this::refresh);
     }
 

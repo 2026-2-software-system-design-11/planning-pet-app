@@ -89,7 +89,7 @@ public final class PetScreen extends JPanel {
             boolean placed = s.placed.contains(item);
             JToggleButton b = new JToggleButton(placed ? item + " ✓" : item, placed);
             b.addActionListener(e -> {
-                app.pets.toggle(item);
+                app.pet.toggle(item);
             });
             items.add(b);
         }

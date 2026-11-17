@@ -37,11 +37,11 @@ public final class MainScreen extends JPanel {
         this.app = app;
         setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 12));
         calendar = new CalendarPanel(app.store, this::select);
-        rows = new TaskRows(app.tasks);
+        rows = new TaskRows(app.schedule);
 
         JPanel list = new Card(new BorderLayout(0, 6));
         listTitle.setFont(Theme.font(23));
-        addButton.addActionListener(e -> app.tasks.add(calendar.selected()));
+        addButton.addActionListener(e -> app.schedule.add(calendar.selected()));
         JPanel head = new JPanel(new BorderLayout());
         head.add(listTitle, BorderLayout.CENTER);
         head.add(addButton, BorderLayout.EAST);
@@ -72,7 +72,7 @@ public final class MainScreen extends JPanel {
         JPanel panel = new JPanel(new BorderLayout(6, 2));
         Ui.limit(quick, 100);
         Runnable put = () -> {
-            if (app.tasks.quickAdd(quick.getText(), calendar.selected())) {
+            if (app.schedule.quickAdd(quick.getText(), calendar.selected())) {
                 quick.setText("");
             }
         };
