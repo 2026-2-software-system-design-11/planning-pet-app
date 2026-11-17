@@ -1,5 +1,7 @@
-package planningpet.proto;
+package planningpet.pet.view;
 
+import planningpet.app.model.Store;
+import planningpet.common.view.*;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -26,7 +28,7 @@ public final class RoomView extends JComponent {
     }
 
     private final Store store;
-    String bubble = "";
+    public String bubble = "";
 
     public RoomView(Store store) {
         this.store = store;

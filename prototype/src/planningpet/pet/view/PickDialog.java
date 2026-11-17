@@ -1,5 +1,8 @@
-package planningpet.proto;
+package planningpet.pet.view;
 
+import planningpet.app.MockData;
+import planningpet.app.model.Store;
+import planningpet.common.view.Ui;
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import javax.swing.BorderFactory;
@@ -13,9 +16,9 @@ import javax.swing.JTextField;
 
 /** 반려동물 고르기 창(05, UC-17). 첫 실행 때 메인 창보다 먼저 뜬다. */
 public final class PickDialog {
-    final JRadioButton cat = new JRadioButton("고양이", true);
-    final JRadioButton dog = new JRadioButton("강아지");
-    final JTextField name = new JTextField(12);
+    public final JRadioButton cat = new JRadioButton("고양이", true);
+    public final JRadioButton dog = new JRadioButton("강아지");
+    public final JTextField name = new JTextField(12);
     final JButton start = new JButton("시작하기");
     public final JPanel panel = new JPanel(new BorderLayout(0, 10));
 
@@ -44,7 +47,7 @@ public final class PickDialog {
     }
 
     /** 시작하기 버튼과 같다. 고른 동물과 이름(비우면 나비, 바둑이)을 넣는다. */
-    void apply(Store s) {
+    public void apply(Store s) {
         String n = name.getText().strip();
         n = n.length() > 10 ? n.substring(0, 10) : n;
         s.petKind = dog.isSelected() ? "DOG" : "CAT";

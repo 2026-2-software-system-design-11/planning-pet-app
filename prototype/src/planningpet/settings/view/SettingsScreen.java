@@ -1,5 +1,6 @@
-package planningpet.proto;
+package planningpet.settings.view;
 
+import planningpet.common.view.Ui;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;

@@ -1,5 +1,11 @@
-package planningpet.proto;
+package planningpet.pet.view;
 
+import planningpet.app.model.Store;
+import planningpet.app.view.App;
+import planningpet.common.model.Rules;
+import planningpet.common.view.*;
+import planningpet.reward.model.Game;
+import planningpet.shop.view.ShopDialog;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -16,11 +22,11 @@ public final class PetScreen extends JPanel {
     private final JLabel name = new JLabel();
     private final JProgressBar expBar = new JProgressBar(0, 1000);
     private final JLabel expText = new JLabel();
-    final RoomView room;
-    final JPanel items = new JPanel();
+    public final RoomView room;
+    public final JPanel items = new JPanel();
     private String said;
     private boolean wasVisible;
-    final JLabel decoText = new JLabel();
+    public final JLabel decoText = new JLabel();
     /** D-45: 상점 버튼은 아이템 줄과 떨어진 오른쪽 끝이다. */
     final JButton shopButton = new JButton("상점");
     private final JProgressBar decoBar = new JProgressBar(0, Game.ITEMS.size());

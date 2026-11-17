@@ -1,5 +1,8 @@
-package planningpet.proto;
+package planningpet.pet.view;
 
+import planningpet.app.model.Store;
+import planningpet.common.model.Rules;
+import planningpet.common.view.Images;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Polygon;

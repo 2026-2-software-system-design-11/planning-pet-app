@@ -1,5 +1,9 @@
-package planningpet.proto;
+package planningpet.pet.model;
 
+import planningpet.app.model.Store;
+import planningpet.common.model.Rules;
+import planningpet.reward.model.*;
+import planningpet.schedule.model.Task;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
