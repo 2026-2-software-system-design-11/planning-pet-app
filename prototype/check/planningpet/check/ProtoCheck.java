@@ -9,7 +9,6 @@ import planningpet.pet.model.Talk;
 import planningpet.pet.view.PetView;
 import planningpet.reward.model.*;
 import planningpet.reward.view.WalkBar;
-import planningpet.schedule.controller.Actions;
 import planningpet.schedule.model.*;
 import planningpet.schedule.view.*;
 
@@ -37,7 +36,7 @@ public final class ProtoCheck {
         eq("T-ATT-1", "true 120", g.attend() + " " + s.points);
         eq("T-SHOP-1", "0 0", g.buy("액자") + " " + s.points);
         eq("T-SHOP-2, T-SHOP-4", "150 -1", g.buy("조명") + " " + g.buy("쿠션"));
-        eq("삭제 확인 조사", "을 는", Actions.josa("자소서 초안", "을", "를") + " " + Actions.josa("자료구조", "은", "는"));
+        eq("삭제 확인 조사", "을 는", Rules.josa("자소서 초안", "을", "를") + " " + Rules.josa("자료구조", "은", "는"));
         TaskForm f = new TaskForm(null, s.today(), s.now);
         eq("T-VAL-2", "제목을 써 주세요", msgs(f));
         f.title.setText("밤 과제");
@@ -106,7 +105,7 @@ public final class ProtoCheck {
         rg.complete(x);
         r.delete(x, false);
         eq("T-DEL-1", "10 1", r.points + " " + r.rewardCount);
-        eq("숫자 조사", "을 를", Actions.josa("과제 1", "을", "를") + " " + Actions.josa("과제 2", "을", "를"));
+        eq("숫자 조사", "을 를", Rules.josa("과제 1", "을", "를") + " " + Rules.josa("과제 2", "을", "를"));
         eq("D-38 5분 단위", "30 null 75", fiveMinute());
         Store c = MockData.sample();
         java.time.LocalDate nov = java.time.LocalDate.of(2026, 11, 1);
@@ -221,7 +220,7 @@ public final class ProtoCheck {
         f.sync();
         f.start.setValue("23:30");
         f.minutes.setValue(40);
-        f.showErrors(TaskCheck.check(f));
+        f.showErrors(TaskCheck.check(f.draft(), f.editing()));
         f.title.setText("밤 공부");
         String afterTitle = f.errorText();
         boolean hintAt30 = f.minutesHint.isVisible();
@@ -245,7 +244,7 @@ public final class ProtoCheck {
 
     /** 검사 문장을 칸 순서대로 " / "로 잇는다. 통과면 null. */
     private static String msgs(TaskForm f) {
-        var p = TaskCheck.check(f);
+        var p = TaskCheck.check(f.draft(), f.editing());
         return p.isEmpty() ? null : String.join(" / ", p.stream().map(x -> x[1]).toList());
     }
 }

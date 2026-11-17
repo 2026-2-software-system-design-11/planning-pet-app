@@ -3,7 +3,7 @@ package planningpet.qa;
 import planningpet.app.*;
 import planningpet.app.model.Store;
 import planningpet.app.view.App;
-import planningpet.schedule.controller.Actions;
+import planningpet.common.model.Rules;
 import planningpet.schedule.model.*;
 import planningpet.schedule.view.*;
 import planningpet.shop.view.ShopDialog;
@@ -48,12 +48,12 @@ public final class BlindStates {
             bad.sync();
             bad.start.setValue("23:30");
             bad.minutes.setValue(40);
-            bad.showErrors(TaskCheck.check(bad));
+            bad.showErrors(TaskCheck.check(bad.draft(), bad.editing()));
             BlindShots.shoot(TaskDialog.content(bad, new JButton("취소"), new JButton("저장"), null), null, "일정 추가",
                     images, key, n++, out, "일정 입력 창(추가), 저장을 누른 뒤 오류");
             Task exercise = app.store.dayPlan(today).untimed().get(1);
             String[] two = {"삭제", "취소"};
-            BlindShots.shoot(new JOptionPane("'" + exercise.title + "'" + Actions.josa(exercise.title, "을", "를") + " 삭제할까요?",
+            BlindShots.shoot(new JOptionPane("'" + exercise.title + "'" + Rules.josa(exercise.title, "을", "를") + " 삭제할까요?",
                     JOptionPane.QUESTION_MESSAGE, JOptionPane.DEFAULT_OPTION, null, two, two[1]), null, "일정 삭제",
                     images, key, n++, out, "일정 삭제 확인 창(반복 아님)");
             Task fixed = app.store.tasks.stream().filter(x -> x.kind == Task.Kind.FIXED).findFirst().orElseThrow();
@@ -97,7 +97,7 @@ public final class BlindStates {
         pane.add(picture, JLayeredPane.DEFAULT_LAYER);
         Task essay = s.dayPlan(s.today()).timed().get(1);
         // 창 없이는 팝업을 띄울 수 없어서, 메뉴의 항목(같은 부품, 같은 동작)을 메뉴 모양 판에 옮겨 담는다.
-        JPopupMenu menu = app.actions.menu(essay);
+        JPopupMenu menu = TaskMenu.of(app.actions, essay);
         javax.swing.JPanel look = new javax.swing.JPanel();
         look.setLayout(new javax.swing.BoxLayout(look, javax.swing.BoxLayout.Y_AXIS));
         look.setBorder(javax.swing.BorderFactory.createLineBorder(java.awt.Color.GRAY));
