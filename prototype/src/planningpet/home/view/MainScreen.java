@@ -4,7 +4,6 @@ import planningpet.app.view.App;
 import planningpet.common.model.Rules;
 import planningpet.common.view.*;
 import planningpet.reward.view.WalkBar;
-import planningpet.schedule.model.Task;
 import planningpet.schedule.view.TaskRows;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -73,13 +72,9 @@ public final class MainScreen extends JPanel {
         JPanel panel = new JPanel(new BorderLayout(6, 2));
         Ui.limit(quick, 100);
         Runnable put = () -> {
-            String title = quick.getText().strip();
-            if (title.isEmpty() || title.length() > 100) {
-                return;
+            if (app.actions.quickAdd(quick.getText(), calendar.selected())) {
+                quick.setText("");
             }
-            app.store.add(Task.Kind.TASK, title, calendar.selected(), null, 30, "", null);
-            quick.setText("");
-            app.store.changed();
         };
         quick.addActionListener(e -> put.run());
         quickButton.addActionListener(e -> put.run());

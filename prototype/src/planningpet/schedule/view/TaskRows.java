@@ -2,7 +2,7 @@ package planningpet.schedule.view;
 
 import planningpet.app.model.Store;
 import planningpet.common.view.*;
-import planningpet.schedule.controller.Actions;
+import planningpet.schedule.controller.TaskController;
 import planningpet.schedule.model.Task;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -19,9 +19,9 @@ import javax.swing.JPanel;
 
 /** 할 일 줄 목록. 메인의 하루 시간표와 일정관리의 시각 없는 할 일 목록이 같이 쓴다. */
 public final class TaskRows extends JPanel implements javax.swing.Scrollable {
-    private final Actions actions;
+    private final TaskController actions;
 
-    public TaskRows(Actions actions) {
+    public TaskRows(TaskController actions) {
         this.actions = actions;
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     }
@@ -134,7 +134,7 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
             @Override
             public void mousePressed(MouseEvent e) {
                 if (e.isPopupTrigger()) {
-                    actions.menu(t).show(e.getComponent(), e.getX(), e.getY());
+                    TaskMenu.of(actions, t).show(e.getComponent(), e.getX(), e.getY());
                 }
             }
 

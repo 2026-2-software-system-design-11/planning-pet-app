@@ -76,32 +76,11 @@ public final class TaskDialog {
 
     /** 저장 버튼과 같다. 검사를 통과하면 저장하고 true, 아니면 칸 아래에 오류를 모두 보이고 false. */
     public static boolean trySave(App app, TaskForm f, Task editing) {
-        var problems = TaskCheck.check(f);
+        var problems = TaskCheck.check(f.draft(), f.editing());
         f.showErrors(problems);
         if (!problems.isEmpty()) {
             return false;
         }
-        String title = f.title.getText().strip();
-        int scope = editing == null ? 0 : app.actions.editScope(editing);
-        if (scope < 0) {
-            return false;
-        }
-        if (editing == null) {
-            Task.Kind kind = f.fixed.isSelected() ? Task.Kind.FIXED : Task.Kind.TASK;
-            app.store.add(kind, title, Ui.dateOf(f.date), f.startTime(), (int) f.minutes.getValue(),
-                    f.memo.getText(), f.repeat.isSelected() ? Ui.dateOf(f.repeatEnd) : null);
-        } else {
-            LocalDate originalDate = editing.date;
-            editing.title = title;
-            editing.date = Ui.dateOf(f.date);
-            editing.start = f.startTime();
-            editing.minutes = (int) f.minutes.getValue();
-            editing.memo = f.memo.getText();
-            if (scope == 1) {
-                app.store.applyToSeries(editing, originalDate);
-            }
-        }
-        app.store.changed();
-        return true;
+        return app.actions.save(editing, f.draft());
     }
 }

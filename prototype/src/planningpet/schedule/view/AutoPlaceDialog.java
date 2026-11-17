@@ -90,8 +90,7 @@ public final class AutoPlaceDialog {
 
     /** 적용 버튼과 같다. */
     public static void apply(App app, Planner.Placement p) {
-        p.placed().forEach(x -> x.task().start = x.start());
-        app.store.changed();
+        app.actions.applyPlacement(p);
     }
 
     private static String day(LocalDate d) {

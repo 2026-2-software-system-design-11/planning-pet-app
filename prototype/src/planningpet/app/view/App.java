@@ -5,7 +5,7 @@ import planningpet.app.model.Store;
 import planningpet.common.view.*;
 import planningpet.pet.model.Talk;
 import planningpet.reward.model.Game;
-import planningpet.schedule.controller.Actions;
+import planningpet.schedule.controller.TaskController;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Dimension;
@@ -24,7 +24,7 @@ public final class App {
     public final Store store;
     public final Game game;
     public final Talk talk;
-    public final Actions actions;
+    public final TaskController actions;
     public final JPanel root = new JPanel(new BorderLayout()) {
         @Override
         protected void paintComponent(java.awt.Graphics g) {
@@ -48,7 +48,7 @@ public final class App {
         this.store = store;
         this.game = new Game(store);
         this.talk = new Talk(store);
-        this.actions = new Actions(this);
+        this.actions = new TaskController(this);
         root.add(topBar(), BorderLayout.NORTH);
         JPanel navWrap = new Card(new BorderLayout(), Theme.CARD_RADIUS).filled(Theme.SIDE);
         navWrap.setBorder(BorderFactory.createEmptyBorder(12, 10, 12, 10));
