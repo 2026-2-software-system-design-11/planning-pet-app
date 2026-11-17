@@ -1,5 +1,9 @@
-package planningpet.proto;
+package planningpet.schedule.view;
 
+import planningpet.app.model.Store;
+import planningpet.app.view.App;
+import planningpet.common.view.*;
+import planningpet.schedule.model.*;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.time.LocalDate;
@@ -85,7 +89,7 @@ public final class AutoPlaceDialog {
     }
 
     /** 적용 버튼과 같다. */
-    static void apply(App app, Planner.Placement p) {
+    public static void apply(App app, Planner.Placement p) {
         p.placed().forEach(x -> x.task().start = x.start());
         app.store.changed();
     }

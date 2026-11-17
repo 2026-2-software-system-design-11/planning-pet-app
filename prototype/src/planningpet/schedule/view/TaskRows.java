@@ -1,5 +1,9 @@
-package planningpet.proto;
+package planningpet.schedule.view;
 
+import planningpet.app.model.Store;
+import planningpet.common.view.*;
+import planningpet.schedule.controller.Actions;
+import planningpet.schedule.model.Task;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.MouseAdapter;

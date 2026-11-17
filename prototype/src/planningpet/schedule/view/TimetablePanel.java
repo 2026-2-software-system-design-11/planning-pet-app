@@ -1,5 +1,9 @@
-package planningpet.proto;
+package planningpet.schedule.view;
 
+import planningpet.app.model.Store;
+import planningpet.common.view.Theme;
+import planningpet.schedule.controller.Actions;
+import planningpet.schedule.model.*;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -65,11 +69,11 @@ public final class TimetablePanel extends JComponent {
     }
 
     /** 마지막으로 그린 블록과 체크박스 자리. 블라인드 검사가 번호를 찍는다. */
-    Map<Rectangle, Task> blockAreas() {
+    public Map<Rectangle, Task> blockAreas() {
         return blocks;
     }
 
-    Map<Rectangle, Task> boxAreas() {
+    public Map<Rectangle, Task> boxAreas() {
         return boxes;
     }
 
