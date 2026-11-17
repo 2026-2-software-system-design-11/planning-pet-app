@@ -5,7 +5,7 @@ import planningpet.common.model.Rules;
 import planningpet.schedule.model.Task;
 import java.time.LocalDate;
 
-/** 보상, 출석, 연속 접속(06의 8, 9, 11, 12, 13번). */
+/** 보상과 출석(06의 8, 9, 11, 13번). */
 public final class Game {
     private final Store s;
 
@@ -52,16 +52,5 @@ public final class Game {
         s.points += Rules.ATTEND_POINTS;
         s.attendanceDay = s.today();
         return true;
-    }
-
-    /** 06의 12번. 브리핑 직전에 부른다. */
-    public void recordOpen() {
-        LocalDate today = s.today();
-        if (today.minusDays(1).equals(s.lastOpenDay)) {
-            s.streak++;
-        } else if (!today.equals(s.lastOpenDay)) {
-            s.streak = 1;
-        }
-        s.lastOpenDay = today;
     }
 }
