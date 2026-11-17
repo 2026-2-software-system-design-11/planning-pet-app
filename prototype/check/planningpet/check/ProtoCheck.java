@@ -11,6 +11,7 @@ import planningpet.reward.model.*;
 import planningpet.reward.view.WalkBar;
 import planningpet.schedule.model.*;
 import planningpet.schedule.view.*;
+import planningpet.shop.model.Shop;
 
 /** 06 검사 표 가운데 프로토타입이 따르는 줄을 확인한다. JUnit 없이 java로 돌린다. */
 public final class ProtoCheck {
@@ -34,8 +35,9 @@ public final class ProtoCheck {
         eq("메인 브리핑", "오늘 할 일 3개 남았어. '은행 서류' 마감이 내일이야.", t.onWindowShown(g));
         eq("T-VIS-2", 5, s.streak);
         eq("T-ATT-1", "true 120", g.attend() + " " + s.points);
-        eq("T-SHOP-1", "0 0", g.buy("액자") + " " + s.points);
-        eq("T-SHOP-2, T-SHOP-4", "150 -1", g.buy("조명") + " " + g.buy("쿠션"));
+        Shop shop = new Shop(s);
+        eq("T-SHOP-1", "0 0", shop.buy("액자") + " " + s.points);
+        eq("T-SHOP-2, T-SHOP-4", "150 -1", shop.buy("조명") + " " + shop.buy("쿠션"));
         eq("삭제 확인 조사", "을 는", Rules.josa("자소서 초안", "을", "를") + " " + Rules.josa("자료구조", "은", "는"));
         TaskForm f = new TaskForm(null, s.today(), s.now);
         eq("T-VAL-2", "제목을 써 주세요", msgs(f));
