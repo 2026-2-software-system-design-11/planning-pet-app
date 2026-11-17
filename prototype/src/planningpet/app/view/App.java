@@ -1,8 +1,10 @@
 package planningpet.app.view;
 
+import planningpet.app.controller.AppController;
 import planningpet.app.controller.DayWatcher;
 import planningpet.app.model.Store;
 import planningpet.common.view.*;
+import planningpet.home.controller.HomeController;
 import planningpet.pet.controller.PetController;
 import planningpet.pet.model.Talk;
 import planningpet.reward.controller.RewardController;
@@ -27,10 +29,12 @@ public final class App {
     public final Store store;
     public final Game game;
     public final Talk talk;
-    public final TaskController actions;
-    public final RewardController rewards;
+    public final AppController control;
+    public final TaskController tasks;
+    public final HomeController home;
     public final ShopController shop;
     public final PetController pets;
+    private final RewardController rewards;
     public final JPanel root = new JPanel(new BorderLayout()) {
         @Override
         protected void paintComponent(java.awt.Graphics g) {
@@ -49,15 +53,18 @@ public final class App {
     public final JButton attend = new JButton();
     /** 06의 23번. Main.create가 넣는다. */
     public DayWatcher watcher;
+    private final java.util.List<Runnable> views = new java.util.ArrayList<>();
 
     public App(Store store) {
         this.store = store;
         this.game = new Game(store);
         this.talk = new Talk(store);
-        this.actions = new TaskController(this);
-        this.rewards = new RewardController(store, game);
-        this.shop = new ShopController(store);
-        this.pets = new PetController(store);
+        this.control = new AppController(store, talk);
+        this.tasks = new TaskController(this);
+        this.home = new HomeController(control, store, talk);
+        this.shop = new ShopController(control, store);
+        this.pets = new PetController(control, store);
+        this.rewards = new RewardController(control, store, game);
         root.add(topBar(), BorderLayout.NORTH);
         JPanel navWrap = new Card(new BorderLayout(), Theme.CARD_RADIUS).filled(Theme.SIDE);
         navWrap.setBorder(BorderFactory.createEmptyBorder(12, 10, 12, 10));
@@ -67,7 +74,18 @@ public final class App {
         root.add(center, BorderLayout.CENTER);
         root.setPreferredSize(new Dimension(1000, 680));
         attend.addActionListener(e -> rewards.attend());
-        store.onChange(this::refresh);
+        watch(this::refresh);
+    }
+
+    /** 데이터 변경 알림과 다시 그리기 신호를 함께 받는다. */
+    public void watch(Runnable refresh) {
+        store.onChange(refresh);
+        views.add(refresh);
+    }
+
+    /** 화면 전환이나 주 옮기기처럼 model을 바꾸지 않을 때 화면을 다시 그린다(D-46). */
+    public void redraw() {
+        views.forEach(Runnable::run);
     }
 
     private JPanel topBar() {
@@ -128,7 +146,7 @@ public final class App {
             JToggleButton b = (JToggleButton) c;
             b.setSelected(b.getText().equals(name));
         }
-        store.changed();
+        redraw();
     }
 
     public void refresh() {
