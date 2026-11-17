@@ -36,12 +36,12 @@ public final class BlindStates {
             int n = 12;
             Store none = MockData.empty();
             App first = Main.create(none);
-            first.store.say(first.talk.onWindowShown(first.game));
+            first.control.windowShown();
             first.show("홈");
             first.store.changed();
             BlindShots.shoot(first.root, new Dimension(1000, 680), null, images, key, n++, out, "홈, 일정이 하나도 없는 처음");
             App app = Main.create(MockData.sample());
-            app.store.say(app.talk.onWindowShown(app.game));
+            app.control.windowShown();
             LocalDate today = app.store.today();
             TaskForm bad = new TaskForm(null, today, app.store.now);
             bad.timed.setSelected(true);
@@ -82,7 +82,7 @@ public final class BlindStates {
     /** 홈 그림 위, 둘째 할 일 줄 자리에 오른쪽 버튼 메뉴를 얹는다. 홈 그림은 눌러지지 않는 그림이다. */
     private static JLayeredPane menuOver(Store s) throws Exception {
         App app = Main.create(s);
-        app.store.say(app.talk.onWindowShown(app.game));
+        app.control.windowShown();
         app.show("홈");
         app.store.changed();
         Dimension size = new Dimension(1000, 680);
@@ -97,7 +97,7 @@ public final class BlindStates {
         pane.add(picture, JLayeredPane.DEFAULT_LAYER);
         Task essay = s.dayPlan(s.today()).timed().get(1);
         // 창 없이는 팝업을 띄울 수 없어서, 메뉴의 항목(같은 부품, 같은 동작)을 메뉴 모양 판에 옮겨 담는다.
-        JPopupMenu menu = TaskMenu.of(app.actions, essay);
+        JPopupMenu menu = TaskMenu.of(app.tasks, essay);
         javax.swing.JPanel look = new javax.swing.JPanel();
         look.setLayout(new javax.swing.BoxLayout(look, javax.swing.BoxLayout.Y_AXIS));
         look.setBorder(javax.swing.BorderFactory.createLineBorder(java.awt.Color.GRAY));

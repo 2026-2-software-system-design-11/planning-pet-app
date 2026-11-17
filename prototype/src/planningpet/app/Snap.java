@@ -27,7 +27,7 @@ public final class Snap {
         File dir = new File(args.length > 0 ? args[0] : "screenshots");
         dir.mkdirs();
         App app = Main.create(MockData.sample());
-        app.store.say(app.talk.onWindowShown(app.game));
+        app.control.windowShown();
         for (String[] screen : new String[][] {{"홈", "1-main"}, {"일정관리", "2-schedule"}, {"pet", "5-pet"},
                 {"설정", "8-settings"}}) {
             app.show(screen[0]);

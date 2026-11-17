@@ -35,8 +35,7 @@ public final class Main {
             frame.pack();
             frame.setLocationRelativeTo(null);
             frame.setVisible(true);
-            app.store.say(app.talk.onWindowShown(app.game));
-            app.store.changed();
+            app.control.windowShown();
             new javax.swing.Timer(30_000, e -> app.watcher.tick()).start();
         });
     }
@@ -52,7 +51,7 @@ public final class Main {
                 new PetScreen(app));
         app.addScreen("통계", "", null);
         app.addScreen("설정", "플래닝펫을 내게 맞게 바꿔요.", new SettingsScreen());
-        store.onChange(() -> Theme.clear(app.root));
+        app.watch(() -> Theme.clear(app.root));
         Theme.clear(app.root);
         return app;
     }

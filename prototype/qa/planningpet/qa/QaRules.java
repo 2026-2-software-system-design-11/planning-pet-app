@@ -92,7 +92,7 @@ final class QaRules {
 
     private static App fresh() {
         App app = Main.create(MockData.sample());
-        app.store.say(app.talk.onWindowShown(app.game));
+        app.control.windowShown();
         app.show("홈");
         app.store.changed();
         return app;

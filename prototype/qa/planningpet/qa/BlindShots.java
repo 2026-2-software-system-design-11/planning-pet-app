@@ -67,7 +67,7 @@ public final class BlindShots {
             out.println();
             out.println("예측자에게 주지 않는다. 그림 번호와 부품을 잇는다.");
             App app = Main.create(MockData.sample());
-            app.store.say(app.talk.onWindowShown(app.game));
+            app.control.windowShown();
             int n = 1;
             for (String screen : new String[] {"홈", "일정관리", "pet", "설정"}) {
                 app.show(screen);
