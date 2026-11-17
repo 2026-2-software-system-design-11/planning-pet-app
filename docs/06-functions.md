@@ -8,7 +8,24 @@
 - 지금 시각은 주입한 `java.time.Clock`에서 얻는다. 표의 시각은 운영체제 시간대의 시각이다.
 - 표의 날짜는 2026년이다. 2026-11-16은 월요일이다.
 - "오늘"은 앱 날짜(D-15)다. 포인트는 P, 경험치는 "경험치 N"으로 적는다.
-- 패키지는 `planningpet.model`(데이터와 규칙), `planningpet.store`(저장), `planningpet.app`(화면과 Model을 잇는 Controller), `planningpet.ui`(Swing)다. 클래스 사이의 관계와 저장 파일 형식은 07에서 그린다.
+- 패키지는 도메인별로 나누고, 도메인 안을 `model`, `view`, `controller`로 나눈다(D-46). 예: `planningpet.schedule.model`. 클래스 사이의 관계와 저장 파일 형식은 07에서 그린다.
+  - `model`은 데이터와 규칙이다. Swing과 AWT를 쓰지 않는다.
+  - `view`는 Swing 화면이다. model을 읽어 그리고, 바꿀 때는 controller를 부른다. 다른 도메인의 controller도 부를 수 있다.
+  - `controller`는 view의 동작을 받아 model을 바꾼다. 바꾸는 일은 22번 `AppController.change`로 감싸서, 저장과 데이터 변경 알림이 변경 하나에 한 번씩 나가게 한다.
+  - 펫 말만 바꾸는 동작(달력 날짜 고르기, 그날 두 번째부터 창이 보일 때)은 저장할 데이터(아래 "데이터" 표)를 바꾸지 않으므로 22번을 거치지 않고 알림만 보낸다.
+  - 화면 전환이나 주 옮기기처럼 model을 바꾸지 않는 다시 그리기는 데이터 변경 알림을 쓰지 않고 view끼리 한다.
+  - 진입점(`main`이 있는 클래스)은 세 패키지에 넣지 않고 `planningpet.app`에 둔다.
+
+| 도메인 | 패키지 | 이 문서의 함수 |
+|---|---|---|
+| 일정 | `planningpet.schedule` | 2~7번(`TaskDraft`, `TaskBook`), 14번(`DefaultDates`), 17번(`Reminders`), 18번(`AutoPlacer`), 19번(`TimetableLayout`), 26번(`CalendarCell`) |
+| 보상 | `planningpet.reward` | 8~11번(`Rewards`, `Level`), 13번(`DailyProgress`, 성취도 막대는 게임 요소다. D-04, D-22) |
+| 펫 | `planningpet.pet` | 16번(`PetTalk`, 글자 규칙은 공통), 20번의 놓기(`Room`) |
+| 상점 | `planningpet.shop` | 20번의 사기(`Shop`) |
+| 홈 | `planningpet.home` | 메인 화면과 그 달력에서 날짜 고르기(UC-09). 여러 도메인을 모아 보인다 |
+| 설정 | `planningpet.settings` | 설정 화면 |
+| 앱 | `planningpet.app` | 12번(`Visits`, 15번만 부른다), 15번과 22번(`AppController`), 21번(`DataStore`), 23번(`DayWatcher`), 24번(`SingleInstance`), 25번. 진입점, 창 틀, 앱 데이터 |
+| 공통 | `planningpet.common` | 1번(`AppDay`), 16번의 글자 규칙(받침, 조사, 제목 줄임. 여러 도메인이 쓴다). 디자인 시스템의 색과 부품 |
 
 ## 데이터
 
@@ -483,7 +500,7 @@
 
 ## 25. 창 닫기, 끝내기, 컴퓨터 켤 때 실행
 
-`AppController`와 `planningpet.ui`가 함께 맡는다.
+`planningpet.app`의 `AppController`와 창 틀이 함께 맡는다.
 
 - **쓰는 곳**: UC-18, UC-19
 - **하는 일**:
