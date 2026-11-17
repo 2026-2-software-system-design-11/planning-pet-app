@@ -5,4 +5,4 @@ cd "$(dirname "$0")"
 ./build.sh
 rm -rf out-check
 javac -encoding UTF-8 -cp out -d out-check $(find check -name '*.java')
-java -Djava.awt.headless=true -cp out:out-check planningpet.proto.ProtoCheck
+java -Djava.awt.headless=true -cp out:out-check planningpet.check.ProtoCheck

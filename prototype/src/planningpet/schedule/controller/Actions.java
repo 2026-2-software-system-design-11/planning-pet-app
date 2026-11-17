@@ -1,5 +1,10 @@
-package planningpet.proto;
+package planningpet.schedule.controller;
 
+import planningpet.app.view.App;
+import planningpet.common.model.Rules;
+import planningpet.reward.model.RewardResult;
+import planningpet.schedule.model.Task;
+import planningpet.schedule.view.*;
 import java.time.LocalDate;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -9,24 +14,24 @@ import javax.swing.JPopupMenu;
 public final class Actions {
     private final App app;
 
-    Actions(App app) {
+    public Actions(App app) {
         this.app = app;
         this.opener = (t, date) -> TaskDialog.open(app, t, date);
     }
 
     /** 삭제 확인 창. 고른 버튼의 번호를 돌려준다. QA는 이것을 바꿔 끼운다. */
-    interface Chooser {
+    public interface Chooser {
         int choose(String title, String message, String[] options);
     }
 
-    Chooser chooser = this::ask;
+    public Chooser chooser = this::ask;
 
     /** 일정 입력 창을 연다. editing이 null이면 추가다. QA는 이것을 바꿔 끼운다. */
-    interface Opener {
+    public interface Opener {
         void open(Task editing, LocalDate date);
     }
 
-    Opener opener;
+    public Opener opener;
 
     private int ask(String title, String message, String[] options) {
         return JOptionPane.showOptionDialog(app.root, message, title,
@@ -69,12 +74,12 @@ public final class Actions {
         return deleted;
     }
 
-    LocalDate today() {
+    public LocalDate today() {
         return app.store.today();
     }
 
     /** D-42. 반복 사본을 저장할 때 범위를 묻는다. 0 이 일정만, 1 이후 반복 모두, -1 취소. 반복이 아니면 묻지 않고 0. */
-    int editScope(Task t) {
+    public int editScope(Task t) {
         if (t.seriesId == null) {
             return 0;
         }
@@ -111,7 +116,7 @@ public final class Actions {
     }
 
     /** 마지막 글자에 받침이 있으면 withBatchim, 없으면 without. */
-    static String josa(String word, String withBatchim, String without) {
+    public static String josa(String word, String withBatchim, String without) {
         return Rules.hasBatchim(word) ? withBatchim : without;
     }
 }

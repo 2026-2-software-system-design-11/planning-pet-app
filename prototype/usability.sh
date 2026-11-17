@@ -9,9 +9,9 @@ javac -encoding UTF-8 -cp out -d out-qa $(find qa -name '*.java')
 mkdir -p out-blind
 IMG=$(mktemp -d /tmp/usability-img.XXXX)
 STEPS=$(mktemp -d /tmp/usability-steps.XXXX)
-java -Djava.awt.headless=true -cp out:out-qa:. planningpet.proto.BlindShots "$IMG" out-blind/key.md
-java -Djava.awt.headless=true -cp out:out-qa:. planningpet.proto.BlindStates "$IMG" out-blind/key2.md
-java -Djava.awt.headless=true -cp out:out-qa:. planningpet.proto.QaRun "$STEPS/report.md" "$STEPS/fail" "$STEPS"
+java -Djava.awt.headless=true -cp out:out-qa:. planningpet.qa.BlindShots "$IMG" out-blind/key.md
+java -Djava.awt.headless=true -cp out:out-qa:. planningpet.qa.BlindStates "$IMG" out-blind/key2.md
+java -Djava.awt.headless=true -cp out:out-qa:. planningpet.qa.QaRun "$STEPS/report.md" "$STEPS/fail" "$STEPS"
 for k in 05 06 07 08 09 10 11 13 14 15 16 17 19; do cp "$IMG/screen-$k.png" "$STEPS/dialog-$k.png"; done
 cp "$STEPS/steps.tsv" out-blind/steps.tsv
 JOBS=out-blind/jobs.txt

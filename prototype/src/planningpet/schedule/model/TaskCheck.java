@@ -1,5 +1,7 @@
-package planningpet.proto;
+package planningpet.schedule.model;
 
+import planningpet.common.view.Ui;
+import planningpet.schedule.view.TaskForm;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;

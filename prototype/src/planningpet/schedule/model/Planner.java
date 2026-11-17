@@ -1,5 +1,6 @@
-package planningpet.proto;
+package planningpet.schedule.model;
 
+import planningpet.app.model.Store;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;

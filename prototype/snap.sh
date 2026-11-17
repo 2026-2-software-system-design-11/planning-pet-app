@@ -3,4 +3,4 @@
 set -e
 cd "$(dirname "$0")"
 ./build.sh
-java -Djava.awt.headless=true -cp planningpet-prototype.jar planningpet.proto.Snap screenshots
+java -Djava.awt.headless=true -cp planningpet-prototype.jar planningpet.app.Snap screenshots
