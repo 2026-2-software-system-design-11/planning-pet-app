@@ -4,22 +4,9 @@ import planningpet.app.model.Store;
 import planningpet.common.model.Rules;
 import planningpet.schedule.model.Task;
 import java.time.LocalDate;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
-/** 보상, 출석, 연속 접속, 상점(06의 8, 9, 11, 12, 13, 20번). */
+/** 보상, 출석, 연속 접속(06의 8, 9, 11, 12, 13번). */
 public final class Game {
-    /** D-28의 아이템과 가격. 가격 순이다. */
-    public static final Map<String, Integer> ITEMS = new LinkedHashMap<>();
-
-    static {
-        String[] names = {"쿠션", "화분", "러그", "액자", "조명", "책장", "책상", "소파"};
-        int[] prices = {50, 80, 100, 120, 150, 200, 250, 300};
-        for (int i = 0; i < names.length; i++) {
-            ITEMS.put(names[i], prices[i]);
-        }
-    }
-
     private final Store s;
 
     public Game(Store store) {
@@ -76,20 +63,5 @@ public final class Game {
             s.streak = 1;
         }
         s.lastOpenDay = today;
-    }
-
-    /** 06의 20번. 모자라면 모자란 포인트(양수), 사면 0, 이미 있으면 -1. */
-    public int buy(String item) {
-        if (s.owned.contains(item)) {
-            return -1;
-        }
-        int price = ITEMS.get(item);
-        if (s.points < price) {
-            return price - s.points;
-        }
-        s.points -= price;
-        s.owned.add(item);
-        s.placed.add(item);
-        return 0;
     }
 }

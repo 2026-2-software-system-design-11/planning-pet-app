@@ -3,18 +3,17 @@ package planningpet.schedule.controller;
 import planningpet.app.view.App;
 import planningpet.common.model.Rules;
 import planningpet.reward.model.RewardResult;
-import planningpet.schedule.model.Task;
+import planningpet.schedule.model.*;
 import planningpet.schedule.view.*;
 import java.time.LocalDate;
-import javax.swing.JMenuItem;
+import java.time.LocalTime;
 import javax.swing.JOptionPane;
-import javax.swing.JPopupMenu;
 
-/** 여러 화면이 같이 쓰는 사용자 동작: 체크, 수정, 삭제, 추가. */
-public final class Actions {
+/** 일정 controller. 여러 화면이 같이 쓰는 사용자 동작(체크, 수정, 삭제, 추가, 저장)을 받아 Model을 바꾸고 알린다. */
+public final class TaskController {
     private final App app;
 
-    public Actions(App app) {
+    public TaskController(App app) {
         this.app = app;
         this.opener = (t, date) -> TaskDialog.open(app, t, date);
     }
@@ -56,14 +55,14 @@ public final class Actions {
     public boolean delete(Task t) {
         boolean deleted = false;
         if (t.seriesId == null) {
-            int answer = chooser.choose("일정 삭제", "'" + t.title + "'" + josa(t.title, "을", "를") + " 삭제할까요?",
+            int answer = chooser.choose("일정 삭제", "'" + t.title + "'" + Rules.josa(t.title, "을", "를") + " 삭제할까요?",
                     new String[] {"삭제", "취소"});
             if (answer == 0) {
                 app.store.delete(t, false);
                 deleted = true;
             }
         } else {
-            int answer = chooser.choose("일정 삭제", "'" + t.title + "'" + josa(t.title, "은", "는") + " 매주 반복 일정이에요.",
+            int answer = chooser.choose("일정 삭제", "'" + t.title + "'" + Rules.josa(t.title, "은", "는") + " 매주 반복 일정이에요.",
                     new String[] {"이 일정만", "이후 반복 모두", "취소"});
             if (answer == 0 || answer == 1) {
                 app.store.delete(t, answer == 1);
@@ -83,7 +82,7 @@ public final class Actions {
         if (t.seriesId == null) {
             return 0;
         }
-        int answer = chooser.choose("반복 일정 저장", "'" + t.title + "'" + josa(t.title, "은", "는") + " 매주 반복 일정이에요. 어디까지 바꿀까요?",
+        int answer = chooser.choose("반복 일정 저장", "'" + t.title + "'" + Rules.josa(t.title, "은", "는") + " 매주 반복 일정이에요. 어디까지 바꿀까요?",
                 new String[] {"이 일정만", "이후 반복 모두", "취소"});
         return answer == 0 || answer == 1 ? answer : -1;
     }
@@ -103,20 +102,71 @@ public final class Actions {
         TimeEditor.open(app, t, anchor);
     }
 
-    /** 오른쪽 버튼 메뉴: 수정, 삭제. */
-    public JPopupMenu menu(Task t) {
-        JPopupMenu menu = new JPopupMenu();
-        JMenuItem edit = new JMenuItem("수정");
-        edit.addActionListener(e -> edit(t));
-        JMenuItem delete = new JMenuItem("삭제");
-        delete.addActionListener(e -> delete(t));
-        menu.add(edit);
-        menu.add(delete);
-        return menu;
+    /** UC-03, UC-05. 검사를 통과한 입력 값을 저장한다. 반복 사본이면 범위를 묻고, 취소하면 false. */
+    public boolean save(Task editing, TaskDraft d) {
+        int scope = editing == null ? 0 : editScope(editing);
+        if (scope < 0) {
+            return false;
+        }
+        String title = d.title().strip();
+        if (editing == null) {
+            app.store.add(d.kind(), title, d.date(), d.start(), d.minutes(), d.memo(), d.repeatEnd());
+        } else {
+            LocalDate originalDate = editing.date;
+            editing.title = title;
+            editing.date = d.date();
+            editing.start = d.start();
+            editing.minutes = d.minutes();
+            editing.memo = d.memo();
+            if (scope == 1) {
+                app.store.applyToSeries(editing, originalDate);
+            }
+        }
+        app.store.changed();
+        return true;
     }
 
-    /** 마지막 글자에 받침이 있으면 withBatchim, 없으면 without. */
-    public static String josa(String word, String withBatchim, String without) {
-        return Rules.hasBatchim(word) ? withBatchim : without;
+    /** 홈 빠른 추가(D-40). 시각 없는 30분 할 일이다. 비었거나 100자를 넘으면 넣지 않고 false. */
+    public boolean quickAdd(String text, LocalDate date) {
+        String title = text.strip();
+        if (title.isEmpty() || title.length() > 100) {
+            return false;
+        }
+        app.store.add(Task.Kind.TASK, title, date, null, 30, "", null);
+        app.store.changed();
+        return true;
+    }
+
+    /** 시각 고치기 창의 저장(D-32, D-42). 반복 사본이면 범위를 묻고, 취소하면 false. */
+    public boolean saveTime(Task t, LocalTime start, int minutes) {
+        int scope = editScope(t);
+        if (scope < 0) {
+            return false;
+        }
+        t.start = start;
+        t.minutes = minutes;
+        if (scope == 1) {
+            app.store.applyToSeries(t, t.date, true);
+        }
+        app.store.changed();
+        return true;
+    }
+
+    /** 시각 빼기. */
+    public void clearTime(Task t) {
+        t.start = null;
+        app.store.changed();
+    }
+
+    /** UC-09. 달력에서 날짜를 고르면 펫이 그 날을 말한다. */
+    public void selectDay(LocalDate date) {
+        app.store.say(date.equals(app.store.today()) ? app.talk.usual() : app.talk.otherDate(date));
+        app.store.changed();
+    }
+
+    /** 자동 배치 결과 창의 적용(UC-11). */
+    public void applyPlacement(Planner.Placement p) {
+        p.placed().forEach(x -> x.task().start = x.start());
+        app.store.changed();
     }
 }

@@ -65,6 +65,11 @@ public final class Rules {
         return "013678".indexOf(last) >= 0;
     }
 
+    /** 마지막 글자에 받침이 있으면 withBatchim, 없으면 without. */
+    public static String josa(String word, String withBatchim, String without) {
+        return hasBatchim(word) ? withBatchim : without;
+    }
+
     /** 15자를 넘으면 앞 14자 뒤에 "…". */
     public static String shortTitle(String title) {
         return title.length() > 15 ? title.substring(0, 14) + "…" : title;

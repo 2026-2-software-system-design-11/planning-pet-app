@@ -129,12 +129,18 @@ public final class TaskForm {
         int end = s == null ? 0 : s.getHour() * 60 + s.getMinute() + (int) minutes.getValue();
         endLabel.setText(s == null ? "" : String.format("끝 %02d:%02d", end / 60, end % 60));
         if (checked) {
-            showErrors(TaskCheck.check(this));
+            showErrors(TaskCheck.check(draft(), editing));
         }
     }
 
     public boolean editing() {
         return editing;
+    }
+
+    /** 칸에 쓴 값. 반복이 꺼져 있으면 반복 끝은 null이다. */
+    public TaskDraft draft() {
+        return new TaskDraft(fixed.isSelected() ? Task.Kind.FIXED : Task.Kind.TASK, title.getText(), Ui.dateOf(date),
+                startTime(), (int) minutes.getValue(), memo.getText(), repeat.isSelected() ? Ui.dateOf(repeatEnd) : null);
     }
 
     /** D-42: 반복 사본을 고칠 때 반복 칸을 켠 채(비활성) 그 반복의 마지막 날짜를 보인다. */

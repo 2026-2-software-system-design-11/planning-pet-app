@@ -4,7 +4,7 @@ import planningpet.app.Main;
 import planningpet.app.model.Store;
 import planningpet.home.view.MainScreen;
 import planningpet.pet.view.PetScreen;
-import planningpet.schedule.controller.Actions;
+import planningpet.schedule.controller.TaskController;
 import planningpet.schedule.model.*;
 import planningpet.schedule.view.*;
 import planningpet.shop.view.ShopDialog;
@@ -119,7 +119,7 @@ class QaDrive extends QaCore {
     /** 목록 제목 줄의 "일정 추가"를 누른다. 창 대신 무엇을 열었는지와 빠른 추가 칸에 남은 글을 돌려준다. */
     String addFromList() {
         String[] opened = {"안 열림"};
-        Actions.Opener real = app.actions.opener;
+        TaskController.Opener real = app.actions.opener;
         app.actions.opener = (t, date) -> opened[0] = (t == null ? "새 일정 " : "수정 ") + date;
         main.addButton.doClick();
         app.actions.opener = real;

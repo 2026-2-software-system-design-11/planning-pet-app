@@ -2,7 +2,7 @@ package planningpet.schedule.view;
 
 import planningpet.app.model.Store;
 import planningpet.common.view.Theme;
-import planningpet.schedule.controller.Actions;
+import planningpet.schedule.controller.TaskController;
 import planningpet.schedule.model.*;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -26,7 +26,7 @@ public final class TimetablePanel extends JComponent {
     private final Map<Rectangle, Task> boxes = new LinkedHashMap<>();
     LocalDate monday;
 
-    public TimetablePanel(Store store, Actions actions) {
+    public TimetablePanel(Store store, TaskController actions) {
         this.store = store;
         setPreferredSize(new Dimension(300, HOUR * 24));
         setToolTipText("");
@@ -57,7 +57,7 @@ public final class TimetablePanel extends JComponent {
             public void mousePressed(MouseEvent e) {
                 Task t = at(e);
                 if (t != null && e.isPopupTrigger()) {
-                    actions.menu(t).show(TimetablePanel.this, e.getX(), e.getY());
+                    TaskMenu.of(actions, t).show(TimetablePanel.this, e.getX(), e.getY());
                 }
             }
 

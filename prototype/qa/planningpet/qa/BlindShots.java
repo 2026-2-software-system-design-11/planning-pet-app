@@ -5,7 +5,7 @@ import planningpet.app.model.Store;
 import planningpet.app.view.App;
 import planningpet.common.view.Theme;
 import planningpet.pet.view.PickDialog;
-import planningpet.schedule.controller.Actions;
+import planningpet.common.model.Rules;
 import planningpet.schedule.model.*;
 import planningpet.schedule.view.*;
 import planningpet.shop.view.ShopDialog;
@@ -89,7 +89,7 @@ public final class BlindShots {
             Task series = app.store.tasks.stream().filter(x -> x.seriesId != null).findFirst().orElseThrow();
             String[] options = {"이 일정만", "이후 반복 모두", "취소"};
             javax.swing.JOptionPane ask = new javax.swing.JOptionPane("'" + series.title + "'"
-                    + Actions.josa(series.title, "은", "는") + " 매주 반복 일정이에요.",
+                    + Rules.josa(series.title, "은", "는") + " 매주 반복 일정이에요.",
                     javax.swing.JOptionPane.QUESTION_MESSAGE, javax.swing.JOptionPane.DEFAULT_OPTION, null, options,
                     options[2]);
             shoot(ask, null, "일정 삭제", images, key, n++, out, "일정 삭제 확인 창(반복 일정)");
