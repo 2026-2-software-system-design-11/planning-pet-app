@@ -1,0 +1,233 @@
+package planningpet.qa;
+
+import planningpet.app.model.Store;
+import planningpet.common.view.Ui;
+import planningpet.pet.view.PickDialog;
+import planningpet.schedule.model.Task;
+import planningpet.schedule.view.*;
+import static planningpet.qa.QaRun.st;
+
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.util.Map;
+
+/** docs/user-flows.md의 ⑥, ⑦ 흐름. */
+final class Flows67 {
+    private Flows67() {
+    }
+
+    static void add(Map<String, Runnable> flows) {
+        flows.put("UF-6-1", Flows67::uf61);
+        flows.put("UF-6-2", Flows67::uf62);
+        flows.put("UF-6-3", Flows67::uf63);
+        flows.put("UF-7-1", () -> uf71(new Qa("UF-7-1")));
+        flows.put("UF-7-2", () -> uf72(new Qa("UF-7-2")));
+        flows.put("UF-7-3", () -> uf73(new Qa("UF-7-3"), true));
+        flows.put("UF-7-4", Flows67::uf74);
+    }
+
+    static void uf61() {
+        Qa q = new Qa("UF-6-1");
+        q.start(Personas.p6());
+        q.step("1", "앱을 연다");
+        q.open();
+        q.eq("말풍선", "오늘 할 일 3개 남았어.", q.app.store.talk);
+        q.eq("목록", "08:00~16:00 [ ] 고정 병원 실습 480분 / 시각 없는 할 일 / 시각 정하기 [ ] 실습 일지 60분"
+                + " / 시각 정하기 [ ] 간호사 국시 문제 30분", q.rows());
+        q.eq("성취도, 레벨", "0/3 두부 Lv.4 경험치 60 / 140", q.progress() + " " + q.level());
+        q.step("2", "병원 실습을 체크한다");
+        q.check(q.task("병원 실습", "2026-11-19"));
+        q.eq("상태", "160P 경험치310 횟수1 성취도1/3", st(q));
+        q.eq("말풍선", "잘했어! +10P", q.app.store.talk);
+        q.step("3", "실습 일지를 체크한다");
+        q.check(q.task("실습 일지"));
+        q.eq("상태", "170P 경험치320 횟수2 성취도2/3", st(q));
+        q.step("4", "간호사 국시 문제를 체크한다");
+        q.check(q.task("간호사 국시 문제"));
+        q.eq("상태", "180P 경험치330 횟수3 성취도3/3", st(q));
+        q.eq("말풍선", "오늘 할 일을 다 끝냈어! 푹 쉬어.", q.app.store.talk);
+        q.step("5", "일정관리를 연다");
+        q.app.show("일정관리");
+        q.eq("열, 체크", "병원 실습 0/1 true", Flows345.cols(q, "2026-11-19") + " " + q.task("병원 실습", "2026-11-19").done);
+        q.end();
+    }
+
+    static void uf62() {
+        Qa q = new Qa("UF-6-2");
+        q.start(Personas.p6());
+        q.open();
+        q.step("1", "달력 20을 누른다");
+        q.select("2026-11-20");
+        q.eq("목록", "08:00~16:00 [ ] 고정 병원 실습 480분", q.rows());
+        q.eq("말풍선", "11월 20일 할 일은 1개야.", q.app.store.talk);
+        q.step("2", "08:00~16:00을 누른다");
+        Task t = q.task("병원 실습", "2026-11-20");
+        TimeEditor e = new TimeEditor(t, q.app.store.now);
+        q.eq("창", "08:00 480 시각 빼기 false", e.start.getValue() + " " + e.minutes.getValue() + " 시각 빼기 " + e.clear.isVisible());
+        q.step("3", "시작을 09:00으로 바꿔 저장하고 이 일정만을 고른다");
+        e.start.setValue("09:00");
+        q.answer(0);
+        q.yes("저장", TimeEditor.save(q.app, t, e));
+        q.eq("범위 창", "반복 일정 저장 / '병원 실습'은 매주 반복 일정이에요. 어디까지 바꿀까요? / 이 일정만, 이후 반복 모두, 취소",
+                q.lastTitle + " / " + q.lastQuestion + " / " + q.lastOptions);
+        q.eq("목록", "09:00~17:00 [ ] 고정 병원 실습 480분", q.rows());
+        Task next = q.task("병원 실습", "2026-11-27");
+        q.eq("다음 주 금 27, 같은 반복", "08:00 true", next.start + " " + next.seriesId.equals(t.seriesId));
+        q.step("4", "달력 27에서 시작을 09:00으로 바꿔 저장하고 이후 반복 모두를 고른다");
+        q.select("2026-11-27");
+        TimeEditor e27 = new TimeEditor(next, q.app.store.now);
+        e27.start.setValue("09:00");
+        q.answer(1);
+        q.yes("저장", TimeEditor.save(q.app, next, e27));
+        StringBuilder fridays = new StringBuilder();
+        for (String day : new String[] {"2026-11-13", "2026-11-20", "2026-11-27", "2026-12-04", "2026-12-11", "2026-12-18"}) {
+            fridays.append(day.substring(5)).append(" ").append(q.task("병원 실습", day).start).append(" ");
+        }
+        q.eq("금요일", "11-13 08:00 11-20 09:00 11-27 09:00 12-04 09:00 12-11 09:00 12-18 09:00", fridays.toString().strip());
+        q.end();
+    }
+
+    static void uf63() {
+        Qa q = new Qa("UF-6-3");
+        q.start(Personas.p6());
+        q.open();
+        TaskForm f = q.form(q.main.calendar.selected().toString());
+        q.step("1", "제목을 비우고 저장한다");
+        q.eq("저장", "false 제목을 써 주세요", q.save(f, null) + " " + f.errorText());
+        q.step("2", "제목 칸에 101자를 붙여 넣는다");
+        f.title.setText("가".repeat(101));
+        q.eq("제목 길이", 100, f.title.getText().length());
+        q.step("3", "국시 모의고사, 걸리는 시간 칸에 27을 쳐 넣고 칸을 벗어난다");
+        f.title.setText("국시 모의고사");
+        q.eq("걸리는 시간", 30, Flows8910.type(f.minutes, "27"));
+        q.step("4", "제목을 비우고 시작 시각 23:30, 40분으로 저장한다");
+        f.title.setText("");
+        f.timed.doClick();
+        f.start.setValue("23:30");
+        f.minutes.setValue(40);
+        q.eq("오류 두 개(칸 순서)", "false 제목을 써 주세요 / 하루 안에 끝나야 해요", q.save(f, null) + " " + f.errorText());
+        q.eq("오류가 보이는 칸", "true true false", f.errors.get("제목").isVisible() + " " + f.errors.get("시작 시각").isVisible()
+                + " " + f.errors.get("걸리는 시간").isVisible());
+        q.step("5", "국시 모의고사, 시작 시각 끄고 30분으로 저장한다");
+        f.title.setText("국시 모의고사");
+        f.timed.doClick();
+        f.minutes.setValue(30);
+        q.yes("저장", q.save(f, null));
+        q.has("목록", "시각 정하기 [ ] 국시 모의고사 30분", q.rows());
+        q.end();
+    }
+
+    static Qa uf71(Qa q) {
+        Store s = Personas.p7();
+        q.step("1", "앱을 연다(반려동물 고르기 창)");
+        PickDialog pd = new PickDialog();
+        q.eq("고양이 골라짐, 이름 칸", "true ''", pd.cat.isSelected() + " '" + pd.name.getText() + "'");
+        q.eq("안내", "비워 두면 나비, 바둑이로 불러요", Qa.plain(hint(pd.panel)));
+        q.step("2", "이름 콩을 쓰고 시작하기를 누른다");
+        pd.name.setText("콩");
+        pd.apply(s);
+        q.start(s);
+        q.open();
+        q.eq("말풍선", "안녕, 나는 콩이야. 일정관리에서 이번 학기 수업부터 넣어 볼까?", q.app.store.talk);
+        q.eq("위 막대", "연속 접속 1일, 보유 0P, 출석 +20P", q.top());
+        q.eq("레벨", "콩 Lv.1 경험치 0 / 50", q.level());
+        q.eq("목록", "아직 일정이 없어요. 작은 계획을 추가해 보세요.", q.rows());
+        q.eq("성취도", "비어 있음", q.progress());
+        q.step("3", "pet을 연다");
+        q.app.show("pet");
+        q.eq("pet", "가진 아이템 0 / 8, 오늘은 아직 끝낸 일이 없어., ", q.pet());
+        q.end();
+        return q;
+    }
+
+    /** 반려동물 고르기 창에서 "나비"가 들어간 안내 글. */
+    static String hint(java.awt.Container c) {
+        for (java.awt.Component k : c.getComponents()) {
+            if (k instanceof javax.swing.JLabel l && l.getText().contains("나비")) {
+                return l.getText();
+            }
+            if (k instanceof java.awt.Container inner && !hint(inner).isEmpty()) {
+                return hint(inner);
+            }
+        }
+        return "";
+    }
+
+    static boolean fixed(Qa q, String title, String date, String time, int minutes, String end) {
+        TaskForm f = q.form(q.sched.defaultDate().toString());
+        f.fixed.doClick();
+        f.title.setText(title);
+        Ui.setDate(f.date, LocalDate.parse(date));
+        f.start.setValue(time);
+        f.minutes.setValue(minutes);
+        f.repeat.doClick();
+        if (end != null) {
+            Ui.setDate(f.repeatEnd, LocalDate.parse(end));
+        }
+        return q.save(f, null);
+    }
+
+    static Qa uf72(Qa q) {
+        q.after(Flows67::uf71);
+        q.step("1", "일정관리를 연다");
+        q.app.show("일정관리");
+        q.eq("오른쪽 목록", "이번 주에 시각 없는 할 일이 없어요.", q.schedRows());
+        q.eq("자동 배치 버튼, 펫", "false 지금 자동 배치할 할 일은 없어.", q.sched.autoPlace.isEnabled() + " " + q.schedBubble());
+        q.step("2", "대학수학 화 09:00 75분을 매주 반복(끝 그대로)으로 넣는다");
+        q.eq("기본 날짜", "2027-03-02", q.sched.defaultDate());
+        q.yes("저장", fixed(q, "대학수학", "2027-03-02", "09:00", 75, null));
+        q.eq("화요일 개수", 16, Flows345.count(q, "대학수학", DayOfWeek.TUESDAY));
+        q.step("3", "대학수학 목, 글쓰기 수를 넣는다");
+        q.yes("목", fixed(q, "대학수학", "2027-03-04", "09:00", 75, "2027-06-17"));
+        q.yes("수", fixed(q, "글쓰기", "2027-03-03", "13:00", 100, "2027-06-16"));
+        q.eq("목, 수 개수", "16 16", Flows345.count(q, "대학수학", DayOfWeek.THURSDAY) + " "
+                + Flows345.count(q, "글쓰기", DayOfWeek.WEDNESDAY));
+        q.step("4", "홈으로 간다");
+        q.app.show("홈");
+        q.eq("목록", "09:00~10:15 [ ] 고정 대학수학 75분", q.rows());
+        q.eq("성취도, 달력 2", "0/1 2", q.progress() + " " + q.cell(2));
+        q.end();
+        return q;
+    }
+
+    static Qa uf73(Qa q, boolean levelUp) {
+        q.after(Flows67::uf72);
+        q.step("1", "빠른 추가에 '  과제  '를 쓰고 Enter");
+        q.quick("  과제  ");
+        q.eq("칸", "", q.main.quick.getText());
+        q.has("목록", "시각 정하기 [ ] 과제 30분", q.rows());
+        q.step("2", "동아리 신청서, 책 사기, 기숙사 짐 정리를 넣는다");
+        q.quick("동아리 신청서");
+        q.quick("책 사기");
+        q.main.quick.setText("기숙사 짐 정리");
+        q.eq("칸에 쓴 채 일정 추가", "새 일정 " + q.main.calendar.selected() + ", 칸에 남은 글 기숙사 짐 정리", q.addFromList());
+        q.quick("기숙사 짐 정리");
+        q.has("넣은 순", "과제 30분 / 시각 정하기 [ ] 동아리 신청서 30분 / 시각 정하기 [ ] 책 사기 30분"
+                + " / 시각 정하기 [ ] 기숙사 짐 정리 30분", q.rows());
+        q.step("3", "대학수학, 과제, 동아리 신청서, 책 사기를 체크한다");
+        for (String t : new String[] {"과제", "동아리 신청서", "책 사기"}) {
+            q.check(q.task(t));
+        }
+        q.check(q.task("대학수학", "2027-03-02"));
+        q.eq("상태", "40P 경험치40 횟수4 성취도4/5", st(q));
+        q.eq("레벨", "콩 Lv.1 경험치 40 / 50", q.level());
+        if (levelUp) {
+            q.step("4", "기숙사 짐 정리를 체크한다");
+            q.check(q.task("기숙사 짐 정리"));
+            q.eq("상태", "50P 경험치50 횟수5 성취도5/5", st(q));
+            q.eq("말풍선", "잘했어! 레벨이 올랐어. 이제 Lv.2", q.app.store.talk);
+            q.eq("레벨", "콩 Lv.2 경험치 0 / 80", q.level());
+        }
+        q.end();
+        return q;
+    }
+
+    static void uf74() {
+        Qa q = new Qa("UF-7-4").after(x -> uf73(x, false));
+        q.step("1", "pet에서 상점을 연다(40P)");
+        q.app.show("pet");
+        q.eq("상점", "쿠션 10P 모자라요 꺼짐 / 화분 40P 모자라요 꺼짐 / 러그 60P 모자라요 꺼짐 / 액자 80P 모자라요 꺼짐"
+                + " / 조명 110P 모자라요 꺼짐 / 책장 160P 모자라요 꺼짐 / 책상 210P 모자라요 꺼짐 / 소파 260P 모자라요 꺼짐", q.shop());
+        q.end();
+    }
+}

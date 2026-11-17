@@ -5,5 +5,5 @@ if exist out rmdir /s /q out
 dir /s /b src\*.java > sources.txt
 javac -encoding UTF-8 -d out @sources.txt || exit /b 1
 del sources.txt
-jar --create --file planningpet-prototype.jar --main-class planningpet.proto.Main -C out . assets
+jar --create --file planningpet-prototype.jar --main-class planningpet.app.Main -C out . assets
 java -jar planningpet-prototype.jar %*

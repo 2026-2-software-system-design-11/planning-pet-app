@@ -9,7 +9,7 @@ rm -rf out-qa
 javac -encoding UTF-8 -cp out -d out-qa $(find qa -name '*.java')
 mkdir -p out-blind
 IMAGES=$(mktemp -d /tmp/blind-images.XXXX)
-java -Djava.awt.headless=true -cp out:out-qa:. planningpet.proto.BlindShots "$IMAGES" out-blind/key.md
+java -Djava.awt.headless=true -cp out:out-qa:. planningpet.qa.BlindShots "$IMAGES" out-blind/key.md
 # 페르소나 다섯 명씩 같이 돌린다.
 printf '%s\n' "$@" | xargs -P 5 -I{} qa/blind/run-one.sh {} "$IMAGES"
 rm -rf "$IMAGES"
