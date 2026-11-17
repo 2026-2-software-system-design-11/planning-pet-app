@@ -7,14 +7,17 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.LongSupplier;
 
-/** 일정 다루기(06의 3~7번, 26번). 앱 데이터의 일정 목록을 받아 다룬다. */
+/** 일정 다루기(06의 3~7번, 26번). 앱 데이터의 일정 목록과 넣은 순 번호를 받아 다룬다. */
 public final class TaskBook {
     private final List<Task> tasks;
-    private long nextSeq = 1;
+    private final LongSupplier nextSeq;
 
-    public TaskBook(List<Task> tasks) {
+    /** nextSeq는 앱 데이터의 다음 넣은 순 번호를 하나 꺼내고 늘린다. */
+    public TaskBook(List<Task> tasks, LongSupplier nextSeq) {
         this.tasks = tasks;
+        this.nextSeq = nextSeq;
     }
 
     /** 06의 3번. 반복 끝 날짜가 있으면 같은 요일마다 사본을 만든다. */
@@ -24,7 +27,7 @@ public final class TaskBook {
         String series = repeatEnd == null ? null : UUID.randomUUID().toString();
         LocalDate last = repeatEnd == null ? date : repeatEnd;
         for (LocalDate d = date; !d.isAfter(last); d = d.plusWeeks(1)) {
-            Task t = new Task(UUID.randomUUID().toString(), nextSeq++, kind, title.strip(), d, start, minutes);
+            Task t = new Task(UUID.randomUUID().toString(), nextSeq.getAsLong(), kind, title.strip(), d, start, minutes);
             t.memo = memo;
             t.seriesId = series;
             tasks.add(t);
