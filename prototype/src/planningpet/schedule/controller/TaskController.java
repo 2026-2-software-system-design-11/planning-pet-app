@@ -39,38 +39,37 @@ public final class TaskController {
 
     /** UC-07, UC-08. */
     public void check(Task t) {
-        if (t.done) {
-            int points = t.rewardPoints;
-            int before = Rules.level(app.store.exp);
-            app.game.uncomplete(t);
-            app.store.say(app.talk.uncompleted(points, before, Rules.level(app.store.exp)));
-        } else {
-            RewardResult r = app.game.complete(t);
-            app.store.say(app.talk.completed(r, t));
-        }
-        app.store.changed();
+        app.control.change(() -> {
+            if (t.done) {
+                int points = t.rewardPoints;
+                int before = Rules.level(app.store.exp);
+                app.game.uncomplete(t);
+                app.store.say(app.talk.uncompleted(points, before, Rules.level(app.store.exp)));
+            } else {
+                RewardResult r = app.game.complete(t);
+                app.store.say(app.talk.completed(r, t));
+            }
+        });
     }
 
     /** UC-06. 반복 사본이면 범위를 묻는다. 지웠으면 true. */
     public boolean delete(Task t) {
-        boolean deleted = false;
+        int scope;
         if (t.seriesId == null) {
             int answer = chooser.choose("일정 삭제", "'" + t.title + "'" + Rules.josa(t.title, "을", "를") + " 삭제할까요?",
                     new String[] {"삭제", "취소"});
-            if (answer == 0) {
-                app.store.delete(t, false);
-                deleted = true;
-            }
+            scope = answer == 0 ? 0 : -1;
         } else {
             int answer = chooser.choose("일정 삭제", "'" + t.title + "'" + Rules.josa(t.title, "은", "는") + " 매주 반복 일정이에요.",
                     new String[] {"이 일정만", "이후 반복 모두", "취소"});
-            if (answer == 0 || answer == 1) {
-                app.store.delete(t, answer == 1);
-                deleted = true;
-            }
+            scope = answer == 0 || answer == 1 ? answer : -1;
         }
-        app.store.changed();
-        return deleted;
+        app.control.change(() -> {
+            if (scope >= 0) {
+                app.store.delete(t, scope == 1);
+            }
+        });
+        return scope >= 0;
     }
 
     public LocalDate today() {
@@ -78,7 +77,7 @@ public final class TaskController {
     }
 
     /** D-42. 반복 사본을 저장할 때 범위를 묻는다. 0 이 일정만, 1 이후 반복 모두, -1 취소. 반복이 아니면 묻지 않고 0. */
-    public int editScope(Task t) {
+    private int editScope(Task t) {
         if (t.seriesId == null) {
             return 0;
         }
@@ -109,20 +108,21 @@ public final class TaskController {
             return false;
         }
         String title = d.title().strip();
-        if (editing == null) {
-            app.store.add(d.kind(), title, d.date(), d.start(), d.minutes(), d.memo(), d.repeatEnd());
-        } else {
-            LocalDate originalDate = editing.date;
-            editing.title = title;
-            editing.date = d.date();
-            editing.start = d.start();
-            editing.minutes = d.minutes();
-            editing.memo = d.memo();
-            if (scope == 1) {
-                app.store.applyToSeries(editing, originalDate);
+        app.control.change(() -> {
+            if (editing == null) {
+                app.store.add(d.kind(), title, d.date(), d.start(), d.minutes(), d.memo(), d.repeatEnd());
+            } else {
+                LocalDate originalDate = editing.date;
+                editing.title = title;
+                editing.date = d.date();
+                editing.start = d.start();
+                editing.minutes = d.minutes();
+                editing.memo = d.memo();
+                if (scope == 1) {
+                    app.store.applyToSeries(editing, originalDate);
+                }
             }
-        }
-        app.store.changed();
+        });
         return true;
     }
 
@@ -132,8 +132,7 @@ public final class TaskController {
         if (title.isEmpty() || title.length() > 100) {
             return false;
         }
-        app.store.add(Task.Kind.TASK, title, date, null, 30, "", null);
-        app.store.changed();
+        app.control.change(() -> app.store.add(Task.Kind.TASK, title, date, null, 30, "", null));
         return true;
     }
 
@@ -143,30 +142,23 @@ public final class TaskController {
         if (scope < 0) {
             return false;
         }
-        t.start = start;
-        t.minutes = minutes;
-        if (scope == 1) {
-            app.store.applyToSeries(t, t.date, true);
-        }
-        app.store.changed();
+        app.control.change(() -> {
+            t.start = start;
+            t.minutes = minutes;
+            if (scope == 1) {
+                app.store.applyToSeries(t, t.date, true);
+            }
+        });
         return true;
     }
 
     /** 시각 빼기. */
     public void clearTime(Task t) {
-        t.start = null;
-        app.store.changed();
-    }
-
-    /** UC-09. 달력에서 날짜를 고르면 펫이 그 날을 말한다. */
-    public void selectDay(LocalDate date) {
-        app.store.say(date.equals(app.store.today()) ? app.talk.usual() : app.talk.otherDate(date));
-        app.store.changed();
+        app.control.change(() -> t.start = null);
     }
 
     /** 자동 배치 결과 창의 적용(UC-11). */
     public void applyPlacement(Planner.Placement p) {
-        p.placed().forEach(x -> x.task().start = x.start());
-        app.store.changed();
+        app.control.change(() -> p.placed().forEach(x -> x.task().start = x.start()));
     }
 }
