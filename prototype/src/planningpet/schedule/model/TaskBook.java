@@ -94,4 +94,45 @@ public final class TaskBook {
         List<Task> untimed = forDate(date).stream().filter(t -> !t.timed()).toList();
         return new DayPlan(timed, untimed);
     }
+
+    /** 06의 26번(D-33). 달력 칸의 첫 할 일 제목과 끝내지 않은 일이 있는지. 할 일이 없으면 null. */
+    public record CellPreview(String title, boolean open) {
+    }
+
+    public CellPreview cellPreview(LocalDate date) {
+        DayPlan plan = dayPlan(date);
+        List<Task> list = new ArrayList<>(plan.timed().stream().filter(t -> t.kind == Task.Kind.TASK).toList());
+        list.addAll(plan.untimed());
+        if (list.isEmpty()) {
+            return null;
+        }
+        String title = list.get(0).title;
+        if (title.length() > 5) {
+            title = title.substring(0, 5).stripTrailing() + "…";
+        }
+        return new CellPreview(title, list.stream().anyMatch(t -> !t.done));
+    }
+
+    /** "10:00~11:00". 자정에 끝나면 "24:00". */
+    public static String timeText(Task t) {
+        int end = t.endMinute();
+        return t.start + "~" + String.format("%02d:%02d", end / 60, end % 60);
+    }
+
+    /** 06의 7번. 일정관리 오른쪽 목록. */
+    public List<Task> untimedOfWeek(LocalDate monday) {
+        return tasks.stream()
+                .filter(t -> t.kind == Task.Kind.TASK && !t.timed())
+                .filter(t -> !t.date.isBefore(monday) && !t.date.isAfter(monday.plusDays(6)))
+                .sorted(Comparator.comparing((Task t) -> t.date).thenComparingLong(t -> t.seq))
+                .toList();
+    }
+
+    public List<Task> timedOn(LocalDate date) {
+        return tasks.stream().filter(t -> t.timed() && t.date.equals(date)).toList();
+    }
+
+    public static LocalDate mondayOf(LocalDate date) {
+        return date.with(DayOfWeek.MONDAY);
+    }
 }
