@@ -55,34 +55,6 @@ public final class Store {
         listeners.forEach(Runnable::run);
     }
 
-    /** 06의 6번. 메인 목록: 시각 있는 할 일을 시각 순으로 먼저, 없는 할 일을 넣은 순으로. */
-    public List<Task> forDate(LocalDate date) {
-        return tasks.stream()
-                .filter(t -> t.kind == Task.Kind.TASK && t.date.equals(date))
-                .sorted(Comparator.comparing((Task t) -> !t.timed())
-                        .thenComparing(t -> t.timed() ? t.start : LocalTime.MIN)
-                        .thenComparingLong(t -> t.seq))
-                .toList();
-    }
-
-    /** 그날 체크할 수 있는 일정(할 일과 고정 일정, D-35). 성취도 막대와 남은 수가 센다. */
-    public List<Task> checkables(LocalDate date) {
-        return tasks.stream().filter(t -> t.date.equals(date)).toList();
-    }
-
-    /** 06의 6번(D-31). 메인 목록의 하루 시간표: 시각 있는 할 일과 고정 일정, 그 아래 시각 없는 할 일. */
-    public record DayPlan(List<Task> timed, List<Task> untimed) {
-    }
-
-    public DayPlan dayPlan(LocalDate date) {
-        List<Task> timed = tasks.stream()
-                .filter(t -> t.timed() && t.date.equals(date))
-                .sorted(Comparator.comparing((Task t) -> t.start).thenComparingLong(t -> t.seq))
-                .toList();
-        List<Task> untimed = forDate(date).stream().filter(t -> !t.timed()).toList();
-        return new DayPlan(timed, untimed);
-    }
-
     /** 06의 26번(D-33). 달력 칸의 첫 할 일 제목과 끝내지 않은 일이 있는지. 할 일이 없으면 null. */
     public record CellPreview(String title, boolean open) {
     }
