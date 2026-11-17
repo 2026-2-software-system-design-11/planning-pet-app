@@ -3,4 +3,6 @@
 set -e
 cd "$(dirname "$0")"
 ./build.sh
-java -Djava.awt.headless=true -cp planningpet-prototype.jar planningpet.app.Snap screenshots
+rm -rf out-qa
+javac -encoding UTF-8 -cp out -d out-qa $(find qa -name '*.java')
+java -Djava.awt.headless=true -cp out:out-qa:. planningpet.qa.Snap screenshots

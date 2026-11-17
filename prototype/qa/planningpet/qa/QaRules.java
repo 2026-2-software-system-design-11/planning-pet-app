@@ -1,7 +1,7 @@
 package planningpet.qa;
 
 import planningpet.app.*;
-import planningpet.app.model.Store;
+import planningpet.app.model.*;
 import planningpet.app.view.App;
 import planningpet.common.view.Card;
 import planningpet.pet.view.PickDialog;

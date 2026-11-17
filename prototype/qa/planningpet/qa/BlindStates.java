@@ -1,7 +1,7 @@
 package planningpet.qa;
 
 import planningpet.app.*;
-import planningpet.app.model.Store;
+import planningpet.app.model.*;
 import planningpet.app.view.App;
 import planningpet.common.model.Rules;
 import planningpet.schedule.model.*;
@@ -97,7 +97,7 @@ public final class BlindStates {
         pane.add(picture, JLayeredPane.DEFAULT_LAYER);
         Task essay = s.dayPlan(s.today()).timed().get(1);
         // 창 없이는 팝업을 띄울 수 없어서, 메뉴의 항목(같은 부품, 같은 동작)을 메뉴 모양 판에 옮겨 담는다.
-        JPopupMenu menu = TaskMenu.of(app.tasks, essay);
+        JPopupMenu menu = TaskMenu.of(app.schedule, essay);
         javax.swing.JPanel look = new javax.swing.JPanel();
         look.setLayout(new javax.swing.BoxLayout(look, javax.swing.BoxLayout.Y_AXIS));
         look.setBorder(javax.swing.BorderFactory.createLineBorder(java.awt.Color.GRAY));

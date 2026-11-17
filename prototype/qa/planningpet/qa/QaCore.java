@@ -1,6 +1,5 @@
 package planningpet.qa;
 
-import planningpet.app.Snap;
 import planningpet.app.view.App;
 import java.awt.Dimension;
 import java.io.File;

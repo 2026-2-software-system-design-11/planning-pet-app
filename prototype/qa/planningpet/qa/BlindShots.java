@@ -1,7 +1,7 @@
 package planningpet.qa;
 
 import planningpet.app.*;
-import planningpet.app.model.Store;
+import planningpet.app.model.*;
 import planningpet.app.view.App;
 import planningpet.common.view.Theme;
 import planningpet.pet.view.PickDialog;
@@ -85,7 +85,7 @@ public final class BlindShots {
             shoot(ShopDialog.content(app.store, item -> { }, new JButton("닫기")), null, "상점", images, key, n++, out,
                     "상점 창");
             shoot(new PickDialog().panel, null, "플래닝펫 시작", images, key, n++, out, "반려동물 고르기 창");
-            // Actions.delete가 반복 일정에 띄우는 확인 창과 같은 글과 버튼이다.
+            // TaskController.delete가 반복 일정에 띄우는 확인 창과 같은 글과 버튼이다.
             Task series = app.store.tasks.stream().filter(x -> x.seriesId != null).findFirst().orElseThrow();
             String[] options = {"이 일정만", "이후 반복 모두", "취소"};
             javax.swing.JOptionPane ask = new javax.swing.JOptionPane("'" + series.title + "'"

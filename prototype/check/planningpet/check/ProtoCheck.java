@@ -2,7 +2,7 @@ package planningpet.check;
 
 import planningpet.app.*;
 import planningpet.app.controller.AppController;
-import planningpet.app.model.Store;
+import planningpet.app.model.*;
 import planningpet.app.view.App;
 import planningpet.common.model.Rules;
 import planningpet.common.view.Ui;
@@ -127,11 +127,11 @@ public final class ProtoCheck {
         App main = Main.create(MockData.sample());
         Task essay = main.store.dayPlan(main.store.today()).timed().get(1);
         int seq = main.store.talkSeq;
-        main.tasks.check(essay);
+        main.schedule.check(essay);
         long doneToday = main.store.checkables(main.store.today()).stream().filter(z -> z.done).count();
         eq("T-SAVE-5", "110 2/4 잘했어! +10P 1", main.store.points + " " + doneToday + "/"
                 + main.store.checkables(main.store.today()).size() + " " + main.store.talk + " " + (main.store.talkSeq - seq));
-        main.tasks.check(essay);
+        main.schedule.check(essay);
         eq("T-TALK-7 화면에서", "100 체크를 풀었어. -10P", main.store.points + " " + main.store.talk);
         Store od = MockData.sample();
         eq("T-TALK-9", "11월 16일 할 일은 2개야.", new Talk(od).otherDate(java.time.LocalDate.of(2026, 11, 16)));
@@ -190,7 +190,7 @@ public final class ProtoCheck {
         f.showSeries(app.store.seriesEnd(last));
         boolean shown = f.repeat.isSelected() && !f.repeat.isEnabled();
         Ui.setDate(f.date, java.time.LocalDate.of(2026, 12, 29));
-        app.tasks.chooser = (title, message, options) -> 0;
+        app.schedule.chooser = (title, message, options) -> 0;
         boolean saved = TaskDialog.trySave(app, f, last);
         return shown + " " + saved + " " + last.date;
     }
@@ -203,7 +203,7 @@ public final class ProtoCheck {
         copies.get(1).title = "보강";
         TimeEditor e = new TimeEditor(copies.get(0), app.store.now);
         e.start.setValue("11:00");
-        app.tasks.chooser = (title, message, options) -> 1;
+        app.schedule.chooser = (title, message, options) -> 1;
         TimeEditor.save(app, copies.get(0), e);
         return copies.get(0).start + " " + copies.get(1).title + " " + copies.get(1).start;
     }

@@ -1,6 +1,7 @@
-package planningpet.app;
+package planningpet.qa;
 
-import planningpet.app.model.Store;
+import planningpet.app.Main;
+import planningpet.app.model.*;
 import planningpet.app.view.App;
 import planningpet.pet.view.PickDialog;
 import planningpet.schedule.model.*;
