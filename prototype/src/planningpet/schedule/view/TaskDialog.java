@@ -1,5 +1,8 @@
-package planningpet.proto;
+package planningpet.schedule.view;
 
+import planningpet.app.view.App;
+import planningpet.common.view.Ui;
+import planningpet.schedule.model.*;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.event.KeyEvent;
@@ -72,7 +75,7 @@ public final class TaskDialog {
     }
 
     /** 저장 버튼과 같다. 검사를 통과하면 저장하고 true, 아니면 칸 아래에 오류를 모두 보이고 false. */
-    static boolean trySave(App app, TaskForm f, Task editing) {
+    public static boolean trySave(App app, TaskForm f, Task editing) {
         var problems = TaskCheck.check(f);
         f.showErrors(problems);
         if (!problems.isEmpty()) {

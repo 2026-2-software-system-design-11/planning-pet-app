@@ -1,5 +1,8 @@
-package planningpet.proto;
+package planningpet.schedule.view;
 
+import planningpet.app.view.App;
+import planningpet.common.view.*;
+import planningpet.schedule.model.Task;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Point;
@@ -19,10 +22,10 @@ import javax.swing.SwingUtilities;
 
 /** 시각 고치기 창(05, D-32). 메인 시각 칸 아래에 떠서 시작 시각과 걸리는 시간만 고친다. */
 public final class TimeEditor {
-    final JSpinner start = new JSpinner(new SpinnerListModel(Ui.times()));
-    final JSpinner minutes;
-    final JLabel error = new JLabel(" ");
-    final JButton clear = new JButton("시각 빼기");
+    public final JSpinner start = new JSpinner(new SpinnerListModel(Ui.times()));
+    public final JSpinner minutes;
+    public final JLabel error = new JLabel(" ");
+    public final JButton clear = new JButton("시각 빼기");
     final JButton cancel = new JButton("취소");
     final JButton save = new JButton("저장");
     public final Card panel = new Card(new BorderLayout(0, 6), Theme.BUBBLE_RADIUS);
@@ -59,7 +62,7 @@ public final class TimeEditor {
     }
 
     /** 끝이 24:00을 넘으면 문장, 아니면 null. */
-    String check() {
+    public String check() {
         if ((int) minutes.getValue() % 5 != 0) {
             return "10분부터 720분까지, 5분 단위예요";
         }
@@ -68,7 +71,7 @@ public final class TimeEditor {
     }
 
     /** 저장 버튼과 같다. 통과하면 true, 아니면 창 아래 문장을 채우고 false. */
-    static boolean save(App app, Task t, TimeEditor e) {
+    public static boolean save(App app, Task t, TimeEditor e) {
         String problem = e.check();
         if (problem != null) {
             e.error.setText(problem);
@@ -88,7 +91,7 @@ public final class TimeEditor {
     }
 
     /** 시각 빼기 버튼과 같다. */
-    static void clear(App app, Task t) {
+    public static void clear(App app, Task t) {
         t.start = null;
         app.store.changed();
     }

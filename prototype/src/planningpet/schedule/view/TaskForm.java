@@ -1,5 +1,7 @@
-package planningpet.proto;
+package planningpet.schedule.view;
 
+import planningpet.common.view.*;
+import planningpet.schedule.model.*;
 import java.awt.Color;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -11,22 +13,22 @@ import javax.swing.*;
 /** 일정 입력 창의 칸들(05 일정 입력 창, 06의 2번 검사). 창 없이도 만들 수 있다. */
 public final class TaskForm {
     public final JPanel panel = new JPanel(new GridBagLayout());
-    final JRadioButton task = new JRadioButton("할 일", true);
-    final JRadioButton fixed = new JRadioButton("고정 일정");
-    final JTextField title = new JTextField(22);
-    final JSpinner date = new JSpinner(new SpinnerDateModel());
-    final JCheckBox timed = new JCheckBox("정하기");
-    final JSpinner start = new JSpinner(new SpinnerListModel(Ui.times()));
-    final JSpinner minutes = Ui.minutes(30);
-    final JCheckBox repeat = new JCheckBox("매주 반복, 끝");
-    final JSpinner repeatEnd = new JSpinner(new SpinnerDateModel());
-    final JTextArea memo = new JTextArea(3, 22);
+    public final JRadioButton task = new JRadioButton("할 일", true);
+    public final JRadioButton fixed = new JRadioButton("고정 일정");
+    public final JTextField title = new JTextField(22);
+    public final JSpinner date = new JSpinner(new SpinnerDateModel());
+    public final JCheckBox timed = new JCheckBox("정하기");
+    public final JSpinner start = new JSpinner(new SpinnerListModel(Ui.times()));
+    public final JSpinner minutes = Ui.minutes(30);
+    public final JCheckBox repeat = new JCheckBox("매주 반복, 끝");
+    public final JSpinner repeatEnd = new JSpinner(new SpinnerDateModel());
+    public final JTextArea memo = new JTextArea(3, 22);
     /** 칸 아래 빨간 오류 글(05). 칸 순서다. */
-    final java.util.Map<String, JLabel> errors = new java.util.LinkedHashMap<>();
-    final JLabel repeatHint = Ui.hint("반복은 고정 일정만 할 수 있어요");
-    final JLabel endLabel = new JLabel();
+    public final java.util.Map<String, JLabel> errors = new java.util.LinkedHashMap<>();
+    public final JLabel repeatHint = Ui.hint("반복은 고정 일정만 할 수 있어요");
+    public final JLabel endLabel = new JLabel();
     /** D-43: 추가 창에서 걸리는 시간이 30일 때만 보인다. */
-    final JLabel minutesHint = Ui.hint("안 바꾸면 30분으로 들어가요");
+    public final JLabel minutesHint = Ui.hint("안 바꾸면 30분으로 들어가요");
     private final boolean editing;
     /** 저장을 한 번 누른 뒤에는 칸을 고칠 때마다 다시 검사한다(D-43). */
     private boolean checked;
@@ -109,7 +111,7 @@ public final class TaskForm {
     }
 
     /** 고정 일정이면 시작 시각이 켜진 채 비활성, 반복은 고정 일정만(D-16, D-17). */
-    void sync() {
+    public void sync() {
         boolean isFixed = fixed.isSelected();
         if (isFixed) {
             timed.setSelected(true);
@@ -131,19 +133,19 @@ public final class TaskForm {
         }
     }
 
-    boolean editing() {
+    public boolean editing() {
         return editing;
     }
 
     /** D-42: 반복 사본을 고칠 때 반복 칸을 켠 채(비활성) 그 반복의 마지막 날짜를 보인다. */
-    void showSeries(LocalDate end) {
+    public void showSeries(LocalDate end) {
         repeat.setSelected(true);
         Ui.setDate(repeatEnd, end);
         sync();
     }
 
     /** 검사 결과를 칸 아래에 보인다. 고친 칸의 오류는 지운다. */
-    void showErrors(java.util.List<String[]> problems) {
+    public void showErrors(java.util.List<String[]> problems) {
         checked = true;
         errors.values().forEach(l -> {
             l.setText("");
@@ -157,11 +159,11 @@ public final class TaskForm {
     }
 
     /** 보이는 오류 글을 칸 순서대로 " / "로 잇는다. */
-    String errorText() {
+    public String errorText() {
         return String.join(" / ", errors.values().stream().filter(JLabel::isVisible).map(JLabel::getText).toList());
     }
 
-    LocalTime startTime() {
+    public LocalTime startTime() {
         return timed.isSelected() ? LocalTime.parse((String) start.getValue()) : null;
     }
 
