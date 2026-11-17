@@ -1,6 +1,11 @@
-package planningpet.proto;
+package planningpet.qa;
 
-import static planningpet.proto.QaRun.st;
+import planningpet.app.model.Store;
+import planningpet.common.view.Ui;
+import planningpet.pet.view.PickDialog;
+import planningpet.schedule.model.Task;
+import planningpet.schedule.view.*;
+import static planningpet.qa.QaRun.st;
 
 import java.time.LocalDateTime;
 import java.util.Map;

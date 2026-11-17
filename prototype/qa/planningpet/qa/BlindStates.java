@@ -1,5 +1,12 @@
-package planningpet.proto;
+package planningpet.qa;
 
+import planningpet.app.*;
+import planningpet.app.model.Store;
+import planningpet.app.view.App;
+import planningpet.schedule.controller.Actions;
+import planningpet.schedule.model.*;
+import planningpet.schedule.view.*;
+import planningpet.shop.view.ShopDialog;
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import java.io.File;

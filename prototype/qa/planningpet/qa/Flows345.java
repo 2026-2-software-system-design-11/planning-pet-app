@@ -1,6 +1,9 @@
-package planningpet.proto;
+package planningpet.qa;
 
-import static planningpet.proto.QaRun.st;
+import planningpet.common.view.Ui;
+import planningpet.schedule.model.*;
+import planningpet.schedule.view.TaskForm;
+import static planningpet.qa.QaRun.st;
 
 import java.time.LocalDate;
 import java.util.Comparator;
