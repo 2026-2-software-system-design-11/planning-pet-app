@@ -1,8 +1,8 @@
 package planningpet.home.view;
 
 import planningpet.app.view.App;
-import planningpet.common.model.Rules;
 import planningpet.common.view.*;
+import planningpet.reward.model.Level;
 import planningpet.reward.view.WalkBar;
 import planningpet.schedule.view.TaskRows;
 import java.awt.BorderLayout;
@@ -125,9 +125,9 @@ public final class MainScreen extends JPanel {
                 + WEEK.charAt(date.getDayOfWeek().getValue() - 1) + ") 할 일");
         rows.showPlan(app.store.book.dayPlan(date));
         calendar.refresh();
-        levelName.setText(app.store.petName + " Lv." + Rules.level(app.store.exp));
+        levelName.setText(app.store.petName + " Lv." + Level.level(app.store.exp));
         levelName.setFont(Theme.bold(15));
-        levelBar.setValue((int) (Rules.expRatio(app.store.exp) * 1000));
-        levelText.setText(Rules.expText(app.store.exp));
+        levelBar.setValue((int) (Level.expRatio(app.store.exp) * 1000));
+        levelText.setText(Level.expText(app.store.exp));
     }
 }

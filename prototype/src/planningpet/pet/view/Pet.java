@@ -1,8 +1,8 @@
 package planningpet.pet.view;
 
 import planningpet.app.model.Store;
-import planningpet.common.model.Rules;
 import planningpet.common.view.Images;
+import planningpet.reward.model.Level;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Polygon;
@@ -14,7 +14,7 @@ public final class Pet {
 
     /** 고양이는 디자인 시스템의 그림(모습 단계별), 강아지는 임시 그림. size는 그림 상자의 한 변. */
     public static void drawAt(Graphics2D g, Store s, int x, int ground, int size) {
-        int stage = Rules.stage(Rules.level(s.exp));
+        int stage = Level.stage(Level.level(s.exp));
         java.awt.image.BufferedImage im = "CAT".equals(s.petKind) ? Images.cat(stage) : null;
         if (im != null) {
             Images.fit(g, im, x - size / 2, ground - size, size, size);

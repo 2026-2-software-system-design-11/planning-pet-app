@@ -30,8 +30,8 @@ public final class ProtoCheck {
         Game g = new Game(s);
         Talk t = new Talk(s);
         eq("T-DAY-1", "2026-11-15", Rules.appDay(java.time.LocalDateTime.of(2026, 11, 16, 3, 59)));
-        eq("T-LVL-3", "경험치 0 / 80", Rules.expText(50));
-        eq("T-LVL-7", "최고 레벨", Rules.expText(1600));
+        eq("T-LVL-3", "경험치 0 / 80", Level.expText(50));
+        eq("T-LVL-7", "최고 레벨", Level.expText(1600));
         eq("T-TALK-3", "콩이야 나비야", "콩" + Rules.iya("콩") + " 나비" + Rules.iya("나비"));
         eq("메인 브리핑", "오늘 할 일 3개 남았어. '은행 서류' 마감이 내일이야.", new AppController(s, t).windowShown());
         eq("T-VIS-2", 5, s.streak);
