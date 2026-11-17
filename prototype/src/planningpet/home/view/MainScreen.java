@@ -1,5 +1,11 @@
-package planningpet.proto;
+package planningpet.home.view;
 
+import planningpet.app.view.App;
+import planningpet.common.model.Rules;
+import planningpet.common.view.*;
+import planningpet.reward.view.WalkBar;
+import planningpet.schedule.model.Task;
+import planningpet.schedule.view.TaskRows;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.FlowLayout;
@@ -16,16 +22,16 @@ import javax.swing.JTextField;
 public final class MainScreen extends JPanel {
     private static final String WEEK = "월화수목금토일";
     private final App app;
-    final CalendarPanel calendar;
-    final TaskRows rows;
+    public final CalendarPanel calendar;
+    public final TaskRows rows;
     private final JLabel listTitle = new JLabel();
-    final JLabel levelName = new JLabel();
+    public final JLabel levelName = new JLabel();
     private final javax.swing.JProgressBar levelBar = new javax.swing.JProgressBar(0, 1000);
-    final JLabel levelText = new JLabel();
-    final JTextField quick = new JTextField();
+    public final JLabel levelText = new JLabel();
+    public final JTextField quick = new JTextField();
     /** D-40: 칸 옆 "추가"는 Enter와 같다. "일정 추가"는 목록 제목 줄 오른쪽이다. */
-    final JButton quickButton = new JButton("추가");
-    final JButton addButton = new JButton("일정 추가");
+    public final JButton quickButton = new JButton("추가");
+    public final JButton addButton = new JButton("일정 추가");
 
     public MainScreen(App app) {
         super(new BorderLayout(0, 8));
@@ -109,7 +115,7 @@ public final class MainScreen extends JPanel {
 
     /** UC-09. 오늘이 아닌 날을 고르면 펫이 그날 할 일 수를 말한다. */
     /** 달력에서 날짜를 누른 것과 같다(QA가 부른다). */
-    void selectDate(LocalDate date) {
+    public void selectDate(LocalDate date) {
         calendar.pick(date);
         select(date);
     }

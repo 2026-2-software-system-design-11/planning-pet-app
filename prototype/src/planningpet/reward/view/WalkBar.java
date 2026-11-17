@@ -1,5 +1,8 @@
-package planningpet.proto;
+package planningpet.reward.view;
 
+import planningpet.app.model.Store;
+import planningpet.common.view.Theme;
+import planningpet.pet.view.Pet;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;

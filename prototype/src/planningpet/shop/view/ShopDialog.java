@@ -1,5 +1,10 @@
-package planningpet.proto;
+package planningpet.shop.view;
 
+import planningpet.app.model.Store;
+import planningpet.app.view.App;
+import planningpet.common.view.*;
+import planningpet.pet.view.PetScreen;
+import planningpet.reward.model.Game;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.GridLayout;
@@ -51,7 +56,7 @@ public final class ShopDialog {
     }
 
     /** 사기 버튼과 같다. 샀으면 true. */
-    static boolean buy(App app, PetScreen pet, String item) {
+    public static boolean buy(App app, PetScreen pet, String item) {
         if (app.game.buy(item) != 0) {
             return false;
         }

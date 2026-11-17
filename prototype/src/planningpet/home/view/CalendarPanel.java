@@ -1,5 +1,7 @@
-package planningpet.proto;
+package planningpet.home.view;
 
+import planningpet.app.model.Store;
+import planningpet.common.view.*;
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.awt.event.MouseAdapter;
@@ -17,7 +19,7 @@ public final class CalendarPanel extends JPanel {
     private static final String DAYS = "일월화수목금토";
     private final Store store;
     private final Consumer<LocalDate> onSelect;
-    final JPanel grid = new JPanel(new GridLayout(7, 7, 2, 2));
+    public final JPanel grid = new JPanel(new GridLayout(7, 7, 2, 2));
     private final JLabel title = new JLabel("", SwingConstants.CENTER);
     private YearMonth month;
     private LocalDate selected;
@@ -44,7 +46,7 @@ public final class CalendarPanel extends JPanel {
         return selected;
     }
 
-    void pick(LocalDate date) {
+    public void pick(LocalDate date) {
         selected = date;
         month = YearMonth.from(date);
     }

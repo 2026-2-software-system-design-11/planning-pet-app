@@ -1,4 +1,6 @@
-package planningpet.proto;
+package planningpet.reward.model;
+
+import planningpet.common.model.Rules;
 
 /** 06의 8번이 돌려주는 값. 펫 말풍선은 이 값으로 고른다. */
 public record RewardResult(Outcome outcome, int levelBefore, int levelAfter) {
