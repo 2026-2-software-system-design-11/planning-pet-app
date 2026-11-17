@@ -4,7 +4,7 @@ import planningpet.app.model.Store;
 import planningpet.app.view.App;
 import planningpet.common.view.*;
 import planningpet.pet.view.PetScreen;
-import planningpet.reward.model.Game;
+import planningpet.shop.model.Shop;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.GridLayout;
@@ -33,7 +33,7 @@ public final class ShopDialog {
         for (String title : new String[] {"아이템", "가격", "상태", ""}) {
             table.add(new JLabel("<html><b>" + title + "</b></html>"));
         }
-        for (Map.Entry<String, Integer> e : Game.ITEMS.entrySet()) {
+        for (Map.Entry<String, Integer> e : Shop.ITEMS.entrySet()) {
             boolean owned = s.owned.contains(e.getKey());
             int lack = e.getValue() - s.points;
             // D-45: 이미 산 줄에는 사기 버튼이 없고, 살 수 있으면 "살 수 있어요"를 보인다.
@@ -57,12 +57,7 @@ public final class ShopDialog {
 
     /** 사기 버튼과 같다. 샀으면 true. */
     public static boolean buy(App app, PetScreen pet, String item) {
-        if (app.game.buy(item) != 0) {
-            return false;
-        }
-        pet.say(item + " 고마워!");
-        app.store.changed();
-        return true;
+        return app.shop.buy(item, () -> pet.say(item + " 고마워!"));
     }
 
     public static void open(App app, PetScreen pet) {

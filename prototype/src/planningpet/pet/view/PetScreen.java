@@ -4,7 +4,7 @@ import planningpet.app.model.Store;
 import planningpet.app.view.App;
 import planningpet.common.model.Rules;
 import planningpet.common.view.*;
-import planningpet.reward.model.Game;
+import planningpet.shop.model.Shop;
 import planningpet.shop.view.ShopDialog;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -29,7 +29,7 @@ public final class PetScreen extends JPanel {
     public final JLabel decoText = new JLabel();
     /** D-45: 상점 버튼은 아이템 줄과 떨어진 오른쪽 끝이다. */
     final JButton shopButton = new JButton("상점");
-    private final JProgressBar decoBar = new JProgressBar(0, Game.ITEMS.size());
+    private final JProgressBar decoBar = new JProgressBar(0, Shop.ITEMS.size());
 
     public PetScreen(App app) {
         super(new BorderLayout(0, 8));
@@ -78,21 +78,18 @@ public final class PetScreen extends JPanel {
             room.bubble = done > 0 ? "오늘 " + done + "개 끝냈어." : "오늘은 아직 끝낸 일이 없어.";
         }
         wasVisible = "pet".equals(app.current());
-        decoText.setText("가진 아이템 " + s.owned.size() + " / " + Game.ITEMS.size());
+        decoText.setText("가진 아이템 " + s.owned.size() + " / " + Shop.ITEMS.size());
         decoBar.setValue(s.owned.size());
         items.removeAll();
         items.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 6, 4));
-        for (String item : Game.ITEMS.keySet()) {
+        for (String item : Shop.ITEMS.keySet()) {
             if (!s.owned.contains(item)) {
                 continue;
             }
             boolean placed = s.placed.contains(item);
             JToggleButton b = new JToggleButton(placed ? item + " ✓" : item, placed);
             b.addActionListener(e -> {
-                if (!s.placed.remove(item)) {
-                    s.placed.add(item);
-                }
-                s.changed();
+                app.pets.toggle(item);
             });
             items.add(b);
         }
