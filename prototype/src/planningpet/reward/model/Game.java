@@ -6,6 +6,12 @@ import java.time.LocalDate;
 
 /** 보상과 출석(06의 8, 9, 11, 13번). */
 public final class Game {
+    /** 하루 보상 상한과 완료 보상(06의 8번), 출석 보상(11번). */
+    private static final int DAILY_CAP = 20;
+    public static final int TASK_POINTS = 10;
+    public static final int TASK_EXP = 10;
+    private static final int ATTEND_POINTS = 20;
+
     private final Store s;
 
     public Game(Store store) {
@@ -20,11 +26,11 @@ public final class Game {
             s.rewardCount = 0;
         }
         t.done = true;
-        if (s.rewardCount >= Level.DAILY_CAP) {
+        if (s.rewardCount >= DAILY_CAP) {
             return new RewardResult(RewardResult.Outcome.CAPPED, before, before);
         }
-        t.rewardPoints = Level.TASK_POINTS;
-        t.rewardExp = Level.TASK_EXP;
+        t.rewardPoints = TASK_POINTS;
+        t.rewardExp = TASK_EXP;
         t.rewardDay = today;
         s.points += t.rewardPoints;
         s.exp += t.rewardExp;
@@ -48,7 +54,7 @@ public final class Game {
         if (s.today().equals(s.attendanceDay)) {
             return false;
         }
-        s.points += Level.ATTEND_POINTS;
+        s.points += ATTEND_POINTS;
         s.attendanceDay = s.today();
         return true;
     }

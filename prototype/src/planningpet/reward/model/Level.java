@@ -1,12 +1,8 @@
 package planningpet.reward.model;
 
-/** 06의 10번 레벨과 보상 상수. */
+/** 06의 10번 레벨. */
 public final class Level {
-    public static final int[] LEVEL_BASE = {0, 50, 130, 240, 380, 550, 750, 990, 1270, 1600};
-    public static final int DAILY_CAP = 20;
-    public static final int TASK_POINTS = 10;
-    public static final int TASK_EXP = 10;
-    public static final int ATTEND_POINTS = 20;
+    private static final int[] LEVEL_BASE = {0, 50, 130, 240, 380, 550, 750, 990, 1270, 1600};
 
     private Level() {
     }
