@@ -1,5 +1,8 @@
-package planningpet.proto;
+package planningpet.app;
 
+import planningpet.app.model.Store;
+import planningpet.common.model.Rules;
+import planningpet.schedule.model.Task;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;

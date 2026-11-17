@@ -1,4 +1,4 @@
-package planningpet.proto;
+package planningpet.common.view;
 
 import java.awt.Color;
 import java.awt.FlowLayout;
@@ -16,13 +16,13 @@ public final class Ui {
     }
 
     /** 시작 시각 목록. 00:00부터 23:55까지 5분 간격(D-38). */
-    static java.util.List<String> times() {
+    public static java.util.List<String> times() {
         return java.util.stream.IntStream.range(0, 288)
                 .mapToObj(i -> String.format("%02d:%02d", i / 12, i % 12 * 5)).toList();
     }
 
     /** 걸리는 시간 칸(D-38). 10분부터 720분, 5분 단위가 아닌 값은 받지 않아 이전 값으로 돌아간다(05). */
-    static javax.swing.JSpinner minutes(int value) {
+    public static javax.swing.JSpinner minutes(int value) {
         return new javax.swing.JSpinner(new javax.swing.SpinnerNumberModel(value, 10, 720, 5) {
             @Override
             public void setValue(Object v) {
@@ -38,7 +38,7 @@ public final class Ui {
      * D-43: 날짜 칸. 화살표가 커서 자리(처음에는 연도) 대신 늘 하루씩 바꾸도록 DateEditor가 아닌 기본 편집기에
      * 날짜 형식을 붙인다. SpinnerDateModel의 기본 단위가 하루다.
      */
-    static void dayEditor(javax.swing.JSpinner s, String pattern) {
+    public static void dayEditor(javax.swing.JSpinner s, String pattern) {
         javax.swing.JSpinner.DefaultEditor editor = new javax.swing.JSpinner.DefaultEditor(s);
         javax.swing.JFormattedTextField field = editor.getTextField();
         field.setEditable(true);

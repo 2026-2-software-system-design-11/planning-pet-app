@@ -1,5 +1,11 @@
-package planningpet.proto;
+package planningpet.app.view;
 
+import planningpet.app.controller.DayWatcher;
+import planningpet.app.model.Store;
+import planningpet.common.view.*;
+import planningpet.pet.model.Talk;
+import planningpet.reward.model.Game;
+import planningpet.schedule.controller.Actions;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Dimension;
@@ -32,11 +38,11 @@ public final class App {
     private final JPanel center = new JPanel(cards);
     private final JPanel nav = new JPanel(new GridLayout(0, 1, 0, 6));
     private final ButtonGroup navGroup = new ButtonGroup();
-    final JLabel streak = new JLabel();
-    final JLabel points = new JLabel();
-    final JButton attend = new JButton();
+    public final JLabel streak = new JLabel();
+    public final JLabel points = new JLabel();
+    public final JButton attend = new JButton();
     /** 06의 23번. Main.create가 넣는다. */
-    DayWatcher watcher;
+    public DayWatcher watcher;
 
     public App(Store store) {
         this.store = store;

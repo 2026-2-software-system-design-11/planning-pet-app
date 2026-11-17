@@ -1,5 +1,11 @@
-package planningpet.proto;
+package planningpet.app;
 
+import planningpet.app.model.Store;
+import planningpet.app.view.App;
+import planningpet.pet.view.PickDialog;
+import planningpet.schedule.model.*;
+import planningpet.schedule.view.*;
+import planningpet.shop.view.ShopDialog;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
@@ -38,7 +44,7 @@ public final class Snap {
         System.out.println("그렸다: " + dir.getPath());
     }
 
-    static void save(JComponent c, Dimension size, File file) throws Exception {
+    public static void save(JComponent c, Dimension size, File file) throws Exception {
         Dimension d = size != null ? size : c.getPreferredSize();
         c.setSize(d);
         layout(c);

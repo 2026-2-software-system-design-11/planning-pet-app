@@ -1,5 +1,13 @@
-package planningpet.proto;
+package planningpet.app;
 
+import planningpet.app.controller.DayWatcher;
+import planningpet.app.model.Store;
+import planningpet.app.view.App;
+import planningpet.common.view.Theme;
+import planningpet.home.view.MainScreen;
+import planningpet.pet.view.*;
+import planningpet.schedule.view.ScheduleScreen;
+import planningpet.settings.view.SettingsScreen;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 

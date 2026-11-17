@@ -1,4 +1,4 @@
-package planningpet.proto;
+package planningpet.common.view;
 
 import java.awt.Graphics;
 import java.awt.Graphics2D;

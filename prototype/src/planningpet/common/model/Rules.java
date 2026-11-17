@@ -1,4 +1,4 @@
-package planningpet.proto;
+package planningpet.common.model;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

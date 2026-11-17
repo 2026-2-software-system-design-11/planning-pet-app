@@ -1,21 +1,23 @@
-package planningpet.proto;
+package planningpet.app.controller;
 
+import planningpet.app.view.App;
+import planningpet.home.view.MainScreen;
 import java.time.LocalDate;
 
 /** 06의 23번. 켜 둔 채 앱 날짜가 바뀌면 화면을 새 날에 맞춘다. 프로토타입 시계는 멈춰 있어서 QA가 시계를 옮긴 뒤 부른다. */
-final class DayWatcher {
+public final class DayWatcher {
     private final App app;
     private final MainScreen main;
     private LocalDate last;
 
-    DayWatcher(App app, MainScreen main) {
+    public DayWatcher(App app, MainScreen main) {
         this.app = app;
         this.main = main;
         last = app.store.today();
     }
 
     /** 30초 타이머가 부른다. 마지막 확인 때와 앱 날짜가 다르면 한 번 알리고 true. */
-    boolean tick() {
+    public boolean tick() {
         LocalDate today = app.store.today();
         if (today.equals(last)) {
             return false;
