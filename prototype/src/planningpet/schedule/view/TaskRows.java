@@ -1,6 +1,5 @@
 package planningpet.schedule.view;
 
-import planningpet.app.model.Store;
 import planningpet.common.view.*;
 import planningpet.schedule.controller.TaskController;
 import planningpet.schedule.model.*;
@@ -19,10 +18,10 @@ import javax.swing.JPanel;
 
 /** 할 일 줄 목록. 메인의 하루 시간표와 일정관리의 시각 없는 할 일 목록이 같이 쓴다. */
 public final class TaskRows extends JPanel implements javax.swing.Scrollable {
-    private final TaskController actions;
+    private final TaskController control;
 
-    public TaskRows(TaskController actions) {
-        this.actions = actions;
+    public TaskRows(TaskController control) {
+        this.control = control;
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     }
 
@@ -64,7 +63,7 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
         JCheckBox box = new JCheckBox();
         box.setSelected(t.done);
         box.putClientProperty(Task.class, t);
-        box.addActionListener(e -> actions.check(t));
+        box.addActionListener(e -> control.check(t));
         JComponent mark = box;
         if (t.kind == Task.Kind.FIXED) {
             JLabel tag = new JLabel("고정");
@@ -86,7 +85,7 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
             when.addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
-                    actions.editTime(t, when);
+                    control.editTime(t, when);
                 }
             });
             left.add(when);
@@ -106,9 +105,9 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
         row.add(left, BorderLayout.WEST);
         row.add(label, BorderLayout.CENTER);
         JButton edit = small("수정");
-        edit.addActionListener(e -> actions.edit(t));
+        edit.addActionListener(e -> control.edit(t));
         JButton delete = small("삭제");
-        delete.addActionListener(e -> actions.delete(t));
+        delete.addActionListener(e -> control.delete(t));
         if (withDate) {
             // 일정관리 오른쪽 목록은 좁아서 버튼을 둘째 줄 오른쪽에 둔다.
             row.add(minutes, BorderLayout.EAST);
@@ -117,7 +116,7 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
             buttons.add(delete);
             // D-44: 오늘보다 앞선 날짜는 둘째 줄 왼쪽에 "지난 날". 제목 줄에 붙이면 좁은 목록에서 제목이 잘린다.
             JPanel second = new JPanel(new BorderLayout());
-            if (t.date.isBefore(actions.today())) {
+            if (t.date.isBefore(control.today())) {
                 JLabel past = new JLabel("지난 날");
                 past.setForeground(new java.awt.Color(0xC0392B));
                 past.setFont(Theme.font(12));
@@ -134,7 +133,7 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
             @Override
             public void mousePressed(MouseEvent e) {
                 if (e.isPopupTrigger()) {
-                    TaskMenu.of(actions, t).show(e.getComponent(), e.getX(), e.getY());
+                    TaskMenu.of(control, t).show(e.getComponent(), e.getX(), e.getY());
                 }
             }
 
@@ -146,7 +145,7 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2) {
-                    actions.edit(t);
+                    control.edit(t);
                 }
             }
         };

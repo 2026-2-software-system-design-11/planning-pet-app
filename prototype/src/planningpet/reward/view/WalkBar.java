@@ -1,6 +1,7 @@
 package planningpet.reward.view;
 
 import planningpet.app.model.Store;
+import planningpet.reward.model.DailyProgress;
 import planningpet.common.view.Theme;
 import planningpet.pet.view.Pet;
 import java.awt.BasicStroke;
@@ -25,25 +26,24 @@ public final class WalkBar extends JComponent {
     protected void paintComponent(Graphics graphics) {
         Graphics2D g = (Graphics2D) graphics.create();
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        var today = store.book.checkables(store.today());
-        long done = today.stream().filter(t -> t.done).count();
+        DailyProgress p = DailyProgress.of(store.book, store.today());
         int left = 70;
         int right = getWidth() - 60;
         int y = getHeight() - 16;
         g.setColor(Theme.INK);
         g.setFont(Theme.bold(14));
         g.drawString("성취도", 8, y + 5);
-        g.drawString(today.isEmpty() ? "-" : done + "/" + today.size(), right + 14, y + 5);
+        g.drawString(p.total() == 0 ? "-" : p.done() + "/" + p.total(), right + 14, y + 5);
         g.setStroke(new BasicStroke(3));
         g.setColor(Theme.TRACK);
         g.drawLine(left, y, right, y);
-        double ratio = today.isEmpty() ? 0 : done / (double) today.size();
+        double ratio = p.ratio();
         int catX = left + (int) ((right - left) * ratio);
         g.setColor(Theme.MINT);
         g.drawLine(left, y, catX, y);
-        for (int i = 1; i <= today.size(); i++) {
-            int x = left + (right - left) * i / today.size();
-            g.setColor(i <= done ? Theme.MINT : Color.WHITE);
+        for (int i = 1; i <= p.total(); i++) {
+            int x = left + (right - left) * i / p.total();
+            g.setColor(i <= p.done() ? Theme.MINT : Color.WHITE);
             g.fillOval(x - 5, y - 5, 10, 10);
             g.setColor(Theme.MINT);
             g.drawOval(x - 5, y - 5, 10, 10);

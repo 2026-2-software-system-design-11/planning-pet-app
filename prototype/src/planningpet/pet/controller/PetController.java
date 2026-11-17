@@ -13,12 +13,14 @@ public final class PetController {
         this.store = store;
     }
 
-    /** 시작하기(UC-17). 이름은 10자까지, 비우면 나비, 바둑이. 첫 실행 창은 앱 창보다 먼저 떠서 알릴 화면이 없다. */
-    public static void choose(Store store, boolean dog, String name) {
+    /** 시작하기(UC-17). 이름은 10자까지, 비우면 나비, 바둑이. */
+    public void choose(boolean dog, String name) {
         String n = name.strip();
-        n = n.length() > 10 ? n.substring(0, 10) : n;
-        store.petKind = dog ? "DOG" : "CAT";
-        store.petName = n.isEmpty() ? (dog ? "바둑이" : "나비") : n;
+        String picked = (n.length() > 10 ? n.substring(0, 10) : n);
+        control.change(() -> {
+            store.petKind = dog ? "DOG" : "CAT";
+            store.petName = picked.isEmpty() ? (dog ? "바둑이" : "나비") : picked;
+        });
     }
 
     /** 방에 놓거나 치운다(06의 20번). */

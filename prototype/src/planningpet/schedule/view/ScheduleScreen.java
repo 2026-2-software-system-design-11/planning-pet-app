@@ -1,11 +1,9 @@
 package planningpet.schedule.view;
 
-import planningpet.app.model.Store;
 import planningpet.app.view.App;
 import planningpet.common.view.*;
 import planningpet.pet.view.PetView;
-import planningpet.schedule.model.Planner;
-import planningpet.schedule.model.TaskBook;
+import planningpet.schedule.model.*;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -82,8 +80,7 @@ public final class ScheduleScreen extends JPanel {
 
     /** 06의 14번: 보이는 주에 오늘이 있으면 오늘, 없으면 그 주 월요일. */
     public LocalDate defaultDate() {
-        LocalDate today = app.store.today();
-        return TaskBook.mondayOf(today).equals(monday) ? today : monday;
+        return DefaultDates.forSchedule(monday, app.store.today());
     }
 
     public LocalDate monday() {

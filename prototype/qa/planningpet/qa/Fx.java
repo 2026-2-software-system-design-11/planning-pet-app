@@ -1,7 +1,7 @@
 package planningpet.qa;
 
 import planningpet.app.model.Store;
-import planningpet.reward.model.Level;
+import planningpet.reward.model.Game;
 import planningpet.schedule.model.Task;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -48,8 +48,8 @@ final class Fx {
     /** 끝냄. rewardDay 앱 날짜에 10P와 경험치 10을 받았다. */
     static Task done(Task t, String rewardDay) {
         t.done = true;
-        t.rewardPoints = Level.TASK_POINTS;
-        t.rewardExp = Level.TASK_EXP;
+        t.rewardPoints = Game.TASK_POINTS;
+        t.rewardExp = Game.TASK_EXP;
         t.rewardDay = LocalDate.parse(rewardDay);
         return t;
     }

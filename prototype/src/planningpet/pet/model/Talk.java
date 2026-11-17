@@ -9,7 +9,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
 
-/** 펫 대사 표(06의 15번, 16번). */
+/** 펫 대사 표(06의 16번). 창이 보일 때 무엇을 말할지는 15번(AppController)이 고른다. */
 public final class Talk {
     private final Store s;
 

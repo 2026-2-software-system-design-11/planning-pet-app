@@ -2,11 +2,10 @@ package planningpet.schedule.view;
 
 import planningpet.app.view.App;
 import planningpet.common.view.*;
-import planningpet.schedule.model.Task;
+import planningpet.schedule.model.*;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Point;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import javax.swing.BorderFactory;
@@ -31,7 +30,7 @@ public final class TimeEditor {
     public final Card panel = new Card(new BorderLayout(0, 6), Theme.BUBBLE_RADIUS);
 
     public TimeEditor(Task t, LocalDateTime now) {
-        LocalTime from = t.timed() ? t.start : defaultStart(t.date, now);
+        LocalTime from = t.timed() ? t.start : DefaultDates.start(t.date, now);
         start.setValue(from.toString());
         minutes = Ui.minutes(t.minutes);
         error.setForeground(Theme.SUNDAY);
@@ -49,16 +48,6 @@ public final class TimeEditor {
         buttons.add(Ui.flow(clear), BorderLayout.WEST);
         buttons.add(Ui.flow(cancel, save), BorderLayout.EAST);
         panel.add(buttons, BorderLayout.SOUTH);
-    }
-
-    /** 06의 14번. 오늘이면 지금을 5분 단위로 올린 시각과 09:00 중 늦은 것(23:55까지), 다른 날이면 09:00. */
-    public static LocalTime defaultStart(LocalDate date, LocalDateTime now) {
-        if (!date.equals(now.toLocalDate())) {
-            return LocalTime.of(9, 0);
-        }
-        int m = now.getHour() * 60 + now.getMinute() + (now.getSecond() > 0 ? 1 : 0);
-        m = Math.min(Math.max((m + 4) / 5 * 5, 9 * 60), 23 * 60 + 55);
-        return LocalTime.of(m / 60, m % 60);
     }
 
     /** 끝이 24:00을 넘으면 문장, 아니면 null. */

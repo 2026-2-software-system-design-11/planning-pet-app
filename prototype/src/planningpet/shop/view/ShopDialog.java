@@ -57,7 +57,7 @@ public final class ShopDialog {
 
     /** 사기 버튼과 같다. 샀으면 true. */
     public static boolean buy(App app, PetScreen pet, String item) {
-        return app.shop.buy(item, () -> pet.say(item + " 고마워!"));
+        return app.shop.buy(item, () -> pet.sayOnce(item + " 고마워!"));
     }
 
     public static void open(App app, PetScreen pet) {

@@ -1,9 +1,11 @@
 package planningpet.pet.view;
 
+import planningpet.app.controller.AppController;
 import planningpet.app.model.MockData;
 import planningpet.app.model.Store;
 import planningpet.common.view.Ui;
 import planningpet.pet.controller.PetController;
+import planningpet.pet.model.Talk;
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import javax.swing.BorderFactory;
@@ -46,7 +48,8 @@ public final class PickDialog {
 
     /** 시작하기 버튼과 같다. 고른 동물과 이름(비우면 나비, 바둑이)을 넣는다. */
     public void apply(Store s) {
-        PetController.choose(s, dog.isSelected(), name.getText());
+        // 첫 실행 창은 앱 창보다 먼저 뜬다. 앱 controller를 이 데이터로 따로 만든다.
+        new PetController(new AppController(s, new Talk(s)), s).choose(dog.isSelected(), name.getText());
     }
 
     /** 고르면 true. 닫기 버튼으로 닫으면 false이고 앱은 아무것도 저장하지 않고 끝난다. */

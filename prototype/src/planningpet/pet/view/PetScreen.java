@@ -60,7 +60,7 @@ public final class PetScreen extends JPanel {
     }
 
     /** 상점에서 산 뒤처럼 한 번만 다른 말을 할 때. */
-    public void say(String line) {
+    public void sayOnce(String line) {
         said = line;
     }
 

@@ -45,7 +45,7 @@ public final class TaskForm {
         kinds.add(fixed);
         Ui.dayEditor(date, "yyyy-MM-dd (E)");
         Ui.dayEditor(repeatEnd, "yyyy-MM-dd");
-        start.setValue(TimeEditor.defaultStart(defaultDate, now).toString());
+        start.setValue(DefaultDates.start(defaultDate, now).toString());
         for (String k : new String[] {"제목", "시작 시각", "걸리는 시간", "메모", "반복"}) {
             JLabel l = new JLabel();
             l.setForeground(Theme.SUNDAY);
@@ -68,7 +68,7 @@ public final class TaskForm {
         line("", errors.get("메모"));
         title.setText(t == null ? "" : t.title);
         Ui.setDate(date, t == null ? defaultDate : t.date);
-        Ui.setDate(repeatEnd, (t == null ? defaultDate : t.date).plusWeeks(15));
+        Ui.setDate(repeatEnd, DefaultDates.repeatEnd(t == null ? defaultDate : t.date));
         if (t != null) {
             fixed.setSelected(t.kind == Task.Kind.FIXED);
             timed.setSelected(t.timed());
@@ -104,7 +104,7 @@ public final class TaskForm {
         repeatEnd.addChangeListener(e -> sync());
         date.addChangeListener(e -> {
             if (!repeat.isSelected() && !editing) {
-                Ui.setDate(repeatEnd, Ui.dateOf(date).plusWeeks(15));
+                Ui.setDate(repeatEnd, DefaultDates.repeatEnd(Ui.dateOf(date)));
             }
         });
         sync();
