@@ -1,6 +1,6 @@
 package planningpet.app.model;
 
-import planningpet.common.model.Rules;
+import planningpet.reward.model.Level;
 import planningpet.schedule.model.Task;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -74,8 +74,8 @@ public final class MockData {
 
     private static void done(Task t, int rewardDay) {
         t.done = true;
-        t.rewardPoints = Rules.TASK_POINTS;
-        t.rewardExp = Rules.TASK_EXP;
+        t.rewardPoints = Level.TASK_POINTS;
+        t.rewardExp = Level.TASK_EXP;
         t.rewardDay = LocalDate.of(2026, 11, rewardDay);
     }
 }

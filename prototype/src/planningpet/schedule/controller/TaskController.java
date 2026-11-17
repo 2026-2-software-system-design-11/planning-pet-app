@@ -2,7 +2,7 @@ package planningpet.schedule.controller;
 
 import planningpet.app.view.App;
 import planningpet.common.model.Rules;
-import planningpet.reward.model.RewardResult;
+import planningpet.reward.model.*;
 import planningpet.schedule.model.*;
 import planningpet.schedule.view.*;
 import java.time.LocalDate;
@@ -42,9 +42,9 @@ public final class TaskController {
         app.control.change(() -> {
             if (t.done) {
                 int points = t.rewardPoints;
-                int before = Rules.level(app.store.exp);
+                int before = Level.level(app.store.exp);
                 app.game.uncomplete(t);
-                app.store.say(app.talk.uncompleted(points, before, Rules.level(app.store.exp)));
+                app.store.say(app.talk.uncompleted(points, before, Level.level(app.store.exp)));
             } else {
                 RewardResult r = app.game.complete(t);
                 app.store.say(app.talk.completed(r, t));

@@ -2,8 +2,8 @@ package planningpet.pet.view;
 
 import planningpet.app.model.Store;
 import planningpet.app.view.App;
-import planningpet.common.model.Rules;
 import planningpet.common.view.*;
+import planningpet.reward.model.Level;
 import planningpet.shop.model.Shop;
 import planningpet.shop.view.ShopDialog;
 import java.awt.BorderLayout;
@@ -66,10 +66,10 @@ public final class PetScreen extends JPanel {
 
     private void refresh() {
         Store s = app.store;
-        name.setText(s.petName + " Lv." + Rules.level(s.exp));
+        name.setText(s.petName + " Lv." + Level.level(s.exp));
         name.setFont(Theme.font(23));
-        expBar.setValue((int) (Rules.expRatio(s.exp) * 1000));
-        expText.setText(Rules.expText(s.exp));
+        expBar.setValue((int) (Level.expRatio(s.exp) * 1000));
+        expText.setText(Level.expText(s.exp));
         long done = s.book.checkables(s.today()).stream().filter(t -> t.done).count();
         if (said != null) {
             room.bubble = said;

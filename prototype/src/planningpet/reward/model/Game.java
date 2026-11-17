@@ -1,7 +1,6 @@
 package planningpet.reward.model;
 
 import planningpet.app.model.Store;
-import planningpet.common.model.Rules;
 import planningpet.schedule.model.Task;
 import java.time.LocalDate;
 
@@ -15,22 +14,22 @@ public final class Game {
 
     public RewardResult complete(Task t) {
         LocalDate today = s.today();
-        int before = Rules.level(s.exp);
+        int before = Level.level(s.exp);
         if (!today.equals(s.rewardCountDay)) {
             s.rewardCountDay = today;
             s.rewardCount = 0;
         }
         t.done = true;
-        if (s.rewardCount >= Rules.DAILY_CAP) {
+        if (s.rewardCount >= Level.DAILY_CAP) {
             return new RewardResult(RewardResult.Outcome.CAPPED, before, before);
         }
-        t.rewardPoints = Rules.TASK_POINTS;
-        t.rewardExp = Rules.TASK_EXP;
+        t.rewardPoints = Level.TASK_POINTS;
+        t.rewardExp = Level.TASK_EXP;
         t.rewardDay = today;
         s.points += t.rewardPoints;
         s.exp += t.rewardExp;
         s.rewardCount++;
-        return new RewardResult(RewardResult.Outcome.REWARDED, before, Rules.level(s.exp));
+        return new RewardResult(RewardResult.Outcome.REWARDED, before, Level.level(s.exp));
     }
 
     public void uncomplete(Task t) {
@@ -49,7 +48,7 @@ public final class Game {
         if (s.today().equals(s.attendanceDay)) {
             return false;
         }
-        s.points += Rules.ATTEND_POINTS;
+        s.points += Level.ATTEND_POINTS;
         s.attendanceDay = s.today();
         return true;
     }
