@@ -26,7 +26,7 @@ public final class TimetablePanel extends JComponent {
     private final Map<Rectangle, Task> boxes = new LinkedHashMap<>();
     LocalDate monday;
 
-    public TimetablePanel(Store store, TaskController actions) {
+    public TimetablePanel(Store store, TaskController control) {
         this.store = store;
         setPreferredSize(new Dimension(300, HOUR * 24));
         setToolTipText("");
@@ -41,7 +41,7 @@ public final class TimetablePanel extends JComponent {
                     }
                 }
                 if (boxed != null && SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 1) {
-                    actions.check(boxed);
+                    control.check(boxed);
                     return;
                 }
                 if (boxed != null && e.getClickCount() == 1) {
@@ -49,7 +49,7 @@ public final class TimetablePanel extends JComponent {
                 }
                 Task t = at(e);
                 if (t != null && e.getClickCount() == 2) {
-                    actions.edit(t);
+                    control.edit(t);
                 }
             }
 
@@ -57,7 +57,7 @@ public final class TimetablePanel extends JComponent {
             public void mousePressed(MouseEvent e) {
                 Task t = at(e);
                 if (t != null && e.isPopupTrigger()) {
-                    TaskMenu.of(actions, t).show(TimetablePanel.this, e.getX(), e.getY());
+                    TaskMenu.of(control, t).show(TimetablePanel.this, e.getX(), e.getY());
                 }
             }
 

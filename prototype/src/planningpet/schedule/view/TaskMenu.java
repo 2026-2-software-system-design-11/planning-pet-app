@@ -10,12 +10,12 @@ public final class TaskMenu {
     private TaskMenu() {
     }
 
-    public static JPopupMenu of(TaskController actions, Task t) {
+    public static JPopupMenu of(TaskController control, Task t) {
         JPopupMenu menu = new JPopupMenu();
         JMenuItem edit = new JMenuItem("수정");
-        edit.addActionListener(e -> actions.edit(t));
+        edit.addActionListener(e -> control.edit(t));
         JMenuItem delete = new JMenuItem("삭제");
-        delete.addActionListener(e -> actions.delete(t));
+        delete.addActionListener(e -> control.delete(t));
         menu.add(edit);
         menu.add(delete);
         return menu;
