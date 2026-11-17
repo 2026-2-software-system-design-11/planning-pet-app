@@ -49,7 +49,7 @@ public final class PickDialog {
 
     /** 시작하기 버튼과 같다. 고른 동물과 이름(비우면 나비, 바둑이)을 넣는다. */
     public void apply(Store s) {
-        new PetController(s).choose(dog.isSelected(), name.getText());
+        PetController.choose(s, dog.isSelected(), name.getText());
     }
 
     /** 고르면 true. 닫기 버튼으로 닫으면 false이고 앱은 아무것도 저장하지 않고 끝난다. */
