@@ -65,11 +65,11 @@ public final class MockData {
 
     private static void weekly(Store s, String title, DayOfWeek day, int hour, int minute) {
         LocalDate first = TERM_START.with(TemporalAdjusters.nextOrSame(day));
-        s.add(Task.Kind.FIXED, title, first, LocalTime.of(hour, minute), 75, "", TERM_END);
+        s.book.add(Task.Kind.FIXED, title, first, LocalTime.of(hour, minute), 75, "", TERM_END);
     }
 
     private static Task task(Store s, int day, String title, LocalTime start, int minutes) {
-        return s.add(Task.Kind.TASK, title, LocalDate.of(2026, 11, day), start, minutes, "", null).get(0);
+        return s.book.add(Task.Kind.TASK, title, LocalDate.of(2026, 11, day), start, minutes, "", null).get(0);
     }
 
     private static void done(Task t, int rewardDay) {

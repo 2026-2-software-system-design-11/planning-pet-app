@@ -3,7 +3,7 @@ package planningpet.schedule.view;
 import planningpet.app.model.Store;
 import planningpet.common.view.*;
 import planningpet.schedule.controller.TaskController;
-import planningpet.schedule.model.Task;
+import planningpet.schedule.model.*;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.MouseAdapter;
@@ -27,12 +27,12 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
     }
 
     /** 메인(D-31): 시각 있는 일정을 시각과 함께, 그 아래 "시각 없는 할 일"(D-41). */
-    public void showPlan(Store.DayPlan plan) {
+    public void showPlan(TaskBook.DayPlan plan) {
         removeAll();
         if (plan.timed().isEmpty() && plan.untimed().isEmpty()) {
             add(Ui.hint("아직 일정이 없어요. 작은 계획을 추가해 보세요."));
         }
-        plan.timed().forEach(t -> add(row(t, Store.timeText(t), false)));
+        plan.timed().forEach(t -> add(row(t, TaskBook.timeText(t), false)));
         if (!plan.untimed().isEmpty()) {
             JLabel head = Ui.hint("시각 없는 할 일");
             head.setBorder(BorderFactory.createEmptyBorder(10, 0, 2, 0));

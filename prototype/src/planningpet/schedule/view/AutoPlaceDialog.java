@@ -25,7 +25,7 @@ public final class AutoPlaceDialog {
 
     public static JPanel content(Store s, LocalDate monday, Planner.Placement p, JButton cancel, JButton apply) {
         LocalDate today = s.today();
-        boolean thisWeek = Store.mondayOf(today).equals(monday);
+        boolean thisWeek = TaskBook.mondayOf(today).equals(monday);
         java.time.LocalDateTime soonest = Planner.earliest(s);
         java.time.LocalDateTime start = thisWeek && soonest.toLocalTime().isAfter(LocalTime.of(9, 0)) ? soonest
                 : (thisWeek ? soonest.toLocalDate() : monday).atTime(9, 0);

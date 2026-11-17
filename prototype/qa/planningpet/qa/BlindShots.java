@@ -73,10 +73,10 @@ public final class BlindShots {
                 app.show(screen);
                 shoot(app.root, new Dimension(1000, 680), null, images, key, n++, out, screen);
             }
-            LocalDate monday = Store.mondayOf(app.store.today());
+            LocalDate monday = TaskBook.mondayOf(app.store.today());
             shoot(TaskDialog.content(new TaskForm(null, app.store.today(), app.store.now), new JButton("취소"),
                     new JButton("저장"), null), null, "일정 추가", images, key, n++, out, "일정 입력 창(추가)");
-            Task essay = app.store.dayPlan(app.store.today()).timed().get(1);
+            Task essay = app.store.book.dayPlan(app.store.today()).timed().get(1);
             shoot(TaskDialog.content(new TaskForm(essay, essay.date, app.store.now), new JButton("취소"),
                     new JButton("저장"), new JButton("삭제")), null, "일정 수정", images, key, n++, out, "일정 입력 창(수정)");
             shoot(new TimeEditor(essay, app.store.now).panel, null, null, images, key, n++, out, "시각 고치기 창");

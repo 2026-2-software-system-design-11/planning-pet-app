@@ -51,27 +51,27 @@ public final class BlindStates {
             bad.showErrors(TaskCheck.check(bad.draft(), bad.editing()));
             BlindShots.shoot(TaskDialog.content(bad, new JButton("취소"), new JButton("저장"), null), null, "일정 추가",
                     images, key, n++, out, "일정 입력 창(추가), 저장을 누른 뒤 오류");
-            Task exercise = app.store.dayPlan(today).untimed().get(1);
+            Task exercise = app.store.book.dayPlan(today).untimed().get(1);
             String[] two = {"삭제", "취소"};
             BlindShots.shoot(new JOptionPane("'" + exercise.title + "'" + Rules.josa(exercise.title, "을", "를") + " 삭제할까요?",
                     JOptionPane.QUESTION_MESSAGE, JOptionPane.DEFAULT_OPTION, null, two, two[1]), null, "일정 삭제",
                     images, key, n++, out, "일정 삭제 확인 창(반복 아님)");
             Task fixed = app.store.tasks.stream().filter(x -> x.kind == Task.Kind.FIXED).findFirst().orElseThrow();
             TaskForm fixedForm = new TaskForm(fixed, fixed.date, app.store.now);
-            fixedForm.showSeries(app.store.seriesEnd(fixed));
+            fixedForm.showSeries(app.store.book.seriesEnd(fixed));
             BlindShots.shoot(TaskDialog.content(fixedForm, new JButton("취소"),
                     new JButton("저장"), new JButton("삭제")), null, "일정 수정", images, key, n++, out, "일정 입력 창(고정 일정 수정)");
             Store rich = MockData.sample();
             rich.points = 300;
             BlindShots.shoot(ShopDialog.content(rich, item -> { }, new JButton("닫기")), null, "상점", images, key, n++, out,
                     "상점 창(300P, 살 수 있는 것 있음)");
-            app.store.add(Task.Kind.TASK, "기말 프로젝트", today, null, 600, "", null);
-            LocalDate monday = Store.mondayOf(today);
+            app.store.book.add(Task.Kind.TASK, "기말 프로젝트", today, null, 600, "", null);
+            LocalDate monday = TaskBook.mondayOf(today);
             BlindShots.shoot(AutoPlaceDialog.content(app.store, monday, Planner.place(app.store, monday), new JButton("취소"),
                     new JButton("적용")), null, "자동 배치 결과", images, key, n++, out, "자동 배치 결과 창(놓지 못한 할 일 있음)");
             BlindShots.shoot(menuOver(MockData.sample()), new Dimension(1000, 680), null, images, key, n++, out,
                     "홈, 할 일 줄에서 오른쪽 버튼을 누른 뒤");
-            Task untimed = app.store.dayPlan(today).untimed().get(0);
+            Task untimed = app.store.book.dayPlan(today).untimed().get(0);
             BlindShots.shoot(new TimeEditor(untimed, app.store.now).panel, null, null, images, key, n++, out,
                     "시각 고치기 창(시각 없는 할 일)");
         }
@@ -95,7 +95,7 @@ public final class BlindStates {
         JLabel picture = new JLabel(new ImageIcon(home));
         picture.setBounds(0, 0, size.width, size.height);
         pane.add(picture, JLayeredPane.DEFAULT_LAYER);
-        Task essay = s.dayPlan(s.today()).timed().get(1);
+        Task essay = s.book.dayPlan(s.today()).timed().get(1);
         // 창 없이는 팝업을 띄울 수 없어서, 메뉴의 항목(같은 부품, 같은 동작)을 메뉴 모양 판에 옮겨 담는다.
         JPopupMenu menu = TaskMenu.of(app.schedule, essay);
         javax.swing.JPanel look = new javax.swing.JPanel();

@@ -37,11 +37,11 @@ final class Fx {
     }
 
     static void weekly(Store s, String title, String first, String time, int minutes, String end) {
-        s.add(Task.Kind.FIXED, title, LocalDate.parse(first), LocalTime.parse(time), minutes, "", LocalDate.parse(end));
+        s.book.add(Task.Kind.FIXED, title, LocalDate.parse(first), LocalTime.parse(time), minutes, "", LocalDate.parse(end));
     }
 
     static Task task(Store s, String date, String title, String time, int minutes) {
-        return s.add(Task.Kind.TASK, title, LocalDate.parse(date), time == null ? null : LocalTime.parse(time),
+        return s.book.add(Task.Kind.TASK, title, LocalDate.parse(date), time == null ? null : LocalTime.parse(time),
                 minutes, "", null).get(0);
     }
 

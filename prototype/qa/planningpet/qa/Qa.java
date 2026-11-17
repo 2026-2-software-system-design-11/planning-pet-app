@@ -44,7 +44,7 @@ final class Qa extends QaDrive {
     }
 
     String progress() {
-        var today = app.store.checkables(app.store.today());
+        var today = app.store.book.checkables(app.store.today());
         return today.isEmpty() ? "비어 있음" : today.stream().filter(t -> t.done).count() + "/" + today.size();
     }
 

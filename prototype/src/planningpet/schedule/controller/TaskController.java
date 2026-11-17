@@ -66,7 +66,7 @@ public final class TaskController {
         }
         app.control.change(() -> {
             if (scope >= 0) {
-                app.store.delete(t, scope == 1);
+                app.store.book.delete(t, scope == 1);
             }
         });
         return scope >= 0;
@@ -110,7 +110,7 @@ public final class TaskController {
         String title = d.title().strip();
         app.control.change(() -> {
             if (editing == null) {
-                app.store.add(d.kind(), title, d.date(), d.start(), d.minutes(), d.memo(), d.repeatEnd());
+                app.store.book.add(d.kind(), title, d.date(), d.start(), d.minutes(), d.memo(), d.repeatEnd());
             } else {
                 LocalDate originalDate = editing.date;
                 editing.title = title;
@@ -119,7 +119,7 @@ public final class TaskController {
                 editing.minutes = d.minutes();
                 editing.memo = d.memo();
                 if (scope == 1) {
-                    app.store.applyToSeries(editing, originalDate);
+                    app.store.book.applyToSeries(editing, originalDate);
                 }
             }
         });
@@ -132,7 +132,7 @@ public final class TaskController {
         if (title.isEmpty() || title.length() > 100) {
             return false;
         }
-        app.control.change(() -> app.store.add(Task.Kind.TASK, title, date, null, 30, "", null));
+        app.control.change(() -> app.store.book.add(Task.Kind.TASK, title, date, null, 30, "", null));
         return true;
     }
 
@@ -146,7 +146,7 @@ public final class TaskController {
             t.start = start;
             t.minutes = minutes;
             if (scope == 1) {
-                app.store.applyToSeries(t, t.date, true);
+                app.store.book.applyToSeries(t, t.date, true);
             }
         });
         return true;

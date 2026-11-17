@@ -38,7 +38,7 @@ public final class TaskDialog {
     public static void open(App app, Task editing, LocalDate defaultDate) {
         TaskForm f = new TaskForm(editing, defaultDate, app.store.now);
         if (editing != null && editing.seriesId != null) {
-            f.showSeries(app.store.seriesEnd(editing));
+            f.showSeries(app.store.book.seriesEnd(editing));
         }
         JButton cancel = new JButton("취소");
         JButton saveButton = new JButton("저장");
