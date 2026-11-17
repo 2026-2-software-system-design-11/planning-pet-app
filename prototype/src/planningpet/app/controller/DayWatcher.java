@@ -28,8 +28,7 @@ public final class DayWatcher {
         }
         last = today;
         // 프로토타입 창은 늘 보이므로 브리핑한다(D-23).
-        app.store.say(app.talk.onWindowShown(app.game));
-        app.store.changed();
+        app.control.windowShown();
         return true;
     }
 }

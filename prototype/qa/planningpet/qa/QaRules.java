@@ -1,7 +1,7 @@
 package planningpet.qa;
 
 import planningpet.app.*;
-import planningpet.app.model.Store;
+import planningpet.app.model.*;
 import planningpet.app.view.App;
 import planningpet.common.view.Card;
 import planningpet.pet.view.PickDialog;
@@ -92,7 +92,7 @@ final class QaRules {
 
     private static App fresh() {
         App app = Main.create(MockData.sample());
-        app.store.say(app.talk.onWindowShown(app.game));
+        app.control.windowShown();
         app.show("홈");
         app.store.changed();
         return app;

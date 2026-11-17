@@ -1,6 +1,6 @@
 package planningpet.pet.view;
 
-import planningpet.app.MockData;
+import planningpet.app.model.MockData;
 import planningpet.app.model.Store;
 import planningpet.common.view.Ui;
 import planningpet.pet.controller.PetController;
@@ -28,12 +28,9 @@ public final class PickDialog {
         ButtonGroup group = new ButtonGroup();
         group.add(cat);
         group.add(dog);
-        Store catLook = MockData.empty();
-        Store dogLook = MockData.empty();
-        dogLook.petKind = "DOG";
         JPanel animals = new JPanel(new GridLayout(2, 2, 16, 4));
-        animals.add(new PetView(catLook, 2));
-        animals.add(new PetView(dogLook, 2));
+        animals.add(new PetView(MockData.look("CAT"), 2));
+        animals.add(new PetView(MockData.look("DOG"), 2));
         animals.add(cat);
         animals.add(dog);
         panel.setBorder(BorderFactory.createEmptyBorder(14, 16, 14, 16));
@@ -49,7 +46,7 @@ public final class PickDialog {
 
     /** 시작하기 버튼과 같다. 고른 동물과 이름(비우면 나비, 바둑이)을 넣는다. */
     public void apply(Store s) {
-        new PetController(s).choose(dog.isSelected(), name.getText());
+        PetController.choose(s, dog.isSelected(), name.getText());
     }
 
     /** 고르면 true. 닫기 버튼으로 닫으면 false이고 앱은 아무것도 저장하지 않고 끝난다. */

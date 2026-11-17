@@ -22,8 +22,10 @@ Windows는 `prototype\run.bat`이다.
 06의 패키지 규칙(D-46)대로 `src/planningpet/` 아래를 도메인별로 나누고, 도메인 안을 `model`, `view`, `controller`로 나눈다.
 
 - `schedule`(일정), `reward`(보상), `pet`(펫), `shop`(상점), `home`(메인 화면), `settings`(설정), `app`(진입점, 창 틀, 앱 데이터 `Store`), `common`(앱 날짜와 글자 규칙, 디자인 시스템의 색과 부품)
-- `model`은 Swing과 AWT를 쓰지 않는다. `view`는 model을 읽어 그리고, 바꿀 때는 그 도메인의 `controller`를 부른다. controller가 model을 바꾸고 `Store.changed()`로 화면에 알린다
-- QA 코드는 `qa/planningpet/qa/`, 단위 검사는 `check/planningpet/check/`에 있다
+- `model`은 Swing과 AWT를 쓰지 않는다. `view`는 model을 읽어 그리고, 바꿀 때는 controller를 부른다(다른 도메인의 것도 된다). controller는 바꾸는 일을 앱 controller의 `change`로 감싸고, `change`가 `Store.changed()`로 한 번 알린다
+- 화면 전환과 주 옮기기처럼 model을 바꾸지 않는 다시 그리기는 `App.redraw()`로 한다
+- `check.sh`가 model의 Swing import와 view의 알림, 펫 말, Model 값 대입을 찾아 있으면 실패한다
+- 진입점은 `app/Main`, 목 데이터는 `app/model/MockData`다. QA 코드와 창 없이 그리는 `Snap`은 `qa/planningpet/qa/`, 단위 검사는 `check/planningpet/check/`에 있다
 
 ## 목 데이터와 목 로직
 

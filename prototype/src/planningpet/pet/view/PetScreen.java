@@ -56,7 +56,7 @@ public final class PetScreen extends JPanel {
         bottom.add(Ui.hint(Ui.POINT_GUIDE), BorderLayout.SOUTH);
         bottom.setPreferredSize(new Dimension(0, 130));
         add(bottom, BorderLayout.SOUTH);
-        app.store.onChange(this::refresh);
+        app.watch(this::refresh);
     }
 
     /** 상점에서 산 뒤처럼 한 번만 다른 말을 할 때. */
@@ -89,7 +89,7 @@ public final class PetScreen extends JPanel {
             boolean placed = s.placed.contains(item);
             JToggleButton b = new JToggleButton(placed ? item + " ✓" : item, placed);
             b.addActionListener(e -> {
-                app.pets.toggle(item);
+                app.pet.toggle(item);
             });
             items.add(b);
         }

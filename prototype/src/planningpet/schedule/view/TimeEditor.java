@@ -77,12 +77,12 @@ public final class TimeEditor {
             e.error.setText(problem);
             return false;
         }
-        return app.actions.saveTime(t, LocalTime.parse((String) e.start.getValue()), (int) e.minutes.getValue());
+        return app.schedule.saveTime(t, LocalTime.parse((String) e.start.getValue()), (int) e.minutes.getValue());
     }
 
     /** 시각 빼기 버튼과 같다. */
     public static void clear(App app, Task t) {
-        app.actions.clearTime(t);
+        app.schedule.clearTime(t);
     }
 
     public static void open(App app, Task t, Component anchor) {

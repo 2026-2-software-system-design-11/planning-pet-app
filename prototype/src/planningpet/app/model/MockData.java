@@ -1,6 +1,5 @@
-package planningpet.app;
+package planningpet.app.model;
 
-import planningpet.app.model.Store;
 import planningpet.common.model.Rules;
 import planningpet.schedule.model.Task;
 import java.time.DayOfWeek;
@@ -22,6 +21,13 @@ public final class MockData {
     public static Store empty() {
         Store s = new Store();
         s.now = NOW;
+        return s;
+    }
+
+    /** 반려동물 고르기 창의 미리보기. 그 동물만 정한 빈 데이터다. */
+    public static Store look(String petKind) {
+        Store s = empty();
+        s.petKind = petKind;
         return s;
     }
 

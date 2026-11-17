@@ -1,7 +1,8 @@
 package planningpet.check;
 
 import planningpet.app.*;
-import planningpet.app.model.Store;
+import planningpet.app.controller.AppController;
+import planningpet.app.model.*;
 import planningpet.app.view.App;
 import planningpet.common.model.Rules;
 import planningpet.common.view.Ui;
@@ -32,7 +33,7 @@ public final class ProtoCheck {
         eq("T-LVL-3", "경험치 0 / 80", Rules.expText(50));
         eq("T-LVL-7", "최고 레벨", Rules.expText(1600));
         eq("T-TALK-3", "콩이야 나비야", "콩" + Rules.iya("콩") + " 나비" + Rules.iya("나비"));
-        eq("메인 브리핑", "오늘 할 일 3개 남았어. '은행 서류' 마감이 내일이야.", t.onWindowShown(g));
+        eq("메인 브리핑", "오늘 할 일 3개 남았어. '은행 서류' 마감이 내일이야.", new AppController(s, t).windowShown());
         eq("T-VIS-2", 5, s.streak);
         eq("T-ATT-1", "true 120", g.attend() + " " + s.points);
         Shop shop = new Shop(s);
@@ -68,7 +69,7 @@ public final class ProtoCheck {
         first.petKind = "DOG";
         first.petName = "바둑이";
         eq("T-BRF-6, FIRST_RUN", "안녕, 나는 바둑이야. 일정관리에서 이번 학기 수업부터 넣어 볼까? 1",
-                new Talk(first).onWindowShown(new Game(first)) + " " + first.streak);
+                new AppController(first, new Talk(first)).windowShown() + " " + first.streak);
         Store d = MockData.empty();
         java.util.function.BiFunction<String, java.time.LocalTime, Task> at = (title, time) ->
                 d.add(Task.Kind.TASK, title, nov16, time, 30, "", null).get(0);
@@ -126,11 +127,11 @@ public final class ProtoCheck {
         App main = Main.create(MockData.sample());
         Task essay = main.store.dayPlan(main.store.today()).timed().get(1);
         int seq = main.store.talkSeq;
-        main.actions.check(essay);
+        main.schedule.check(essay);
         long doneToday = main.store.checkables(main.store.today()).stream().filter(z -> z.done).count();
         eq("T-SAVE-5", "110 2/4 잘했어! +10P 1", main.store.points + " " + doneToday + "/"
                 + main.store.checkables(main.store.today()).size() + " " + main.store.talk + " " + (main.store.talkSeq - seq));
-        main.actions.check(essay);
+        main.schedule.check(essay);
         eq("T-TALK-7 화면에서", "100 체크를 풀었어. -10P", main.store.points + " " + main.store.talk);
         Store od = MockData.sample();
         eq("T-TALK-9", "11월 16일 할 일은 2개야.", new Talk(od).otherDate(java.time.LocalDate.of(2026, 11, 16)));
@@ -189,7 +190,7 @@ public final class ProtoCheck {
         f.showSeries(app.store.seriesEnd(last));
         boolean shown = f.repeat.isSelected() && !f.repeat.isEnabled();
         Ui.setDate(f.date, java.time.LocalDate.of(2026, 12, 29));
-        app.actions.chooser = (title, message, options) -> 0;
+        app.schedule.chooser = (title, message, options) -> 0;
         boolean saved = TaskDialog.trySave(app, f, last);
         return shown + " " + saved + " " + last.date;
     }
@@ -202,7 +203,7 @@ public final class ProtoCheck {
         copies.get(1).title = "보강";
         TimeEditor e = new TimeEditor(copies.get(0), app.store.now);
         e.start.setValue("11:00");
-        app.actions.chooser = (title, message, options) -> 1;
+        app.schedule.chooser = (title, message, options) -> 1;
         TimeEditor.save(app, copies.get(0), e);
         return copies.get(0).start + " " + copies.get(1).title + " " + copies.get(1).start;
     }

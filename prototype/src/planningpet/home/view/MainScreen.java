@@ -37,11 +37,11 @@ public final class MainScreen extends JPanel {
         this.app = app;
         setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 12));
         calendar = new CalendarPanel(app.store, this::select);
-        rows = new TaskRows(app.actions);
+        rows = new TaskRows(app.schedule);
 
         JPanel list = new Card(new BorderLayout(0, 6));
         listTitle.setFont(Theme.font(23));
-        addButton.addActionListener(e -> app.actions.add(calendar.selected()));
+        addButton.addActionListener(e -> app.schedule.add(calendar.selected()));
         JPanel head = new JPanel(new BorderLayout());
         head.add(listTitle, BorderLayout.CENTER);
         head.add(addButton, BorderLayout.EAST);
@@ -65,14 +65,14 @@ public final class MainScreen extends JPanel {
         bottom.add(top, BorderLayout.NORTH);
         bottom.add(new WalkBar(app.store), BorderLayout.CENTER);
         add(bottom, BorderLayout.SOUTH);
-        app.store.onChange(this::refresh);
+        app.watch(this::refresh);
     }
 
     private JPanel quickAdd() {
         JPanel panel = new JPanel(new BorderLayout(6, 2));
         Ui.limit(quick, 100);
         Runnable put = () -> {
-            if (app.actions.quickAdd(quick.getText(), calendar.selected())) {
+            if (app.schedule.quickAdd(quick.getText(), calendar.selected())) {
                 quick.setText("");
             }
         };
@@ -116,7 +116,7 @@ public final class MainScreen extends JPanel {
     }
 
     private void select(LocalDate date) {
-        app.actions.selectDay(date);
+        app.home.selectDay(date);
     }
 
     private void refresh() {

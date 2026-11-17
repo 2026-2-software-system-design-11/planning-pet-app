@@ -17,14 +17,9 @@ public final class Talk {
         this.s = store;
     }
 
-    /** 창이 보이게 될 때. 그날 처음이면 브리핑하고 연속 접속을 센다. */
-    public String onWindowShown(Game game) {
+    /** 그날 처음 창이 보일 때 하는 말. before는 그 전에 마지막으로 연 날(없으면 null)이다. 15번이 부른다. */
+    public String opening(LocalDate before) {
         LocalDate today = s.today();
-        if (today.equals(s.lastOpenDay)) {
-            return usual();
-        }
-        LocalDate before = s.lastOpenDay;
-        game.recordOpen();
         if (before == null) {
             return "안녕, 나는 " + s.petName + Rules.iya(s.petName) + ". 일정관리에서 이번 학기 수업부터 넣어 볼까?";
         }

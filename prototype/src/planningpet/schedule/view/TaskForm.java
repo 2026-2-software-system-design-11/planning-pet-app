@@ -169,7 +169,7 @@ public final class TaskForm {
         return String.join(" / ", errors.values().stream().filter(JLabel::isVisible).map(JLabel::getText).toList());
     }
 
-    public LocalTime startTime() {
+    private LocalTime startTime() {
         return timed.isSelected() ? LocalTime.parse((String) start.getValue()) : null;
     }
 
