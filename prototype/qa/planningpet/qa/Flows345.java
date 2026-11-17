@@ -29,13 +29,13 @@ final class Flows345 {
 
     /** 그날 시각 있는 일정을 "17:00 팀 회의, 18:00 편의점 알바"처럼. */
     static String day(Qa q, String date) {
-        return q.app.store.timedOn(QaDrive.d(date)).stream().sorted(Comparator.comparing((Task t) -> t.start))
+        return q.app.store.book.timedOn(QaDrive.d(date)).stream().sorted(Comparator.comparing((Task t) -> t.start))
                 .map(t -> t.start + " " + t.title).collect(Collectors.joining(", "));
     }
 
     /** 시간표 열: "팀 회의 0/2, 편의점 알바 1/2". */
     static String cols(Qa q, String date) {
-        var tasks = q.app.store.timedOn(QaDrive.d(date));
+        var tasks = q.app.store.book.timedOn(QaDrive.d(date));
         var c = Planner.columns(tasks);
         return tasks.stream().sorted(Comparator.comparing((Task t) -> t.start))
                 .map(t -> t.title + " " + c.get(t)[0] + "/" + c.get(t)[1]).collect(Collectors.joining(", "));

@@ -53,10 +53,10 @@ public final class ProtoCheck {
         java.time.LocalDate nov16 = java.time.LocalDate.of(2026, 11, 16);
         Store p = MockData.empty();
         p.now = nov16.atTime(15, 23);
-        p.add(Task.Kind.FIXED, "수업", nov16, java.time.LocalTime.of(16, 0), 90, "", null);
-        p.add(Task.Kind.TASK, "끝낸 일", nov16, java.time.LocalTime.of(18, 0), 60, "", null).get(0).done = true;
-        Task a = p.add(Task.Kind.TASK, "A", nov16, null, 60, "", null).get(0);
-        Task b = p.add(Task.Kind.TASK, "B", nov16, null, 120, "", null).get(0);
+        p.book.add(Task.Kind.FIXED, "수업", nov16, java.time.LocalTime.of(16, 0), 90, "", null);
+        p.book.add(Task.Kind.TASK, "끝낸 일", nov16, java.time.LocalTime.of(18, 0), 60, "", null).get(0).done = true;
+        Task a = p.book.add(Task.Kind.TASK, "A", nov16, null, 60, "", null).get(0);
+        Task b = p.book.add(Task.Kind.TASK, "B", nov16, null, 120, "", null).get(0);
         var placed = Planner.place(p, nov16).placed();
         eq("T-AUTO-3 개수", 2, placed.size());
         eq("T-AUTO-3", "B 19:00 A 21:00", placed.get(0).task().title + " " + placed.get(0).start() + " "
@@ -72,18 +72,18 @@ public final class ProtoCheck {
                 new AppController(first, new Talk(first)).windowShown() + " " + first.streak);
         Store d = MockData.empty();
         java.util.function.BiFunction<String, java.time.LocalTime, Task> at = (title, time) ->
-                d.add(Task.Kind.TASK, title, nov16, time, 30, "", null).get(0);
+                d.book.add(Task.Kind.TASK, title, nov16, time, 30, "", null).get(0);
         at.apply("B", null);
         at.apply("D", java.time.LocalTime.of(15, 0));
         at.apply("A", java.time.LocalTime.of(15, 0));
         at.apply("C", java.time.LocalTime.of(9, 0));
         at.apply("F", null).done = true;
-        d.add(Task.Kind.FIXED, "E", nov16, java.time.LocalTime.of(10, 30), 75, "", null);
-        Store.DayPlan plan = d.dayPlan(nov16);
+        d.book.add(Task.Kind.FIXED, "E", nov16, java.time.LocalTime.of(10, 30), 75, "", null);
+        TaskBook.DayPlan plan = d.book.dayPlan(nov16);
         eq("T-LIST-1", "CEDA BF", plan.timed().stream().map(x -> x.title).reduce("", String::concat) + " "
                 + plan.untimed().stream().map(x -> x.title).reduce("", String::concat));
         Task late = at.apply("늦게", java.time.LocalTime.of(23, 30));
-        eq("T-LIST-2", "23:30~24:00", Store.timeText(late));
+        eq("T-LIST-2", "23:30~24:00", TaskBook.timeText(late));
         java.time.LocalDateTime t1523 = nov16.atTime(15, 23);
         eq("T-DEF-6~9", "15:25 09:00 09:00 23:55", TimeEditor.defaultStart(nov16, t1523) + " "
                 + TimeEditor.defaultStart(nov16, nov16.atTime(7, 0)) + " " + TimeEditor.defaultStart(nov16.plusDays(1), t1523)
@@ -92,11 +92,11 @@ public final class ProtoCheck {
         longOne.minutes.setValue(40);
         eq("시각 고치기 하루 넘김", "하루 안에 끝나야 해요", longOne.check());
         eq("시간 빼기는 할 일만", "true false", longOne.clear.isVisible() + " "
-                + new TimeEditor(d.dayPlan(nov16).timed().get(1), t1523).clear.isVisible());
+                + new TimeEditor(d.book.dayPlan(nov16).timed().get(1), t1523).clear.isVisible());
         Store r = MockData.empty();
         r.now = nov16.atTime(15, 0);
         Game rg = new Game(r);
-        Task x = r.add(Task.Kind.TASK, "과제", nov16, null, 30, "", null).get(0);
+        Task x = r.book.add(Task.Kind.TASK, "과제", nov16, null, 30, "", null).get(0);
         RewardResult done1 = rg.complete(x);
         eq("T-RWD-1", "REWARDED 10 10 1", done1.outcome() + " " + r.points + " " + r.exp + " " + r.rewardCount);
         rg.uncomplete(x);
@@ -106,17 +106,17 @@ public final class ProtoCheck {
         rg.uncomplete(x);
         r.rewardCount = 0;
         rg.complete(x);
-        r.delete(x, false);
+        r.book.delete(x, false);
         eq("T-DEL-1", "10 1", r.points + " " + r.rewardCount);
         eq("숫자 조사", "을 를", Rules.josa("과제 1", "을", "를") + " " + Rules.josa("과제 2", "을", "를"));
         eq("D-38 5분 단위", "30 null 75", fiveMinute());
         Store c = MockData.sample();
         java.time.LocalDate nov = java.time.LocalDate.of(2026, 11, 1);
-        Store.CellPreview c14 = c.cellPreview(nov.withDayOfMonth(14));
-        Store.CellPreview c13 = c.cellPreview(nov.withDayOfMonth(13));
-        Store.CellPreview c15 = c.cellPreview(nov.withDayOfMonth(15));
+        TaskBook.CellPreview c14 = c.book.cellPreview(nov.withDayOfMonth(14));
+        TaskBook.CellPreview c13 = c.book.cellPreview(nov.withDayOfMonth(13));
+        TaskBook.CellPreview c15 = c.book.cellPreview(nov.withDayOfMonth(15));
         eq("T-CAL-1", "알고리즘… true", c14.title() + " " + c14.open());
-        eq("T-CAL-2", null, c.cellPreview(nov.withDayOfMonth(16)));
+        eq("T-CAL-2", null, c.book.cellPreview(nov.withDayOfMonth(16)));
         eq("T-CAL-3", "토익 스터… false", c13.title() + " " + c13.open());
         eq("T-CAL-4", "은행 서류 true", c15.title() + " " + c15.open());
         Store w = MockData.sample();
@@ -125,27 +125,27 @@ public final class ProtoCheck {
         new PetView(w, 1);
         eq("T-SAVE-5 다시 그리기 연결", 2, w.listenerCount() - before);
         App main = Main.create(MockData.sample());
-        Task essay = main.store.dayPlan(main.store.today()).timed().get(1);
+        Task essay = main.store.book.dayPlan(main.store.today()).timed().get(1);
         int seq = main.store.talkSeq;
         main.schedule.check(essay);
-        long doneToday = main.store.checkables(main.store.today()).stream().filter(z -> z.done).count();
+        long doneToday = main.store.book.checkables(main.store.today()).stream().filter(z -> z.done).count();
         eq("T-SAVE-5", "110 2/4 잘했어! +10P 1", main.store.points + " " + doneToday + "/"
-                + main.store.checkables(main.store.today()).size() + " " + main.store.talk + " " + (main.store.talkSeq - seq));
+                + main.store.book.checkables(main.store.today()).size() + " " + main.store.talk + " " + (main.store.talkSeq - seq));
         main.schedule.check(essay);
         eq("T-TALK-7 화면에서", "100 체크를 풀었어. -10P", main.store.points + " " + main.store.talk);
         Store od = MockData.sample();
         eq("T-TALK-9", "11월 16일 할 일은 2개야.", new Talk(od).otherDate(java.time.LocalDate.of(2026, 11, 16)));
         Store f2 = MockData.empty();
         f2.now = nov16.atTime(9, 0);
-        Task cls = f2.add(Task.Kind.FIXED, "수업", nov16, java.time.LocalTime.of(10, 0), 75, "", null).get(0);
-        f2.add(Task.Kind.FIXED, "수업2", nov16, java.time.LocalTime.of(13, 0), 75, "", null);
-        Task hw = f2.add(Task.Kind.TASK, "과제", nov16, null, 30, "", null).get(0);
-        f2.add(Task.Kind.TASK, "운동", nov16, null, 30, "", null);
+        Task cls = f2.book.add(Task.Kind.FIXED, "수업", nov16, java.time.LocalTime.of(10, 0), 75, "", null).get(0);
+        f2.book.add(Task.Kind.FIXED, "수업2", nov16, java.time.LocalTime.of(13, 0), 75, "", null);
+        Task hw = f2.book.add(Task.Kind.TASK, "과제", nov16, null, 30, "", null).get(0);
+        f2.book.add(Task.Kind.TASK, "운동", nov16, null, 30, "", null);
         Game fg = new Game(f2);
         eq("T-RWD-7", "REWARDED 10 10", fg.complete(cls).outcome() + " " + f2.points + " " + f2.exp);
         fg.complete(hw);
-        long doneCount = f2.checkables(nov16).stream().filter(z -> z.done).count();
-        eq("T-PRG-3", "2/4", doneCount + "/" + f2.checkables(nov16).size());
+        long doneCount = f2.book.checkables(nov16).stream().filter(z -> z.done).count();
+        eq("T-PRG-3", "2/4", doneCount + "/" + f2.book.checkables(nov16).size());
         Talk ft = new Talk(f2);
         eq("T-TALK-7", "체크를 풀었어. -10P, 이제 Lv.1", ft.uncompleted(10, 2, 1));
         eq("T-TALK-8", "체크를 풀었어.", ft.uncompleted(0, 1, 1));
@@ -162,7 +162,7 @@ public final class ProtoCheck {
     /** T-ADD-3의 사본 7개에서 11-30 사본을 THIS_AND_AFTER로 고친다(06의 4번, D-42). */
     private static String series(boolean moveAndRename) {
         Store s = MockData.empty();
-        java.util.List<Task> copies = s.add(Task.Kind.FIXED, "대학수학", java.time.LocalDate.of(2026, 11, 16),
+        java.util.List<Task> copies = s.book.add(Task.Kind.FIXED, "대학수학", java.time.LocalDate.of(2026, 11, 16),
                 java.time.LocalTime.of(10, 30), 75, "", java.time.LocalDate.of(2026, 12, 28));
         Task t = copies.get(2);
         java.time.LocalDate original = t.date;
@@ -172,7 +172,7 @@ public final class ProtoCheck {
         } else {
             t.start = java.time.LocalTime.of(13, 0);
         }
-        s.applyToSeries(t, original);
+        s.book.applyToSeries(t, original);
         StringBuilder out = new StringBuilder();
         for (Task c : copies) {
             out.append(moveAndRename ? c.title + (c == t ? "@" + c.date.toString().substring(5) : "") : c.start.toString()).append(" ");
@@ -183,11 +183,11 @@ public final class ProtoCheck {
     /** 반복의 마지막 사본을 수정 창에서 하루 뒤로 옮겨 이 일정만으로 저장한다. 수정할 때 반복 칸은 검사하지 않는다. */
     private static String moveLastCopy() {
         App app = Main.create(MockData.empty());
-        java.util.List<Task> copies = app.store.add(Task.Kind.FIXED, "대학수학", java.time.LocalDate.of(2026, 11, 16),
+        java.util.List<Task> copies = app.store.book.add(Task.Kind.FIXED, "대학수학", java.time.LocalDate.of(2026, 11, 16),
                 java.time.LocalTime.of(10, 30), 75, "", java.time.LocalDate.of(2026, 12, 28));
         Task last = copies.get(copies.size() - 1);
         TaskForm f = new TaskForm(last, last.date, app.store.now);
-        f.showSeries(app.store.seriesEnd(last));
+        f.showSeries(app.store.book.seriesEnd(last));
         boolean shown = f.repeat.isSelected() && !f.repeat.isEnabled();
         Ui.setDate(f.date, java.time.LocalDate.of(2026, 12, 29));
         app.schedule.chooser = (title, message, options) -> 0;
@@ -198,7 +198,7 @@ public final class ProtoCheck {
     /** 뒤 사본의 제목을 따로 고쳐 둔 뒤, 앞 사본을 시각 고치기 창에서 이후 반복 모두로 고친다. */
     private static String timeOnly() {
         App app = Main.create(MockData.empty());
-        java.util.List<Task> copies = app.store.add(Task.Kind.FIXED, "대학수학", java.time.LocalDate.of(2026, 11, 16),
+        java.util.List<Task> copies = app.store.book.add(Task.Kind.FIXED, "대학수학", java.time.LocalDate.of(2026, 11, 16),
                 java.time.LocalTime.of(10, 30), 75, "", java.time.LocalDate.of(2026, 11, 30));
         copies.get(1).title = "보강";
         TimeEditor e = new TimeEditor(copies.get(0), app.store.now);
