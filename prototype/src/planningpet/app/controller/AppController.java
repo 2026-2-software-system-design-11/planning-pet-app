@@ -21,17 +21,26 @@ public final class AppController {
         store.changed();
     }
 
+    /** 펫 말만 바꾼다. 저장할 데이터가 아니므로 22번을 거치지 않고 알림만 보낸다(06 읽는 법). */
+    public void say(String line) {
+        store.say(line);
+        store.changed();
+    }
+
     /** 06의 15번. 창이 보이게 될 때. 그날 처음이면 연속 접속을 세고(12번) 브리핑한다. 펫이 한 말을 돌려준다. */
     public String windowShown() {
         LocalDate before = store.lastOpenDay;
-        String line;
         if (store.today().equals(before)) {
-            line = talk.usual();
-        } else {
-            Visits.recordOpen(store);
-            line = talk.opening(before);
+            String line = talk.usual();
+            say(line);
+            return line;
         }
-        change(() -> store.say(line));
-        return line;
+        String[] line = new String[1];
+        change(() -> {
+            Visits.recordOpen(store);
+            line[0] = talk.opening(before);
+            store.say(line[0]);
+        });
+        return line[0];
     }
 }
