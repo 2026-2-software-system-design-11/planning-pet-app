@@ -2,6 +2,7 @@ package planningpet.home.view;
 
 import planningpet.app.model.Store;
 import planningpet.common.view.*;
+import planningpet.schedule.model.TaskBook;
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.awt.event.MouseAdapter;
@@ -76,7 +77,7 @@ public final class CalendarPanel extends JPanel {
     }
 
     private JLabel cell(LocalDate date) {
-        Store.CellPreview preview = store.cellPreview(date);
+        TaskBook.CellPreview preview = store.book.cellPreview(date);
         String day = date.equals(selected) ? "<b>" + date.getDayOfMonth() + "</b>" : String.valueOf(date.getDayOfMonth());
         String text = "<center>" + day + (preview == null ? "" : "<br><font size='2' color='"
                 + (preview.open() ? "#28977F" : "#8A96A0") + "'>" + Ui.esc(preview.title()) + "</font>") + "</center>";

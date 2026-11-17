@@ -70,7 +70,7 @@ public final class PetScreen extends JPanel {
         name.setFont(Theme.font(23));
         expBar.setValue((int) (Rules.expRatio(s.exp) * 1000));
         expText.setText(Rules.expText(s.exp));
-        long done = s.checkables(s.today()).stream().filter(t -> t.done).count();
+        long done = s.book.checkables(s.today()).stream().filter(t -> t.done).count();
         if (said != null) {
             room.bubble = said;
             said = null;

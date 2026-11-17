@@ -23,7 +23,7 @@ public final class Planner {
     }
 
     public static List<Task> targets(Store s, LocalDate monday) {
-        return s.untimedOfWeek(monday).stream()
+        return s.book.untimedOfWeek(monday).stream()
                 .filter(t -> !t.done && !t.date.isBefore(s.today()))
                 .sorted(Comparator.comparing((Task t) -> t.date)
                         .thenComparing(t -> -t.minutes)
@@ -43,7 +43,7 @@ public final class Planner {
         List<Task> unplaced = new ArrayList<>();
         for (Task t : targets(s, monday)) {
             List<int[]> busy = new ArrayList<>();
-            s.timedOn(t.date).forEach(x -> busy.add(new int[] {x.startMinute(), x.endMinute()}));
+            s.book.timedOn(t.date).forEach(x -> busy.add(new int[] {x.startMinute(), x.endMinute()}));
             placed.stream().filter(p -> p.task().date.equals(t.date)).forEach(p -> {
                 int from = p.start().getHour() * 60 + p.start().getMinute();
                 busy.add(new int[] {from, from + p.task().minutes});

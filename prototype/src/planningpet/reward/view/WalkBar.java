@@ -25,7 +25,7 @@ public final class WalkBar extends JComponent {
     protected void paintComponent(Graphics graphics) {
         Graphics2D g = (Graphics2D) graphics.create();
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        var today = store.checkables(store.today());
+        var today = store.book.checkables(store.today());
         long done = today.stream().filter(t -> t.done).count();
         int left = 70;
         int right = getWidth() - 60;

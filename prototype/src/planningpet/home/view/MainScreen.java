@@ -123,7 +123,7 @@ public final class MainScreen extends JPanel {
         LocalDate date = calendar.selected();
         listTitle.setText(date.getMonthValue() + "월 " + date.getDayOfMonth() + "일 ("
                 + WEEK.charAt(date.getDayOfWeek().getValue() - 1) + ") 할 일");
-        rows.showPlan(app.store.dayPlan(date));
+        rows.showPlan(app.store.book.dayPlan(date));
         calendar.refresh();
         levelName.setText(app.store.petName + " Lv." + Rules.level(app.store.exp));
         levelName.setFont(Theme.bold(15));

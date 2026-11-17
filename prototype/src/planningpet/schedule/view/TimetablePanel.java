@@ -115,7 +115,7 @@ public final class TimetablePanel extends JComponent {
         blocks.clear();
         boxes.clear();
         for (int i = 0; i < 7; i++) {
-            var tasks = store.timedOn(monday.plusDays(i));
+            var tasks = store.book.timedOn(monday.plusDays(i));
             var columns = Planner.columns(tasks);
             for (Task t : tasks) {
                 int[] c = columns.get(t);

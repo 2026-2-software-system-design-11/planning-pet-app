@@ -5,6 +5,7 @@ import planningpet.app.view.App;
 import planningpet.common.view.*;
 import planningpet.pet.view.PetView;
 import planningpet.schedule.model.Planner;
+import planningpet.schedule.model.TaskBook;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -37,7 +38,7 @@ public final class ScheduleScreen extends JPanel {
         super(new BorderLayout(8, 8));
         this.app = app;
         setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 12));
-        monday = Store.mondayOf(app.store.today());
+        monday = TaskBook.mondayOf(app.store.today());
         table = new TimetablePanel(app.store, app.schedule);
         untimed = new TaskRows(app.schedule);
         JButton prev = new JButton("<");
@@ -46,7 +47,7 @@ public final class ScheduleScreen extends JPanel {
         JButton add = new JButton("일정 추가");
         prev.addActionListener(e -> move(monday.minusWeeks(1)));
         next.addActionListener(e -> move(monday.plusWeeks(1)));
-        today.addActionListener(e -> move(Store.mondayOf(app.store.today())));
+        today.addActionListener(e -> move(TaskBook.mondayOf(app.store.today())));
         autoPlace.addActionListener(e -> AutoPlaceDialog.open(app, monday));
         add.addActionListener(e -> app.schedule.add(defaultDate()));
         JPanel bar = new JPanel(new BorderLayout());
@@ -82,7 +83,7 @@ public final class ScheduleScreen extends JPanel {
     /** 06의 14번: 보이는 주에 오늘이 있으면 오늘, 없으면 그 주 월요일. */
     public LocalDate defaultDate() {
         LocalDate today = app.store.today();
-        return Store.mondayOf(today).equals(monday) ? today : monday;
+        return TaskBook.mondayOf(today).equals(monday) ? today : monday;
     }
 
     public LocalDate monday() {
@@ -135,7 +136,7 @@ public final class ScheduleScreen extends JPanel {
             }
             header.add(label);
         }
-        untimed.show(app.store.untimedOfWeek(monday), true);
+        untimed.show(app.store.book.untimedOfWeek(monday), true);
         int n = Planner.targets(app.store, monday).size();
         autoPlace.setEnabled(n > 0);
         // 화면을 열거나 주를 옮기면 SCHEDULE_HINT. 보이는 중에 바뀌면 새 펫 말(완료, 취소, 상한, 레벨 업)이
