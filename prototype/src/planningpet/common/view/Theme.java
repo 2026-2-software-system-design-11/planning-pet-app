@@ -11,7 +11,7 @@ import javax.swing.UIManager;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.FontUIResource;
 
-/** 디자인 시스템(docs/design-system.md)의 값. 이름은 문서의 이름과 같다. */
+/** 디자인 시스템(docs/ux/design-system.md)의 값. 이름은 문서의 이름과 같다. */
 public final class Theme {
     public static final Color INK = new Color(0x354656);
     public static final Color INK_DIM = new Color(0x35, 0x46, 0x56, 102);

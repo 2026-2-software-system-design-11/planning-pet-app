@@ -10,7 +10,7 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/** docs/user-flows.md의 ③, ④, ⑤ 흐름. */
+/** docs/ux/user-flows.md의 ③, ④, ⑤ 흐름. */
 final class Flows345 {
     private Flows345() {
     }

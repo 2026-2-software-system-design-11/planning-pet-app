@@ -24,7 +24,7 @@
 원본은 [diagrams/usecase.puml](diagrams/usecase.puml)이다. PlantUML로 그린다.
 
 ```sh
-plantuml -tpng docs/diagrams/usecase.puml
+plantuml -tpng docs/spec/diagrams/usecase.puml
 ```
 
 한글 글꼴은 `Apple SD Gothic Neo`로 정해 두었다. macOS가 아니면 `skinparam defaultFontName`을 그 컴퓨터에 있는 한글 글꼴로 바꿔서 그린다.

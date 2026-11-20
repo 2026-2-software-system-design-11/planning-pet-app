@@ -1,6 +1,6 @@
 # 06. 함수 명세
 
-유스케이스([02-usecases.md](02-usecases.md))와 결정([decisions.md](decisions.md))을 코드의 함수로 옮긴다. 형식은 개인과제 CP3 양식의 FUNCTION SPECIFICATION(시그니처, 입력, 출력, 하는 일)에 쓰는 곳, 오류, 검사 표를 더했다.
+유스케이스([02-usecases.md](02-usecases.md))와 결정([decisions.md](../decisions.md))을 코드의 함수로 옮긴다. 형식은 개인과제 CP3 양식의 FUNCTION SPECIFICATION(시그니처, 입력, 출력, 하는 일)에 쓰는 곳, 오류, 검사 표를 더했다.
 
 ## 읽는 법
 

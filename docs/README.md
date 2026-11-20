@@ -4,17 +4,17 @@
 
 | 순서 | 문서 | 양식의 절 |
 |---|---|---|
-| 01 | [개요와 요구사항](01-requirements.md) | CHARACTERISTICS, REQUIREMENT LISTS |
-| 02 | [유스케이스](02-usecases.md) | USECASES |
-| 03 | [유스케이스 다이어그램](03-usecase-diagram.md) | USECASE DIAGRAM |
+| 01 | [개요와 요구사항](spec/01-requirements.md) | CHARACTERISTICS, REQUIREMENT LISTS |
+| 02 | [유스케이스](spec/02-usecases.md) | USECASES |
+| 03 | [유스케이스 다이어그램](spec/03-usecase-diagram.md) | USECASE DIAGRAM |
 | 04 | 시퀀스 다이어그램 | SEQUENCE DIAGRAM |
-| 05 | [화면 설계](05-ui-design.md) | USER INTERFACE DESIGNS |
-| 06 | [함수 명세와 검사 표](06-functions.md) | FUNCTION SPECIFICATION |
+| 05 | [화면 설계](spec/05-ui-design.md) | USER INTERFACE DESIGNS |
+| 06 | [함수 명세와 검사 표](spec/06-functions.md) | FUNCTION SPECIFICATION |
 | 07 | 클래스 다이어그램 | 개인과제 CP4 |
-| - | [페르소나](personas.md) | 양식에 없음. 사용자 열 명과 고정 데이터(D-37) |
-| - | [유저플로우](user-flows.md) | 양식에 없음. 페르소나별 흐름 32개, 06 커버리지 |
-| - | [페르소나 선정 근거](research/personas.md) | 양식에 없음. 통계, 채널, 점수 |
-| - | [디자인 시스템](design-system.md) | 양식에 없음. 색, 글꼴, 모양, 그림(D-30) |
+| - | [페르소나](ux/personas.md) | 양식에 없음. 사용자 열 명과 고정 데이터(D-37) |
+| - | [유저플로우](ux/user-flows.md) | 양식에 없음. 페르소나별 흐름 32개, 06 커버리지 |
+| - | [페르소나 선정 근거](research/persona-selection.md) | 양식에 없음. 통계, 채널, 점수 |
+| - | [디자인 시스템](ux/design-system.md) | 양식에 없음. 색, 글꼴, 모양, 그림(D-30) |
 | - | [결정 기록](decisions.md) | 양식에 없음. 무엇을 왜 정했는지 |
 | - | [저장 방식 측정](research/storage.md) | 양식에 없음. D-08의 근거 |
 | - | [QA 결과](qa/README.md) | 양식에 없음. 프로토타입 유저플로우 QA, 수동 확인 목록 |

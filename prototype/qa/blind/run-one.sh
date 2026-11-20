@@ -10,7 +10,7 @@ run() {
     cp $pattern "$WORK"/
     OUT="out-blind/p$n-$phase"
     mkdir -p "$OUT"
-    python3 qa/blind/persona.py ../docs/personas.md "$n" "$template" > "$OUT/prompt.md"
+    python3 qa/blind/persona.py ../docs/ux/personas.md "$n" "$template" > "$OUT/prompt.md"
     # 빈 폴더에서 연다: 저장소 경로, 프로젝트 문맥, MCP, 스킬이 들어가지 않고 도구는 Read뿐이다.
     (cd "$WORK" && claude -p "$(cat "$OLDPWD/$OUT/prompt.md")" --tools Read --permission-mode default \
         --strict-mcp-config --disable-slash-commands --no-session-persistence \

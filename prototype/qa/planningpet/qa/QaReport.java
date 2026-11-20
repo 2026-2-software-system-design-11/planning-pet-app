@@ -19,7 +19,7 @@ final class QaReport {
         List<String> out = new ArrayList<>();
         out.add("# 프로토타입 유저플로우 QA 결과");
         out.add("");
-        out.add("실행일 " + LocalDate.now() + ". `prototype/qa.sh`가 [user-flows.md](../user-flows.md)의 흐름을 창 없이 돌려 이 파일을 만든다. 손으로 고치지 않는다.");
+        out.add("실행일 " + LocalDate.now() + ". `prototype/qa.sh`가 [user-flows.md](../ux/user-flows.md)의 흐름을 창 없이 돌려 이 파일을 만든다. 손으로 고치지 않는다.");
         out.add("");
         out.add("- 흐름 " + flows.size() + "개 가운데 모두 통과 " + cleanFlows + "개");
         out.add("- 확인 " + all.size() + "개 가운데 통과 " + (all.size() - failed) + "개, 실패 " + failed + "개");

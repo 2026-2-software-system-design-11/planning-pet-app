@@ -18,9 +18,9 @@ JOBS=out-blind/jobs.txt
 : > "$JOBS"
 for n in 1 2 3 4 5 6 7 8 9 10; do
     mkdir -p out-blind/p$n-a2 out-blind/p$n-b2 out-blind/p$n-walk
-    python3 qa/blind/persona.py ../docs/personas.md $n qa/blind/predict-a2.md > out-blind/p$n-a2/prompt.md
-    python3 qa/blind/persona.py ../docs/personas.md $n qa/blind/predict2.md > out-blind/p$n-b2/prompt.md
-    python3 qa/blind/persona.py ../docs/personas.md $n qa/blind/walk.md > out-blind/p$n-walk/persona.md
+    python3 qa/blind/persona.py ../docs/ux/personas.md $n qa/blind/predict-a2.md > out-blind/p$n-a2/prompt.md
+    python3 qa/blind/persona.py ../docs/ux/personas.md $n qa/blind/predict2.md > out-blind/p$n-b2/prompt.md
+    python3 qa/blind/persona.py ../docs/ux/personas.md $n qa/blind/walk.md > out-blind/p$n-walk/persona.md
     python3 qa/blind/walkprompt.py out-blind/p$n-walk/persona.md "$STEPS/steps.tsv" "$STEPS" $n > out-blind/p$n-walk/prompt.md
     echo "qa/blind/session.sh out-blind/p$n-a2 out-blind/p$n-a2/prompt.md $IMG/screen-[0-9][0-9].png" >> "$JOBS"
     echo "qa/blind/session.sh out-blind/p$n-b2 out-blind/p$n-b2/prompt.md $IMG/*.png" >> "$JOBS"
