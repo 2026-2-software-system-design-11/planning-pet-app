@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import javax.swing.JSpinner;
 
-/** docs/user-flows.md의 ⑧, ⑨, ⑩ 흐름. */
+/** docs/ux/user-flows.md의 ⑧, ⑨, ⑩ 흐름. */
 final class Flows8910 {
     private Flows8910() {
     }

@@ -1,6 +1,6 @@
 # QA 정리
 
-[user-flows.md](../user-flows.md)의 흐름 32개를 프로토타입에서 돌린 결과다. 단계마다의 확인 결과는 `prototype/qa.sh`가 만드는 [prototype-flows.md](prototype-flows.md)에 있다. 흐름으로 확인하지 않는 것은 [manual-checklist.md](manual-checklist.md)에 있다.
+[user-flows.md](../ux/user-flows.md)의 흐름 32개를 프로토타입에서 돌린 결과다. 단계마다의 확인 결과는 `prototype/qa.sh`가 만드는 [prototype-flows.md](prototype-flows.md)에 있다. 흐름으로 확인하지 않는 것은 [manual-checklist.md](manual-checklist.md)에 있다.
 
 ## 1. 결과
 

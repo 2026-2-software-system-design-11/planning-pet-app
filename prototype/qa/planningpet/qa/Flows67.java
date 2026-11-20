@@ -11,7 +11,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.Map;
 
-/** docs/user-flows.md의 ⑥, ⑦ 흐름. */
+/** docs/ux/user-flows.md의 ⑥, ⑦ 흐름. */
 final class Flows67 {
     private Flows67() {
     }

@@ -2,7 +2,7 @@
 
 [02-usecases.md](02-usecases.md)의 액터와 유스케이스 사이의 관계를 그린 그림이다. 표기는 수업 슬라이드 "0. Diagrams"를 따른다.
 
-![유스케이스 다이어그램](diagrams/usecase.png)
+![유스케이스 다이어그램](diagrams/usecase/usecase.png)
 
 ## 읽는 법
 
@@ -21,10 +21,10 @@
 
 ## 다시 그리기
 
-원본은 [diagrams/usecase.puml](diagrams/usecase.puml)이다. PlantUML로 그린다.
+원본은 [diagrams/usecase/usecase.puml](diagrams/usecase/usecase.puml)이다. PlantUML로 그린다.
 
 ```sh
-plantuml -tpng docs/diagrams/usecase.puml
+plantuml -tpng docs/spec/diagrams/usecase/usecase.puml
 ```
 
 한글 글꼴은 `Apple SD Gothic Neo`로 정해 두었다. macOS가 아니면 `skinparam defaultFontName`을 그 컴퓨터에 있는 한글 글꼴로 바꿔서 그린다.

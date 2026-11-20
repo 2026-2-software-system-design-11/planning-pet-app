@@ -9,7 +9,7 @@ import java.util.Map;
 import javax.swing.AbstractButton;
 import javax.swing.JButton;
 
-/** docs/user-flows.md의 ①, ② 흐름. 단계 번호와 문장은 문서와 같다. */
+/** docs/ux/user-flows.md의 ①, ② 흐름. 단계 번호와 문장은 문서와 같다. */
 final class Flows12 {
     private Flows12() {
     }

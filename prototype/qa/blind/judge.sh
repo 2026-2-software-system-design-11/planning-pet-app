@@ -1,10 +1,10 @@
 #!/bin/sh
 # 페르소나 한 명의 예측과 실제를 판정 세션에 넘긴다. 판정 세션은 도구가 없고 두 문장만 본다.
-# 쓰기: qa/blind/judge.sh <페르소나 번호> [단계 이름, 기본 b] [실제 동작 표, 기본 actual.md]   (prototype 폴더에서)
+# 쓰기: qa/blind/judge.sh <페르소나 번호> [단계 이름, 기본 b] [실제 동작 표, 기본 ../docs/qa/blind/round1/actual.md]   (prototype 폴더에서)
 set -e
 n=$1
 OUT="out-blind/p$n-${2:-b}"
-ACTUAL="${3:-../docs/qa/blind/actual.md}"
+ACTUAL="${3:-../docs/qa/blind/round1/actual.md}"
 python3 qa/blind/pairs.py "$ACTUAL" "$OUT/answer.md" "$OUT/pairs.tsv"
 python3 - "$OUT/pairs.tsv" qa/blind/judge.md > "$OUT/judge-prompt.md" <<'PY'
 import sys

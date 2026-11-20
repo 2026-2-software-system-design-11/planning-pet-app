@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
-/** 페르소나 고정 데이터를 만드는 도구(docs/personas.md). */
+/** 페르소나 고정 데이터를 만드는 도구(docs/ux/personas.md). */
 final class Fx {
     private Fx() {
     }
