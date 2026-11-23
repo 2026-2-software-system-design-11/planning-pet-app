@@ -32,11 +32,16 @@ rectangle "플래닝펫" {
   usecase "UC-11\n할 일 자동\n배치하기" as UC11
   usecase "UC-12\nURL에서\n일정 가져오기" as UC12
   usecase "UC-13\n일정 시작 알림 받기" as UC13
-  usecase "UC-14\n펫 방 보기" as UC14
+  usecase "UC-14\n나의 방 보기" as UC14
   usecase "UC-15\n아이템 사기" as UC15
   usecase "UC-16\n아이템 놓기와\n치우기" as UC16
   usecase "UC-18\n컴퓨터 켤 때\n실행 설정하기" as UC18
   usecase "UC-19\n창 닫기와\n앱 끝내기" as UC19
+  usecase "UC-20\n펫 데려오기" as UC20
+  usecase "UC-21\n고른 펫 바꾸기" as UC21
+  usecase "UC-22\n펫 꾸미기와\n자세 고르기" as UC22
+  usecase "UC-23\n펫 이름 바꾸기" as UC23
+  usecase "UC-24\n통계 보기" as UC24
 }
 
 User --> UC01
@@ -56,6 +61,11 @@ User --> UC15
 User --> UC16
 User --> UC18
 User --> UC19
+User --> UC20
+User --> UC21
+User --> UC22
+User --> UC23
+User --> UC24
 Clock --> UC13
 
 UC01 <-- OS : 시작
