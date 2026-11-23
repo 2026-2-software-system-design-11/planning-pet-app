@@ -268,3 +268,36 @@ abstract class PetPaintWear extends PetPaintBase {
                 bow(0, py + 8, 1.4, PINK_LIGHT);
                 break;
             case "별":
+                filled(star(0, py + 18, 21, 10), GOLD);
+                break;
+            default:
+                filled(crown(0, py + 20, 40, 30), GOLD);
+                break;
+        }
+        g.setTransform(old);
+    }
+
+    /** 아이콘용 조끼: 앞이 V로 트이고 단추 둘. */
+    void vestIcon() {
+        Path2D v = new Path2D.Double();
+        v.moveTo(-34, -62);
+        v.lineTo(0, -10);
+        v.lineTo(34, -62);
+        v.quadTo(46, -60, 52, -50);
+        v.quadTo(48, -22, 62, -6);
+        v.lineTo(62, 52);
+        v.quadTo(62, 62, 52, 62);
+        v.lineTo(-52, 62);
+        v.quadTo(-62, 62, -62, 52);
+        v.lineTo(-62, -6);
+        v.quadTo(-48, -22, -52, -50);
+        v.quadTo(-46, -60, -34, -62);
+        v.closePath();
+        filled(v, MINT);
+        shadeIn(v, new java.awt.geom.Rectangle2D.Double(-70, 48, 140, 16), MINT_SHADE);
+        redraw(v);
+        stroke(new java.awt.geom.Line2D.Double(0, -10, 0, 62), line * 0.7f, ink);
+        filled(ell(-10, 14, 5, 5), GOLD);
+        filled(ell(-10, 36, 5, 5), GOLD);
+    }
+}
