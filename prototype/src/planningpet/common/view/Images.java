@@ -86,6 +86,29 @@ public final class Images {
         }
     }
 
+    /** 장신구 그림(D-51). 없으면 null. */
+    public static BufferedImage wear(String name) {
+        String file = WEAR_FILES.get(name);
+        return file == null ? null : trimmed("wear/" + file + ".png");
+    }
+
+    /** 아이템 그림. 이름이 목록에 없으면 null이다. */
+    public static BufferedImage item(String name) {
+        String file = ITEM_FILES.get(name);
+        return file == null ? null : trimmed("items/" + file + ".png");
+    }
+
+    private static BufferedImage trimmed(String file) {
+        synchronized (CACHE) {
+            if (!CACHE.containsKey(file)) {
+                BufferedImage im = load(file);
+                CACHE.put(file, im == null ? null : trim(im));
+            }
+            return CACHE.get(file);
+        }
+    }
+
+    /** 투명한 가장자리를 잘라 낸다. */
     private static BufferedImage trim(BufferedImage im) {
         int x0 = im.getWidth();
         int y0 = im.getHeight();
@@ -93,7 +116,7 @@ public final class Images {
         int y1 = 0;
         for (int y = 0; y < im.getHeight(); y++) {
             for (int x = 0; x < im.getWidth(); x++) {
-                if ((im.getRGB(x, y) >>> 24) > 200) {
+                if ((im.getRGB(x, y) >>> 24) > 24) {
                     x0 = Math.min(x0, x);
                     y0 = Math.min(y0, y);
                     x1 = Math.max(x1, x);
@@ -104,12 +127,35 @@ public final class Images {
         return x0 < x1 && y0 < y1 ? im.getSubimage(x0, y0, x1 - x0 + 1, y1 - y0 + 1) : im;
     }
 
+    /** 비율을 지키며 상자를 빈틈없이 덮게 그리고 넘치는 곳은 가운데 기준으로 잘라 낸다. */
+    public static void cover(Graphics2D g, BufferedImage im, int x, int y, int w, int h) {
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+        double scale = Math.max((double) w / im.getWidth(), (double) h / im.getHeight());
+        int dw = (int) Math.ceil(im.getWidth() * scale);
+        int dh = (int) Math.ceil(im.getHeight() * scale);
+        g.drawImage(im, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh, null);
+    }
+
     /** 비율을 지키며 상자 안 가운데에 맞춰 그린다. */
     public static void fit(Graphics2D g, BufferedImage im, int x, int y, int w, int h) {
+        place(g, im, x, y, w, h, 0.5);
+    }
+
+    /** 비율을 지키며 상자 안에 맞추고 가로는 가운데, 세로는 아래에 붙인다(바닥에 서는 펫과 가구). */
+    public static void fitBottom(Graphics2D g, BufferedImage im, int x, int y, int w, int h) {
+        place(g, im, x, y, w, h, 1.0);
+    }
+
+    /** 상자 위에 붙여 맞춘다(천장에 거는 것). */
+    public static void fitTop(Graphics2D g, BufferedImage im, int x, int y, int w, int h) {
+        place(g, im, x, y, w, h, 0);
+    }
+
+    private static void place(Graphics2D g, BufferedImage im, int x, int y, int w, int h, double vertical) {
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
         double scale = Math.min((double) w / im.getWidth(), (double) h / im.getHeight());
         int dw = (int) (im.getWidth() * scale);
         int dh = (int) (im.getHeight() * scale);
-        g.drawImage(im, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh, null);
+        g.drawImage(im, x + (w - dw) / 2, y + (int) ((h - dh) * vertical), dw, dh, null);
     }
 }
