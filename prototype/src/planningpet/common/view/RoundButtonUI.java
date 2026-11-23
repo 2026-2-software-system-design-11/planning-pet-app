@@ -95,6 +95,9 @@ public final class RoundButtonUI extends BasicButtonUI {
 
     @Override
     protected void paintText(Graphics g, AbstractButton b, java.awt.Rectangle r, String text) {
+        Color ink = !b.isEnabled() || Boolean.TRUE.equals(b.getClientProperty(DIM)) ? Theme.INK_DIM
+                : filled(b) ? Color.WHITE : Theme.INK;
+        g.setColor(ink);
         g.setFont(b.getFont());
         int mnemonic = b.getDisplayedMnemonicIndex();
         BasicGraphicsUtils.drawStringUnderlineCharAt(b, (Graphics2D) g, text, mnemonic, r.x, r.y + g.getFontMetrics().getAscent());
@@ -102,6 +105,6 @@ public final class RoundButtonUI extends BasicButtonUI {
 
     @Override
     protected void paintButtonPressed(Graphics g, AbstractButton b) {
-        // 눌림은 paint에서 MINT_SELECTED로 그린다.
+        // 눌림은 paint에서 그린다.
     }
 }
