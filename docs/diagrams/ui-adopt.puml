@@ -1,0 +1,13 @@
+@startsalt ui-adopt
+!include ui-common.iuml
+{+
+  <b>강아지 데려오기</b> | .
+  --|--
+  <b>강아지를 데려올까요?</b> | .
+  [강아지 그림] | .
+  이름 | "                "
+  . | <size:11><color:#666666>비워 두면 바둑이로 불러요</color></size>
+  --|--
+  . | { [취소] | [<b>데려오기</b>] }
+}
+@endsalt
