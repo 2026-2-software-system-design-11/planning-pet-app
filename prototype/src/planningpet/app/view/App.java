@@ -39,9 +39,6 @@ public final class App {
         @Override
         protected void paintComponent(java.awt.Graphics g) {
             super.paintComponent(g);
-            if (Images.LANDSCAPE != null) {
-                g.drawImage(Images.LANDSCAPE, 0, 0, getWidth(), getHeight(), null);
-            }
         }
     };
     private final CardLayout cards = new CardLayout();
