@@ -15,7 +15,7 @@ public class Card extends JPanel {
 
     public Card(LayoutManager layout) {
         this(layout, Theme.CARD_RADIUS);
-        setBorder(new EmptyBorder(18, 18, 20, 18));
+        setBorder(new EmptyBorder(14, 16, 18, 16));
     }
 
     public Card(LayoutManager layout, int radius) {
@@ -36,12 +36,19 @@ public class Card extends JPanel {
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         int w = getWidth();
         int h = getHeight();
-        g.setColor(Theme.CARD_SHADOW);
-        g.fillRoundRect(1, 4, w - 2, h - 5, radius + 2, radius + 2);
+        shadow(g, 2, 1, w - 4, h - 8, radius);
         g.setPaint(fill != null ? fill : new GradientPaint(0, 0, Theme.CARD_TOP, 0, h, Theme.CARD_BOTTOM));
-        g.fillRoundRect(1, 1, w - 3, h - 7, radius, radius);
-        g.setColor(Theme.CARD_LINE);
-        g.drawRoundRect(1, 1, w - 3, h - 7, radius, radius);
+        g.fillRoundRect(2, 1, w - 4, h - 8, radius, radius);
+        g.setColor(fill != null ? new java.awt.Color(255, 255, 255, 170) : Theme.CARD_EDGE);
+        g.drawRoundRect(2, 1, w - 5, h - 9, radius, radius);
         g.dispose();
+    }
+
+    /** 아래로 옅게 퍼지는 그림자(디자인 시스템 4절). 카드와 버튼이 같이 쓴다. */
+    public static void shadow(Graphics2D g, int x, int y, int w, int h, int radius) {
+        for (int i = 3; i >= 1; i--) {
+            g.setColor(Theme.CARD_SHADOW);
+            g.fillRoundRect(x - i + 1, y + i, w + 2 * i - 2, h + i, radius + 2 * i, radius + 2 * i);
+        }
     }
 }
