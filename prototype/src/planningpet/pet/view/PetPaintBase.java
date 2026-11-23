@@ -88,3 +88,70 @@ static Color alpha(Color c, int a) {
     final Set<String> wear;
     final double t;
     final boolean cat;
+    final Color ink;
+    final Color fur;
+    final Color furShade;
+    float line = LINE;
+
+    PetPaintBase(Graphics2D g, PetKind kind, PetPose pose, Set<String> wear, double t) {
+        this.g = g;
+        this.kind = kind;
+        this.pose = pose;
+        this.wear = wear == null ? Set.of() : wear;
+        this.t = t;
+        this.cat = kind == PetKind.CAT;
+        this.ink = cat ? CAT_INK : DOG_INK;
+        this.fur = cat ? CAT_WHITE : DOG_FUR;
+        this.furShade = cat ? CAT_WHITE_SHADE : DOG_FUR_SHADE;
+    }
+
+    boolean has(String name) {
+        return wear.contains(name);
+    }
+
+    // ---------- 그리기 도구 ----------
+    BasicStroke stroke(float w) {
+        return new BasicStroke(w, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
+    }
+
+    void filled(Shape s, Color c) {
+        g.setColor(c);
+        g.fill(s);
+        g.setColor(ink);
+        g.setStroke(stroke(line));
+        g.draw(s);
+    }
+
+    void stroke(Shape s, float w, Color c) {
+        g.setColor(c);
+        g.setStroke(stroke(w));
+        g.draw(s);
+    }
+
+    /** 외곽선 있는 굵은 관(꼬리, 다리). 어두운 선을 넓게, 그 위에 털색을 좁게 긋는다. */
+    void tube(Shape path, float w, Color c) {
+        stroke(path, w + line * 2, ink);
+        stroke(path, w, c);
+    }
+
+    /** s 안쪽에만 shade를 칠한다(그림자 한 단). */
+    void shadeIn(Shape s, Shape shade, Color c) {
+        Shape old = g.getClip();
+        g.clip(s);
+        g.setColor(c);
+        g.fill(shade);
+        g.setClip(old);
+    }
+
+    void push(double x, double y, double rot, double sx, double sy) {
+        g.translate(x, y);
+        g.rotate(Math.toRadians(rot));
+        g.scale(sx, sy);
+    }
+
+    void redraw(Shape s) {
+        g.setColor(ink);
+        g.setStroke(stroke(line));
+        g.draw(s);
+    }
+}
