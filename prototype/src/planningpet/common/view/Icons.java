@@ -178,3 +178,80 @@ public final class Icons {
             }
             case CART -> {
                 g.draw(path(2.5, 4, 5.5, 4, 8, 15.5, 18.5, 15.5, 20.5, 8, 6.6, 8));
+                g.fill(new Ellipse2D.Double(7.6, 17.6, 3.2, 3.2));
+                g.fill(new Ellipse2D.Double(15.6, 17.6, 3.2, 3.2));
+            }
+            case SOFA -> {
+                g.draw(new RoundRectangle2D.Double(5.5, 6, 13, 8, 4, 4));
+                g.draw(new RoundRectangle2D.Double(2.5, 10, 19, 7.5, 4, 4));
+                g.draw(path(5, 17.5, 5, 20));
+                g.draw(path(19, 17.5, 19, 20));
+            }
+            case BOX -> {
+                g.draw(path(3.5, 8, 12, 4, 20.5, 8, 20.5, 17, 12, 21, 3.5, 17, 3.5, 8));
+                g.draw(path(3.5, 8, 12, 12, 20.5, 8));
+                g.draw(path(12, 12, 12, 21));
+            }
+            case INFO -> {
+                g.draw(new Ellipse2D.Double(3, 3, 18, 18));
+                g.draw(path(12, 11, 12, 16.5));
+                g.fill(new Ellipse2D.Double(10.8, 6.6, 2.4, 2.4));
+            }
+            case CHECK -> {
+                g.fill(new Ellipse2D.Double(1, 1, 22, 22));
+                g.setColor(Color.WHITE);
+                g.setStroke(new BasicStroke(2.6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                g.draw(path(7, 12.4, 10.6, 16, 17.2, 8.6));
+            }
+            case HEART -> {
+                Path2D h = new Path2D.Double();
+                h.moveTo(12, 21);
+                h.curveTo(4, 15.5, 1.5, 11, 3.2, 7);
+                h.curveTo(4.8, 3.4, 9.8, 2.8, 12, 7.2);
+                h.curveTo(14.2, 2.8, 19.2, 3.4, 20.8, 7);
+                h.curveTo(22.5, 11, 20, 15.5, 12, 21);
+                h.closePath();
+                g.fill(h);
+                g.setColor(new Color(255, 255, 255, 150));
+                g.fill(new Ellipse2D.Double(5.6, 7, 3.4, 2.6));
+            }
+            case SPARK -> {
+                g.setStroke(new BasicStroke(2.8f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                g.draw(path(4, 14, 9, 16));
+                g.draw(path(7.5, 6.5, 11, 10.5));
+                g.draw(path(15, 3.5, 15.5, 8.5));
+            }
+            case FLAME -> {
+                Path2D f = new Path2D.Double();
+                f.moveTo(12, 21);
+                f.curveTo(6.5, 21, 4.5, 17, 5.5, 13.5);
+                f.curveTo(6.3, 10.8, 8.5, 10, 9, 7.5);
+                f.curveTo(11, 9, 11.2, 10.5, 11, 12);
+                f.curveTo(13, 10, 13.5, 6, 12.5, 3);
+                f.curveTo(17, 5.5, 19.5, 10.5, 18.6, 15);
+                f.curveTo(18, 18.5, 15.5, 21, 12, 21);
+                f.closePath();
+                g.draw(f);
+            }
+        }
+        g.dispose();
+    }
+
+    /** 발자국: 가운데 (cx, cy), 비율 s. 채워서 그린다. */
+    private static void paw(Graphics2D g, double cx, double cy, double s) {
+        g.fill(new Ellipse2D.Double(cx - 3.2 * s, cy - 1.2 * s, 6.4 * s, 5.2 * s));
+        double[][] toes = {{-4.2, -3.2}, {-1.5, -5.4}, {1.5, -5.4}, {4.2, -3.2}};
+        for (double[] t : toes) {
+            g.fill(new Ellipse2D.Double(cx + t[0] * s - 1.25 * s, cy + t[1] * s - 1.4 * s, 2.5 * s, 2.8 * s));
+        }
+    }
+
+    private static Path2D path(double... xy) {
+        Path2D p = new Path2D.Double();
+        p.moveTo(xy[0], xy[1]);
+        for (int i = 2; i < xy.length; i += 2) {
+            p.lineTo(xy[i], xy[i + 1]);
+        }
+        return p;
+    }
+}
