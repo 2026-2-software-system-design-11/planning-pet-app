@@ -178,3 +178,93 @@ abstract class PetPaintWear extends PetPaintBase {
         p.closePath();
         return p;
     }
+
+    /** 가운데 아래가 (cx, cy + h/2)인 뾰족한 끝 셋의 왕관. */
+    Shape crown(double cx, double cy, double w, double h) {
+        Path2D p = new Path2D.Double();
+        double x0 = cx - w / 2;
+        double y0 = cy - h / 2;
+        p.moveTo(x0, cy + h / 2);
+        p.lineTo(x0, y0 + h * 0.2);
+        p.lineTo(x0 + w * 0.27, y0 + h * 0.55);
+        p.lineTo(cx, y0);
+        p.lineTo(x0 + w * 0.73, y0 + h * 0.55);
+        p.lineTo(x0 + w, y0 + h * 0.2);
+        p.lineTo(x0 + w, cy + h / 2);
+        p.closePath();
+        return p;
+    }
+
+    /** 몸 모양 안쪽, 목에서 아래로 띠를 칠한 조끼. */
+    void vest(Shape body, double top, double bottom) {
+        Shape old = g.getClip();
+        g.clip(body);
+        Path2D v = new Path2D.Double();
+        Area a = new Area(body);
+        java.awt.Rectangle r = a.getBounds();
+        v.append(new java.awt.geom.Rectangle2D.Double(r.x - 10, Math.min(top, bottom) - 10, r.width + 20,
+                Math.abs(bottom - top) + 10), false);
+        g.setColor(MINT);
+        g.fill(v);
+        g.setColor(MINT_SHADE);
+        g.fill(new java.awt.geom.Rectangle2D.Double(r.x - 10, Math.max(top, bottom) - 8, r.width + 20, 8));
+        stroke(new java.awt.geom.Line2D.Double(r.x - 10, Math.max(top, bottom), r.x + r.width + 10,
+                Math.max(top, bottom)), line * 0.7f, ink);
+        g.setClip(old);
+        redraw(body);
+        if (pose == PetPose.SIT || pose == PetPose.EAT || pose == PetPose.SING) {
+            filled(ell(160, 232, 5, 5), GOLD);
+            filled(ell(160, 248, 5, 5), GOLD);
+        }
+    }
+
+    /** 앉은 자세의 망토: 목에서 몸 뒤로 넓게 퍼진다. */
+    void capeBehind(double x, double y, double w) {
+        Path2D c = new Path2D.Double();
+        c.moveTo(x - w, y - 6);
+        c.quadTo(x, y + 6, x + w, y - 6);
+        c.curveTo(x + w * 1.7, y + 40, x + w * 1.9, y + 90, x + w * 1.75, y + 112);
+        c.quadTo(x, y + 124, x - w * 1.75, y + 112);
+        c.curveTo(x - w * 1.9, y + 90, x - w * 1.7, y + 40, x - w, y - 6);
+        c.closePath();
+        filled(c, CAPE);
+        shadeIn(c, ell(x, y + 120, w * 1.5, 18), CAPE_INNER);
+        redraw(c);
+    }
+
+    /** 누운 자세의 망토: 몸 윗부분을 덮는다. */
+    void capeOnBack(Shape body) {
+        Shape old = g.getClip();
+        g.clip(body);
+        java.awt.Rectangle r = body.getBounds();
+        Shape top = ell(r.getCenterX(), r.y, r.width * 0.52, r.height * 0.6);
+        g.setColor(CAPE);
+        g.fill(top);
+        g.setClip(old);
+        Area a = new Area(top);
+        a.intersect(new Area(body));
+        redraw(a);
+        redraw(body);
+    }
+
+    /** 아이콘용 목걸이: 앞에서 조금 내려다본 고리와 장식. */
+    void collarIcon() {
+        Color band = has("리본 목걸이") ? PINK : has("별 목걸이") ? BLUE : has("왕관 목걸이") ? GOLD : TEAL;
+        Shape ring = ell(0, -14, 66, 26);
+        stroke(ring, 13 + line * 2, ink);
+        stroke(ring, 13, band);
+        AffineTransform old = g.getTransform();
+        g.translate(0, -12);
+        String keep = has("리본 목걸이") ? "리본" : has("별 목걸이") ? "별" : has("왕관 목걸이") ? "왕관" : "기본";
+        double py = 6;
+        switch (keep) {
+            case "기본":
+                filled(ell(0, py + 14, 15, 15), GOLD);
+                stroke(new java.awt.geom.Line2D.Double(-10, py + 14, 10, py + 14), line * 0.5f, ink);
+                g.setColor(new Color(255, 255, 255, 200));
+                g.fill(ell(-5, py + 8, 4, 3));
+                break;
+            case "리본":
+                bow(0, py + 8, 1.4, PINK_LIGHT);
+                break;
+            case "별":
