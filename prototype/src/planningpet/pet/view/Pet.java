@@ -15,7 +15,7 @@ public final class Pet {
     /** 고양이는 디자인 시스템의 그림(모습 단계별), 강아지는 임시 그림. size는 그림 상자의 한 변. */
     public static void drawAt(Graphics2D g, Store s, int x, int ground, int size) {
         int stage = Level.stage(Level.level(s.exp));
-        java.awt.image.BufferedImage im = "CAT".equals(s.petKind) ? Images.cat(stage) : null;
+        java.awt.image.BufferedImage im = Images.pet(s.petKind, stage);
         if (im != null) {
             Images.fit(g, im, x - size / 2, ground - size, size, size);
         } else {
