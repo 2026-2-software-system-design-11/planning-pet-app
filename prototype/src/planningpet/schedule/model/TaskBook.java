@@ -41,11 +41,18 @@ public final class TaskBook {
 
     /** 06의 5번. thisAndAfter면 같은 반복의 같거나 뒤 날짜 사본을 모두 지운다. 보상은 그대로 둔다. */
     public void delete(Task task, boolean thisAndAfter) {
-        if (thisAndAfter && task.seriesId != null) {
-            tasks.removeIf(t -> task.seriesId.equals(t.seriesId) && !t.date.isBefore(task.date));
-        } else {
-            tasks.remove(task);
-        }
+        java.util.function.Predicate<Task> gone = thisAndAfter && task.seriesId != null
+                ? t -> task.seriesId.equals(t.seriesId) && !t.date.isBefore(task.date)
+                : t -> t == task;
+        tasks.stream().filter(gone).filter(t -> t.rewardDay != null).forEach(deletedRewarded::add);
+        tasks.removeIf(gone);
+    }
+
+    /** 보상 기록: 남은 일정과 지운 일정 가운데 보상을 받은 것. */
+    public List<Task> rewardHistory() {
+        List<Task> all = new ArrayList<>(deletedRewarded);
+        tasks.stream().filter(t -> t.rewardDay != null).forEach(all::add);
+        return all;
     }
 
     /** D-42, 06의 4번 THIS_AND_AFTER. 고친 사본의 제목, 시작 시각, 걸리는 시간, 메모를 원래 날짜와 같거나 뒤인 같은 반복 사본에 넣는다. */
@@ -62,6 +69,7 @@ public final class TaskBook {
                 if (!timeOnly) {
                     t.title = edited.title;
                     t.memo = edited.memo;
+                    t.category = edited.category;
                 }
             }
         }
