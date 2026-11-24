@@ -88,3 +88,93 @@ final class TrendChart extends JComponent {
     private int columnAt(Point p) {
         if (buckets.isEmpty() || p.x < LEFT || p.x >= getWidth() - RIGHT) {
             return -1;
+        }
+        double col = (double) (getWidth() - LEFT - RIGHT) / buckets.size();
+        int i = (int) ((p.x - LEFT) / col);
+        return i >= 0 && i < buckets.size() && counted(buckets.get(i)) ? i : -1;
+    }
+
+    private boolean counted(Stats.Bucket b) {
+        return !b.from().isAfter(today);
+    }
+
+    private boolean holdsToday(Stats.Bucket b) {
+        return !today.isBefore(b.from()) && !today.isAfter(b.to());
+    }
+
+    /** 말풍선의 첫 줄. 주간은 "11/20 (목)", 월간은 "11/16 ~ 11/22". */
+    String label(Stats.Bucket b) {
+        if (!monthly) {
+            return md(b.from()) + " (" + WEEK.charAt(b.from().getDayOfWeek().getValue() - 1) + ")";
+        }
+        return b.from().equals(b.to()) ? md(b.from()) : md(b.from()) + " ~ " + md(b.to());
+    }
+
+    /** 말풍선 글. QA와 접근성 이름이 같이 쓴다. */
+    List<String> tip(int i) {
+        Stats.Bucket b = buckets.get(i);
+        Stats.Rate r = b.rate();
+        if (r.total() == 0) {
+            return List.of(label(b), "셀 일정이 없어요");
+        }
+        return List.of(label(b), "완료 " + r.done() + "개 / 전체 " + r.total() + "개", "완료율 " + r.percent() + "%");
+    }
+
+    private static String md(LocalDate d) {
+        return d.getMonthValue() + "/" + d.getDayOfMonth();
+    }
+
+    @Override
+    protected void paintComponent(Graphics graphics) {
+        Graphics2D g = (Graphics2D) graphics.create();
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
+        int w = getWidth();
+        int h = getHeight();
+        int x0 = LEFT;
+        int x1 = w - RIGHT;
+        int y0 = TOP;
+        int y1 = h - BOTTOM;
+        int n = Math.max(1, buckets.size());
+        double col = (double) (x1 - x0) / n;
+
+        legend(g, x1);
+
+        // 왼쪽 백분율 눈금과 아래 바닥선.
+        g.setFont(Theme.font(11));
+        FontMetrics fm = g.getFontMetrics();
+        for (int p = 0; p <= 100; p += 20) {
+            int y = yOf(p, y0, y1);
+            String s = p + "%";
+            g.setColor(Theme.INK_SUB);
+            g.drawString(s, x0 - 10 - fm.stringWidth(s), y + fm.getAscent() / 2 - 1);
+            if (p > 0) {
+                g.setColor(new Color(0xEEF5F8));
+                g.drawLine(x0 + 1, y, x1, y);
+            }
+        }
+        g.setColor(Theme.TRACK);
+        g.setStroke(new BasicStroke(1.4f));
+        g.drawLine(x0, y0 - 6, x0, y1);
+        g.drawLine(x0, y1, x1, y1);
+
+        // 아래 날짜. 오늘 칸은 알약을 깐다.
+        for (int i = 0; i < buckets.size(); i++) {
+            Stats.Bucket b = buckets.get(i);
+            int cx = (int) (x0 + col * (i + 0.5));
+            if (holdsToday(b)) {
+                int pw = (int) Math.min(col - 6, 58);
+                g.setColor(Theme.NAV_PILL);
+                g.fill(new RoundRectangle2D.Double(cx - pw / 2.0, y1 + 4, pw, BOTTOM - 6, 14, 14));
+            }
+            String top;
+            String bottom;
+            Color bottomInk = Theme.INK;
+            if (monthly) {
+                top = md(b.from());
+                bottom = b.from().equals(b.to()) ? "" : "~ " + md(b.to());
+            } else {
+                top = md(b.from());
+                int dow = b.from().getDayOfWeek().getValue();
+                bottom = "(" + WEEK.charAt(dow - 1) + ")";
