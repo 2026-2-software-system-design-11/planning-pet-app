@@ -88,3 +88,4 @@ d2p = Image.new('RGBA', (dog.width, dog.height + PAD)); d2p.paste(d2, (0, PAD));
 d3 = up(d2)
 crown(d3, 108, 8, 26, -12)
 down(d3).save(f'{out}/dog-3.png')
+print('ok')
