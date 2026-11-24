@@ -88,3 +88,19 @@ final class KindBars extends JComponent {
             g.setColor(Theme.TRACK);
             g.fill(new RoundRectangle2D.Double(barX, mid - bh / 2.0, barW, bh, bh, bh));
             double share = e.getValue().total() == 0 ? 0 : (double) e.getValue().done() / e.getValue().total();
+            if (share > 0) {
+                double fw = Math.max(bh, barW * share);
+                g.setPaint(new GradientPaint(barX, 0, look.top(), barX + barW, 0, look.bottom()));
+                g.fill(new RoundRectangle2D.Double(barX, mid - bh / 2.0, fw, bh, bh, bh));
+            }
+            g.setFont(Theme.heavy(17));
+            fm = g.getFontMetrics();
+            String pct = e.getValue().percent() + "%";
+            g.setColor(Theme.INK);
+            g.drawString(pct, w - 8 - fm.stringWidth(pct), mid + fm.getAscent() / 2 - 2);
+            y += rowH;
+            i++;
+        }
+        g.dispose();
+    }
+}
