@@ -268,3 +268,93 @@ final class TrendChart extends JComponent {
             g.setColor(LINE);
             g.setStroke(new BasicStroke(on ? 3f : 2.4f));
             g.draw(new Ellipse2D.Double(p[0] - rr, p[1] - rr, rr * 2, rr * 2));
+            if (!on) {
+                String s = buckets.get(i).rate().percent() + "%";
+                halo(g, s, (int) p[0] - fm.stringWidth(s) / 2, (int) (p[1] - rr - 6));
+            }
+        }
+        if (hover >= 0 && hover < buckets.size()) {
+            int k = idx.indexOf(hover);
+            double px = x0 + col * (hover + 0.5);
+            double py = k >= 0 ? pts.get(k)[1] : y1;
+            bubble(g, tip(hover), px, py);
+        }
+        g.dispose();
+    }
+
+    /** 점 위에 꼬리 달린 말풍선. 위에 자리가 없으면 점 아래에 둔다. */
+    private void bubble(Graphics2D g, List<String> lines, double px, double py) {
+        g.setFont(Theme.font(12));
+        FontMetrics fm = g.getFontMetrics();
+        int lh = fm.getHeight();
+        int tw = lines.stream().mapToInt(fm::stringWidth).max().orElse(0);
+        int bw = tw + 24;
+        int bh = lh * lines.size() + 14;
+        int tail = 8;
+        int bx = (int) Math.max(2, Math.min(getWidth() - bw - 2, px - bw / 2.0));
+        boolean above = py - 12 - tail - bh >= 0;
+        int by = above ? (int) (py - 12 - tail - bh) : (int) (py + 12 + tail);
+        Card.shadow(g, bx, by, bw, bh, 12);
+        Path2D shape = new Path2D.Double();
+        shape.append(new RoundRectangle2D.Double(bx, by, bw, bh, 12, 12), false);
+        Path2D t = new Path2D.Double();
+        double tx = Math.max(bx + 12, Math.min(bx + bw - 12, px));
+        if (above) {
+            t.moveTo(tx - 7, by + bh - 1);
+            t.lineTo(tx, by + bh + tail);
+            t.lineTo(tx + 7, by + bh - 1);
+        } else {
+            t.moveTo(tx - 7, by + 1);
+            t.lineTo(tx, by - tail);
+            t.lineTo(tx + 7, by + 1);
+        }
+        t.closePath();
+        java.awt.geom.Area a = new java.awt.geom.Area(shape);
+        a.add(new java.awt.geom.Area(t));
+        g.setColor(Color.WHITE);
+        g.fill(a);
+        g.setColor(new Color(0xCFE3EA));
+        g.setStroke(new BasicStroke(1.1f));
+        g.draw(a);
+        int y = by + 7 + fm.getAscent();
+        for (int i = 0; i < lines.size(); i++) {
+            g.setFont(i == 0 ? Theme.bold(12) : Theme.font(12));
+            g.setColor(Theme.INK);
+            g.drawString(lines.get(i), bx + 12, y);
+            y += lh;
+        }
+    }
+
+    /** 막대 안 숫자의 세로 가운데. 아래쪽에 두되 완료율 점과 겹치면 막대 위쪽이나 바닥 쪽으로 비킨다. */
+    private static double countMiddle(double bh, int y1, int pointY) {
+        double[] tries = bh >= 40 ? new double[] {y1 - Math.min(bh * 0.42, 20), y1 - bh + 14, y1 - 10}
+                : new double[] {y1 - Math.min(bh * 0.42, 20), y1 - 10};
+        double best = tries[0];
+        for (double t : tries) {
+            if (Math.abs(t - pointY) >= 16) {
+                return t;
+            }
+            if (Math.abs(t - pointY) > Math.abs(best - pointY)) {
+                best = t;
+            }
+        }
+        return best;
+    }
+
+    /** 막대 위에 겹쳐도 읽히게 흰 테두리를 두른 글자. */
+    private static void halo(Graphics2D g, String s, int x, int y) {
+        g.setColor(new Color(255, 255, 255, 220));
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                if (dx != 0 || dy != 0) {
+                    g.drawString(s, x + dx, y + dy);
+                }
+            }
+        }
+        g.setColor(Theme.INK);
+        g.drawString(s, x, y);
+    }
+
+    /** 오른쪽 위 범례: 완료율 점과 완료 일정 수 막대(예시의 범례). */
+    private static void legend(Graphics2D g, int right) {
+        g.setFont(Theme.font(12));
