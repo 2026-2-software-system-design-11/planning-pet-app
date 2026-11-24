@@ -88,3 +88,93 @@ public final class ShopPanel extends Card {
         this.app = app;
         this.thanks = thanks;
         setBorder(BorderFactory.createEmptyBorder(10, 12, 12, 12));
+        previewRoom = new RoomView(app.store, true);
+        add(menu(), BorderLayout.WEST);
+        add(center(), BorderLayout.CENTER);
+        previewCard = preview();
+        add(previewCard, BorderLayout.EAST);
+        app.watch(this::refresh);
+    }
+
+    /** 왼쪽 메뉴와 쇼핑백 그림. */
+    private JComponent menu() {
+        ButtonGroup modes = new ButtonGroup();
+        modes.add(shopMode);
+        modes.add(ownedMode);
+        JPanel col = new JPanel(new GridLayout(0, 1, 0, 8));
+        Object[][] rows = {{shopMode, Icons.Kind.CART}, {ownedMode, Icons.Kind.BOX}, {previewToggle, Icons.Kind.EYE}};
+        for (Object[] r : rows) {
+            JToggleButton b = (JToggleButton) r[0];
+            Icons.Kind k = (Icons.Kind) r[1];
+            b.setFont(Theme.bold(13));
+            b.setHorizontalAlignment(SwingConstants.LEFT);
+            b.setIconTextGap(8);
+            b.setBorder(BorderFactory.createEmptyBorder(9, 14, 11, 12));
+            b.addChangeListener(e -> b.setIcon(Icons.icon(k, 20, b.isSelected() ? java.awt.Color.WHITE : Theme.ICON)));
+            b.setIcon(Icons.icon(k, 20, b.isSelected() ? java.awt.Color.WHITE : Theme.ICON));
+            col.add(b);
+        }
+        shopMode.addActionListener(e -> {
+            first = 0;
+            app.redraw();
+        });
+        ownedMode.addActionListener(e -> {
+            first = 0;
+            app.redraw();
+        });
+        previewToggle.addActionListener(e -> app.redraw());
+        JComponent bag = new JComponent() {
+            @Override
+            protected void paintComponent(Graphics graphics) {
+                if (Images.SHOP_BAG != null) {
+                    Graphics2D g = (Graphics2D) graphics.create();
+                    g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                    Images.fitBottom(g, Images.SHOP_BAG, 0, 0, getWidth(), getHeight());
+                    g.dispose();
+                }
+            }
+        };
+        bag.setPreferredSize(new Dimension(130, 40));
+        JPanel left = new JPanel(new BorderLayout(0, 8));
+        left.add(col, BorderLayout.NORTH);
+        left.add(bag, BorderLayout.CENTER);
+        left.setPreferredSize(new Dimension(146, 0));
+        return left;
+    }
+
+    /** 가운데: 분류 탭과 검색, 카드 줄. */
+    private JComponent center() {
+        ButtonGroup group = new ButtonGroup();
+        JPanel tabRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0)) {
+            @Override
+            public void doLayout() {
+                // 다섯 탭이 한 줄에 안 들어가면(최소 창) 아이콘을 빼고 글자만 둔다.
+                for (Pill p : tabs) {
+                    p.showIcon(true);
+                }
+                int need = 0;
+                for (Pill p : tabs) {
+                    need += p.getPreferredSize().width + 5;
+                }
+                for (Pill p : tabs) {
+                    p.showIcon(need <= getWidth());
+                }
+                super.doLayout();
+            }
+        };
+        for (int i = 0; i < TABS.size(); i++) {
+            String name = TABS.get(i);
+            Pill p = new Pill(name, TAB_ICONS[i], 12);
+            p.setSelected(i == 0);
+            p.addActionListener(e -> {
+                category = name;
+                first = 0;
+                app.redraw();
+            });
+            group.add(p);
+            tabs[i] = p;
+            tabRow.add(p);
+        }
+        search.setFont(Theme.font(13));
+        search.setColumns(10);
+        search.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Theme.CARD_EDGE, 1, true),
