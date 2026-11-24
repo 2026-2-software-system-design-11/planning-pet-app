@@ -10,7 +10,7 @@ import planningpet.pet.model.*;
 import planningpet.stats.model.Stats;
 import planningpet.pet.view.PetView;
 import planningpet.reward.model.*;
-import planningpet.reward.view.WalkBar;
+import planningpet.home.view.PetCard;
 import planningpet.schedule.model.*;
 import planningpet.schedule.view.*;
 import planningpet.shop.model.Shop;
@@ -123,16 +123,22 @@ public final class ProtoCheck {
         eq("T-CAL-4", "은행 서류 true", c15.title() + " " + c15.open());
         Store w = MockData.sample();
         int before = w.listenerCount();
-        new WalkBar(w);
+        new PetCard(w, () -> { });
         new PetView(w, 1);
         eq("T-SAVE-5 다시 그리기 연결", 2, w.listenerCount() - before);
         App main = Main.create(MockData.sample());
         Task essay = main.store.book.dayPlan(main.store.today()).timed().get(1);
         int seq = main.store.talkSeq;
+        PetCard card = find(main.root, PetCard.class);
+        eq("D-59 펫 카드 처음", "나비 Lv. 3 경험치 80 / 110, 오늘 끝낸 일 1 / 4, 25% 4칸",
+                card.nameText() + " " + card.levelText() + " " + card.expText() + ", " + card.doneText() + ", " + card.doneBarText());
         main.schedule.check(essay);
         long doneToday = main.store.book.checkables(main.store.today()).stream().filter(z -> z.done).count();
         eq("T-SAVE-5", "110 2/4 잘했어! +10P 1", main.store.points + " " + doneToday + "/"
                 + main.store.book.checkables(main.store.today()).size() + " " + main.store.talk + " " + (main.store.talkSeq - seq));
+        // 06의 22번 T-SAVE-5: 같은 알림에서 펫 카드의 "오늘 끝낸 일" 막대(2 / 4)와 레벨 막대가 함께 바뀐다.
+        eq("T-SAVE-5 펫 카드", "경험치 90 / 110, 오늘 끝낸 일 2 / 4, 50% 4칸, 잘했어! +10P",
+                card.expText() + ", " + card.doneText() + ", " + card.doneBarText() + ", " + card.bubbleText());
         main.schedule.check(essay);
         eq("T-TALK-7 화면에서", "100 체크를 풀었어. -10P", main.store.points + " " + main.store.talk);
         Store od = MockData.sample();
@@ -374,6 +380,9 @@ public final class ProtoCheck {
         button(cr.room, "고양이").doClick();
         button(cr, "캐릭터에서 꾸미기").doClick();
         eq("D-58 펫 칩은 고르고 창을 연다, 캐릭터에서 꾸미기는 꾸미기 탭", "CAT 지금 탭, CAT 꾸미기 탭", String.join(", ", opened));
+        opened.clear();
+        find(ca.root, planningpet.home.view.MainScreen.class).pet.click();
+        eq("D-59 홈 펫 카드를 누르면 캐릭터 창(지금 탭)", "CAT 지금 탭", String.join(", ", opened));
         eq("D-58 메뉴에 캐릭터가 없다", "true", String.valueOf(button(ca.root, "캐릭터") == null));
         cr.character.draft.clear();
         cr.character.opened(false);
