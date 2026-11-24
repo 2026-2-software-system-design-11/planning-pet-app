@@ -143,52 +143,99 @@ public final class TaskForm {
             }
         });
         repeatEnd.addChangeListener(e -> sync());
-        date.addChangeListener(e -> {
-            if (!repeat.isSelected() && !editing) {
-                Ui.setDate(repeatEnd, DefaultDates.repeatEnd(Ui.dateOf(date)));
-            }
-        });
+        date.addChangeListener(e -> sync());
         sync();
     }
 
-    /** 고정 일정이면 시작 시각이 켜진 채 비활성, 반복은 고정 일정만(D-16, D-17). */
+    /**
+     * 고정 일정이면 시작 시각이 켜진 채 비활성이고 기간은 꺼진 채 비활성이다(D-16, D-65). 반복과 기간은 함께 고를 수 없다(D-65).
+     * 반복이 안 함인 동안 끝 날짜는, 기간을 켜기 전에는 마감이 날짜를 따라간다(06의 14번).
+     */
     public void sync() {
+        if (syncing) {
+            return;
+        }
+        syncing = true;
+        boolean dueShown = due.isVisible();
+        task.setEnabled(!editing);
+        fixed.setEnabled(!editing);
         boolean isFixed = fixed.isSelected();
         if (isFixed) {
             timed.setSelected(true);
         }
         timed.setEnabled(!isFixed);
         start.setEnabled(timed.isSelected());
-        if (!isFixed) {
-            repeat.setSelected(false);
+        boolean repeating = repeat.getSelectedIndex() != 0;
+        boolean periodAllowed = !isFixed && !copy && !repeating;
+        if (!periodAllowed) {
+            period.setSelected(false);
         }
-        repeat.setEnabled(isFixed && !editing);
-        repeatEnd.setEnabled(repeat.isSelected() && !editing);
-        repeatHint.setVisible(!isFixed);
+        period.setEnabled(periodAllowed);
+        period.setToolTipText(isFixed ? "기간은 할 일만 정할 수 있어요" : null);
+        dueLabel.setVisible(period.isSelected());
+        due.setVisible(period.isSelected());
+        repeat.setEnabled(!editing && !period.isSelected());
+        for (JToggleButton d : days) {
+            d.setEnabled(!editing && repeat.getSelectedIndex() == 2);
+        }
+        repeatEnd.setEnabled(repeating && !editing);
+        repeatHint.setVisible(period.isSelected());
+        LocalDate day = Ui.dateOf(date);
+        if (!repeating && !editing) {
+            Ui.setDate(repeatEnd, DefaultDates.repeatEnd(isFixed ? Task.Kind.FIXED : Task.Kind.TASK, day));
+        }
+        if (!period.isSelected()) {
+            Ui.setDate(due, DefaultDates.due(day));
+        }
         minutesHint.setVisible(!editing && (int) minutes.getValue() == 30);
         LocalTime s = startTime();
         int end = s == null ? 0 : s.getHour() * 60 + s.getMinute() + (int) minutes.getValue();
         endLabel.setText(s == null ? "" : String.format("끝 %02d:%02d", end / 60, end % 60));
+        syncing = false;
         if (checked) {
-            showErrors(TaskCheck.check(draft(), editing));
+            showErrors(problems());
+        } else if (dueShown != due.isVisible()) {
+            relayout.run();
         }
+    }
+
+    /** 06의 2번 검사. 끝낸 일정은 마감이 날짜보다 앞인지 보지 않는다(D-65). */
+    public java.util.List<String[]> problems() {
+        return TaskCheck.check(draft(), editing, editingTask != null && editingTask.done);
     }
 
     public boolean editing() {
         return editing;
     }
 
-    /** 칸에 쓴 값. 반복이 꺼져 있으면 반복 끝은 null이다. */
+    /** 칸에 쓴 값. 반복이 안 함이면 반복 방식과 끝은 null, 기간 안에 하기가 꺼져 있으면 마감은 null이다. */
     public TaskDraft draft() {
-        return new TaskDraft(fixed.isSelected() ? Task.Kind.FIXED : Task.Kind.TASK, title.getText(), Ui.dateOf(date),
-                startTime(), (int) minutes.getValue(), memo.getText(), repeat.isSelected() ? Ui.dateOf(repeatEnd) : null,
-                (String) category.getSelectedItem());
+        Repeat how = null;
+        if (repeat.getSelectedIndex() == 1) {
+            how = Repeat.DAILY;
+        } else if (repeat.getSelectedIndex() == 2) {
+            java.util.List<java.time.DayOfWeek> picked = new java.util.ArrayList<>();
+            for (int i = 0; i < 7; i++) {
+                if (days[i].isSelected()) {
+                    picked.add(java.time.DayOfWeek.of(i + 1));
+                }
+            }
+            how = Repeat.weekly(picked);
+        }
+        return new TaskDraft(fixed.isSelected() ? Task.Kind.FIXED : Task.Kind.TASK, title.getText(),
+                (String) category.getSelectedItem(), Ui.dateOf(date), period.isSelected() ? Ui.dateOf(due) : null,
+                startTime(), (int) minutes.getValue(), memo.getText(), how, how == null ? null : Ui.dateOf(repeatEnd));
     }
 
-    /** D-42: 반복 사본을 고칠 때 반복 칸을 켠 채(비활성) 그 반복의 마지막 날짜를 보인다. */
-    public void showSeries(LocalDate end) {
-        repeat.setSelected(true);
+    /** D-42: 반복 사본을 고칠 때 반복 칸을 그 반복의 방식인 채(비활성) 그 반복의 마지막 날짜와 함께 보인다. */
+    public void showSeries(Repeat how, LocalDate end) {
+        syncing = true;
+        repeat.setSelectedIndex(how == null ? 0 : how.daily() ? 1 : 2);
+        for (int i = 0; i < 7; i++) {
+            days[i].setSelected(how != null && how.days().contains(java.time.DayOfWeek.of(i + 1)));
+        }
         Ui.setDate(repeatEnd, end);
+        syncing = false;
         sync();
     }
 

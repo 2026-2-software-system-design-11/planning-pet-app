@@ -34,14 +34,14 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
             none.setBorder(BorderFactory.createEmptyBorder(16, 6, 0, 0));
             add(none);
         }
-        plan.timed().forEach(t -> add(row(t, TaskBook.timeText(t), false)));
+        plan.timed().forEach(t -> add(row(t, TaskBook.timeText(t), null, plan.date())));
         if (!plan.untimed().isEmpty()) {
             JLabel head = Ui.hint("시각 없는 할 일");
             head.setFont(Theme.bold(12));
             head.setForeground(Theme.INK_SUB);
             head.setBorder(BorderFactory.createEmptyBorder(14, 6, 4, 0));
             add(head);
-            plan.untimed().forEach(t -> add(row(t, "", false)));
+            plan.untimed().forEach(t -> add(row(t, "", null, plan.date())));
         }
         revalidate();
         repaint();
