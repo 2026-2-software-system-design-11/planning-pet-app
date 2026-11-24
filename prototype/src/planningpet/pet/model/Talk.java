@@ -33,19 +33,21 @@ public final class Talk {
     public String briefing() {
         LocalDate today = s.today();
         StringBuilder b = new StringBuilder(usual());
-        long yesterday = s.book.forDate(today.minusDays(1)).stream().filter(t -> !t.done).count();
+        // 세는 날(06 데이터 절)로 센다. 끝내지 않은 기간 할 일은 마감 날의 일이다(D-65).
+        long yesterday = s.tasks.stream()
+                .filter(t -> t.kind == Task.Kind.TASK && !t.done && t.countDay().equals(today.minusDays(1))).count();
         if (yesterday > 0) {
             b.append(" 어제 못 끝낸 일 ").append(yesterday).append("개는 달력에 남아 있어.");
         }
         Task near = s.tasks.stream()
                 .filter(t -> t.kind == Task.Kind.TASK && !t.done)
-                .filter(t -> t.date.isAfter(today) && !t.date.isAfter(today.plusDays(3)))
-                .min(Comparator.comparing((Task t) -> t.date).thenComparingLong(t -> t.seq))
+                .filter(t -> t.countDay().isAfter(today) && !t.countDay().isAfter(today.plusDays(3)))
+                .min(Comparator.comparing(Task::countDay).thenComparingLong(t -> t.seq))
                 .orElse(null);
         if (near != null) {
             String[] when = {"", "내일이야", "모레야", "사흘 뒤야"};
             b.append(" '").append(Rules.shortTitle(near.title)).append("' 마감이 ")
-                    .append(when[(int) ChronoUnit.DAYS.between(today, near.date)]).append(".");
+                    .append(when[(int) ChronoUnit.DAYS.between(today, near.countDay())]).append(".");
         }
         if (s.book.checkables(today).isEmpty() && near == null) {
             b.append(" 아래 칸에 하나 적어 볼까?");

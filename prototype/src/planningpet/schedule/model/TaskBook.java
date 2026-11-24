@@ -20,20 +20,74 @@ public final class TaskBook {
         this.nextSeq = nextSeq;
     }
 
-    /** 06의 3번. 반복 끝 날짜가 있으면 같은 요일마다 사본을 만든다. */
+    /** 06의 3번. 검사(2번)를 통과한 입력으로 일정을 만든다. 반복이면 반복하는 날마다 사본을 만든다(D-17, D-64). */
+    public List<Task> add(TaskDraft d) {
+        if (!TaskCheck.check(d, false).isEmpty()) {
+            throw new IllegalArgumentException("검사를 통과하지 않은 입력");
+        }
+        return make(d);
+    }
+
+    /** 목 데이터와 검사가 쓰는 줄임. 반복 끝 날짜가 있으면 날짜의 요일 하나로 반복한다. */
     public List<Task> add(Task.Kind kind, String title, LocalDate date, LocalTime start, int minutes,
                           String memo, LocalDate repeatEnd) {
+        TaskDraft d = new TaskDraft(kind, title, date, start, minutes, memo);
+        return make(repeatEnd == null ? d : d.withRepeat(Repeat.weekly(date.getDayOfWeek()), repeatEnd));
+    }
+
+    private List<Task> make(TaskDraft d) {
         List<Task> made = new ArrayList<>();
-        String series = repeatEnd == null ? null : UUID.randomUUID().toString();
-        LocalDate last = repeatEnd == null ? date : repeatEnd;
-        for (LocalDate d = date; !d.isAfter(last); d = d.plusWeeks(1)) {
-            Task t = new Task(UUID.randomUUID().toString(), nextSeq.getAsLong(), kind, title.strip(), d, start, minutes);
-            t.memo = memo;
+        String series = d.repeat() == null ? null : UUID.randomUUID().toString();
+        List<LocalDate> days = d.repeat() == null ? List.of(d.date())
+                : d.repeat().dates(d.date(), d.repeatEnd(), Integer.MAX_VALUE - 1);
+        for (LocalDate day : days) {
+            Task t = new Task(UUID.randomUUID().toString(), nextSeq.getAsLong(), d.kind(), d.title().strip(), day, d.start(),
+                    d.minutes());
+            t.memo = d.memo();
+            t.category = d.category();
             t.seriesId = series;
+            t.repeat = d.repeat();
+            t.dueDate = d.kind() == Task.Kind.TASK && d.repeat() == null ? d.dueDate() : null;
             tasks.add(t);
             made.add(t);
         }
         return made;
+    }
+
+    /**
+     * 06의 4번. 제목, 유형, 날짜, 마감, 시작 시각, 걸리는 시간, 메모를 바꾼다. thisAndAfter면 같은 반복의 원래 날짜와 같거나 뒤인
+     * 사본에도 넣는다(D-42). 종류가 다르면 IllegalArgumentException.
+     */
+    public void update(Task task, TaskDraft d, boolean thisAndAfter) {
+        if (task.kind != d.kind()) {
+            throw new IllegalArgumentException("종류는 바꿀 수 없다");
+        }
+        LocalDate originalDate = task.date;
+        task.title = d.title().strip();
+        task.category = d.category();
+        task.date = d.date();
+        task.dueDate = task.kind == Task.Kind.TASK && task.seriesId == null ? d.dueDate() : task.dueDate;
+        task.start = d.start();
+        task.minutes = d.minutes();
+        task.memo = d.memo();
+        if (thisAndAfter) {
+            applyToSeries(task, originalDate);
+        }
+    }
+
+    /**
+     * 06의 4번을 시각 고치기 창(D-32)에서 부를 때. 시작 시각과 걸리는 시간만 넣는다. 시각 없는 기간 할 일에 시각을 정하면 날짜를
+     * 창을 연 목록의 날(listDay)로 옮기고 마감은 둔다(D-65).
+     */
+    public void setTime(Task task, LocalTime start, int minutes, LocalDate listDay, boolean thisAndAfter) {
+        if (task.dueDate != null && !task.timed() && start != null) {
+            task.date = listDay;
+        }
+        task.start = start;
+        task.minutes = minutes;
+        if (thisAndAfter) {
+            applyToSeries(task, task.date, true);
+        }
     }
 
     /** 지운 일정 가운데 보상을 받았던 것. 친밀도(D-49)와 통계 포인트(D-55)가 지워도 줄지 않게 센다(D-19). */
@@ -81,23 +135,21 @@ public final class TaskBook {
                 .max(LocalDate::compareTo).orElse(task.date);
     }
 
-    /** 06의 6번. 메인 목록: 시각 있는 할 일을 시각 순으로 먼저, 없는 할 일을 넣은 순으로. */
-    public List<Task> forDate(LocalDate date) {
-        return tasks.stream()
-                .filter(t -> t.kind == Task.Kind.TASK && t.date.equals(date))
-                .sorted(Comparator.comparing((Task t) -> !t.timed())
-                        .thenComparing(t -> t.timed() ? t.start : LocalTime.MIN)
-                        .thenComparingLong(t -> t.seq))
-                .toList();
-    }
+    /** 시각 있는 일을 시각 순으로 먼저, 없는 일을 넣은 순으로(06의 6번과 26번의 순서). */
+    private static final Comparator<Task> ORDER = Comparator.comparing((Task t) -> !t.timed())
+            .thenComparing(t -> t.timed() ? t.start : LocalTime.MIN)
+            .thenComparingLong(t -> t.seq);
 
-    /** 그날 체크할 수 있는 일정(할 일과 고정 일정, D-35). 성취도 막대와 남은 수가 센다. */
+    /** 그날 보이는 일정(할 일과 고정 일정, D-35, D-65). 성취도 막대와 남은 수가 센다. */
     public List<Task> checkables(LocalDate date) {
-        return tasks.stream().filter(t -> t.date.equals(date)).toList();
+        DayPlan plan = dayPlan(date);
+        List<Task> all = new ArrayList<>(plan.timed());
+        all.addAll(plan.untimed());
+        return all;
     }
 
-    /** 06의 6번(D-31). 메인 목록의 하루 시간표: 시각 있는 할 일과 고정 일정, 그 아래 시각 없는 할 일. */
-    public record DayPlan(List<Task> timed, List<Task> untimed) {
+    /** 06의 6번(D-31). 메인 목록의 하루 시간표: 시각 있는 할 일과 고정 일정, 그 아래 그날 보이는 시각 없는 할 일. */
+    public record DayPlan(LocalDate date, List<Task> timed, List<Task> untimed) {
     }
 
     public DayPlan dayPlan(LocalDate date) {
@@ -105,18 +157,22 @@ public final class TaskBook {
                 .filter(t -> t.timed() && t.date.equals(date))
                 .sorted(Comparator.comparing((Task t) -> t.start).thenComparingLong(t -> t.seq))
                 .toList();
-        List<Task> untimed = forDate(date).stream().filter(t -> !t.timed()).toList();
-        return new DayPlan(timed, untimed);
+        List<Task> untimed = tasks.stream()
+                .filter(t -> t.kind == Task.Kind.TASK && !t.timed() && t.shownOn(date))
+                .sorted(Comparator.comparingLong(t -> t.seq))
+                .toList();
+        return new DayPlan(date, timed, untimed);
     }
 
-    /** 06의 26번(D-33). 달력 칸의 첫 할 일 제목과 끝내지 않은 일이 있는지. 할 일이 없으면 null. */
+    /** 06의 26번(D-33). 달력 칸의 첫 할 일 제목과 끝내지 않은 일이 있는지. 세는 날이 그날인 할 일이 없으면 null. */
     public record CellPreview(String title, boolean open) {
     }
 
     public CellPreview cellPreview(LocalDate date) {
-        DayPlan plan = dayPlan(date);
-        List<Task> list = new ArrayList<>(plan.timed().stream().filter(t -> t.kind == Task.Kind.TASK).toList());
-        list.addAll(plan.untimed());
+        List<Task> list = tasks.stream()
+                .filter(t -> t.kind == Task.Kind.TASK && t.countDay().equals(date))
+                .sorted(ORDER)
+                .toList();
         if (list.isEmpty()) {
             return null;
         }
@@ -127,19 +183,33 @@ public final class TaskBook {
         return new CellPreview(title, list.stream().anyMatch(t -> !t.done));
     }
 
+    /** 마감이 있는 할 일의 "~11/22까지"(06의 6번). 마감이 없으면 null. */
+    public static String dueText(Task t) {
+        return t.dueDate == null ? null : "~" + t.dueDate.getMonthValue() + "/" + t.dueDate.getDayOfMonth() + "까지";
+    }
+
     /** "10:00~11:00". 자정에 끝나면 "24:00". */
     public static String timeText(Task t) {
         int end = t.endMinute();
         return t.start + "~" + String.format("%02d:%02d", end / 60, end % 60);
     }
 
-    /** 06의 7번. 일정관리 오른쪽 목록. */
+    /** 06의 7번. 일정관리 오른쪽 목록: 그 주에 보이는 시각 없는 할 일을 한 번씩, 줄의 날짜 순, 같은 날은 넣은 순. */
     public List<Task> untimedOfWeek(LocalDate monday) {
         return tasks.stream()
-                .filter(t -> t.kind == Task.Kind.TASK && !t.timed())
-                .filter(t -> !t.date.isBefore(monday) && !t.date.isAfter(monday.plusDays(6)))
-                .sorted(Comparator.comparing((Task t) -> t.date).thenComparingLong(t -> t.seq))
+                .filter(t -> t.kind == Task.Kind.TASK && !t.timed() && rowDay(t, monday) != null)
+                .sorted(Comparator.comparing((Task t) -> rowDay(t, monday)).thenComparingLong(t -> t.seq))
                 .toList();
+    }
+
+    /** 일정관리 목록 줄의 날짜: 그 주에서 보이는 첫날. 그 주에 보이지 않으면 null(D-65). */
+    public static LocalDate rowDay(Task t, LocalDate monday) {
+        for (int i = 0; i < 7; i++) {
+            if (t.shownOn(monday.plusDays(i))) {
+                return monday.plusDays(i);
+            }
+        }
+        return null;
     }
 
     public List<Task> timedOn(LocalDate date) {
