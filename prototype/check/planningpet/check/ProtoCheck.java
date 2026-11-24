@@ -6,7 +6,8 @@ import planningpet.app.model.*;
 import planningpet.app.view.App;
 import planningpet.common.model.Rules;
 import planningpet.common.view.Ui;
-import planningpet.pet.model.Talk;
+import planningpet.pet.model.*;
+import planningpet.stats.model.Stats;
 import planningpet.pet.view.PetView;
 import planningpet.reward.model.*;
 import planningpet.reward.view.WalkBar;
@@ -156,6 +157,7 @@ public final class ProtoCheck {
         eq("D-43 오류 글 다시 검사, 30분 안내", "하루 안에 끝나야 해요 / true false", recheck());
         eq("D-42 반복 끝 밖으로 옮겨 저장, 반복 표시", "true true 2026-12-29", moveLastCopy());
         eq("D-42 시각 창의 이후 반복 모두는 시각만", "11:00 보강 11:00", timeOnly());
+        newRules();
         System.out.println(failed == 0 ? "모두 통과" : failed + "개 실패");
         System.exit(failed == 0 ? 0 : 1);
     }
@@ -250,5 +252,138 @@ public final class ProtoCheck {
     private static String msgs(TaskForm f) {
         var p = TaskCheck.check(f.draft(), f.editing());
         return p.isEmpty() ? null : String.join(" / ", p.stream().map(x -> x[1]).toList());
+    }
+
+    /** D-48~D-55의 규칙. */
+    static void newRules() {
+        App app = Main.create(MockData.sample());
+        Store s = app.store;
+        int catExp = s.pet().exp;
+        planningpet.pet.view.PetScreen room = find(app.root, planningpet.pet.view.PetScreen.class);
+        eq("D-56 방 말풍선 평소", "", room.room.bubble);
+        eq("D-48 데려오기", "true false 2 DOG 바둑이", app.pet.adopt(true, " ") + " " + app.pet.adopt(true, "x") + " "
+                + s.pets.size() + " " + s.activeKind + " " + s.pet().name);
+        eq("D-56 데려온 직후 인사", "안녕, 나는 바둑이야. 잘 부탁해!", room.room.bubble);
+        Task t = s.book.add(Task.Kind.TASK, "보고서", s.today(), null, 30, "", null).get(0);
+        app.schedule.check(t);
+        eq("D-48 경험치는 고른 펫", "10 " + catExp + " DOG", s.pet("DOG").exp + " " + s.pet("CAT").exp + " " + t.rewardPet);
+        app.pet.select("CAT");
+        app.schedule.check(t);
+        eq("D-48 취소는 받은 펫에서", "0 " + catExp, s.pet("DOG").exp + " " + s.pet("CAT").exp);
+        app.pet.step(1);
+        eq("D-56 화살표", "DOG", s.activeKind);
+        java.util.List<Task> days = new java.util.ArrayList<>();
+        for (int i = 0; i < 40; i++) {
+            Task d = new Task("b" + i, 900 + i, Task.Kind.TASK, "b", s.today().minusDays(i), null, 30);
+            d.rewardExp = 10;
+            d.rewardPet = "CAT";
+            d.rewardDay = d.date;
+            days.add(d);
+        }
+        eq("D-49 친밀도", "50 100 0", Bond.percent(days.subList(0, 15), "CAT") + " " + Bond.percent(days, "CAT") + " "
+                + Bond.percent(days, "DOG"));
+        java.util.Map<String, String> want = new java.util.LinkedHashMap<>();
+        want.put(Wardrobe.NECK, "별 목걸이");
+        want.put(Wardrobe.HAT, "밀짚모자");
+        want.put(Wardrobe.CLOTHES, "스카프");
+        app.pet.select("CAT");
+        app.pet.applyWear("CAT", want);
+        eq("D-51 열린 것만 입는다(Lv.3)", "{모자=밀짚모자, 의상=스카프}", new java.util.TreeMap<>(s.pet().wear).toString());
+        eq("D-52 아이템 13개, 합 2210P", "13 2210", Shop.ITEMS.size() + " " + Shop.ITEMS.values().stream().mapToInt(i -> i).sum());
+        eq("D-52 만족도", "0 14 100", Shop.satisfaction(java.util.List.of()) + " " + Shop.satisfaction(java.util.List.of("소파"))
+                + " " + Shop.satisfaction(Shop.ITEMS.keySet()));
+        eq("D-53 찾기", "털실 공 뼈다귀 / 걸이 화분", names(Shop.find("장난감", "", false, s.owned)) + " / "
+                + names(Shop.find("전체", "걸이", false, s.owned)));
+        Store e = MockData.empty();
+        Task past = e.book.add(Task.Kind.TASK, "a", e.today().minusDays(1), null, 30, "", null).get(0);
+        past.done = true;
+        past.category = "운동";
+        e.book.add(Task.Kind.TASK, "b", e.today(), null, 30, "", null);
+        e.book.add(Task.Kind.TASK, "c", e.today().plusDays(1), null, 30, "", null);
+        Stats.Period w = Stats.Period.week(e.today());
+        eq("D-55 앞날은 세지 않는다", "1/2 50%", Stats.rate(e, w).done() + "/" + Stats.rate(e, w).total() + " " + Stats.rate(e, w).percent() + "%");
+        eq("D-55 유형", "{운동=Rate[done=1, total=1], 기타=Rate[done=0, total=1]}", Stats.byCategory(e, w).toString());
+        eq("D-55 주간 칸", "7", String.valueOf(Stats.trend(e, w).size()));
+        // 06 27~30번의 나머지 검사 줄.
+        eq("T-SHOP-10 보유만 찾기", "쿠션", names(Shop.find("전체", "", true, java.util.Set.of("쿠션"))));
+        java.util.List<Task> two = new java.util.ArrayList<>();
+        for (int i = 0; i < 2; i++) {
+            Task d = new Task("c" + i, 950 + i, Task.Kind.TASK, "c", java.time.LocalDate.of(2026, 11, 16), null, 30);
+            d.rewardExp = 10;
+            d.rewardPet = "CAT";
+            d.rewardDay = d.date;
+            two.add(d);
+        }
+        eq("T-BOND-2 같은 날 두 번", "1 3", Bond.days(two, "CAT") + " " + Bond.percent(two, "CAT"));
+        eq("T-WEAR-2 처음 장신구", "{목걸이=기본 목걸이}", new PetState("CAT", "나비").wear.toString());
+        Store top = MockData.sample();
+        top.pet().exp = 1600;
+        App topApp = Main.create(top);
+        java.util.Map<String, String> all = new java.util.LinkedHashMap<>();
+        all.put(Wardrobe.NECK, "왕관 목걸이");
+        all.put(Wardrobe.ACCESSORY, "안경");
+        all.put(Wardrobe.HAT, "왕관");
+        all.put(Wardrobe.CLOTHES, "망토");
+        topApp.pet.applyWear("CAT", all);
+        eq("T-WEAR-3 레벨 10은 넷 다", all.toString(), top.pet().wear.toString());
+        Store none = MockData.empty();
+        Stats.Period nov = Stats.Period.month(java.time.LocalDate.of(2026, 11, 14));
+        StringBuilder cells = new StringBuilder();
+        Stats.trend(none, nov).forEach(b -> cells.append(b.from().getDayOfMonth()).append("-").append(b.to().getDayOfMonth()).append(" "));
+        eq("T-STAT-4 월간 칸", "1-1 2-8 9-15 16-22 23-29 30-30 ", cells.toString());
+        Store pts = MockData.empty();
+        pts.now = java.time.LocalDateTime.of(2026, 11, 18, 12, 0);
+        pts.attendDays.add(java.time.LocalDate.of(2026, 11, 16));
+        pts.attendDays.add(java.time.LocalDate.of(2026, 11, 17));
+        for (int i = 0; i < 3; i++) {
+            Task d = pts.book.add(Task.Kind.TASK, "p" + i, java.time.LocalDate.of(2026, 11, 16 + i), null, 30, "", null).get(0);
+            d.done = true;
+            d.rewardPoints = 10;
+            d.rewardDay = d.date;
+        }
+        Stats.Period week = Stats.Period.week(pts.today());
+        eq("T-STAT-5 주간 포인트", "70", String.valueOf(Stats.points(pts, week)));
+        pts.book.delete(pts.tasks.get(0), false);
+        eq("T-STAT-7 지워도 포인트는 그대로(D-19)", "70", String.valueOf(Stats.points(pts, week)));
+        Stats.Rate zero = Stats.rate(none, Stats.Period.week(none.today()));
+        eq("T-STAT-6 일정 없음", "0/0 0%", zero.done() + "/" + zero.total() + " " + zero.percent() + "%");
+        java.util.List<Task> kept = new java.util.ArrayList<>(two);
+        Store bs = MockData.empty();
+        Task bt = bs.book.add(Task.Kind.TASK, "b", bs.today(), null, 30, "", null).get(0);
+        bt.done = true;
+        bt.rewardExp = 10;
+        bt.rewardPet = "CAT";
+        bt.rewardDay = bs.today();
+        bs.book.delete(bt, false);
+        eq("T-BOND-3 지워도 친밀도는 그대로(D-19, D-49)", "1", String.valueOf(Bond.days(bs.book.rewardHistory(), "CAT")));
+        App pa = Main.create(MockData.sample());
+        pa.pet.rename("CAT", "  ");
+        String blank = pa.store.pet().name;
+        pa.pet.rename("CAT", "가나다라마바사아자차카");
+        eq("T-PET-3 이름", "나비 가나다라마바사아자차", blank + " " + pa.store.pet().name);
+        pa.pet.pose("CAT", "자기");
+        pa.pet.pose("CAT", "춤");
+        eq("T-PET-4 자세", "자기", pa.store.pet().pose);
+        pa.pet.select("DOG");
+        eq("T-PET-5 없는 펫은 못 고른다", "CAT", pa.store.activeKind);
+    }
+
+    static <T> T find(java.awt.Component c, Class<T> type) {
+        if (type.isInstance(c)) {
+            return type.cast(c);
+        }
+        if (c instanceof java.awt.Container k) {
+            for (java.awt.Component child : k.getComponents()) {
+                T t = find(child, type);
+                if (t != null) {
+                    return t;
+                }
+            }
+        }
+        return null;
+    }
+
+    private static String names(java.util.List<Shop.Item> items) {
+        return String.join(" ", items.stream().map(Shop.Item::name).toList());
     }
 }
