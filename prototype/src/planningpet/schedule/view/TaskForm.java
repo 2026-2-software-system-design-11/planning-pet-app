@@ -38,8 +38,6 @@ public final class TaskForm {
     /** D-43: 추가 창에서 걸리는 시간이 30일 때만 보인다. */
     public final JLabel minutesHint = Ui.hint("안 바꾸면 30분으로 들어가요");
     private final boolean editing;
-    /** 고치는 일정. 추가면 null. */
-    private final Task editingTask;
     /** 반복 사본을 고치는 중(기간 칸은 꺼진 채 비활성, D-65). */
     private final boolean copy;
     /** sync 안에서 칸 값을 바꿀 때 다시 sync하지 않는다. */
@@ -52,7 +50,6 @@ public final class TaskForm {
 
     public TaskForm(Task t, LocalDate defaultDate, java.time.LocalDateTime now) {
         editing = t != null;
-        editingTask = t;
         copy = t != null && t.seriesId != null;
         Ui.limit(title, 100);
         Ui.limit(memo, 1000);
@@ -97,12 +94,14 @@ public final class TaskForm {
         line("", errors.get("메모"));
         category.setSelectedItem(Categories.OTHER);
         title.setText(t == null ? "" : t.title);
-        Ui.setDate(date, t == null ? defaultDate : t.date);
-        Ui.setDate(due, t != null && t.dueDate != null ? t.dueDate : DefaultDates.due(t == null ? defaultDate : t.date));
+        // D-66: 기간 할 일의 날짜 칸은 기간 첫날이다(계획한 날이 아니다).
+        LocalDate first = t == null ? defaultDate : t.period() ? t.startDay : t.date;
+        Ui.setDate(date, first);
+        Ui.setDate(due, t != null && t.dueDate != null ? t.dueDate : DefaultDates.due(first));
         period.setSelected(t != null && t.dueDate != null);
         if (t != null) {
             fixed.setSelected(t.kind == Task.Kind.FIXED);
-            timed.setSelected(t.timed());
+            timed.setSelected(t.timed() && !t.period());
             start.setValue(t.timed() ? t.start.toString() : "09:00");
             minutes.setValue(t.minutes);
             memo.setText(t.memo);
@@ -163,7 +162,12 @@ public final class TaskForm {
         if (isFixed) {
             timed.setSelected(true);
         }
-        timed.setEnabled(!isFixed);
+        // D-68: 기간 할 일의 시각은 목록의 "시각 정하기"와 자동 배치로만 정한다.
+        if (period.isSelected()) {
+            timed.setSelected(false);
+        }
+        timed.setEnabled(!isFixed && !period.isSelected());
+        timed.setToolTipText(period.isSelected() ? "기간 할 일의 시각은 목록에서 정해요" : null);
         start.setEnabled(timed.isSelected());
         boolean repeating = repeat.getSelectedIndex() != 0;
         boolean periodAllowed = !isFixed && !copy && !repeating;
@@ -199,9 +203,9 @@ public final class TaskForm {
         }
     }
 
-    /** 06의 2번 검사. 끝낸 일정은 마감이 날짜보다 앞인지 보지 않는다(D-65). */
+    /** 06의 2번 검사. */
     public java.util.List<String[]> problems() {
-        return TaskCheck.check(draft(), editing, editingTask != null && editingTask.done);
+        return TaskCheck.check(draft(), editing);
     }
 
     public boolean editing() {

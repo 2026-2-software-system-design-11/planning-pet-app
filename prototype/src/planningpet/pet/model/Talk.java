@@ -89,7 +89,7 @@ public final class Talk {
         if (r.outcome() == RewardResult.Outcome.CAPPED) {
             return "잘했어! 오늘 보상은 다 받았지만 체크는 계속 돼.";
         }
-        boolean allDone = t.date.equals(s.today()) && s.book.checkables(s.today()).stream().allMatch(x -> x.done);
+        boolean allDone = t.countDay().equals(s.today()) && s.book.checkables(s.today()).stream().allMatch(x -> x.done);
         return allDone ? "오늘 할 일을 다 끝냈어! 푹 쉬어." : "잘했어! +10P";
     }
 }

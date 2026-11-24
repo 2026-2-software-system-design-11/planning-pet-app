@@ -72,11 +72,17 @@ final class PeriodCheck {
                 msgs(TaskCheck.check(task.withRepeat(wed, d("11-17")), false)) + " / "
                 + msgs(TaskCheck.check(task.withRepeat(wed, d("11-18")), false)));
         TaskDraft p18 = draft(Task.Kind.TASK, "11-18", null);
-        eq("D-65 마감은 날짜와 같거나 뒤", "마감: 마감이 날짜보다 앞이에요 / 오류 없음 / 마감: 마감이 날짜보다 앞이에요 / 오류 없음",
+        eq("D-65 마감은 날짜와 같거나 뒤", "마감: 마감이 날짜보다 앞이에요 / 오류 없음 / 마감: 마감이 날짜보다 앞이에요",
                 msgs(TaskCheck.check(p18.withDue(d("11-17")), false)) + " / "
                 + msgs(TaskCheck.check(p18.withDue(d("11-18")), false)) + " / "
-                + msgs(TaskCheck.check(p18.withDue(d("11-17")), true)) + " / "
-                + msgs(TaskCheck.check(p18.withDue(d("11-17")), true, true)));
+                + msgs(TaskCheck.check(p18.withDue(d("11-17")), true)));
+        // T-VAL-17의 끝낸 할 일: 끝내도 날짜 칸(기간 첫날)이 그대로이므로 수정 창에서 마감을 검사한다(D-66).
+        App app = Main.create(at("11-18T09:00"));
+        Task done = period(app.store, "끝냄", "11-18", "11-22", 30);
+        app.schedule.check(done);
+        TaskForm f = new TaskForm(done, done.date, app.store.now);
+        Ui.setDate(f.due, d("11-17"));
+        eq("D-66 끝낸 할 일도 마감 검사", "마감: 마감이 날짜보다 앞이에요", msgs(f.problems()));
         eq("D-65 기간 할 일은 반복하지 않는다", "반복: 기간 안에 하는 할 일은 반복할 수 없어요",
                 msgs(TaskCheck.check(task.withDue(d("11-22")).withRepeat(Repeat.DAILY, d("11-22")), false)));
         eq("D-65 기간은 할 일만", "마감: 기간은 할 일만 정할 수 있어요",
@@ -110,7 +116,14 @@ final class PeriodCheck {
                 copies(w.book.add(draft(Task.Kind.FIXED, "11-16", "18:00")
                         .withRepeat(Repeat.weekly(DayOfWeek.TUESDAY, DayOfWeek.THURSDAY), d("11-26")))));
         Task p = period(MockData.empty(), "P", "11-18", "11-22", 30);
-        eq("D-65 기간 할 일", "2026-11-18 2026-11-22 null", p.date + " " + p.dueDate + " " + p.seriesId);
+        eq("D-65 기간 할 일", "2026-11-18 2026-11-18 2026-11-22 null", p.date + " " + p.startDay + " " + p.dueDate + " " + p.seriesId);
+        Task timed = MockData.empty().book.add(new TaskDraft(Task.Kind.TASK, "T", d("11-18"), LocalTime.of(10, 0), 30, "")
+                .withDue(d("11-22"))).get(0);
+        TaskForm form = new TaskForm(null, d("11-18"), at("11-18T09:00").now);
+        form.timed.doClick();
+        form.period.doClick();
+        eq("D-68 기간 할 일은 시각 없이", "null false false 기간 할 일의 시각은 목록에서 정해요", timed.start + " " + form.timed.isSelected()
+                + " " + form.timed.isEnabled() + " " + form.timed.getToolTipText());
         Store del = MockData.empty();
         List<Task> made = daily(del);
         del.book.delete(made.get(3), true);
@@ -181,15 +194,26 @@ final class PeriodCheck {
         main.selectDate(d("11-18"));
         javax.swing.JCheckBox box = box(main.rows, p);
         box.doClick();
-        eq("D-65 끝내면 끝낸 날로", "10P 보상 10 2026-11-17 2026-11-22 true false false 18일 목록에 없음 true",
-                app.store.points + "P 보상 " + p.rewardPoints + " " + p.date + " " + p.dueDate + " " + on(app.store, p, "11-17")
+        eq("D-66 끝내면 끝낸 날에만", "10P 보상 10 2026-11-16 2026-11-17 2026-11-22 true false false 18일 목록에 없음 true",
+                app.store.points + "P 보상 " + p.rewardPoints + " " + p.date + " " + p.doneDay + " " + p.dueDate + " "
+                + app.store.book.dayPlan(d("11-17")).untimed().contains(p)
                 + " " + on(app.store, p, "11-16") + " " + on(app.store, p, "11-18") + " 18일 목록에 없음 " + (box(main.rows, p) == null));
         app.schedule.check(p);
         StringBuilder days = new StringBuilder();
         for (String day : new String[] {"11-16", "11-17", "11-18", "11-19", "11-20", "11-21", "11-22"}) {
             days.append(on(app.store, p, day) ? "o" : "x");
         }
-        eq("D-65 취소해도 날짜는 그대로", "false 2026-11-17 2026-11-22 xoooooo", p.done + " " + p.date + " " + p.dueDate + " " + days);
+        eq("D-66 풀면 처음 계획으로", "false 2026-11-16 null 2026-11-22 ooooooo", p.done + " " + p.date + " " + p.doneDay + " "
+                + p.dueDate + " " + days);
+        App plan = Main.create(at("11-16T09:00"));
+        Task q = period(plan.store, "Q", "11-16", "11-22", 60);
+        plan.store.book.setTime(q, LocalTime.of(9, 0), 60, d("11-18"), false);
+        plan.schedule.check(q);
+        String afterDone = q.date + " " + q.start + " " + q.doneDay + " " + plan.store.book.dayPlan(d("11-16")).untimed().contains(q)
+                + " " + on(plan.store, q, "11-18") + " " + plan.store.book.timedOn(d("11-18")).isEmpty();
+        plan.schedule.check(q);
+        eq("D-66 계획한 칸이 빈다", "2026-11-18 09:00 2026-11-16 true false true, 풀면 true false",
+                afterDone + ", 풀면 " + plan.store.book.dayPlan(d("11-18")).timed().contains(q) + " " + on(plan.store, q, "11-16"));
         Store st = at("11-16T09:00");
         period(st, "P", "11-09", "11-16", 30);
         period(st, "Q", "11-16", "11-22", 30);
@@ -198,7 +222,7 @@ final class PeriodCheck {
         st.now = d("11-17").atTime(9, 0);
         Stats.Rate week = Stats.rate(st, Stats.Period.week(d("11-16")));
         Stats.Rate last = Stats.rate(st, Stats.Period.week(d("11-09")));
-        eq("D-65 기간 할 일은 마감 날에 센다", "R 2026-11-16, 1/2 50%, 0/0", "R " + r.date + ", " + week.done() + "/" + week.total()
+        eq("D-65 기간 할 일은 마감 날에 센다", "R 2026-11-16, 1/2 50%, 0/0", "R " + r.doneDay + ", " + week.done() + "/" + week.total()
                 + " " + week.percent() + "%, " + last.done() + "/" + last.total());
     }
 

@@ -17,7 +17,7 @@ public final class Store {
     /** 다음 일정에 줄 seq(06 "데이터" 표). */
     public long nextSeq = 1;
     /** 일정 다루기(06의 3~7번, 26번). 위 tasks와 nextSeq를 다룬다. */
-    public final TaskBook book = new TaskBook(tasks, () -> nextSeq++);
+    public final TaskBook book = new TaskBook(tasks, () -> nextSeq++, this::today);
     public LocalDateTime now;
     public int points;
     public LocalDate rewardCountDay;

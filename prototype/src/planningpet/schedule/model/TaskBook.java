@@ -13,11 +13,17 @@ import java.util.function.LongSupplier;
 public final class TaskBook {
     private final List<Task> tasks;
     private final LongSupplier nextSeq;
+    private final java.util.function.Supplier<LocalDate> today;
 
-    /** nextSeq는 앱 데이터의 다음 넣은 순 번호를 하나 꺼내고 늘린다. */
-    public TaskBook(List<Task> tasks, LongSupplier nextSeq) {
+    /** nextSeq는 앱 데이터의 다음 넣은 순 번호를 하나 꺼내고 늘린다. today는 앱의 오늘이다(못 끝낸 계획, D-67). */
+    public TaskBook(List<Task> tasks, LongSupplier nextSeq, java.util.function.Supplier<LocalDate> today) {
         this.tasks = tasks;
         this.nextSeq = nextSeq;
+        this.today = today;
+    }
+
+    public LocalDate today() {
+        return today.get();
     }
 
     /** 06의 3번. 검사(2번)를 통과한 입력으로 일정을 만든다. 반복이면 반복하는 날마다 사본을 만든다(D-17, D-64). */
@@ -41,13 +47,16 @@ public final class TaskBook {
         List<LocalDate> days = d.repeat() == null ? List.of(d.date())
                 : d.repeat().dates(d.date(), d.repeatEnd(), Integer.MAX_VALUE - 1);
         for (LocalDate day : days) {
-            Task t = new Task(UUID.randomUUID().toString(), nextSeq.getAsLong(), d.kind(), d.title().strip(), day, d.start(),
-                    d.minutes());
+            boolean period = d.kind() == Task.Kind.TASK && d.repeat() == null && d.dueDate() != null;
+            // D-68: 기간 할 일의 시각은 목록과 자동 배치로만 정하므로 시각 없이 만든다.
+            Task t = new Task(UUID.randomUUID().toString(), nextSeq.getAsLong(), d.kind(), d.title().strip(), day,
+                    period ? null : d.start(), d.minutes());
             t.memo = d.memo();
             t.category = d.category();
             t.seriesId = series;
             t.repeat = d.repeat();
-            t.dueDate = d.kind() == Task.Kind.TASK && d.repeat() == null ? d.dueDate() : null;
+            t.dueDate = period ? d.dueDate() : null;
+            t.startDay = period ? day : null;
             tasks.add(t);
             made.add(t);
         }
@@ -56,7 +65,8 @@ public final class TaskBook {
 
     /**
      * 06의 4번. 제목, 유형, 날짜, 마감, 시작 시각, 걸리는 시간, 메모를 바꾼다. thisAndAfter면 같은 반복의 원래 날짜와 같거나 뒤인
-     * 사본에도 넣는다(D-42). 종류가 다르면 IllegalArgumentException.
+     * 사본에도 넣는다(D-42). 종류가 다르면 IllegalArgumentException. 기간 할 일이면 입력의 날짜는 기간 첫날이고, 시각을 정해 둔
+     * 자리(날짜와 시작 시각)는 그대로 둔다(D-68, D-93).
      */
     public void update(Task task, TaskDraft d, boolean thisAndAfter) {
         if (task.kind != d.kind()) {
@@ -65,9 +75,22 @@ public final class TaskBook {
         LocalDate originalDate = task.date;
         task.title = d.title().strip();
         task.category = d.category();
-        task.date = d.date();
-        task.dueDate = task.kind == Task.Kind.TASK && task.seriesId == null ? d.dueDate() : task.dueDate;
-        task.start = d.start();
+        boolean period = task.kind == Task.Kind.TASK && task.seriesId == null && d.dueDate() != null;
+        if (period) {
+            if (!(task.period() && task.timed())) {
+                task.date = d.date();
+                task.start = null;
+            }
+            task.startDay = d.date();
+            task.dueDate = d.dueDate();
+        } else {
+            task.date = d.date();
+            task.start = d.start();
+            if (task.seriesId == null) {
+                task.dueDate = null;
+                task.startDay = null;
+            }
+        }
         task.minutes = d.minutes();
         task.memo = d.memo();
         if (thisAndAfter) {
@@ -76,11 +99,11 @@ public final class TaskBook {
     }
 
     /**
-     * 06의 4번을 시각 고치기 창(D-32)에서 부를 때. 시작 시각과 걸리는 시간만 넣는다. 시각 없는 기간 할 일에 시각을 정하면 날짜를
-     * 창을 연 목록의 날(listDay)로 옮기고 마감은 둔다(D-65).
+     * 06의 4번을 시각 고치기 창(D-32)에서 부를 때. 시작 시각과 걸리는 시간만 넣는다. 기간 할 일에 시각을 정하면 날짜를 창을 연
+     * 목록의 날(listDay)로 옮기고 기간은 둔다(D-65, D-68).
      */
     public void setTime(Task task, LocalTime start, int minutes, LocalDate listDay, boolean thisAndAfter) {
-        if (task.dueDate != null && !task.timed() && start != null) {
+        if (task.period() && start != null) {
             task.date = listDay;
         }
         task.start = start;
@@ -136,8 +159,8 @@ public final class TaskBook {
     }
 
     /** 시각 있는 일을 시각 순으로 먼저, 없는 일을 넣은 순으로(06의 6번과 26번의 순서). */
-    private static final Comparator<Task> ORDER = Comparator.comparing((Task t) -> !t.timed())
-            .thenComparing(t -> t.timed() ? t.start : LocalTime.MIN)
+    private static final Comparator<Task> ORDER = Comparator.comparing((Task t) -> !t.onTimetable())
+            .thenComparing(t -> t.onTimetable() ? t.start : LocalTime.MIN)
             .thenComparingLong(t -> t.seq);
 
     /** 그날 보이는 일정(할 일과 고정 일정, D-35, D-65). 성취도 막대와 남은 수가 센다. */
@@ -154,11 +177,11 @@ public final class TaskBook {
 
     public DayPlan dayPlan(LocalDate date) {
         List<Task> timed = tasks.stream()
-                .filter(t -> t.timed() && t.date.equals(date))
+                .filter(t -> t.onTimetable() && t.date.equals(date))
                 .sorted(Comparator.comparing((Task t) -> t.start).thenComparingLong(t -> t.seq))
                 .toList();
         List<Task> untimed = tasks.stream()
-                .filter(t -> t.kind == Task.Kind.TASK && !t.timed() && t.shownOn(date))
+                .filter(t -> t.kind == Task.Kind.TASK && !t.onTimetable() && t.shownOn(date))
                 .sorted(Comparator.comparingLong(t -> t.seq))
                 .toList();
         return new DayPlan(date, timed, untimed);
@@ -197,7 +220,7 @@ public final class TaskBook {
     /** 06의 7번. 일정관리 오른쪽 목록: 그 주에 보이는 시각 없는 할 일을 한 번씩, 줄의 날짜 순, 같은 날은 넣은 순. */
     public List<Task> untimedOfWeek(LocalDate monday) {
         return tasks.stream()
-                .filter(t -> t.kind == Task.Kind.TASK && !t.timed() && rowDay(t, monday) != null)
+                .filter(t -> t.kind == Task.Kind.TASK && !t.onTimetable() && rowDay(t, monday) != null)
                 .sorted(Comparator.comparing((Task t) -> rowDay(t, monday)).thenComparingLong(t -> t.seq))
                 .toList();
     }
@@ -213,7 +236,7 @@ public final class TaskBook {
     }
 
     public List<Task> timedOn(LocalDate date) {
-        return tasks.stream().filter(t -> t.timed() && t.date.equals(date)).toList();
+        return tasks.stream().filter(t -> t.onTimetable() && t.date.equals(date)).toList();
     }
 
     public static LocalDate mondayOf(LocalDate date) {
