@@ -435,7 +435,7 @@
 | 4 수정 | T-EDIT-1: UF-10-3(2). T-EDIT-2: UF-6-2(3). T-EDIT-3: UF-6-2(3). T-EDIT-4: UF-2-4(2). T-EDIT-6: UF-2-4(5), UF-6-2(2). T-EDIT-7: UF-6-2(4) | T-EDIT-5 단위(흐름에서는 같은 날 시각 없는 할 일이 하나뿐이라 순서를 볼 수 없음). T-EDIT-8 단위(흐름에서 반복 사본의 날짜와 제목을 함께 바꾸는 경우가 없음). T-EDIT-9, T-EDIT-10, T-EDIT-11, T-EDIT-12, T-EDIT-13, T-EDIT-14 단위 |
 | 5 삭제 | T-DEL-1: UF-10-3(3). T-DEL-2: UF-3-3(3). T-DEL-3: UF-3-3(2). T-DEL-4: UF-5-4(7) |  |
 | 6 하루 시간표 | T-LIST-1: UF-1-1(1). T-LIST-2: UF-10-2(1). T-LIST-3: UF-7-2(4). T-LIST-4: UF-2-6(5) | T-LIST-5, T-LIST-6 단위(흐름에 정한 날을 놓치거나 오늘로 정하는 기간 할 일이 없음) |
-| 7 시각 없는 목록 | T-WEEK-1: UF-1-2(1). T-WEEK-2: UF-2-6(7) | T-WEEK-3 단위 |
+| 7 시각 없는 목록 | T-WEEK-1: UF-1-2(1). T-WEEK-2: UF-2-6(7) | T-WEEK-3, T-WEEK-4 단위 |
 | 8 완료 | T-RWD-1: UF-1-1(2). T-RWD-2: UF-2-2(2). T-RWD-3: UF-2-2(3). T-RWD-4: UF-4-1(2). T-RWD-5: UF-4-1(3). T-RWD-6: UF-4-2(4). T-RWD-7: UF-6-1(2). T-RWD-8: UF-7-3(4). T-RWD-9: UF-1-1(7), UF-4-1(2). T-RWD-11: UF-2-6(10). T-RWD-12: UF-2-6(10) | T-RWD-10 단위(흐름의 사람은 모두 펫이 하나) |
 | 9 완료 취소 | T-UNDO-1: UF-1-1(3). T-UNDO-2: UF-5-1(3). T-UNDO-3: UF-4-1(4). T-UNDO-4: UF-5-1(2). T-UNDO-5: UF-1-1(4), UF-5-2(1) | T-UNDO-6 단위(펫이 둘인 흐름이 없음). T-UNDO-7 단위 |
 | 10 레벨 | T-LVL-1: UF-7-1(2). T-LVL-3: UF-7-3(4). T-LVL-4: UF-1-1(7), UF-4-1(2) | T-LVL-2, T-LVL-5, T-LVL-6, T-LVL-7 단위 |
@@ -444,7 +444,7 @@
 | 13 성취도 막대 | T-PRG-1: UF-1-1(1). T-PRG-2: UF-7-1(2). T-PRG-3: UF-6-1(2). T-PRG-4: UF-2-2(2). T-PRG-5: UF-4-1(3). T-PRG-6: UF-2-6(4) |  |
 | 14 기본값 | T-DEF-1: UF-1-1(9). T-DEF-2: UF-2-5(1). T-DEF-3: UF-2-5(2). T-DEF-4: UF-2-5(4). T-DEF-5: UF-3-1(2), UF-3-1(3). T-DEF-6: UF-2-4(1). T-DEF-7: UF-8-2(2). T-DEF-8: UF-2-4(4). T-DEF-9: UF-8-1(3). T-DEF-10: UF-3-1(1), UF-5-4(1). T-DEF-11: UF-2-6(2) |  |
 | 15 브리핑 때 | T-BRF-1: UF-1-1(1), UF-2-1(1), UF-2-6(6). T-BRF-2: UF-1-1(8). T-BRF-4: UF-9-1(1). T-BRF-5: UF-9-2(1). T-BRF-6: UF-7-1(2), UF-10-1(1) | T-BRF-3 수동, 실제 앱 |
-| 16 펫 대사 | T-TALK-1: UF-2-1(1). T-TALK-2: UF-4-2(2), UF-8-2(1). T-TALK-3: UF-7-1(2), UF-10-1(1). T-TALK-5: UF-1-1(7), UF-4-1(2). T-TALK-6: UF-6-1(4). T-TALK-7: UF-5-1(2). T-TALK-8: UF-4-1(4). T-TALK-9: UF-6-2(1). T-TALK-10: UF-1-2(3). T-TALK-12: UF-1-3(2), UF-7-1(3). T-TALK-14: UF-2-6(6). T-TALK-22: UF-1-4(4-1) | T-TALK-11 단위. T-TALK-4, T-TALK-15, T-TALK-16, T-TALK-17, T-TALK-18, T-TALK-19 단위. T-TALK-13 단위(흐름에 펫 데려오기가 아직 없음) |
+| 16 펫 대사 | T-TALK-1: UF-2-1(1). T-TALK-2: UF-4-2(2), UF-8-2(1). T-TALK-3: UF-7-1(2), UF-10-1(1). T-TALK-5: UF-1-1(7), UF-4-1(2). T-TALK-6: UF-6-1(4). T-TALK-7: UF-5-1(2). T-TALK-8: UF-4-1(4). T-TALK-9: UF-6-2(1). T-TALK-10: UF-1-2(3). T-TALK-12: UF-1-3(2), UF-7-1(3). T-TALK-14: UF-2-6(6). T-TALK-22: UF-1-4(4-1) | T-TALK-11 단위. T-TALK-4, T-TALK-15, T-TALK-16, T-TALK-17, T-TALK-18, T-TALK-19, T-TALK-20 단위. T-TALK-13 단위(흐름에 펫 데려오기가 아직 없음) |
 | 17 알림 | 없음 | T-NTF-1, T-NTF-2, T-NTF-3, T-NTF-4, T-NTF-5, T-NTF-6, T-NTF-7, T-NTF-8, T-NTF-9, T-NTF-10 수동, 실제 앱 |
 | 18 자동 배치 | T-AUTO-1: UF-1-2(2). T-AUTO-2: UF-8-2(3). T-AUTO-4: UF-1-2(2). T-AUTO-5: UF-8-1(1). T-AUTO-6: UF-4-3(2), UF-8-1(2). T-AUTO-7: UF-8-1(5). T-AUTO-8: UF-4-3(1). T-AUTO-9: UF-8-1(2). T-AUTO-10: UF-2-5(3). T-AUTO-11: UF-2-6(8) | T-AUTO-3 단위(끝낸 일정을 피하는 경우가 흐름에 없음). T-AUTO-12, T-AUTO-13, T-AUTO-14 단위 |
 | 19 시간표 열 | T-TT-1: UF-6-1(5). T-TT-2: UF-3-2(1). T-TT-3: UF-3-2(3) | T-TT-4, T-TT-5 단위 |
@@ -454,7 +454,7 @@
 | 23 날 바뀜 | T-DAYW-1: UF-4-2(2). T-DAYW-2: UF-4-2(2). T-DAYW-4: UF-4-2(2) | T-DAYW-3, T-DAYW-5 수동, 실제 앱 |
 | 24 하나만 실행 | 없음 | T-ONE-1, T-ONE-2, T-ONE-3 수동, 실제 앱 |
 | 25 창과 자동 실행 | 없음 | T-WIN-1, T-WIN-2, T-WIN-3, T-WIN-4, T-WIN-5, T-WIN-6 수동, 실제 앱 |
-| 26 달력 칸 | T-CAL-1: UF-1-1(1). T-CAL-2: UF-7-2(4). T-CAL-3: UF-9-3(1). T-CAL-4: UF-1-1(1). T-CAL-5: UF-2-6(4) |  |
+| 26 달력 칸 | T-CAL-1: UF-1-1(1). T-CAL-2: UF-7-2(4). T-CAL-3: UF-9-3(1). T-CAL-4: UF-1-1(1). T-CAL-5: UF-2-6(4) | T-CAL-6 단위 |
 | 27 친밀도 | 없음 | T-BOND-1, T-BOND-2, T-BOND-3 단위 |
 | 28 장신구 적용 | UF-1-4(7) | T-WEAR-1, T-WEAR-2, T-WEAR-3 단위 |
 | 29 통계 | T-STAT-8: UF-1-4(9) | T-STAT-1, T-STAT-2, T-STAT-3, T-STAT-4, T-STAT-5, T-STAT-6, T-STAT-7, T-STAT-9 단위 |

@@ -110,13 +110,14 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
         String noteMark = note == null ? "" : " <font size='2' color='#8A96A0'>" + note + "</font>";
         String tag = dueTag(t, listDay);
         String tagMark = tag == null ? "" : " <font size='2' color='#C0392B'>" + tag + "</font>";
-        JLabel label = title(t, date, note, tag, "<html>" + date + (t.done ? "<s>" + Ui.esc(t.title) + "</s>" : Ui.esc(t.title))
+        boolean dim = withDate && t.pastCopy(control.today());
+        JLabel label = title(t, date, note, tag, dim, "<html>" + date + (t.done ? "<s>" + Ui.esc(t.title) + "</s>" : Ui.esc(t.title))
                 + dueMark + noteMark + tagMark + memoMark + "</html>");
         label.setToolTipText(memoTip(t));
         row.setToolTipText(memoTip(t));
         JLabel minutes = new JLabel(t.minutes + "분", JLabel.RIGHT);
         minutes.setFont(Theme.font(13));
-        minutes.setForeground(t.done ? Theme.INK_DIM : Theme.INK_SUB);
+        minutes.setForeground(t.done || dim ? Theme.INK_DIM : Theme.INK_SUB);
         minutes.setPreferredSize(new Dimension(Math.max(34, minutes.getPreferredSize().width), 20));
         row.add(left, BorderLayout.WEST);
         row.add(label, BorderLayout.CENTER);
@@ -134,7 +135,8 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
             buttons.add(delete);
             // D-44: 오늘보다 앞선 날짜는 둘째 줄 왼쪽에 "지난 날". 제목 줄에 붙이면 좁은 목록에서 제목이 잘린다.
             JPanel second = new JPanel(new BorderLayout());
-            if (t.countDay().isBefore(control.today())) {
+            // D-69: 지난 반복 사본은 "지난 날" 없이 흐리게 보인다.
+            if (t.countDay().isBefore(control.today()) && !t.pastCopy(control.today())) {
                 JLabel past = new JLabel("지난 날");
                 past.setForeground(PAST);
                 past.setFont(Theme.font(12));
@@ -201,7 +203,7 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
      * 제목 칸. 글(getText)은 HTML(QA와 화면 읽기 프로그램이 읽는다)이고, 그림은 한 줄로 그려 칸 폭을 넘으면 "…"로 줄인다.
      * HTML 라벨은 좁으면 두 줄로 꺾여 줄 높이를 넘었다. 끝낸 일은 흐린 글에 취소선, 메모가 있으면 끝에 흐린 "메모".
      */
-    private static JLabel title(Task t, String date, String note, String tag, String html) {
+    private static JLabel title(Task t, String date, String note, String tag, boolean dim, String html) {
         JLabel label = new JLabel(html) {
             @Override
             protected void paintComponent(java.awt.Graphics graphics) {
@@ -218,7 +220,7 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
                 String text = fit(date + t.title, fm, getWidth() - memo - dueWidth - noteWidth - tagWidth);
                 int y = (getHeight() + fm.getAscent() - fm.getDescent()) / 2;
                 g.setFont(getFont());
-                g.setColor(t.done ? Theme.INK_DIM : Theme.INK);
+                g.setColor(t.done || dim ? Theme.INK_DIM : Theme.INK);
                 g.drawString(text, 0, y);
                 int tw = fm.stringWidth(text);
                 if (t.done) {

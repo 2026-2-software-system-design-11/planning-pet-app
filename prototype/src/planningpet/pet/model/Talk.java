@@ -35,7 +35,8 @@ public final class Talk {
         StringBuilder b = new StringBuilder(usual());
         // 세는 날(06 데이터 절)로 센다. 끝내지 않은 기간 할 일은 마감 날의 일이다(D-65).
         long yesterday = s.tasks.stream()
-                .filter(t -> t.kind == Task.Kind.TASK && !t.done && t.countDay().equals(today.minusDays(1))).count();
+                .filter(t -> t.kind == Task.Kind.TASK && !t.done && t.countDay().equals(today.minusDays(1)))
+                .filter(t -> !t.pastCopy(today)).count(); // D-69: 놓친 반복 사본은 밀린 일이 아니다.
         if (yesterday > 0) {
             b.append(" 어제 못 끝낸 일 ").append(yesterday).append("개는 달력에 남아 있어.");
         }

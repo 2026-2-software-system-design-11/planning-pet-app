@@ -57,6 +57,31 @@ final class PeriodCheck {
         rewards();
         talkAndCalendar();
         autoPlace();
+        pastCopies();
+    }
+
+    /** D-69: 지난 반복 사본은 밀린 일로 보이지 않는다. */
+    static void pastCopies() {
+        App app = Main.create(at("11-18T09:00"));
+        List<Task> runs = daily(app.store);
+        app.store.book.add(Task.Kind.TASK, "과제", d("11-16"), null, 30, "", null);
+        app.show("일정관리");
+        app.store.changed();
+        ScheduleScreen sched = ProtoCheck.find(app.root, ScheduleScreen.class);
+        eq("D-69 지난 반복 사본", "11/16 운동 30분 / 11/16 과제 30분 지난 날 / 11/17 운동 30분", String.join(" / ",
+                java.util.Arrays.asList(rows(sched.untimed).split(" / ")).subList(0, 3)));
+        box(sched.untimed, runs.get(0)).doClick();
+        eq("D-69 지난 사본도 체크", "true", runs.get(0).done);
+        TaskBook.CellPreview c17 = app.store.book.cellPreview(d("11-17"));
+        TaskBook.CellPreview c18 = app.store.book.cellPreview(d("11-18"));
+        eq("D-69 지난 반복 사본은 진하지 않다", "운동 false 운동 true", c17.title() + " " + c17.open() + " " + c18.title() + " " + c18.open());
+        Store b = at("11-18T09:00");
+        daily(b);
+        b.book.add(Task.Kind.TASK, "과제", d("11-17"), null, 30, "", null);
+        eq("D-69 놓친 반복은 어제 일로 세지 않는다", "오늘 할 일 1개 남았어. 어제 못 끝낸 일 1개는 달력에 남아 있어. 내일 '운동'이 있어.",
+                new Talk(b).briefing());
+        Stats.Rate week = Stats.rate(b, Stats.Period.week(d("11-16")));
+        eq("D-69 통계에는 센다", "0/3", week.done() + "/" + week.total());
     }
 
     static void validate() {

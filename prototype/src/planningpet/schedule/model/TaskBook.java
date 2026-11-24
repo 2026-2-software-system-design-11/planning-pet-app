@@ -240,7 +240,8 @@ public final class TaskBook {
         if (title.length() > 5) {
             title = title.substring(0, 5).stripTrailing() + "…";
         }
-        return new CellPreview(title, list.stream().anyMatch(t -> !t.done));
+        LocalDate now = today();
+        return new CellPreview(title, list.stream().anyMatch(t -> !t.done && !t.pastCopy(now)));
     }
 
     /** 마감이 있는 할 일의 "~11/22까지"(06의 6번). 마감이 없으면 null. */
