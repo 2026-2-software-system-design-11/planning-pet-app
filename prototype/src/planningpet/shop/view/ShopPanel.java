@@ -178,3 +178,93 @@ public final class ShopPanel extends Card {
         search.setFont(Theme.font(13));
         search.setColumns(10);
         search.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Theme.CARD_EDGE, 1, true),
+                BorderFactory.createEmptyBorder(6, 30, 6, 10)));
+        search.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            private void changed() {
+                first = 0;
+                app.redraw();
+            }
+
+            @Override
+            public void insertUpdate(javax.swing.event.DocumentEvent e) {
+                changed();
+            }
+
+            @Override
+            public void removeUpdate(javax.swing.event.DocumentEvent e) {
+                changed();
+            }
+
+            @Override
+            public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                changed();
+            }
+        });
+        JLabel glass = new JLabel(Icons.icon(Icons.Kind.SEARCH, 16, Theme.INK_SUB));
+        JPanel searchBox = new JPanel(null) {
+            @Override
+            public void doLayout() {
+                search.setBounds(0, 0, getWidth(), getHeight());
+                glass.setBounds(9, (getHeight() - 16) / 2, 16, 16);
+            }
+
+            @Override
+            public Dimension getPreferredSize() {
+                return new Dimension(Math.max(110, Math.min(170, ShopPanel.this.getWidth() / 8)), 34);
+            }
+        };
+        searchBox.add(glass);
+        searchBox.add(search);
+        searchBox.setComponentZOrder(glass, 0);
+        JPanel searchWrap = new JPanel(new GridBagLayout());
+        searchWrap.add(searchBox);
+        JPanel top = new JPanel(new BorderLayout(8, 0));
+        top.add(tabRow, BorderLayout.CENTER);
+        top.add(searchWrap, BorderLayout.EAST);
+        prev.addActionListener(e -> {
+            first = Math.max(0, first - perPage());
+            app.redraw();
+        });
+        next.addActionListener(e -> {
+            first += perPage();
+            app.redraw();
+        });
+        JPanel row = new JPanel(new BorderLayout(4, 0));
+        row.add(prev, BorderLayout.WEST);
+        row.add(cards, BorderLayout.CENTER);
+        row.add(next, BorderLayout.EAST);
+        JLabel guide = new JLabel(Ui.POINT_GUIDE, Icons.icon(Icons.Kind.INFO, 14, Theme.ICON), SwingConstants.LEFT);
+        guide.setFont(Theme.regular(11));
+        guide.setForeground(Theme.INK_SUB);
+        guide.setIconTextGap(5);
+        guide.setToolTipText(Ui.POINT_GUIDE);
+        JPanel c = new JPanel(new BorderLayout(0, 6));
+        c.add(top, BorderLayout.NORTH);
+        c.add(row, BorderLayout.CENTER);
+        c.add(guide, BorderLayout.SOUTH);
+        return c;
+    }
+
+    /** 카드 줄에 들어가는 카드 수. */
+    private int perPage() {
+        int w = cards.getWidth() > 0 ? cards.getWidth() : 6 * (ShopCard.W + 10);
+        return Math.max(2, (w + 10) / (ShopCard.W + 10));
+    }
+
+    /** 오른쪽 미리보기 칸. */
+    private JPanel preview() {
+        Card c = new Card(new BorderLayout(0, 6), 16);
+        c.setBorder(BorderFactory.createEmptyBorder(8, 10, 10, 10));
+        JLabel title = new JLabel("미리보기", Icons.icon(Icons.Kind.ROOM, 16, Theme.ICON), SwingConstants.LEFT);
+        title.setFont(Theme.bold(14));
+        title.setIconTextGap(6);
+        CircleButton close = new CircleButton(Icons.Kind.CLOSE, 24, "미리보기 닫기", true);
+        close.addActionListener(e -> {
+            previewToggle.setSelected(false);
+            app.redraw();
+        });
+        JPanel head = new JPanel(new BorderLayout());
+        head.add(title, BorderLayout.WEST);
+        head.add(close, BorderLayout.EAST);
+        c.add(head, BorderLayout.NORTH);
+        c.add(previewRoom, BorderLayout.CENTER);
