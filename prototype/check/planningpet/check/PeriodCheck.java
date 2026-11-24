@@ -55,6 +55,7 @@ final class PeriodCheck {
         edit();
         lists();
         narrow();
+        pills();
         rewards();
         talkAndCalendar();
         autoPlace();
@@ -503,6 +504,46 @@ final class PeriodCheck {
                 + " / 기간 안에 할 일 / E사 지원서 120분 ~11/22까지 18일에 하려던 일 / 11/16 졸업 작품 기획서, 11/19 졸업 작품 기획서,"
                 + " 11/19 E사 지원서, 11/22 E사 지원서",
                 homeTitles + " / " + homeRows + " / " + titles(app.root, sched.untimed));
+    }
+
+    /** T-EDIT-15(D-94): 지난 날 목록의 기간 할 일과 끝낸 줄의 시각 알약은 누를 수 없다. */
+    static void pills() {
+        App app = Main.create(at("11-19T09:00"));
+        Task job = period(app.store, "지원서", "11-16", "11-22", 60);
+        Task toeic = app.store.book.add(Task.Kind.TASK, "토익", d("11-19"), null, 30, "", null).get(0);
+        app.schedule.check(toeic);
+        MainScreen home = ProtoCheck.find(app.root, MainScreen.class);
+        home.rows.settle();
+        home.selectDate(d("11-17"));
+        javax.swing.JButton past = pill(home.rows, job);
+        String before = past.isEnabled() + " " + past.getToolTipText();
+        past.doClick();
+        home.selectDate(d("11-19"));
+        eq("D-94 지난 날과 끝낸 줄의 알약", "false 지난 날에는 시각을 정할 수 없어요 / true / false / 2026-11-16 null",
+                before + " / " + pill(home.rows, job).isEnabled() + " / " + pill(home.rows, toeic).isEnabled() + " / " + job.date + " "
+                        + job.start);
+    }
+
+    /** 목록에서 그 일의 줄에 있는 시각 알약. */
+    static javax.swing.JButton pill(java.awt.Container list, Task t) {
+        for (java.awt.Component row : list.getComponents()) {
+            if (row instanceof java.awt.Container k && box(k, t) != null) {
+                return button(k);
+            }
+        }
+        return null;
+    }
+
+    private static javax.swing.JButton button(java.awt.Container c) {
+        for (java.awt.Component child : c.getComponents()) {
+            if (child instanceof javax.swing.JButton b && (b.getText().contains(":") || b.getText().equals("시각 정하기"))) {
+                return b;
+            }
+            if (child instanceof java.awt.Container k && button(k) != null) {
+                return button(k);
+            }
+        }
+        return null;
     }
 
     /** 메인 창을 1000x680으로 늘어놓고 목록의 제목 칸이 그리는 글을 잇는다. "…"로 줄인 글은 앞 네 글자 넘게 보여야 한다. */

@@ -270,7 +270,9 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
         } else {
             JComponent[] right;
             if (time != null) {
-                TimePill when = new TimePill(time, t.done);
+                // D-94: 끝낸 줄은 누를 수 없다. 지난 날 목록에서 기간 할 일의 시각은 정하지 않는다.
+                boolean pastPeriod = !t.done && t.period() && listDay.isBefore(control.today());
+                TimePill when = new TimePill(time, t.done, t.done || pastPeriod, pastPeriod ? "지난 날에는 시각을 정할 수 없어요" : null);
                 when.addActionListener(e -> control.editTime(t, listDay, when));
                 watched.add(when);
                 right = new JComponent[] {when, minutes, edit, delete};

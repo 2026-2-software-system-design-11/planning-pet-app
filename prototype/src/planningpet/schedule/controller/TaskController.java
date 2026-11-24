@@ -113,6 +113,10 @@ public final class TaskController {
 
     /** D-32. 메인 시각 칸을 누르면 그 아래에 시각 고치기 창을 연다. day는 그 목록의 날이다(D-65). */
     public void editTime(Task t, LocalDate day, java.awt.Component anchor) {
+        // D-94: 끝낸 일과 지난 날 목록의 기간 할 일은 목록에서 시각을 정하지 않는다(화면은 알약을 흐린다).
+        if (t.done || t.period() && day.isBefore(app.store.today())) {
+            return;
+        }
         TimeEditor.open(app, t, day, anchor);
     }
 
