@@ -11,9 +11,7 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
-import java.io.InputStream;
 import java.util.Map;
-import javax.imageio.ImageIO;
 
 /**
  * 통계 화면만 쓰는 그림: 카드 제목 아이콘, 일정 유형(D-54) 아이콘과 막대 색, 장식 고양이.
@@ -25,10 +23,10 @@ final class StatsArt {
 
     enum Kind { TARGET, PIE, SWAP, BOOK, DUMBBELL, LAPTOP, CUP, TAG, HELP, LEFT, RIGHT, RING }
 
-    /** 머리 오른쪽에서 내다보는 고양이. 파일이 없으면 null이고 그리지 않는다. */
-    static final BufferedImage PEEK_CAT = load("peek-cat.png");
-    /** 사이드바 아래에서 자는 고양이. 파일이 없으면 null이다. */
-    static final BufferedImage SLEEP_CAT = load("sleep-cat.png");
+    /** 머리 오른쪽에서 내다보는 고양이. 그림 파일 대신 펫 도형의 얼굴로 그린다(05 통계, 디자인 시스템 10절). */
+    static final BufferedImage PEEK_CAT = peekCat();
+    /** 사이드바 아래에서 자는 고양이. 펫 도형의 자기 자세(D-50)로 방석 위에 그린다. */
+    static final BufferedImage SLEEP_CAT = sleepCat();
 
     /** 유형마다 아이콘, 아이콘 색, 막대의 위와 아래 색. 예시의 유형별 달성률을 따랐다. */
     record Look(Kind icon, Color ink, Color top, Color bottom) {
@@ -48,12 +46,28 @@ final class StatsArt {
         return LOOKS.getOrDefault(category, OTHER);
     }
 
-    private static BufferedImage load(String name) {
-        try (InputStream in = StatsArt.class.getResourceAsStream("/assets/stats/" + name)) {
-            return in == null ? null : ImageIO.read(in);
-        } catch (java.io.IOException e) {
-            return null;
-        }
+    private static final java.util.Set<String> COLLAR = java.util.Set.of("기본 목걸이");
+
+    private static BufferedImage peekCat() {
+        BufferedImage im = new BufferedImage(128, 112, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = im.createGraphics();
+        planningpet.pet.view.PetArt.drawFace(g, planningpet.pet.view.PetKind.CAT, COLLAR, 64, 60, 112);
+        g.dispose();
+        return im;
+    }
+
+    private static BufferedImage sleepCat() {
+        BufferedImage im = new BufferedImage(300, 200, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = im.createGraphics();
+        g.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+        // 방석: 예시의 하늘색 둥근 방석.
+        g.setColor(new Color(0x9CC9EA));
+        g.fill(new Ellipse2D.Double(24, 140, 252, 52));
+        g.setColor(new Color(0xC6E2F5));
+        g.fill(new Ellipse2D.Double(36, 136, 228, 40));
+        planningpet.pet.view.PetArt.drawAt(g, planningpet.pet.view.PetKind.CAT, planningpet.pet.view.PetPose.SLEEP, COLLAR, 0, 99, 150, 168, 230);
+        g.dispose();
+        return im;
     }
 
     /** Swing 부품에 붙이는 아이콘. */

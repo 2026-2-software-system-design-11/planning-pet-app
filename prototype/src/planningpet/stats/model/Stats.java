@@ -53,6 +53,9 @@ public final class Stats {
 
     private static List<Task> counted(Store s, LocalDate from, LocalDate to) {
         LocalDate end = to.isAfter(s.today()) ? s.today() : to;
+        // D-55: 앞날은 세지 않는다. D-63: 오늘의 일정은 끝낸 것만 센다(안 끝낸 일은 다음 날부터 센다).
+        return s.tasks.stream().filter(t -> !t.date.isBefore(from) && !t.date.isAfter(end))
+                .filter(t -> t.done || t.date.isBefore(s.today())).toList();
     }
 
     private static Rate rate(List<Task> list) {
