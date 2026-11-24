@@ -62,6 +62,23 @@ public final class Bar extends JComponent {
         int h = Math.min(getHeight(), getPreferredSize().height);
         int y = (getHeight() - h) / 2;
         int w = getWidth();
+        if (segments > 0) {
+            int gap = Math.max(3, h / 2);
+            double cell = (w - gap * (segments - 1)) / (double) segments;
+            for (int i = 0; i < segments; i++) {
+                int x = (int) Math.round(i * (cell + gap));
+                int cw = (int) Math.round((i + 1) * (cell + gap) - gap) - x;
+                if (i < done) {
+                    g.setPaint(new GradientPaint(0, y, Theme.MINT_TOP, 0, y + h, Theme.MINT));
+                } else {
+                    g.setColor(track);
+                }
+                g.fillRoundRect(x, y, cw, h, h, h);
+            }
+            g.dispose();
+            return;
+        }
+        g.setColor(track);
         g.fillRoundRect(0, y, w, h, h, h);
         int fw = (int) Math.round(w * ratio);
         if (fw > 0) {

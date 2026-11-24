@@ -56,6 +56,18 @@ public final class Theme {
     public static final Color SPARK = new Color(0xF8C630);
     /** 놓인 아이템의 테두리와 체크 배지. */
     public static final Color CHECK = new Color(0x1DB898);
+    /** 홈 달력의 오늘(2026-11-24 홈 예시의 연민트 둥근 네모). */
+    public static final Color DAY_TODAY = new Color(0xC2F0E0);
+    /** 끝낸 할 일 줄의 바탕(홈 예시의 민트빛 줄). */
+    public static final Color ROW_DONE = new Color(0xE3, 0xF7, 0xF1, 150);
+    /** 홈 펫 카드 장면의 하늘(위에서 아래로)과 풀밭(가까운 곳, 먼 곳, 풀잎). */
+    public static final Color SKY_TOP = new Color(0xC9E9FC);
+    public static final Color SKY_BOTTOM = new Color(0xEAF6FD);
+    public static final Color GRASS = new Color(0xDCEDA2);
+    public static final Color GRASS_FAR = new Color(0xCCEBC8);
+    public static final Color GRASS_DEEP = new Color(0xA9D38A);
+    /** 흰 바탕이 아닌 곳(하늘 위)의 진행 막대 바탕과 진행 칸의 빈 칸. */
+    public static final Color TRACK_DEEP = new Color(0xB4D0E2);
     public static final int CARD_RADIUS = 18;
     public static final int BUTTON_RADIUS = 22;
     public static final int IMAGE_RADIUS = 16;

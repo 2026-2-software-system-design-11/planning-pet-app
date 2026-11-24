@@ -18,7 +18,8 @@ import javax.swing.Icon;
  */
 public final class Icons {
     public enum Kind { HOME, ROOM, CALENDAR, CHART, GEAR, PAW, COIN, CART, SOFA, INFO, CHECK, HEART, SPARK, FLAME, BOX,
-        GAMEPAD, SEARCH, LEFT, RIGHT, PLUS, PENCIL, LOCK, SHIRT, HAT, BOW, COLLAR, BALL, GRID, DOTS, PLANT, CLOSE, EYE }
+        GAMEPAD, SEARCH, LEFT, RIGHT, PLUS, PENCIL, LOCK, SHIRT, HAT, BOW, COLLAR, BALL, GRID, DOTS, PLANT, CLOSE, EYE,
+        TRASH, CLOCK, CHECKLIST }
 
     private Icons() {
     }
@@ -160,6 +161,25 @@ public final class Icons {
                 g.draw(path(12, 15, 12, 9));
                 g.draw(path(12, 11, 6, 6.5, 6.5, 11, 12, 11));
                 g.draw(path(12, 9, 17.5, 4, 17.5, 8.5, 12, 9));
+            }
+            case TRASH -> {
+                g.draw(path(4, 6.5, 20, 6.5));
+                g.draw(path(9.5, 6.5, 10, 3.8, 14, 3.8, 14.5, 6.5));
+                g.draw(path(6, 6.5, 7.2, 19.5, 7.6, 20.5, 16.4, 20.5, 16.8, 19.5, 18, 6.5));
+                g.draw(path(10, 10.5, 10, 16.5));
+                g.draw(path(14, 10.5, 14, 16.5));
+            }
+            case CLOCK -> {
+                g.draw(new Ellipse2D.Double(3.5, 3.5, 17, 17));
+                g.draw(path(12, 7.5, 12, 12, 15.2, 14));
+            }
+            case CHECKLIST -> {
+                g.draw(new RoundRectangle2D.Double(4.5, 4.5, 15, 16.5, 4, 4));
+                g.draw(new RoundRectangle2D.Double(8.5, 2.5, 7, 4, 2, 2));
+                g.draw(path(7.8, 11.5, 9.3, 13, 11.6, 10.5));
+                g.draw(path(13.5, 11.8, 16.5, 11.8));
+                g.draw(path(7.8, 16.5, 9.3, 18, 11.6, 15.5));
+                g.draw(path(13.5, 16.8, 16.5, 16.8));
             }
             case EYE -> {
                 g.draw(path(2.5, 12, 7, 6.5, 12, 5.5, 17, 6.5, 21.5, 12, 17, 17.5, 12, 18.5, 7, 17.5, 2.5, 12));
