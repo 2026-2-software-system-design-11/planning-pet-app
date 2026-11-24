@@ -196,8 +196,8 @@ public final class ProtoCheck {
                 java.time.LocalTime.of(10, 30), 75, "", java.time.LocalDate.of(2026, 12, 28));
         Task last = copies.get(copies.size() - 1);
         TaskForm f = new TaskForm(last, last.date, app.store.now);
-        f.showSeries(app.store.book.seriesEnd(last));
-        boolean shown = f.repeat.isSelected() && !f.repeat.isEnabled();
+        f.showSeries(last.repeat, app.store.book.seriesEnd(last));
+        boolean shown = "요일".equals(f.repeat.getSelectedItem()) && !f.repeat.isEnabled() && f.days[0].isSelected();
         Ui.setDate(f.date, java.time.LocalDate.of(2026, 12, 29));
         app.schedule.chooser = (title, message, options) -> 0;
         boolean saved = TaskDialog.trySave(app, f, last);

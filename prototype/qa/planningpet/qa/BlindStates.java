@@ -57,7 +57,7 @@ public final class BlindStates {
                     images, key, n++, out, "일정 삭제 확인 창(반복 아님)");
             Task fixed = app.store.tasks.stream().filter(x -> x.kind == Task.Kind.FIXED).findFirst().orElseThrow();
             TaskForm fixedForm = new TaskForm(fixed, fixed.date, app.store.now);
-            fixedForm.showSeries(app.store.book.seriesEnd(fixed));
+            fixedForm.showSeries(fixed.repeat, app.store.book.seriesEnd(fixed));
             BlindShots.shoot(TaskDialog.content(fixedForm, new JButton("취소"),
                     new JButton("저장"), new JButton("삭제")), null, "일정 수정", images, key, n++, out, "일정 입력 창(고정 일정 수정)");
             app.store.book.add(Task.Kind.TASK, "기말 프로젝트", today, null, 600, "", null);
