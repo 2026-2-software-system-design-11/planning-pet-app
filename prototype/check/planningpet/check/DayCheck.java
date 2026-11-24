@@ -26,6 +26,15 @@ final class DayCheck {
         nightDay();
         overlaps();
         narrowTips();
+        scrolls();
+    }
+
+    /** D-89: 시간표가 처음 보이는 자리와 자동 배치 뒤. */
+    private static void scrolls() {
+        java.util.function.BiFunction<String, String, Integer> top = (monday, now) ->
+                Planner.top(d(monday), java.time.LocalDateTime.parse("2026-" + now));
+        eq("T-TT-8", "1150 1470 480 480", top.apply("11-16", "11-18T20:10") + " " + top.apply("11-16", "11-21T01:30") + " "
+                + top.apply("11-23", "11-18T20:10") + " " + top.apply("11-16", "11-16T00:30"));
     }
 
     /** 앱 하루의 분으로 시각을 준 할 일 하나를 넣는다. */
