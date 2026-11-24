@@ -100,8 +100,57 @@ public final class RoomView extends JComponent {
         g.dispose();
     }
 
+    /** 펫 한 마리면 가운데, 두 마리면 고양이 왼쪽, 강아지 오른쪽이다. 고른 펫 위에 말풍선을 둔다. */
+    private void pets(Graphics2D g, int w, int h, int visibleH) {
+        int n = store.pets.size();
+        // 디자이너 제안(README 3절): 바닥 y 0.82, 상자 한 변 min(칸 폭 0.165, 칸 높이 0.62), 두 마리면 x 0.42와 0.58.
+        int ground = Math.min((int) (h * 0.82), visibleH - 8);
+        int size = (int) Math.min(getWidth() * 0.165, getHeight() * 0.62);
+        for (int i = 0; i < n; i++) {
+            PetState p = n > 1 ? store.pet(i == 0 ? "CAT" : "DOG") : store.pets.get(0);
+            int px = (int) (w * (n > 1 ? (i == 0 ? 0.42 : 0.58) : 0.50));
+            g.setColor(new java.awt.Color(0x9A, 0x6A, 0x45, 40));
+            g.fillOval(px - size * 3 / 10, ground - size / 22, size * 3 / 5, size / 11);
+            Pet.drawAt(g, p, px, ground, size);
+            if (p == store.pet()) {
+                int top = ground - Pet.drawnHeight(p, size) * 9 / 10;
+                Icons.draw(g, Icons.Kind.HEART, px - size * 11 / 20, top + size / 14, size / 6, Theme.HEART);
+                Icons.draw(g, Icons.Kind.HEART, px - size * 7 / 16, top - size / 20, size / 9, Theme.HEART);
+                Icons.draw(g, Icons.Kind.SPARK, px + size * 3 / 10, top - size / 30, size / 5, Theme.SPARK);
+                bubble(g, px + size / 5, top - 4, w);
+            }
+        }
+    }
+
+    /** 말풍선(디자인 시스템 5절): 흰 바탕, 옅은 그림자, 꼬리가 아래의 펫을 가리킨다. 글이 없으면 하트 하나다(D-56). */
+    private void bubble(Graphics2D g, int tipX, int tipY, int roomW) {
+        g.setFont(Theme.bold(14));
+        java.awt.FontMetrics fm = g.getFontMetrics();
+        boolean words = bubble != null && !bubble.isEmpty();
+        int heart = words ? 14 : 22;
+        int bw = words ? fm.stringWidth(bubble) + heart + 8 + 32 : 44;
+        int bh = words ? 36 : 40;
+        int bx = Math.max(10, Math.min(roomW - bw - 10, tipX - (words ? bw / 2 : 8)));
+        int by = tipY - 10 - bh;
+        int r = words ? Theme.BUBBLE_RADIUS : bh;
+        Card.shadow(g, bx, by, bw, bh, r);
+        java.awt.Polygon tail = new java.awt.Polygon(new int[] {tipX - 7, tipX + 7, tipX}, new int[] {by + bh - 3, by + bh - 3, tipY}, 3);
+        g.setColor(Theme.CARD_TOP);
+        g.fillRoundRect(bx, by, bw, bh, r, r);
+        g.fill(tail);
+        g.setColor(Theme.CARD_EDGE);
+        g.drawRoundRect(bx, by, bw, bh, r, r);
+        if (words) {
+            Icons.draw(g, Icons.Kind.HEART, bx + 16, by + (bh - heart) / 2, heart, Theme.HEART);
+            g.setColor(Theme.INK);
+            g.drawString(bubble, bx + 16 + heart + 8, by + (bh + fm.getAscent() - fm.getDescent()) / 2);
+        } else {
+            Icons.draw(g, Icons.Kind.HEART, bx + (bw - heart) / 2, by + (bh - heart) / 2 + 1, heart, Theme.HEART);
+        }
+    }
+
     private void item(Graphics2D g, String name, double[] s, int w, int h) {
-        if (!store.placed.contains(name)) {
+        if (!store.placed.contains(name) && !name.equals(previewItem)) {
             return;
         }
         int x = (int) (s[0] * w);
@@ -110,14 +159,23 @@ public final class RoomView extends JComponent {
         int ih = (int) (s[3] * h);
         BufferedImage im = Images.item(name);
         if (im != null) {
-            Images.fit(g, im, x, y, iw, ih);
+            if ("걸이 화분".equals(name)) {
+                Images.fitTop(g, im, x, y, iw, ih);
+            } else if (HANGING.contains(name)) {
+                Images.fit(g, im, x, y, iw, ih);
+            } else {
+                Images.fitBottom(g, im, x, y, iw, ih);
+            }
             return;
         }
-        g.setColor(Theme.MINT_PALE);
+        g.setColor(new java.awt.Color(255, 255, 255, 200));
         g.fillRoundRect(x, y, iw, ih, 14, 14);
         g.setColor(Theme.MINT_LINE);
         g.drawRoundRect(x, y, iw, ih, 14, 14);
+        int s2 = Math.min(iw, ih) / 2;
+        Icons.draw(g, Icons.Kind.BOX, x + (iw - s2) / 2, y + (ih - s2) / 2 - 6, s2, Theme.ICON);
+        g.setFont(Theme.bold(12));
         g.setColor(Theme.INK);
-        g.drawString(name + " (임시)", x + 8, y + 20);
+        g.drawString(name, x + (iw - g.getFontMetrics().stringWidth(name)) / 2, y + ih - 8);
     }
 }

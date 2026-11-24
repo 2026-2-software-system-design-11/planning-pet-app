@@ -2,19 +2,22 @@ package planningpet.shop.model;
 
 import planningpet.app.model.Store;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
-/** 상점(06의 20번): 아이템과 가격, 사기. */
+/** 상점(06의 20번): 아이템과 가격, 분류, 사기, 방 꾸미기 만족도. */
 public final class Shop {
-    /** D-28의 아이템과 가격. 가격 순이다. */
+    public static final List<String> CATEGORIES = List.of("가구", "장식", "장난감", "기타");
+
+    public record Item(String name, int price, String category) {
+    }
+
+    /** D-52의 아이템 이름에서 가격으로. 가격 순이다. */
     public static final Map<String, Integer> ITEMS = new LinkedHashMap<>();
+    /** D-52의 아이템. ITEMS와 같은 순서다. */
+    public static final Map<String, Item> CATALOG = new LinkedHashMap<>();
 
     static {
-        String[] names = {"쿠션", "화분", "러그", "액자", "조명", "책장", "책상", "소파"};
-        int[] prices = {50, 80, 100, 120, 150, 200, 250, 300};
-        for (int i = 0; i < names.length; i++) {
-            ITEMS.put(names[i], prices[i]);
-        }
     }
 
     private final Store s;
