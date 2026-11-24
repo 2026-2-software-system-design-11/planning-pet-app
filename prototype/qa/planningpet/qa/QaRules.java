@@ -63,7 +63,7 @@ final class QaRules {
     /** 앱 창 네 화면과 창 열 가지. 창은 버튼에 동작이 붙기 전의 내용 판이다. */
     private Map<String, JComponent> screens() {
         Map<String, JComponent> m = new LinkedHashMap<>();
-        for (String name : new String[] {"홈", "일정관리", "pet", "설정"}) {
+        for (String name : new String[] {"홈", "일정관리", "나의 방", "설정"}) {
             App app = fresh();
             app.show(name);
             app.store.changed();

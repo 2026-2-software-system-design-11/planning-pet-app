@@ -130,13 +130,16 @@ final class Qa extends QaDrive {
 
     /** 나의 방: 배치 아이템, 방 말풍선(글이 없으면 하트), 보유한 아이템 카드("쿠션 보유 중 ✓"는 방에 놓임). */
     String pet() {
-        List<String> items = new ArrayList<>();
-        for (Component c : pet.items.getComponents()) {
-            if (c instanceof javax.swing.AbstractButton b) {
-                items.add(b.getText() + (Boolean.TRUE.equals(b.getClientProperty(RoundButtonUI.DIM)) ? "(흐림)" : ""));
-            }
+        pet.shop.ownedMode.doClick();
+        StringBuilder owned = new StringBuilder(pet.shop.cardsText());
+        // 카드 줄이 넘치면 다음 쪽으로 넘기며 모두 읽는다.
+        while (pet.shop.next.isEnabled()) {
+            pet.shop.next.doClick();
+            owned.append(owned.length() > 0 ? ", " : "").append(pet.shop.cardsText());
         }
-        return pet.decoText.getText() + ", " + pet.room.bubble + ", " + String.join(" ", items);
+        pet.shop.shopMode.doClick();
+        return pet.placedStat.getText().replaceAll("<[^>]+>", "") + ", " + (pet.room.bubble.isEmpty() ? "하트" : pet.room.bubble)
+                + ", " + owned;
     }
 
     private static Container findGrid(Container c) {
