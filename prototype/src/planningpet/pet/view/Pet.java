@@ -1,31 +1,17 @@
 package planningpet.pet.view;
 
-import planningpet.app.model.Store;
+import planningpet.pet.model.PetState;
 import planningpet.common.view.Images;
 import planningpet.reward.model.Level;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Polygon;
 
-/** 펫 임시 그림. 진짜 그림은 Q-28에서 정한다. 모습 단계(D-20)만큼 커진다. */
+/** 펫 그림(디자인 시스템 6절). 자세(D-50)마다 그림이 있고 모습 단계는 크기로 보인다. 장신구(D-51)는 그림 위에 겹쳐 그린다. 그림을 못 읽으면 도형 임시 그림을 그린다. */
 public final class Pet {
     private Pet() {
     }
 
-    /** 고양이는 디자인 시스템의 그림(모습 단계별), 강아지는 임시 그림. size는 그림 상자의 한 변. */
-    public static void drawAt(Graphics2D g, Store s, int x, int ground, int size) {
-        int stage = Level.stage(Level.level(s.exp));
-        java.awt.image.BufferedImage im = Images.pet(s.petKind, stage);
-        if (im != null) {
-            Images.fit(g, im, x - size / 2, ground - size, size, size);
-        } else {
-            Graphics2D h = (Graphics2D) g.create();
-            h.translate(x, ground);
-            double k = size / 50.0;
-            h.scale(k, k);
-            draw(h, s.petKind, 0, 0, stage, false);
-            h.dispose();
-        }
     }
 
     /** (x, ground)는 발이 닿는 가운데 점이다. walking이면 다리를 벌린다. */
