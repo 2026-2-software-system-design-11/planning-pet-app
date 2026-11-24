@@ -123,12 +123,12 @@ final class Flows67 {
         PickDialog pd = new PickDialog();
         q.eq("고양이 골라짐, 이름 칸", "true ''", pd.cat.isSelected() + " '" + pd.name.getText() + "'");
         q.eq("안내", "비워 두면 나비, 바둑이로 불러요", Qa.plain(hint(pd.panel)));
-        q.step("2", "이름 콩을 쓰고 시작하기를 누른다");
+        q.step("2", "이름 콩을 쓰고 바로 시작을 누른다");
         pd.name.setText("콩");
         pd.apply(s);
         q.start(s);
         q.open();
-        q.eq("말풍선", "안녕, 나는 콩이야. 일정관리에서 이번 학기 수업부터 넣어 볼까?", q.app.store.talk);
+        q.eq("말풍선", "처음 만났네! 나는 콩이야. 수업부터 넣어 볼까?", q.app.store.talk);
         q.eq("위 막대", "연속 접속 1일, 보유 0P, 출석 +20P", q.top());
         q.eq("레벨", "콩 Lv. 1 경험치 0 / 50", q.level());
         q.eq("목록", "아직 일정이 없어요. 작은 계획을 추가해 보세요.", q.rows());

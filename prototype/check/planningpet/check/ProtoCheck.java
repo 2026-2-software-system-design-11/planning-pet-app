@@ -77,7 +77,7 @@ public final class ProtoCheck {
         first.pets.clear();
         first.pets.add(new planningpet.pet.model.PetState("DOG", "바둑이"));
         first.activeKind = "DOG";
-        eq("T-BRF-6, FIRST_RUN", "안녕, 나는 바둑이야. 일정관리에서 이번 학기 수업부터 넣어 볼까? 1",
+        eq("T-BRF-6, FIRST_RUN", "처음 만났네! 나는 바둑이야. 수업부터 넣어 볼까? 1",
                 new AppController(first, new Talk(first)).windowShown() + " " + first.streak);
         Store d = MockData.empty();
         java.util.function.BiFunction<String, java.time.LocalTime, Task> at = (title, time) ->

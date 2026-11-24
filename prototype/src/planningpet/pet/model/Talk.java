@@ -21,7 +21,10 @@ public final class Talk {
     public String opening(LocalDate before) {
         LocalDate today = s.today();
         if (before == null) {
-            return "안녕, 나는 " + s.pet().name + Rules.iya(s.pet().name) + ". 일정관리에서 이번 학기 수업부터 넣어 볼까?";
+            // D-74: 처음 만난 인사. 바로 시작이면 수업부터 넣자고 이끌고, 예시면 예시를 넣어 뒀다고 말한다.
+            String hello = "처음 만났네! 나는 " + s.pet().name + Rules.iya(s.pet().name) + ". ";
+            return hello + (s.sampleIds.isEmpty() ? "수업부터 넣어 볼까?"
+                    : "예시 일정을 넣어 뒀어.");
         }
         if (ChronoUnit.DAYS.between(before, today) >= 8) {
             int n = s.book.checkables(today).size();
