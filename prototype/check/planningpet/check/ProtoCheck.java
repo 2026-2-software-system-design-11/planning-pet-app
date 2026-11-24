@@ -458,6 +458,11 @@ public final class ProtoCheck {
                 menu0 + " / " + menu1 + " / " + menu2 + " / " + shopPanel.previewToggle.getClass().getSimpleName());
         shopPanel.shopMode.doClick();
         shopPanel.previewToggle.doClick();
+        Store sv = MockData.sample();
+        sv.points = 100;
+        Shop svShop = new Shop(sv);
+        eq("D-85 되팔기", "50 150 false false", svShop.sell("쿠션") + " " + sv.points + " " + sv.owned.contains("쿠션") + " " + sv.placed.contains("쿠션"));
+        eq("T-SHOP-12 없는 것은 못 판다", "-1 150", svShop.sell("소파") + " " + sv.points);
         App one = Main.create(MockData.sample());
         planningpet.pet.view.PetScreen oneRoom = find(one.root, planningpet.pet.view.PetScreen.class);
         oneRoom.character.opened(false);
