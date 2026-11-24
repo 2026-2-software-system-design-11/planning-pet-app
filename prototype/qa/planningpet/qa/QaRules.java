@@ -246,6 +246,96 @@ final class QaRules {
         });
     }
 
+    /** 규칙 6: 기본 창(1000x680)과 창들에서 글 부품의 글이 잘리는가. HTML 글은 줄을 바꾸므로 뺀다. */
+    private void clipped(Map<String, JComponent> screens) {
+        screens.forEach((name, root) -> {
+            // 스스로 그리는 부품(알약 탭, 장신구 카드 등)은 선호 크기에 여백이 들어 있어 견줄 수 없다.
+            // 글을 Swing이 그리는 라벨과 기본 버튼만 본다.
+            List<JComponent> parts = new ArrayList<>(all(root, JLabel.class));
+            for (AbstractButton bt : all(root, AbstractButton.class)) {
+                Class<?> k = bt.getClass();
+                if (k == javax.swing.JButton.class || k == javax.swing.JToggleButton.class || k == javax.swing.JCheckBox.class
+                        || k == javax.swing.JRadioButton.class) {
+                    parts.add(bt);
+                }
+            }
+            for (JComponent c : parts) {
+                String text = c instanceof JLabel l ? l.getText() : ((AbstractButton) c).getText();
+                if (text == null || text.isBlank() || text.startsWith("<html") || !shown(c, root) || c.getWidth() <= 0) {
+                    continue;
+                }
+                int need = c.getPreferredSize().width;
+                if (need > c.getWidth()) {
+                    found.add(new String[] {"6 글 잘림", name, "\"" + text + "\" 필요 폭 " + need + ", 실제 폭 " + c.getWidth()});
+                }
+            }
+        });
+    }
+
+    /**
+     * 규칙 5: 화면의 보이는 활성 버튼을 하나씩 누르고 누르기 전과 뒤의 그림을 견준다. 그대로면 반응이 없는 버튼이다.
+     * 창을 여는 버튼은 창 없이 돌 때 예외가 나므로 반응한 것으로 친다. 묶음에서 이미 눌린 탭은 관례라 뺀다.
+     * 버튼마다 앱을 새로 만들어 앞 버튼이 바꾼 상태가 남지 않게 한다.
+     */
+    private void reacts() {
+        Dimension size = new Dimension(1000, 680);
+        for (String name : new String[] {"홈", "일정관리", "나의 방", "통계", "설정"}) {
+            int count = pressable(open(name, size)).size();
+            for (int i = 0; i < count; i++) {
+                App app = open(name, size);
+                List<AbstractButton> bs = pressable(app);
+                if (i >= bs.size()) {
+                    break;
+                }
+                AbstractButton b = bs.get(i);
+                int[] before = picture(app.root, size);
+                boolean opened = false;
+                try {
+                    b.doClick(0);
+                } catch (RuntimeException e) {
+                    opened = true;
+                }
+                lay(app.root, size);
+                if (!opened && java.util.Arrays.equals(before, picture(app.root, size))) {
+                    found.add(new String[] {"5 누르면 그림이 바뀐다", name, "\"" + name(b) + "\"을 눌러도 화면이 그대로다"});
+                }
+            }
+        }
+    }
+
+    private static App open(String name, Dimension size) {
+        App app = fresh();
+        app.show(name);
+        app.store.changed();
+        lay(app.root, size);
+        return app;
+    }
+
+    private static List<AbstractButton> pressable(App app) {
+        List<AbstractButton> out = new ArrayList<>();
+        for (AbstractButton b : all(app.root, AbstractButton.class)) {
+            boolean tab = b instanceof javax.swing.JToggleButton && b.isSelected()
+                    && b.getModel() instanceof javax.swing.DefaultButtonModel m && m.getGroup() != null;
+            // 스크롤 막대의 화살표는 누름이 아니라 마우스를 누르고 있는 동안 움직여 이 규칙 밖이다.
+            boolean scroll = javax.swing.SwingUtilities.getAncestorOfClass(javax.swing.JScrollBar.class, b) != null;
+            if (b.isEnabled() && shown(b, app.root) && b.getWidth() > 0 && !tab && !scroll) {
+                out.add(b);
+            }
+        }
+        return out;
+    }
+
+    private static int[] picture(JComponent root, Dimension size) {
+        java.awt.image.BufferedImage im = new java.awt.image.BufferedImage(size.width, size.height, java.awt.image.BufferedImage.TYPE_INT_RGB);
+        java.awt.Graphics2D g = im.createGraphics();
+        root.paint(g);
+        g.dispose();
+        return im.getRGB(0, 0, size.width, size.height, null, 0, size.width);
+    }
+
+    private static String name(AbstractButton b) {
+        String t = b.getText();
+        if (t != null && !t.isBlank()) {
     private void write(File out) throws Exception {
         List<String> lines = new ArrayList<>();
         lines.add("# 사용성 자동 규칙");
