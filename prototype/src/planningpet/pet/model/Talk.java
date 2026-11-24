@@ -50,20 +50,44 @@ public final class Talk {
             // D-70: 마감 날까지 못 한 기간 할 일.
             b.append(" 오늘이 ").append(Rules.shortTitle(dueToday.title)).append(" 마감이야!");
         }
+        // D-71: "마감"은 기간 할 일에만 쓰고 날짜와 남은 날 수를 붙인다.
         Task near = dueToday != null ? null : s.tasks.stream()
-                .filter(t -> t.kind == Task.Kind.TASK && !t.done)
-                .filter(t -> t.countDay().isAfter(today) && !t.countDay().isAfter(today.plusDays(3)))
-                .min(Comparator.comparing(Task::countDay).thenComparingLong(t -> t.seq))
+                .filter(t -> t.period() && !t.done)
+                .filter(t -> t.dueDate.isAfter(today) && !t.dueDate.isAfter(today.plusDays(3)))
+                .min(Comparator.comparing((Task t) -> t.dueDate).thenComparingLong(t -> t.seq))
                 .orElse(null);
         if (near != null) {
-            String[] when = {"", "내일이야", "모레야", "사흘 뒤야"};
-            b.append(" '").append(Rules.shortTitle(near.title)).append("' 마감이 ")
-                    .append(when[(int) ChronoUnit.DAYS.between(today, near.countDay())]).append(".");
+            int n = (int) ChronoUnit.DAYS.between(today, near.dueDate);
+            String when = n == 1 ? "내일" : n == 2 ? "모레" : n + "일 뒤";
+            b.append(" '").append(Rules.shortTitle(near.title)).append("' 마감이 ").append(when).append("(")
+                    .append(near.dueDate.getDayOfMonth()).append("일)").append(Rules.josa(when, "이야", "야"))
+                    .append(", D-").append(n).append(".");
         }
-        if (s.book.checkables(today).isEmpty() && near == null && dueToday == null) {
-            b.append(" 아래 칸에 하나 적어 볼까?");
+        // D-71: 내일 날짜의 보통 할 일은 "내일 '{제목}'이 있어."
+        Task tomorrow = s.book.dayPlan(today.plusDays(1)).timed().stream()
+                .filter(t -> t.kind == Task.Kind.TASK && !t.done).findFirst()
+                .or(() -> s.book.dayPlan(today.plusDays(1)).untimed().stream().filter(t -> !t.done && !t.period()).findFirst())
+                .orElse(null);
+        if (tomorrow != null) {
+            b.append(" 내일 '").append(Rules.shortTitle(tomorrow.title)).append("'")
+                    .append(Rules.josa(tomorrow.title, "이", "가")).append(" 있어.");
+        }
+        if (s.book.checkables(today).isEmpty() && near == null && dueToday == null && tomorrow == null) {
+            // 기간 안에 할 일이 있으면 새로 적으라고 하지 않고 가장 가까운 마감을 알린다.
+            String period = periodLine();
+            b.append(period != null ? " " + period : " 아래 칸에 하나 적어 볼까?");
         }
         return b.toString();
+    }
+
+    /** 오늘의 기간 안에 할 일 가운데 마감, 넣은 순으로 첫 번째의 "{제목}은 {일}일까지야, {n}일 남았어."(D-70). 없으면 null. */
+    private String periodLine() {
+        LocalDate today = s.today();
+        return s.book.dayPlan(today).period().stream()
+                .min(Comparator.comparing((Task x) -> x.dueDate).thenComparingLong(x -> x.seq))
+                .map(p -> Rules.shortTitle(p.title) + Rules.josa(p.title, "은", "는") + " " + p.dueDate.getDayOfMonth()
+                        + "일까지야, " + ChronoUnit.DAYS.between(today, p.dueDate) + "일 남았어.")
+                .orElse(null);
     }
 
     public String usual() {
@@ -105,10 +129,7 @@ public final class Talk {
             return "잘했어! +10P";
         }
         // D-70: 기간 안에 할 일이 남았으면 가장 가까운 마감을 함께 말한다.
-        return s.book.dayPlan(s.today()).period().stream()
-                .min(Comparator.comparing((Task x) -> x.dueDate).thenComparingLong(x -> x.seq))
-                .map(p -> "오늘 할 일 다 끝냈어! " + Rules.shortTitle(p.title) + Rules.josa(p.title, "은", "는") + " "
-                        + p.dueDate.getDayOfMonth() + "일까지야, " + ChronoUnit.DAYS.between(s.today(), p.dueDate) + "일 남았어.")
-                .orElse("오늘 할 일을 다 끝냈어! 푹 쉬어.");
+        String period = periodLine();
+        return period != null ? "오늘 할 일 다 끝냈어! " + period : "오늘 할 일을 다 끝냈어! 푹 쉬어.";
     }
 }

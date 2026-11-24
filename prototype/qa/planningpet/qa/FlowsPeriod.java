@@ -21,7 +21,7 @@ final class FlowsPeriod {
         q.start(Personas.p2());
         q.step("1", "앱을 열고 목록 제목 줄의 일정 추가를 누른다");
         q.open();
-        q.eq("말풍선(UF-2-1의 1단계와 같다)", "오늘 할 일 3개 남았어. 어제 못 끝낸 일 1개는 달력에 남아 있어. 'B사 자소서 제출' 마감이 내일이야.",
+        q.eq("말풍선(UF-2-1의 1단계와 같다)", "오늘 할 일 3개 남았어. 어제 못 끝낸 일 1개는 달력에 남아 있어. 내일 'B사 자소서 제출'이 있어.",
                 q.app.store.talk);
         q.has("연 창", "새 일정 2026-11-16", q.addFromList());
         TaskForm f = q.form(q.main.calendar.selected().toString());
@@ -58,7 +58,7 @@ final class FlowsPeriod {
         q.eq("고른 날짜", "2026-11-17", q.main.calendar.selected());
         q.eq("목록", "시각 없는 할 일 / [ ] B사 자소서 제출 시각 정하기 30분 / 기간 안에 할 일 / [ ] E사 지원서 ~11/22까지 시각 정하기 120분",
                 q.rows());
-        q.eq("말풍선", "오늘 할 일 1개 남았어. 어제 못 끝낸 일 2개는 달력에 남아 있어. '2026 하반기 공채 자기…' 마감이 모레야.",
+        q.eq("말풍선", "오늘 할 일 1개 남았어. 어제 못 끝낸 일 2개는 달력에 남아 있어.",
                 q.app.store.talk);
         q.has("위 막대", "연속 접속 11일", q.top());
         q.eq("성취도", "0/1", q.progress());

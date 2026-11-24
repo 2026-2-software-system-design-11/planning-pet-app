@@ -278,15 +278,15 @@ final class PeriodCheck {
         period(s, "E사 지원서", "11-16", "11-22", 120);
         period(s, "F사 서류", "11-16", "11-18", 30);
         s.book.add(Task.Kind.TASK, "과제", d("11-16"), null, 30, "", null);
-        eq("D-65 브리핑의 기간 할 일", "오늘은 할 일이 없어. 어제 못 끝낸 일 1개는 달력에 남아 있어. 'F사 서류' 마감이 내일이야.",
+        eq("D-65 브리핑의 기간 할 일", "오늘은 할 일이 없어. 어제 못 끝낸 일 1개는 달력에 남아 있어. 'F사 서류' 마감이 내일(18일)이야, D-1.",
                 new Talk(s).briefing());
         Store m = at("11-18T09:00");
         Task e = period(m, "E사 지원서", "11-16", "11-22", 120);
         m.book.setTime(e, LocalTime.of(9, 0), 120, d("11-17"), false);
         String day18 = new Talk(m).briefing();
         m.now = d("11-19").atTime(9, 0);
-        eq("D-67 어제 하기로 한 일", "오늘은 할 일이 없어. 어제 하기로 한 'E사 지원서'를 못 했어. 마감은 22일이야. 아래 칸에 하나 적어 볼까?"
-                + " / 오늘은 할 일이 없어. 'E사 지원서' 마감이 사흘 뒤야.",
+        eq("D-67 어제 하기로 한 일", "오늘은 할 일이 없어. 어제 하기로 한 'E사 지원서'를 못 했어. 마감은 22일이야. E사 지원서는 22일까지야, 4일 남았어."
+                + " / 오늘은 할 일이 없어. 'E사 지원서' 마감이 3일 뒤(22일)야, D-3.",
                 day18 + " / " + new Talk(m).briefing());
         App done = Main.create(at("11-18T09:00"));
         done.store.book.add(Task.Kind.TASK, "과제", d("11-18"), null, 30, "", null).get(0).done = true;
@@ -294,6 +294,17 @@ final class PeriodCheck {
         period(done.store, "E사 지원서", "11-16", "11-22", 120);
         done.schedule.check(laundry);
         eq("D-70 다 끝내면 기간 할 일 안내", "오늘 할 일 다 끝냈어! E사 지원서는 22일까지야, 4일 남았어.", done.store.talk);
+        Store order = at("11-18T09:00");
+        order.book.add(Task.Kind.TASK, "빨래", d("11-18"), null, 30, "", null);
+        order.book.add(Task.Kind.TASK, "과제", d("11-19"), null, 30, "", null);
+        period(order, "E사 지원서", "11-16", "11-20", 120);
+        eq("D-71 마감과 내일 일", "오늘 할 일 1개 남았어. 'E사 지원서' 마감이 모레(20일)야, D-2. 내일 '과제'가 있어.", new Talk(order).briefing());
+        Store only = at("11-18T09:00");
+        period(only, "E사 지원서", "11-16", "11-22", 120);
+        eq("D-70 할 일이 없어도 기간 할 일 안내", "오늘은 할 일이 없어. E사 지원서는 22일까지야, 4일 남았어.", new Talk(only).briefing());
+        Store far = at("11-18T09:00");
+        period(far, "2026 하반기 공채 자기소개서 1번 문항", "11-16", "11-20", 90);
+        eq("T-TALK-4", "오늘은 할 일이 없어. '2026 하반기 공채 자기…' 마감이 모레(20일)야, D-2.", new Talk(far).briefing());
         Store last = at("11-22T09:00");
         Task due = period(last, "E사 지원서", "11-16", "11-22", 120);
         eq("D-70 마감 날", "오늘 할 일 1개 남았어. 오늘이 E사 지원서 마감이야! true", new Talk(last).briefing() + " "
