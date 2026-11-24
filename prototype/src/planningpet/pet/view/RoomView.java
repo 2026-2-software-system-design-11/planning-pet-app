@@ -61,6 +61,19 @@ public final class RoomView extends JComponent {
         setLayout(null);
     }
 
+    private PetState petOf(int i, int n) {
+        return n > 1 ? store.pet(i == 0 ? "CAT" : "DOG") : store.pets.get(0);
+    }
+
+    /** i번째 펫의 {가운데 x, 바닥 y, 상자 한 변}(방 그림 좌표). */
+    private int[] spot(int i, int n, int w, int h, int visibleH) {
+        // 디자이너 제안(README 3절): 바닥 y 0.82, 상자 한 변 min(칸 폭 0.165, 칸 높이 0.62), 두 마리면 x 0.42와 0.58.
+        int ground = Math.min((int) (h * 0.82), visibleH - 8);
+        int size = (int) Math.min(getWidth() * 0.165, getHeight() * 0.62);
+        int px = (int) (w * (n > 1 ? (i == 0 ? 0.42 : 0.58) : 0.50));
+        return new int[] {px, ground, size};
+    }
+
     /** 방 그림이 칸을 덮을 때의 그림 상자 {x0, y0, w, h}. */
     private int[] frame() {
         int cw = getWidth();
@@ -103,12 +116,12 @@ public final class RoomView extends JComponent {
     /** 펫 한 마리면 가운데, 두 마리면 고양이 왼쪽, 강아지 오른쪽이다. 고른 펫 위에 말풍선을 둔다. */
     private void pets(Graphics2D g, int w, int h, int visibleH) {
         int n = store.pets.size();
-        // 디자이너 제안(README 3절): 바닥 y 0.82, 상자 한 변 min(칸 폭 0.165, 칸 높이 0.62), 두 마리면 x 0.42와 0.58.
-        int ground = Math.min((int) (h * 0.82), visibleH - 8);
-        int size = (int) Math.min(getWidth() * 0.165, getHeight() * 0.62);
         for (int i = 0; i < n; i++) {
-            PetState p = n > 1 ? store.pet(i == 0 ? "CAT" : "DOG") : store.pets.get(0);
-            int px = (int) (w * (n > 1 ? (i == 0 ? 0.42 : 0.58) : 0.50));
+            PetState p = petOf(i, n);
+            int[] at = spot(i, n, w, h, visibleH);
+            int px = at[0];
+            int ground = at[1];
+            int size = at[2];
             g.setColor(new java.awt.Color(0x9A, 0x6A, 0x45, 40));
             g.fillOval(px - size * 3 / 10, ground - size / 22, size * 3 / 5, size / 11);
             Pet.drawAt(g, p, px, ground, size);
