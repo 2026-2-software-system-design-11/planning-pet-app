@@ -236,9 +236,9 @@ public final class TaskBook {
      * 06의 26번(D-86). 달력 칸의 일의 수, 끝내지 않은 일이 있는지, 그날이 마감인 끝내지 않은 기간 할 일의 제목들.
      */
     public record CellPreview(int count, boolean open, List<String> due) {
-        /** 칸에 보이는 글 "{수}개". */
+        /** 칸에 보이는 글 "{수}개". 셀 일 없이 마감만 있으면 빈 글(빨간 점만 찍는다, D-94). */
         public String text() {
-            return count + "개";
+            return count > 0 ? count + "개" : "";
         }
     }
 
@@ -247,20 +247,23 @@ public final class TaskBook {
         return cellPreview(date, false);
     }
 
-    /** 세는 날이 그날인 할 일(withFixed면 그날의 고정 일정도)을 센다. 셀 일이 없으면 null. */
+    /**
+     * 그날 목록의 "오늘 할 일"(dueToday, timed, untimed) 가운데 할 일(withFixed면 고정 일정도)을 센다(D-94). 시각을 정한 기간 할 일은
+     * 정한 날에 센다. 마감 제목은 그와 따로 그날이 마감인 끝내지 않은 기간 할 일에서 모은다. 둘 다 없으면 null.
+     */
     public CellPreview cellPreview(LocalDate date, boolean withFixed) {
-        List<Task> list = tasks.stream()
-                .filter(t -> t.kind == Task.Kind.TASK ? t.countDay().equals(date) : withFixed && t.date.equals(date))
-                .sorted(Comparator.comparingLong(t -> t.seq))
+        List<Task> list = checkables(date).stream()
+                .filter(t -> t.kind == Task.Kind.TASK || withFixed)
                 .toList();
-        if (list.isEmpty()) {
+        List<String> due = tasks.stream().filter(t -> t.period() && !t.done && t.dueDate.equals(date))
+                .sorted(Comparator.comparingLong(t -> t.seq)).map(t -> t.title).toList();
+        if (list.isEmpty() && due.isEmpty()) {
             return null;
         }
         LocalDate now = today();
         // D-69: 지난 반복 사본과 지난 날의 고정 일정은 밀린 일이 아니다.
         boolean open = list.stream().anyMatch(t -> !t.done && !t.pastCopy(now)
                 && !(t.kind == Task.Kind.FIXED && t.date.isBefore(now)));
-        List<String> due = list.stream().filter(t -> t.period() && !t.done && t.dueDate.equals(date)).map(t -> t.title).toList();
         return new CellPreview(list.size(), open, due);
     }
 

@@ -467,6 +467,13 @@ final class PeriodCheck {
         TaskBook.CellPreview c22 = c.book.cellPreview(d("11-22"));
         eq("D-65 기간 할 일은 마감 날 칸", "null 1개 true [E사 지원서]", c.book.cellPreview(d("11-16")) + " " + c22.text() + " " + c22.open()
                 + " " + c22.due());
+        App cal = Main.create(at("11-17T09:00"));
+        Task p = period(cal.store, "P", "11-16", "11-22", 60);
+        cal.store.book.setTime(p, LocalTime.of(9, 0), 60, d("11-18"), false);
+        cal.redraw();
+        MainScreen month = ProtoCheck.find(cal.root, MainScreen.class);
+        eq("T-CAL-8", "18 1개(진함) / 22 마감 P 마감", HomeCheck.cell(month, 18) + " / " + HomeCheck.cell(month, 22) + " "
+                + HomeCheck.tip(month, 22));
     }
 
     static String placed(Planner.Placement p) {
