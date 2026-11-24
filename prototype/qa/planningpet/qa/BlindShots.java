@@ -86,7 +86,7 @@ public final class BlindShots {
             shoot(new PickDialog().panel, null, "플래닝펫 시작", images, key, n++, out, "반려동물 고르기 창");
             PetScreen room = QaDrive.find(app.root, PetScreen.class);
             room.character.opened(false);
-            shoot(CharacterDialog.content(room.character), new Dimension(880, 585), "캐릭터", images, key, n++, out, "캐릭터 창");
+            shoot(CharacterDialog.content(room.character), CharacterDialog.size(1000, 680), "캐릭터", images, key, n++, out, "캐릭터 창");
             // TaskController.delete가 반복 일정에 띄우는 확인 창과 같은 글과 버튼이다.
             Task series = app.store.tasks.stream().filter(x -> x.seriesId != null).findFirst().orElseThrow();
             String[] options = {"이 일정만", "이후 반복 모두", "취소"};

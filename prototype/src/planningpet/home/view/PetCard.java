@@ -302,14 +302,25 @@ public final class PetCard extends JComponent {
         g.dispose();
     }
 
-    /** 펫: 카드 왼쪽에 발을 풀밭에 붙인다. 크기는 3단계 그림이 위쪽 여백을 빼고 꽉 차는 상자이고, 단계는 그 안의 크기로 보인다(D-50). */
+    /** 펫 상자 한 변: 3단계 그림이 위쪽 여백을 빼고 꽉 차는 크기. */
+    private int petSize(Rectangle f) {
+        return (int) Math.min(petWidth(f) * 1.7, (ground(f) - f.y - 14) / 0.97);
+    }
+
+    /** 펫 그림 높이를 카드 칸(카드 위에서 땅 선까지) 높이로 나눈 값. 1단계 앉기도 3분의 2를 넘는다(D-93). 검사용. */
+    public double petFill() {
+        Rectangle f = frame();
+        return Pet.cardDrawnHeight(store.pet(), petSize(f)) / (double) (ground(f) - f.y);
+    }
+
+    /** 펫: 카드 왼쪽에 발을 풀밭에 붙인다. 단계는 상자 안의 크기로 보이고 홈 카드 비율(0.94, 0.97, 1배)이다(D-93). */
     private void pet(Graphics2D g, Rectangle f) {
         PetState p = store.pet();
         int ground = ground(f);
         int pw = petWidth(f);
         int cx = f.x + pw / 2 + 6;
-        int size = (int) Math.min(pw * 1.7, (ground - f.y - 14) / 0.97);
-        int drawn = Pet.drawnHeight(p, size);
+        int size = petSize(f);
+        int drawn = Pet.cardDrawnHeight(p, size);
         g.setColor(new Color(0x5E, 0x8A, 0x3C, 45));
         g.fillOval(cx - size * 3 / 10, ground - size / 26, size * 3 / 5, size / 13);
         Pet.drawAt(g, p, cx, ground, size, t);

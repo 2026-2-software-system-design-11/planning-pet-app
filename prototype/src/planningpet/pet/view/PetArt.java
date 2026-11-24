@@ -32,6 +32,11 @@ public final class PetArt {
         return stage <= 1 ? 0.72 : stage == 2 ? 0.86 : 1.0;
     }
 
+    /** 홈 펫 카드의 단계별 크기 비율(D-93). 1단계도 카드 칸의 3분의 2 넘게 그리려고 단계 사이 차를 줄였다. */
+    public static double cardScale(int stage) {
+        return stage <= 1 ? 0.94 : stage == 2 ? 0.97 : 1.0;
+    }
+
     private PetArt() {
     }
 

@@ -3,6 +3,7 @@ package planningpet.pet.view;
 import planningpet.app.view.App;
 import planningpet.common.view.Theme;
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -20,7 +21,15 @@ import javax.swing.SwingUtilities;
  * 캐릭터 화면(CharacterScreen) 하나를 담는다. 운영체제 창 틀의 닫기나 Esc로 닫고, 입혀 본 장신구가 있으면 먼저 묻는다(D-61).
  */
 public final class CharacterDialog {
+    /** 안의 내용(오른쪽 카드 420, 꾸미기 탭의 장신구 칸과 꾸미기 적용)이 들어가는 최소 크기(D-93). */
+    public static final Dimension MIN = new Dimension(800, 580);
+
     private CharacterDialog() {
+    }
+
+    /** D-93: 메인 창의 3분의 2쯤이고 MIN보다 작아지지 않는다. */
+    public static Dimension size(int ownerW, int ownerH) {
+        return new Dimension(Math.max(MIN.width, ownerW * 2 / 3), Math.max(MIN.height, ownerH * 2 / 3));
     }
 
     /** 창 안: 본문 판과 같은 그라데이션 바탕에 여백 16. 창 없이 그릴 때도 쓴다. */
@@ -47,7 +56,14 @@ public final class CharacterDialog {
         d.setContentPane(content(screen));
         int w = owner == null ? 1000 : owner.getWidth();
         int h = owner == null ? 680 : owner.getHeight();
-        d.setSize(Math.max(860, (int) (w * 0.88)), Math.max(560, (int) (h * 0.86)));
+        // 크기는 창 안(내용) 크기다. 운영체제 창 틀만큼 더한다.
+        d.pack();
+        java.awt.Insets in = d.getInsets();
+        Dimension inner = size(w, h);
+        int dw = in.left + in.right;
+        int dh = in.top + in.bottom;
+        d.setMinimumSize(new Dimension(MIN.width + dw, MIN.height + dh));
+        d.setSize(inner.width + dw, inner.height + dh);
         // D-61: 닫기와 Esc는 입혀 본 장신구가 있으면 먼저 묻는다.
         d.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
         Runnable close = () -> {

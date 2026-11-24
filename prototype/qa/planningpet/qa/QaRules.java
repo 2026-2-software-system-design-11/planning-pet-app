@@ -87,7 +87,7 @@ final class QaRules {
         PetScreen room = QaDrive.find(app.root, PetScreen.class);
         room.character.opened(false);
         JComponent character = CharacterDialog.content(room.character);
-        lay(character, new Dimension(880, 585));
+        lay(character, CharacterDialog.size(1000, 680));
         m.put("캐릭터 창", character);
         for (JComponent c : m.values()) {
             if (c.getWidth() == 0) {

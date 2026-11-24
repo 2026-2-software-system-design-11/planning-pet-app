@@ -432,6 +432,22 @@ public final class ProtoCheck {
             }
         }
         eq("D-84 자세 칸은 이름을 늘 적고 고른 칸을 보인다", "앉기 자기 기지개(고름) 밥 먹기 노래 ", poseCells.toString());
+        eq("D-93 캐릭터 창은 메인 창의 3분의 2쯤, 최소 800x580", "800x580 960x600", sizeText(planningpet.pet.view.CharacterDialog.size(1000, 680))
+                + " " + sizeText(planningpet.pet.view.CharacterDialog.size(1440, 900)));
+        StringBuilder fills = new StringBuilder();
+        for (String kind : new String[] {"CAT", "DOG"}) {
+            Store small = MockData.sample();
+            small.pets.clear();
+            small.pets.add(new PetState(kind, "작은 펫"));
+            small.activeKind = kind;
+            App sa = Main.create(small);
+            planningpet.home.view.PetCard card = find(sa.root, planningpet.home.view.MainScreen.class).pet;
+            for (java.awt.Dimension d : new java.awt.Dimension[] {card.getMinimumSize(), card.getPreferredSize(), new java.awt.Dimension(700, 400)}) {
+                card.setSize(d);
+                fills.append(card.petFill() > 2 / 3.0 ? "넘음 " : String.format("%.2f ", card.petFill()));
+            }
+        }
+        eq("D-93 홈 펫 카드의 1단계 펫은 카드 칸의 3분의 2 넘게", "넘음 넘음 넘음 넘음 넘음 넘음 ", fills.toString());
         App one = Main.create(MockData.sample());
         planningpet.pet.view.PetScreen oneRoom = find(one.root, planningpet.pet.view.PetScreen.class);
         oneRoom.character.opened(false);
@@ -457,6 +473,10 @@ public final class ProtoCheck {
             }
         }
         return null;
+    }
+
+    static String sizeText(java.awt.Dimension d) {
+        return d.width + "x" + d.height;
     }
 
     /** c 아래의 type 부품 모두(그린 순서). */
