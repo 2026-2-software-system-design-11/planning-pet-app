@@ -358,3 +358,93 @@ public final class CharacterScreen extends JPanel {
         b.addActionListener(e -> {
             if (on) {
                 draft.remove(w.slot());
+            } else {
+                draft.put(w.slot(), w.name());
+            }
+            refresh();
+        });
+        return b;
+    }
+
+    private static Icons.Kind slotIcon(String slot) {
+        return switch (slot) {
+            case Wardrobe.NECK -> Icons.Kind.COLLAR;
+            case Wardrobe.HAT -> Icons.Kind.HAT;
+            case Wardrobe.ACCESSORY -> Icons.Kind.BOW;
+            default -> Icons.Kind.SHIRT;
+        };
+    }
+
+    /** 자세 칸 하나. 고른 자세는 민트 테두리다. 누르면 바로 바뀐다(D-50). */
+    private JComponent poseCard(PetState p, String pose) {
+        JToggleButton b = new JToggleButton(pose, pose.equals(p.pose)) {
+            @Override
+            protected void paintComponent(Graphics graphics) {
+                Graphics2D g = (Graphics2D) graphics.create();
+                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                int w = getWidth() - 5;
+                int h = getHeight() - 6;
+                Card.shadow(g, 2, 2, w, h, 16);
+                g.setColor(isSelected() ? Theme.MINT_PALE : Theme.CARD_TOP);
+                g.fillRoundRect(2, 2, w, h, 16, 16);
+                g.setColor(isSelected() ? Theme.MINT : Theme.CARD_EDGE);
+                g.setStroke(new java.awt.BasicStroke(isSelected() ? 2.2f : 1f));
+                g.drawRoundRect(2, 2, w, h, 16, 16);
+                int size = Math.min(w, h) - 14;
+                Pet.drawStage(g, p.kind, pose, p.wear, 3, 2 + w / 2, h - 4, size);
+                g.dispose();
+            }
+        };
+        b.setContentAreaFilled(false);
+        b.setBorderPainted(false);
+        b.setFocusPainted(false);
+        b.setToolTipText(pose);
+        b.addActionListener(e -> app.pet.pose(p.kind, pose));
+        return b;
+    }
+
+    private void askRename() {
+        PetState p = app.store.pet();
+        JTextField field = new JTextField(p.name, 12);
+        Ui.limit(field, 10);
+        JPanel panel = new JPanel(new BorderLayout(0, 4));
+        panel.add(field, BorderLayout.NORTH);
+        panel.add(Ui.hint("10자까지. 비워 두면 " + PetState.defaultName(p.kind) + "로 불러요"), BorderLayout.SOUTH);
+        int answer = JOptionPane.showOptionDialog(app.root, panel, "이름 변경", JOptionPane.DEFAULT_OPTION,
+                JOptionPane.PLAIN_MESSAGE, null, new String[] {"취소", "저장"}, "저장");
+        if (answer == 1) {
+            app.pet.rename(p.kind, field.getText());
+        }
+    }
+
+    public void refresh() {
+        Store s = app.store;
+        PetState p = s.pet();
+        if (!p.kind.equals(draftKind)) {
+            draftKind = p.kind;
+            draft.clear();
+            draft.putAll(p.wear);
+        }
+        petTabs.removeAll();
+        ButtonGroup g = new ButtonGroup();
+        for (String kind : new String[] {"CAT", "DOG"}) {
+            PetState q = s.pet(kind);
+            if (q == null) {
+                continue;
+            }
+            Pill tab = new Pill(q.kindName(), null, 18).picture(Pet.face(q));
+            tab.setPreferredSize(new Dimension(200, 58));
+            tab.setSelected(q == p);
+            tab.addActionListener(e -> app.pet.select(kind));
+            g.add(tab);
+            petTabs.add(tab);
+        }
+        petTabs.revalidate();
+        poses.removeAll();
+        for (String pose : Poses.ALL) {
+            poses.add(poseCard(p, pose));
+        }
+        poses.revalidate();
+        int lv = Level.level(p.exp);
+        name.setText(p.name);
