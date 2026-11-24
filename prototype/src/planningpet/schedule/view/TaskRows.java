@@ -109,8 +109,12 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
         String memoMark = t.memo.isBlank() ? "" : " <font size='2' color='#8A96A0'>메모</font>";
         String due = TaskBook.dueText(t);
         String dueMark = due == null ? "" : " <font size='2' color='#8A96A0'>" + due + "</font>";
-        JLabel label = title(t, date, "<html>" + date + (t.done ? "<s>" + Ui.esc(t.title) + "</s>" : Ui.esc(t.title))
-                + dueMark + memoMark + "</html>");
+        String note = missedNote(t);
+        String noteMark = note == null ? "" : " <font size='2' color='#8A96A0'>" + note + "</font>";
+        String tag = dueTag(t, listDay);
+        String tagMark = tag == null ? "" : " <font size='2' color='#C0392B'>" + tag + "</font>";
+        JLabel label = title(t, date, note, tag, "<html>" + date + (t.done ? "<s>" + Ui.esc(t.title) + "</s>" : Ui.esc(t.title))
+                + dueMark + noteMark + tagMark + memoMark + "</html>");
         label.setToolTipText(memoTip(t));
         row.setToolTipText(memoTip(t));
         JLabel minutes = new JLabel(t.minutes + "분", JLabel.RIGHT);
@@ -135,7 +139,7 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
             JPanel second = new JPanel(new BorderLayout());
             if (t.countDay().isBefore(control.today())) {
                 JLabel past = new JLabel("지난 날");
-                past.setForeground(new java.awt.Color(0xC0392B));
+                past.setForeground(PAST);
                 past.setFont(Theme.font(12));
                 past.setBorder(BorderFactory.createEmptyBorder(0, RoundCheck.SIZE + 10, 0, 0));
                 second.add(past, BorderLayout.WEST);
@@ -200,7 +204,7 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
      * 제목 칸. 글(getText)은 HTML(QA와 화면 읽기 프로그램이 읽는다)이고, 그림은 한 줄로 그려 칸 폭을 넘으면 "…"로 줄인다.
      * HTML 라벨은 좁으면 두 줄로 꺾여 줄 높이를 넘었다. 끝낸 일은 흐린 글에 취소선, 메모가 있으면 끝에 흐린 "메모".
      */
-    private static JLabel title(Task t, String date, String html) {
+    private static JLabel title(Task t, String date, String note, String tag, String html) {
         JLabel label = new JLabel(html) {
             @Override
             protected void paintComponent(java.awt.Graphics graphics) {
@@ -212,7 +216,9 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
                 int memo = t.memo.isBlank() ? 0 : sm.stringWidth("메모") + 5;
                 String due = TaskBook.dueText(t);
                 int dueWidth = due == null ? 0 : sm.stringWidth(due) + 5;
-                String text = fit(date + t.title, fm, getWidth() - memo - dueWidth);
+                int noteWidth = note == null ? 0 : sm.stringWidth(note) + 5;
+                int tagWidth = tag == null ? 0 : sm.stringWidth(tag) + 5;
+                String text = fit(date + t.title, fm, getWidth() - memo - dueWidth - noteWidth - tagWidth);
                 int y = (getHeight() + fm.getAscent() - fm.getDescent()) / 2;
                 g.setFont(getFont());
                 g.setColor(t.done ? Theme.INK_DIM : Theme.INK);
@@ -229,6 +235,18 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
                     g.drawString(due, tw + 5, y);
                     tw += dueWidth;
                 }
+                if (note != null) {
+                    // D-67: 시각을 정한 날에 못 끝낸 기간 할 일은 "{일}일에 하려던 일".
+                    g.drawString(note, tw + 5, y);
+                    tw += noteWidth;
+                }
+                if (tag != null) {
+                    // D-70: 마감 날에는 빨간 "오늘 마감".
+                    g.setColor(PAST);
+                    g.drawString(tag, tw + 5, y);
+                    g.setColor(Theme.INK_DIM);
+                    tw += tagWidth;
+                }
                 if (memo > 0) {
                     g.drawString("메모", tw + 5, y);
                 }
@@ -239,6 +257,19 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
         label.setMinimumSize(new Dimension(0, 0));
         label.setPreferredSize(new Dimension(40, 24));
         return label;
+    }
+
+    /** 빨간 "지난 날"과 "오늘 마감"의 색. */
+    private static final java.awt.Color PAST = new java.awt.Color(0xC0392B);
+
+    /** D-67: 시각을 정한 날에 못 끝낸 기간 할 일이면 "{일}일에 하려던 일", 아니면 null. */
+    private String missedNote(Task t) {
+        return t.missed(control.today()) ? t.date.getDayOfMonth() + "일에 하려던 일" : null;
+    }
+
+    /** D-70: 끝내지 않은 기간 할 일을 마감 날 목록에서 보면 "오늘 마감", 아니면 null. */
+    private static String dueTag(Task t, java.time.LocalDate listDay) {
+        return t.period() && !t.done && t.dueDate.equals(listDay) ? "오늘 마감" : null;
     }
 
     /** max 폭에 들어가게 끝을 "…"로 줄인다. */

@@ -181,6 +181,18 @@ final class PeriodCheck {
         Task p = period(s, "P", "11-16", "11-18", 30);
         eq("D-65 기간 동안 날마다", "x period period due x ~11/18까지",
                 groups(s, p, "11-15", "11-16", "11-17", "11-18", "11-19") + " " + TaskBook.dueText(p));
+        App miss = Main.create(at("11-18T09:00"));
+        Task m = period(miss.store, "P", "11-16", "11-22", 30);
+        miss.store.book.setTime(m, LocalTime.of(9, 0), 30, d("11-17"), false);
+        String before = groups(miss.store, m, "11-17", "11-18", "11-21", "11-22");
+        MainScreen home = ProtoCheck.find(miss.root, MainScreen.class);
+        home.selectDate(d("11-18"));
+        String row = rows(home.rows);
+        TimeEditor e = new TimeEditor(m, d("11-18"), miss.store.now);
+        e.start.setValue("14:00");
+        TimeEditor.save(miss, m, e);
+        eq("D-67 정한 날을 놓치면 다음 날부터", "x period period due / 기간 안에 할 일 / P ~11/22까지 17일에 하려던 일 30분"
+                + " / 11-18 timed", before + " / " + row + " / " + m.date.toString().substring(5) + " " + group(miss.store, m, "11-18"));
         Store today = at("11-18T09:00");
         today.book.add(Task.Kind.TASK, "과제", d("11-18"), null, 30, "", null).get(0).done = true;
         today.book.add(Task.Kind.TASK, "빨래", d("11-18"), null, 30, "", null);

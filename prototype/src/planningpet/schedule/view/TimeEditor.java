@@ -38,7 +38,9 @@ public final class TimeEditor {
 
     public TimeEditor(Task t, java.time.LocalDate day, LocalDateTime now) {
         this.day = day;
-        LocalTime from = t.timed() ? t.start : DefaultDates.start(day, now);
+        // D-67: 정한 날에 못 끝낸 기간 할 일은 시각 없는 할 일처럼 연다.
+        boolean placed = t.onTimetable(planningpet.common.model.Rules.appDay(now));
+        LocalTime from = placed ? t.start : DefaultDates.start(day, now);
         start.setValue(from.toString());
         minutes = Ui.minutes(t.minutes);
         error.setForeground(Theme.SUNDAY);
@@ -51,7 +53,7 @@ public final class TimeEditor {
         fields.add(Ui.flow(new JLabel("시작 시각"), start, new JLabel("걸리는 시간"), minutes, new JLabel("분")), BorderLayout.CENTER);
         panel.add(fields, BorderLayout.NORTH);
         panel.add(error, BorderLayout.CENTER);
-        clear.setVisible(t.timed() && t.kind == Task.Kind.TASK);
+        clear.setVisible(placed && t.kind == Task.Kind.TASK);
         JPanel buttons = new JPanel(new BorderLayout());
         buttons.add(Ui.flow(clear), BorderLayout.WEST);
         buttons.add(Ui.flow(cancel, save), BorderLayout.EAST);
