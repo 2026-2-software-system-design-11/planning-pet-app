@@ -12,7 +12,10 @@ import planningpet.stats.view.StatsScreen;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
-/** 프로토타입 실행 진입점. --first-run이면 반려동물 고르기부터 한다. 창을 닫으면 끝난다(트레이는 뺐다). */
+/**
+ * 프로토타입 실행 진입점. --first-run이면 반려동물 고르기부터 한다. 창을 닫으면 끝난다(트레이는 뺐다).
+ * 앱 날짜는 컴퓨터 시계다(06의 1번). --sample-clock이면 샘플 시계(2026-11-14 15:23)에 멈춘다. QA와 화면 그림은 늘 샘플 시계다.
+ */
 public final class Main {
     static {
         Theme.install();
@@ -25,6 +28,10 @@ public final class Main {
         SwingUtilities.invokeLater(() -> {
             boolean firstRun = java.util.List.of(args).contains("--first-run");
             Store store = firstRun ? MockData.empty() : MockData.sample();
+            boolean realClock = !java.util.List.of(args).contains("--sample-clock");
+            if (realClock) {
+                store.now = java.time.LocalDateTime.now().withNano(0);
+            }
             if (firstRun && !new PickDialog().ask(store)) {
                 System.exit(0);
             }
@@ -38,7 +45,12 @@ public final class Main {
             frame.setLocationRelativeTo(null);
             frame.setVisible(true);
             app.control.windowShown();
-            new javax.swing.Timer(30_000, e -> app.watcher.tick()).start();
+            new javax.swing.Timer(30_000, e -> {
+                if (realClock) {
+                    store.now = java.time.LocalDateTime.now().withNano(0);
+                }
+                app.watcher.tick();
+            }).start();
         });
     }
 
