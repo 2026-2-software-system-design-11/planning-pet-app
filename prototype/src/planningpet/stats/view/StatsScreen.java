@@ -178,3 +178,93 @@ public final class StatsScreen extends JPanel {
 
     private static void arrow(JButton b, StatsArt.Kind kind, String name) {
         b.setIcon(StatsArt.icon(kind, 18, Theme.ICON));
+        b.setBorder(BorderFactory.createEmptyBorder(8, 9, 11, 9));
+        b.setToolTipText(name);
+        b.getAccessibleContext().setAccessibleName(name);
+    }
+
+    /** 흰 알약 판(예시의 주간과 월간 묶음, 기간 옮기기 묶음). */
+    private static final class Pill extends JPanel {
+        Pill(java.awt.LayoutManager layout) {
+            super(layout);
+            setOpaque(false);
+            setBorder(BorderFactory.createEmptyBorder(4, 5, 6, 5));
+        }
+
+        @Override
+        protected void paintComponent(Graphics graphics) {
+            Graphics2D g = (Graphics2D) graphics.create();
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            int w = getWidth() - 4;
+            int h = getHeight() - 5;
+            Card.shadow(g, 2, 1, w, h, h);
+            g.setColor(new Color(255, 255, 255, 235));
+            g.fillRoundRect(2, 1, w, h, h, h);
+            g.setColor(Theme.CARD_EDGE);
+            g.drawRoundRect(2, 1, w - 1, h - 1, h, h);
+            g.dispose();
+        }
+    }
+
+    // 카드
+
+    /** 카드 제목 줄: 아이콘, 아주 굵은 제목, "?" 설명, 오른쪽 장식. */
+    private static JPanel title(StatsArt.Kind kind, javax.swing.Icon icon, String text, String help, JComponent east) {
+        JPanel row = new JPanel(new BorderLayout(10, 0));
+        JLabel label = new JLabel(text, icon != null ? icon : StatsArt.icon(kind, 30, Theme.ICON), SwingConstants.LEFT);
+        label.setIconTextGap(10);
+        label.setFont(Theme.heavy(21));
+        JLabel q = new JLabel(StatsArt.icon(StatsArt.Kind.HELP, 20, Theme.ICON));
+        q.setToolTipText("<html><div style='width:250px'>" + help + "</div></html>");
+        q.getAccessibleContext().setAccessibleName(text + " 설명");
+        q.setBorder(BorderFactory.createEmptyBorder(3, 0, 0, 0));
+        JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        left.add(label);
+        left.add(q);
+        row.add(left, BorderLayout.WEST);
+        if (east != null) {
+            row.add(east, BorderLayout.EAST);
+        }
+        return row;
+    }
+
+    /** 카드 오른쪽 위의 발자국 장식. */
+    private static JComponent paws() {
+        JComponent c = new JComponent() {
+            @Override
+            protected void paintComponent(Graphics graphics) {
+                StatsArt.paws((Graphics2D) graphics, getWidth() - 42, 0);
+            }
+        };
+        c.setPreferredSize(new Dimension(46, 34));
+        return c;
+    }
+
+    private static Card card() {
+        Card c = new Card(new BorderLayout(0, 10));
+        c.setBorder(BorderFactory.createEmptyBorder(14, 18, 18, 16));
+        return c;
+    }
+
+    private Card rateCard() {
+        Card c = card();
+        c.add(title(StatsArt.Kind.TARGET, null, "계획 달성률", HELP_RATE, paws()), BorderLayout.NORTH);
+        JPanel rows = new JPanel(new GridLayout(3, 1, 0, 10));
+        rows.add(doneRow);
+        rows.add(leftRow);
+        rows.add(totalRow);
+        // 왼쪽은 높이에 맞춘 정사각형 도넛, 오른쪽은 남은 폭의 세 줄을 세로 가운데에 둔다.
+        JPanel data = new JPanel(null) {
+            @Override
+            public void doLayout() {
+                int w = getWidth();
+                int h = getHeight();
+                int s = Math.max(100, Math.min(h, (int) (w * 0.5)));
+                donut.setBounds(0, (h - s) / 2, s, s);
+                int rh = Math.min(rows.getPreferredSize().height, h);
+                rows.setBounds(s + 10, (h - rh) / 2, Math.max(0, w - s - 10), rh);
+            }
+        };
+        data.add(donut);
+        data.add(rows);
+        rateBody.add(data, "data");
