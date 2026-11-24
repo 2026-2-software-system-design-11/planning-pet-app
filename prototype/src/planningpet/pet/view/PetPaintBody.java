@@ -268,3 +268,35 @@ final class PetPaintBody extends PetPaintHead {
         g.fill(new RoundRectangle2D.Double(116, 278, 26, 6, 6, 6));
         stroke(new java.awt.geom.Line2D.Double(104, 270, 216, 270), line, ink);
     }
+
+    void notes() {
+        for (int i = 0; i < 2; i++) {
+            double p = (t / 2.0 + i * 0.5) % 1.0;
+            double x = 252 + i * 24 + Math.sin(p * Math.PI * 2) * 6;
+            double y = 86 - p * 56;
+            int a = (int) (255 * Math.min(1, Math.min(p * 4, (1 - p) * 3)));
+            Color c = alpha(NOTE, a);
+            g.setColor(c);
+            g.fill(ell(x, y, 9, 7));
+            g.setStroke(stroke(4f));
+            g.draw(new java.awt.geom.Line2D.Double(x + 8, y, x + 8, y - 30));
+            g.draw(new QuadCurve2D.Double(x + 8, y - 30, x + 22, y - 24, x + 18, y - 12));
+        }
+    }
+
+    void zzz() {
+        for (int i = 0; i < 3; i++) {
+            double p = (t / 2.6 + i / 3.0) % 1.0;
+            double s = 9 + p * 8;
+            double x = 214 + p * 46;
+            double y = 176 - p * 70;
+            int a = (int) (255 * Math.min(1, Math.min(p * 4, (1 - p) * 3)));
+            Path2D z = new Path2D.Double();
+            z.moveTo(x - s, y - s);
+            z.lineTo(x + s, y - s);
+            z.lineTo(x - s, y + s);
+            z.lineTo(x + s, y + s);
+            stroke(z, 4.5f, alpha(new Color(0x6C8EE0), a));
+        }
+    }
+}
