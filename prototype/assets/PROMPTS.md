@@ -10,9 +10,10 @@
 |---|---|---|---|
 | `room.png` | 1536x1024 | 생성 후 보정 | 바닥을 `#FFE2C2`와 32% 섞어 밝히고(예시 바닥 `#F4B890` 쪽), 벽색 픽셀만 `#F6D6CC`와 35% 섞어 채도를 낮췄다 |
 | `items/cushion.png`, `items/plant.png`, `items/bookshelf.png` | 512x512 | 생성 | 그대로 씀 |
-| `items/rug.png`, `items/desk.png`, `items/sofa.png` | 512x512 | 손으로 그림 | 생성 할당량이 막혀 그렸다. 생성으로 바꿀 목록에 있다 |
-| `items/lamp.png` | 65x101 | 예시에서 잘라 냄(스탠드 조명 카드) | 작아서 방 안에서 1.5배쯤 늘어난다. 바꿀 목록에 있다 |
-| `items/frame.png` | 83x110 | 예시에서 잘라 냄(벽의 발자국 액자) | 바꿀 목록에 있다 |
+| `items/lamp.png`, `items/frame.png`, `items/hanging-plant.png`, `items/rug.png` | 418x935, 660x841, 597x934, 963x578 | 생성(시트 2x2를 잘라 냄) | 처음의 잘라 낸 조명과 액자, 손으로 그린 러그를 2026-11-24에 바꿨다 |
+| `items/yarn.png`, `items/bone.png` | 728x738, 773x448 | 생성(시트 2x1을 잘라 냄) |  |
+| `items/desk.png`, `items/sofa.png` | 512x512 | 손으로 그림 | 생성 서버가 막혀 그렸다. 생성으로 바꿀 목록에 있다 |
+| `items/bed.png`, `items/cat-tower.png` | 106x90, 97x99 | 예시에서 잘라 냄(상점 카드) | 임시 그림. 생성으로 바꿀 목록에 있다 |
 | `pets/cat-1.png` | 138x150 | 예시에서 잘라 냄(펫 패널의 고양이) | 청록 목걸이와 금색 방울. 바꿀 목록에 있다 |
 | `pets/cat-2.png`, `pets/cat-3.png` | 138x150 | 1단계에 덧그림 | 2단계 민트 스카프, 3단계 스카프와 왕관(D-20, 예전 `cats.png`의 소품 규칙) |
 | `pets/dog-1.png` | 190x137 | 예시에서 잘라 냄(방의 강아지) | 엎드린 자세, 빨간 목수건 |

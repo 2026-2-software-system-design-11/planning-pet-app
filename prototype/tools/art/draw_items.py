@@ -62,16 +62,6 @@ def save(img, path):
     print(path)
 
 
-def rug(path):
-    img = canvas()
-    part(img, 'ellipse', (30, 196, 482, 368), CREAM_SH, CREAM_SH, hi=False)
-    part(img, 'ellipse', (30, 180, 482, 350), (251, 227, 196, 255), (247, 214, 178, 255), shade_from=0.7)
-    d = ImageDraw.Draw(img)
-    d.ellipse([v * S for v in (78, 204, 434, 326)], outline=(232, 185, 142, 255), width=4 * S)
-    paw(img, 256, 262, 104, squash=0.5)
-    save(img, path)
-
-
 def desk(path):
     img = canvas()
     # 뒤 다리(조금 어둡고 짧게)
@@ -120,6 +110,5 @@ def sofa(path):
 
 
 d = sys.argv[1]
-rug(d + '/rug.png')
 desk(d + '/desk.png')
 sofa(d + '/sofa.png')
