@@ -54,8 +54,23 @@ final class HomeCheck {
         TaskForm f = new TaskForm(null, d("11-17"), s.now);
         f.title.setText("운동");
         boolean saved = TaskDialog.trySave(app, f, null);
-        eq("T-TALK-23", "'통계 레포트' 넣었구나! 오늘 남은 일 2개야. / '은행 서류' 11/20에 넣었어. / true '은행 서류' 11/20에 넣었어.",
+        eq("T-TALK-23", "'통계 레포트' 넣었구나! 오늘 남은 일 2개야. / '은행 서류' 11/20에 넣었어. / true '운동' 11/17에 넣었어.",
                 today + " / " + other + " / " + saved + " " + s.talk);
+        Store e = at("11-16T09:00");
+        new planningpet.pet.view.PickDialog().apply(e, false);
+        App ea = Main.create(e);
+        ea.control.windowShown();
+        ea.show("일정관리");
+        e.changed();
+        TaskForm fixed = new TaskForm(null, d("11-16"), e.now);
+        fixed.title.setText("자료구조");
+        fixed.fixed.doClick();
+        fixed.start.setValue("09:00");
+        boolean put = TaskDialog.trySave(ea, fixed, null);
+        String hint = HomeCheck.plain(ProtoCheck.find(ea.root, planningpet.schedule.view.ScheduleScreen.class).bubble.getText());
+        ea.show("홈");
+        eq("T-TALK-25", "true 지금 자동 배치할 할 일은 없어. / '자료구조' 넣었구나! 오늘 남은 일 1개야.", put + " " + hint + " / "
+                + ProtoCheck.find(ea.root, planningpet.home.view.PetCard.class).bubbleText());
     }
 
     /** T-LIST-10. 기간 할 일도 체크한 자리(시각 줄, "기간 안에 할 일")에 머문 뒤 "끝낸 일"로 간다(D-94). */

@@ -143,6 +143,9 @@ public final class TaskController {
                 } else if (fromHome()) {
                     // D-90: 홈에서 넣으면 펫이 넣은 일의 이름과 오늘 남은 수를 말한다.
                     app.store.say(app.talk.added(made.get(0)));
+                } else {
+                    // D-94: 일정관리에서 넣으면 홈 말풍선에만 남기고, 일정관리 말풍선은 D-39대로 힌트를 다시 정한다.
+                    app.store.sayAtHome(app.talk.added(made.get(0)));
                 }
             } else {
                 app.store.book.update(editing, d, scope == 1);
@@ -164,7 +167,7 @@ public final class TaskController {
         return true;
     }
 
-    /** 일정 입력 창을 홈에서 열었는가(D-90). 일정관리에서 넣으면 일정관리의 펫 말(D-39)을 따른다. */
+    /** 일정 입력 창을 홈에서 열었는가(D-90). 일정관리에서 넣으면 일정관리의 펫 말은 D-39를 따른다(D-94). */
     private boolean fromHome() {
         return "홈".equals(app.current());
     }

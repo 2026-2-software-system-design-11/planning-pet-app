@@ -73,6 +73,14 @@ public final class Store {
         talkSeq++;
     }
 
+    /**
+     * 홈 말풍선에만 남기는 말(D-94). 새 말 번호(talkSeq)를 올리지 않아, 일정관리 말풍선은 새 말로 보지 않고 D-39대로 힌트를 다시
+     * 정한다.
+     */
+    public void sayAtHome(String line) {
+        talk = line;
+    }
+
     public void changed() {
         listeners.forEach(Runnable::run);
     }
