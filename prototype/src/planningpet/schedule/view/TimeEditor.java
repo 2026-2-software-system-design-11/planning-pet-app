@@ -28,9 +28,17 @@ public final class TimeEditor {
     final JButton cancel = new JButton("취소");
     final JButton save = new JButton("저장");
     public final Card panel = new Card(new BorderLayout(0, 6), Theme.BUBBLE_RADIUS);
+    /** 창을 연 목록의 날. 시각 없는 기간 할 일에 시각을 정하면 날짜가 이 날로 옮겨진다(D-65). */
+    final java.time.LocalDate day;
 
+    /** 그 일정의 날짜 목록에서 연 창. */
     public TimeEditor(Task t, LocalDateTime now) {
-        LocalTime from = t.timed() ? t.start : DefaultDates.start(t.date, now);
+        this(t, t.date, now);
+    }
+
+    public TimeEditor(Task t, java.time.LocalDate day, LocalDateTime now) {
+        this.day = day;
+        LocalTime from = t.timed() ? t.start : DefaultDates.start(day, now);
         start.setValue(from.toString());
         minutes = Ui.minutes(t.minutes);
         error.setForeground(Theme.SUNDAY);
@@ -66,7 +74,7 @@ public final class TimeEditor {
             e.error.setText(problem);
             return false;
         }
-        return app.schedule.saveTime(t, LocalTime.parse((String) e.start.getValue()), (int) e.minutes.getValue());
+        return app.schedule.saveTime(t, LocalTime.parse((String) e.start.getValue()), (int) e.minutes.getValue(), e.day);
     }
 
     /** 시각 빼기 버튼과 같다. */
@@ -74,8 +82,8 @@ public final class TimeEditor {
         app.schedule.clearTime(t);
     }
 
-    public static void open(App app, Task t, Component anchor) {
-        TimeEditor e = new TimeEditor(t, app.store.now);
+    public static void open(App app, Task t, java.time.LocalDate day, Component anchor) {
+        TimeEditor e = new TimeEditor(t, day, app.store.now);
         JDialog d = new JDialog(SwingUtilities.getWindowAncestor(app.root), JDialog.ModalityType.APPLICATION_MODAL);
         d.setUndecorated(true);
         try {
