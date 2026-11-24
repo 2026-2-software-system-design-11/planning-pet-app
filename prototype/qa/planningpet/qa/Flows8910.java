@@ -107,7 +107,7 @@ final class Flows8910 {
         q.step("2", "pet에서 쿠션을 두 번 누른다");
         q.app.show("pet");
         Flows12.press(q, "쿠션");
-        q.eq("첫 번째", "가진 아이템 1 / 8, 오늘은 아직 끝낸 일이 없어., 쿠션", q.pet());
+        q.eq("첫 번째", "가진 아이템 1 / 13, 오늘은 아직 끝낸 일이 없어., 쿠션", q.pet());
         Flows12.press(q, "쿠션");
         q.has("두 번째", "쿠션 ✓", q.pet());
         q.step("3", "상점을 연다");
