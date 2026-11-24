@@ -160,14 +160,24 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
         };
         label.addMouseListener(mouse);
         row.addMouseListener(mouse);
+        // 줄 위에 마우스가 있는 동안(줄 안 버튼 위 포함) 줄 바탕을 칠한다.
+        MouseAdapter hover = new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                over[0] = true;
+                row.repaint();
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                over[0] = row.isShowing() && row.getMousePosition(true) != null;
+                row.repaint();
+            }
+        };
+        watched.forEach(c -> c.addMouseListener(hover));
         return row;
     }
 
-    private static JButton small(String text) {
-        JButton b = new JButton(text);
-        b.setFont(Theme.bold(12));
-        b.setBorder(BorderFactory.createEmptyBorder(3, 8, 3, 8));
-        return b;
     }
 
     /** 메모가 있으면 마우스를 올렸을 때 200자까지 보인다(D-33). */
