@@ -396,12 +396,12 @@ public final class ProtoCheck {
         planningpet.pet.view.PetScreen cr = find(ca.root, planningpet.pet.view.PetScreen.class);
         java.util.List<String> opened = new java.util.ArrayList<>();
         cr.characterOpener = dress -> opened.add(ca.store.activeKind + (dress ? " 꾸미기 탭" : " 지금 탭"));
-        button(cr.room, "고양이").doClick();
-        button(cr, "캐릭터에서 꾸미기").doClick();
-        eq("D-58 펫 칩은 고르고 창을 연다, 캐릭터에서 꾸미기는 꾸미기 탭", "CAT 지금 탭, CAT 꾸미기 탭", String.join(", ", opened));
+        tipButton(cr.room, "나비").doClick();
+        eq("D-80 펫 칩은 고르기만 한다", "CAT ", ca.store.activeKind + " " + String.join(", ", opened));
         opened.clear();
         find(ca.root, planningpet.home.view.MainScreen.class).pet.click();
         eq("D-59 홈 펫 카드를 누르면 캐릭터 창(지금 탭)", "CAT 지금 탭", String.join(", ", opened));
+        eq("D-80 방 화살표는 없다", "true true", (tipButton(cr.room, "앞 펫") == null) + " " + (tipButton(cr.room, "다음 펫") == null));
         String talkBefore = ca.store.talk;
         cr.room.pat("DOG");
         String patted = cr.room.bubble + " " + cr.room.bubbleKind + " " + ca.store.activeKind + " " + talkBefore.equals(ca.store.talk);
@@ -422,6 +422,22 @@ public final class ProtoCheck {
         if (c instanceof java.awt.Container k) {
             for (java.awt.Component child : k.getComponents()) {
                 javax.swing.AbstractButton b = button(child, text);
+                if (b != null) {
+                    return b;
+                }
+            }
+        }
+        return null;
+    }
+
+    /** 툴팁이 tip인 버튼. 없으면 null. */
+    static javax.swing.AbstractButton tipButton(java.awt.Component c, String tip) {
+        if (c instanceof javax.swing.AbstractButton b && tip.equals(b.getToolTipText())) {
+            return b;
+        }
+        if (c instanceof java.awt.Container k) {
+            for (java.awt.Component child : k.getComponents()) {
+                javax.swing.AbstractButton b = tipButton(child, tip);
                 if (b != null) {
                     return b;
                 }
