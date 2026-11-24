@@ -88,3 +88,38 @@ def desk(path):
     # 상판(윗면이 보이게 두 단)
     part(img, 'rect', (52, 168, 464, 214), WOOD_HI, WOOD_HI, radius=16, hi=False)
     part(img, 'rect', (48, 200, 468, 232), WOOD, WOOD_SH, radius=12, shade_from=0.6)
+    # 노트
+    part(img, 'rect', (110, 150, 230, 188), CREAM, CREAM_SH, radius=6, shade_from=0.75, hi=False)
+    d = ImageDraw.Draw(img)
+    for y in (162, 172):
+        d.line([v * S for v in (126, y, 214, y)], fill=(232, 205, 170, 255), width=3 * S)
+    # 연필꽂이와 연필
+    for x, top, col in ((332, 80, (246, 211, 107, 255)), (352, 92, (244, 143, 160, 255)), (368, 70, (111, 168, 220, 255))):
+        part(img, 'rect', (x, top, x + 14, 150), col, col, radius=6, hi=False)
+    part(img, 'rect', (318, 118, 392, 190), (158, 217, 192, 255), (120, 196, 168, 255), radius=14)
+    save(img, path)
+
+
+def sofa(path):
+    img = canvas()
+    for x in (82, 404):
+        part(img, 'rect', (x, 408, x + 28, 448), WOOD_SH, WOOD_SH, radius=8, hi=False)
+    part(img, 'rect', (70, 170, 442, 330), CREAM, CREAM_SH, radius=56, shade_from=0.74)
+    d = ImageDraw.Draw(img)
+    d.line([v * S for v in (256, 190, 256, 300)], fill=(232, 205, 170, 255), width=4 * S)
+    part(img, 'rect', (40, 352, 472, 420), WOOD, WOOD_SH, radius=24, shade_from=0.6)
+    part(img, 'rect', (96, 288, 416, 372), CREAM, CREAM_SH, radius=26, shade_from=0.66)
+    d = ImageDraw.Draw(img)
+    d.line([v * S for v in (256, 296, 256, 366)], fill=(232, 205, 170, 255), width=4 * S)
+    for x in (26, 410):
+        part(img, 'rect', (x, 262, x + 76, 404), WOOD, WOOD_SH, radius=36, shade_from=0.72)
+    # 발자국 쿠션
+    part(img, 'rect', (128, 214, 224, 300), CREAM, CREAM_SH, radius=24, shade_from=0.78)
+    paw(img, 176, 260, 44, squash=0.95)
+    save(img, path)
+
+
+d = sys.argv[1]
+rug(d + '/rug.png')
+desk(d + '/desk.png')
+sofa(d + '/sofa.png')
