@@ -25,6 +25,7 @@ final class DayCheck {
     static void run() {
         nightDay();
         overlaps();
+        narrowTips();
     }
 
     /** 앱 하루의 분으로 시각을 준 할 일 하나를 넣는다. */
@@ -200,6 +201,26 @@ final class DayCheck {
                 + "18:00~22:00 '알바'와 60분 겹쳐요. 그래도 넣을까요?",
                 jobSaved + " " + first.replaceAll("^시간이 겹쳐요: | 넣기, 취소.*$", "") + " / " + reportSaved + " " + second
                 + " / " + hwSaved + " " + q4[0].replaceAll("^시간이 겹쳐요: | 넣기, 취소.*$", ""));
+    }
+
+    /** D-87: 좁아진 블록은 마우스를 올리면 전체 제목과 시각을 보인다. */
+    private static void narrowTips() {
+        App app = Main.create(at("11-16T09:00"));
+        Task a = task(app.store, "자소서 초안", "11-16", hm(14, 0), 60);
+        Task b = task(app.store, "면접 준비", "11-16", hm(14, 30), 60);
+        b.memo = "질문 목록";
+        Task c = task(app.store, "운동", "11-16", hm(18, 0), 60);
+        app.store.changed();
+        app.show("일정관리");
+        TimetablePanel table = ProtoCheck.find(app.root, TimetablePanel.class);
+        Map<Rectangle, Task> blocks = paint(table);
+        eq("T-TT-7", "50 50 / <b>자소서 초안</b> 14:00~15:00 / <b>면접 준비</b> 14:30~15:30<br>질문 목록 / null",
+                rect(blocks, a).width + 2 + " " + (rect(blocks, b).width + 2) + " / " + body(table.tip(a)) + " / "
+                + body(table.tip(b)) + " / " + table.tip(c));
+    }
+
+    static String body(String html) {
+        return html == null ? null : html.replaceAll("^<html><div style='width:280px'>|</div></html>$", "");
     }
 
     /** 시간표를 창 없이 그리고 블록 자리를 돌려준다. */
