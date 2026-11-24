@@ -178,3 +178,93 @@ public final class PetCard extends JComponent {
             clock = new javax.swing.Timer(40, e -> {
                 if (isShowing()) {
                     t = (System.nanoTime() - start) / 1e9;
+                    repaint(petArea());
+                }
+            });
+        }
+        clock.start();
+    }
+
+    @Override
+    public void removeNotify() {
+        if (clock != null) {
+            clock.stop();
+        }
+        super.removeNotify();
+    }
+
+    /** 카드 틀(그림자 자리를 뺀 것). Card와 같다. */
+    private Rectangle frame() {
+        return new Rectangle(2, 1, getWidth() - 4, getHeight() - 8);
+    }
+
+    private int petWidth(Rectangle f) {
+        return (int) Math.max(118, Math.min(f.width * 0.40, 260));
+    }
+
+    private Rectangle petArea() {
+        Rectangle f = frame();
+        return new Rectangle(f.x, f.y, petWidth(f) + 24, f.height);
+    }
+
+    private int ground(Rectangle f) {
+        return f.y + f.height - Math.max(14, f.height / 11);
+    }
+
+    /** 오른쪽 열(이름부터 말풍선까지)의 왼쪽과 폭. */
+    private int infoX(Rectangle f) {
+        return f.x + petWidth(f) + GAP;
+    }
+
+    private int infoW(Rectangle f) {
+        return f.x + f.width - PAD - infoX(f);
+    }
+
+    /** 경험치 줄과 작은 카드의 세로 자리. 막대 둘을 그 자리에 둔다. */
+    private int[] rows(Rectangle f) {
+        // 카드가 높으면(넓은 창) 오른쪽 열을 조금 내려 위로 몰리지 않게 한다.
+        int y = f.y + PAD + Math.max(0, (f.height - 250) / 3);
+        int nameRow = y;
+        y += 30 + 6;
+        int expRow = y;
+        y += 8 + 4 + 16 + GAP;
+        int mini = y;
+        y += 52 + GAP;
+        int bubble = y;
+        return new int[] {nameRow, expRow, mini, bubble};
+    }
+
+    @Override
+    public void doLayout() {
+        Rectangle f = frame();
+        int[] r = rows(f);
+        int x = infoX(f);
+        int w = infoW(f);
+        int chip = chipWidth();
+        expBar.setBounds(x + chip + 8, r[1], Math.max(20, w - chip - 8), 8);
+        doneBar.setBounds(x + 12, r[2] + 34, Math.max(20, w - 24), 8);
+    }
+
+    private int chipWidth() {
+        return getFontMetrics(Theme.bold(11)).stringWidth("경험치") + 16;
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+        return new Dimension(360, 240);
+    }
+
+    @Override
+    public Dimension getMinimumSize() {
+        return new Dimension(300, 210);
+    }
+
+    @Override
+    public String getToolTipText(MouseEvent e) {
+        if (bubbleCut && bubbleBox != null && bubbleBox.contains(e.getPoint())) {
+            return "<html><div style='width:260px'>" + Ui.esc(bubbleText()) + "</div></html>";
+        }
+        return "캐릭터 창 열기";
+    }
+
+    @Override
