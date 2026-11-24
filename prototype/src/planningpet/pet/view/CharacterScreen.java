@@ -37,6 +37,12 @@ import javax.swing.SwingConstants;
  */
 public final class CharacterScreen extends JPanel {
     private final App app;
+    /** 물음 창(D-61). 돌려주는 값은 고른 버튼의 번호이고 창을 닫으면 -1이다. QA는 창 대신 답을 준다. */
+    public interface Ask {
+        int choose(String title, String message, String[] options);
+    }
+
+    public Ask ask;
     private final JPanel petTabs = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
     private final JPanel poses = new JPanel(new GridLayout(1, Poses.ALL.size(), 10, 0));
     public final JLabel name = new JLabel();
@@ -64,6 +70,8 @@ public final class CharacterScreen extends JPanel {
     public CharacterScreen(App app) {
         super(new BorderLayout());
         this.app = app;
+        this.ask = (title, message, options) -> JOptionPane.showOptionDialog(this, message, title, JOptionPane.DEFAULT_OPTION,
+                JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
         Card main = new Card(new BorderLayout(Theme.GAP + 4, 0), 24);
         main.setBorder(BorderFactory.createEmptyBorder(14, 14, 14, 14));
         stageView = big();
@@ -357,7 +365,7 @@ public final class CharacterScreen extends JPanel {
         b.setBorderPainted(false);
         b.setFocusPainted(false);
         b.setEnabled(open);
-        b.setToolTipText(open ? (on ? "누르면 벗겨 봐요" : "누르면 입혀 봐요") : "레벨 " + w.level() + "이 되면 열려요");
+        b.setToolTipText(open ? (on ? "누르면 벗겨 봐요" : "누르면 입혀 봐요") : lockedTip(w.level()));
         b.addActionListener(e -> {
             if (on) {
                 draft.remove(w.slot());
@@ -411,14 +419,43 @@ public final class CharacterScreen extends JPanel {
         PetState p = app.store.pet();
         JTextField field = new JTextField(p.name, 12);
         Ui.limit(field, 10);
+        Ui.focusWhenShown(field);
         JPanel panel = new JPanel(new BorderLayout(0, 4));
         panel.add(field, BorderLayout.NORTH);
         panel.add(Ui.hint("10자까지. 비워 두면 " + PetState.defaultName(p.kind) + "로 불러요"), BorderLayout.SOUTH);
-        int answer = JOptionPane.showOptionDialog(app.root, panel, "이름 변경", JOptionPane.DEFAULT_OPTION,
+        int answer = JOptionPane.showOptionDialog(this, panel, "이름 변경", JOptionPane.DEFAULT_OPTION,
                 JOptionPane.PLAIN_MESSAGE, null, new String[] {"취소", "저장"}, "저장");
         if (answer == 1) {
             app.pet.rename(p.kind, field.getText());
         }
+    }
+
+    /** 잠긴 장신구 카드의 툴팁(05 캐릭터 창 7번). 조사는 레벨 숫자의 받침을 따른다. */
+    public static String lockedTip(int level) {
+        return "레벨 " + level + planningpet.common.model.Rules.josa(String.valueOf(level), "이", "가") + " 되면 열려요";
+    }
+
+    /**
+     * D-61: 입혀 본 장신구가 저장된 것과 다르면 적용, 버리기, 취소를 묻는다. 창을 닫거나 다른 펫을 고르기 전에 부른다.
+     * 하던 일을 이어도 되면 true다. 취소, 물음 창 닫기, 적용의 저장 실패면 false이고 아무것도 바꾸지 않는다.
+     */
+    public boolean confirmLeave() {
+        PetState p = app.store.pet();
+        if (draft.equals(p.wear)) {
+            return true;
+        }
+        int answer = ask.choose("꾸미기", "입혀 본 장신구를 적용할까요?", new String[] {"적용", "버리기", "취소"});
+        if (answer == 0) {
+            app.pet.applyWear(p.kind, new LinkedHashMap<>(draft));
+            return draft.equals(app.store.pet().wear);
+        }
+        if (answer == 1) {
+            draft.clear();
+            draft.putAll(p.wear);
+            refresh();
+            return true;
+        }
+        return false;
     }
 
     /** 캐릭터 창을 열 때 부른다(D-58). 입혀 보던 장신구를 버리고 저장된 것에서 시작한다. dress면 꾸미기 탭을 연다. */
@@ -449,7 +486,14 @@ public final class CharacterScreen extends JPanel {
             Pill tab = new Pill(q.kindName(), null, 18).picture(Pet.face(q));
             tab.setPreferredSize(new Dimension(200, 58));
             tab.setSelected(q == p);
-            tab.addActionListener(e -> app.pet.select(kind));
+            tab.addActionListener(e -> {
+                // D-61: 입혀 본 것이 있으면 묻고, 취소면 고른 펫과 탭을 그대로 둔다.
+                if (!kind.equals(app.store.activeKind) && confirmLeave()) {
+                    app.pet.select(kind);
+                } else {
+                    refresh();
+                }
+            });
             g.add(tab);
             petTabs.add(tab);
         }

@@ -28,6 +28,8 @@ public final class ScheduleScreen extends JPanel {
     public final TaskRows untimed;
     public final JLabel bubble = Ui.bubble();
     private LocalDate monday;
+    /** D-60: 이번 주를 보고 있으면 흐리다. */
+    public JButton today;
     private int lastTalk;
     private boolean wasVisible;
     private boolean showHint = true;
@@ -41,7 +43,7 @@ public final class ScheduleScreen extends JPanel {
         untimed = new TaskRows(app.schedule);
         JButton prev = new JButton("<");
         JButton next = new JButton(">");
-        JButton today = new JButton("오늘");
+        today = new JButton("오늘");
         JButton add = new JButton("일정 추가");
         prev.addActionListener(e -> move(monday.minusWeeks(1)));
         next.addActionListener(e -> move(monday.plusWeeks(1)));
@@ -119,6 +121,9 @@ public final class ScheduleScreen extends JPanel {
 
     private void refresh() {
         table.monday = monday;
+        boolean thisWeek = monday.equals(TaskBook.mondayOf(app.store.today()));
+        today.setEnabled(!thisWeek);
+        today.setToolTipText(thisWeek ? "이번 주를 보고 있어요" : null);
         LocalDate sunday = monday.plusDays(6);
         range.setText("<html><b>" + monday.getMonthValue() + "월 " + monday.getDayOfMonth() + "일 ~ "
                 + sunday.getMonthValue() + "월 " + sunday.getDayOfMonth() + "일</b></html>");

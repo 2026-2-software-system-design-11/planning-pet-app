@@ -233,7 +233,20 @@ public final class ShopPanel extends Card {
         row.add(prev, BorderLayout.WEST);
         row.add(cards, BorderLayout.CENTER);
         row.add(next, BorderLayout.EAST);
-        JLabel guide = new JLabel(Ui.POINT_GUIDE, Icons.icon(Icons.Kind.INFO, 14, Theme.ICON), SwingConstants.LEFT);
+        // 기본 창에서 한 줄에 다 들어가지 않으면 "끝내면 경험치도..."를 둘째 줄로 내린다(D-45 문장을 다 보인다).
+        JLabel guide = new JLabel(Ui.POINT_GUIDE, Icons.icon(Icons.Kind.INFO, 14, Theme.ICON), SwingConstants.LEFT) {
+            @Override
+            public void setBounds(int x, int y, int w, int h) {
+                super.setBounds(x, y, w, h);
+                int need = getFontMetrics(getFont()).stringWidth(Ui.POINT_GUIDE) + 14 + 5;
+                int cut = Ui.POINT_GUIDE.indexOf(". ") + 1;
+                String text = w >= need || cut <= 0 ? Ui.POINT_GUIDE
+                        : "<html>" + Ui.esc(Ui.POINT_GUIDE.substring(0, cut)) + "<br>" + Ui.esc(Ui.POINT_GUIDE.substring(cut + 1)) + "</html>";
+                if (!text.equals(getText())) {
+                    setText(text);
+                }
+            }
+        };
         guide.setFont(Theme.regular(11));
         guide.setForeground(Theme.INK_SUB);
         guide.setIconTextGap(5);

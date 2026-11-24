@@ -63,6 +63,7 @@ public final class PickDialog {
         String kind = dog ? "강아지" : "고양이";
         JTextField field = new JTextField(12);
         Ui.limit(field, 10);
+        Ui.focusWhenShown(field);
         JPanel p = new JPanel(new BorderLayout(0, 8));
         p.setBorder(BorderFactory.createEmptyBorder(10, 12, 6, 12));
         p.add(new JLabel("<html><b>" + kind + "를 데려올까요?</b></html>"), BorderLayout.NORTH);

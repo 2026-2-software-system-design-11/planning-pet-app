@@ -53,7 +53,6 @@ public final class Stats {
 
     private static List<Task> counted(Store s, LocalDate from, LocalDate to) {
         LocalDate end = to.isAfter(s.today()) ? s.today() : to;
-        return s.tasks.stream().filter(t -> !t.date.isBefore(from) && !t.date.isAfter(end)).toList();
     }
 
     private static Rate rate(List<Task> list) {

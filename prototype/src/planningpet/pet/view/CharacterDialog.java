@@ -48,6 +48,20 @@ public final class CharacterDialog {
         int w = owner == null ? 1000 : owner.getWidth();
         int h = owner == null ? 680 : owner.getHeight();
         d.setSize(Math.max(860, (int) (w * 0.88)), Math.max(560, (int) (h * 0.86)));
+        // D-61: 닫기와 Esc는 입혀 본 장신구가 있으면 먼저 묻는다.
+        d.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+        Runnable close = () -> {
+            if (screen.confirmLeave()) {
+                d.dispose();
+            }
+        };
+        d.addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                close.run();
+            }
+        });
+        d.getRootPane().registerKeyboardAction(e -> close.run(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
                 JComponent.WHEN_IN_FOCUSED_WINDOW);
         d.setLocationRelativeTo(owner);
         d.setVisible(true);
