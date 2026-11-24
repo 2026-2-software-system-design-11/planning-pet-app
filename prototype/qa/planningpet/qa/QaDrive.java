@@ -23,6 +23,9 @@ class QaDrive extends QaCore {
     String lastQuestion;
     String lastOptions;
     String lastTitle;
+    /** 겹침 물음(D-87)의 문장. 물음마다 " | "로 잇는다. 고르는 버튼은 overlapAnswer번째(처음은 넣기)다. */
+    String overlaps = "";
+    int overlapAnswer;
 
     QaDrive(String flow) {
         super(flow);
@@ -33,6 +36,34 @@ class QaDrive extends QaCore {
         main = find(app.root, MainScreen.class);
         sched = find(app.root, ScheduleScreen.class);
         pet = find(app.root, PetScreen.class);
+        app.schedule.chooser = chooser(-1);
+    }
+
+    /**
+     * 물음에 answer번째 버튼을 고르는 창. 겹침 물음(D-87)은 overlaps에 적고 overlapAnswer번째를 고른다. answer가 -1인데 다른
+     * 물음이 오면 흐름이 예상하지 못한 창이라 멈춘다.
+     */
+    /** 지금까지 받은 겹침 물음을 돌려주고 비운다. */
+    String takeOverlaps() {
+        String out = overlaps;
+        overlaps = "";
+        return out;
+    }
+
+    TaskController.Chooser chooser(int answer) {
+        return (title, message, options) -> {
+            if ("시간이 겹쳐요".equals(title)) {
+                overlaps += (overlaps.isEmpty() ? "" : " | ") + message;
+                return overlapAnswer;
+            }
+            if (answer < 0) {
+                throw new IllegalStateException("예상하지 못한 창: " + title + " " + message);
+            }
+            lastTitle = title;
+            lastQuestion = message;
+            lastOptions = String.join(", ", options);
+            return answer;
+        };
     }
 
     static <T> T find(Component c, Class<T> type) {
@@ -126,12 +157,7 @@ class QaDrive extends QaCore {
 
     /** 반복 사본 저장의 범위 창에서 answer번째 버튼을 누르게 한다(D-42). 물어본 문장은 lastQuestion에 남는다. */
     void answer(int answer) {
-        app.schedule.chooser = (title, message, options) -> {
-            lastTitle = title;
-            lastQuestion = message;
-            lastOptions = String.join(", ", options);
-            return answer;
-        };
+        app.schedule.chooser = chooser(answer);
     }
 
     void attend() {
@@ -140,12 +166,7 @@ class QaDrive extends QaCore {
 
     /** 삭제 확인 창에서 answer번째 버튼을 누른다. 물어본 문장은 lastQuestion에 남는다. */
     boolean delete(Task t, int answer) {
-        app.schedule.chooser = (title, message, options) -> {
-            lastTitle = title;
-            lastQuestion = message;
-            lastOptions = String.join(", ", options);
-            return answer;
-        };
+        app.schedule.chooser = chooser(answer);
         return app.schedule.delete(t);
     }
     TaskForm form(String date) {
