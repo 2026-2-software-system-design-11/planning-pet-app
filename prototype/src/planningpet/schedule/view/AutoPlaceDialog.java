@@ -15,7 +15,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
-import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 /** 자동 배치 결과 창(05, UC-11). 적용을 눌러야 저장한다. */
@@ -44,20 +43,8 @@ public final class AutoPlaceDialog {
             LocalTime end = x.start().plusMinutes(x.task().minutes);
             model.addRow(new Object[] {x.task().title, day(x.day()), x.start() + " ~ " + (end.equals(LocalTime.MIDNIGHT) ? "24:00" : end), x.task().minutes + "분"});
         }
-        for (Task t : p.unplaced()) {
-            model.addRow(new Object[] {t.title, "놓지 못함", "그날 빈 시간이 모자라요", t.minutes + "분"});
-        }
         JTable table = new JTable(model);
         table.getTableHeader().setReorderingAllowed(false);
-        int firstUnplaced = p.placed().size();
-        table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
-            @Override
-            public java.awt.Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean f, int row, int col) {
-                java.awt.Component c = super.getTableCellRendererComponent(t, v, sel, f, row, col);
-                c.setForeground(row >= firstUnplaced && (col == 1 || col == 2) ? Theme.SUNDAY : Theme.INK);
-                return c;
-            }
-        });
         JScrollPane scroll = new JScrollPane(table);
         scroll.setColumnHeaderView(table.getTableHeader());
         scroll.setPreferredSize(new java.awt.Dimension(560, 40 + 20 * model.getRowCount()));
@@ -65,11 +52,36 @@ public final class AutoPlaceDialog {
         JPanel root = new JPanel(new BorderLayout(0, 8));
         root.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10));
         root.add(head, BorderLayout.NORTH);
-        root.add(scroll, BorderLayout.CENTER);
+        JPanel middle = new JPanel(new BorderLayout(0, 8));
+        middle.add(scroll, BorderLayout.CENTER);
+        if (!p.unplaced().isEmpty()) {
+            middle.add(unplaced(p, monday), BorderLayout.SOUTH);
+        }
+        root.add(middle, BorderLayout.CENTER);
         JPanel buttons = new JPanel(new BorderLayout());
         buttons.add(Ui.flow(cancel, apply), BorderLayout.EAST);
         root.add(buttons, BorderLayout.SOUTH);
         return root;
+    }
+
+    /** D-76: 표 아래 "놓지 못한 일" 칸. 일마다 제목, 마감 날짜, 빨간 까닭이고 맨 아래에 다음 할 일을 적는다. */
+    public static JPanel unplaced(Planner.Placement p, LocalDate monday) {
+        JPanel box = new JPanel();
+        box.setLayout(new javax.swing.BoxLayout(box, javax.swing.BoxLayout.Y_AXIS));
+        box.setName("놓지 못한 일");
+        JLabel title = new JLabel("놓지 못한 일");
+        title.setFont(Theme.bold(13));
+        box.add(title);
+        for (Task t : p.unplaced()) {
+            JLabel line = new JLabel("<html><div style='width:520px'><b>" + Ui.esc(t.title) + "</b> " + Planner.dueText(t)
+                    + "<br><font color='#E55C64'>" + Planner.reason(t, monday) + "</font></div></html>");
+            line.setBorder(javax.swing.BorderFactory.createEmptyBorder(4, 0, 0, 0));
+            box.add(line);
+        }
+        JLabel hint = Ui.hint(Planner.UNPLACED_HINT);
+        hint.setBorder(javax.swing.BorderFactory.createEmptyBorder(6, 0, 0, 0));
+        box.add(hint);
+        return box;
     }
 
     public static void open(App app, LocalDate monday) {
