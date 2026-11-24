@@ -96,17 +96,17 @@ final class PeriodCheck {
     static void validate() {
         TaskDraft task = draft(Task.Kind.TASK, "11-16", null);
         eq("T-VAL-11", "오류 없음", msgs(TaskCheck.check(task.withRepeat(Repeat.DAILY, d("12-13")), false)));
-        eq("T-VAL-13", "오류 없음 / 반복: 반복이 너무 많아요. 끝 날짜를 앞당겨 주세요",
+        eq("T-VAL-13", "오류 없음 / 반복: 반복이 너무 많아요. 반복 끝나는 날을 앞당겨 주세요",
                 msgs(TaskCheck.check(task.withRepeat(Repeat.DAILY, d("2027-03-15")), false)) + " / "
                 + msgs(TaskCheck.check(task.withRepeat(Repeat.DAILY, d("2027-03-16")), false)));
         eq("D-64 요일은 하나 이상", "반복: 요일을 하나 이상 골라 주세요",
                 msgs(TaskCheck.check(task.withRepeat(Repeat.weekly(List.of()), d("11-30")), false)));
         Repeat wed = Repeat.weekly(DayOfWeek.WEDNESDAY);
-        eq("D-64 반복하는 날 없음", "반복: 끝 날짜 안에 반복하는 날이 없어요 / 오류 없음",
+        eq("D-64 반복하는 날 없음", "반복: 반복 끝나는 날 안에 반복하는 날이 없어요 / 오류 없음",
                 msgs(TaskCheck.check(task.withRepeat(wed, d("11-17")), false)) + " / "
                 + msgs(TaskCheck.check(task.withRepeat(wed, d("11-18")), false)));
         TaskDraft p18 = draft(Task.Kind.TASK, "11-18", null);
-        eq("D-65 마감은 날짜와 같거나 뒤", "마감: 마감이 날짜보다 앞이에요 / 오류 없음 / 마감: 마감이 날짜보다 앞이에요",
+        eq("D-65 마감은 날짜와 같거나 뒤", "마감: 마감일이 시작일보다 앞이에요 / 오류 없음 / 마감: 마감일이 시작일보다 앞이에요",
                 msgs(TaskCheck.check(p18.withDue(d("11-17")), false)) + " / "
                 + msgs(TaskCheck.check(p18.withDue(d("11-18")), false)) + " / "
                 + msgs(TaskCheck.check(p18.withDue(d("11-17")), true)));
@@ -116,7 +116,7 @@ final class PeriodCheck {
         app.schedule.check(done);
         TaskForm f = new TaskForm(done, done.date, app.store.now);
         Ui.setDate(f.due, d("11-17"));
-        eq("D-66 끝낸 할 일도 마감 검사", "마감: 마감이 날짜보다 앞이에요", msgs(f.problems()));
+        eq("D-66 끝낸 할 일도 마감 검사", "마감: 마감일이 시작일보다 앞이에요", msgs(f.problems()));
         eq("D-65 기간 할 일은 반복하지 않는다", "반복: 기간 안에 하는 할 일은 반복할 수 없어요",
                 msgs(TaskCheck.check(task.withDue(d("11-22")).withRepeat(Repeat.DAILY, d("11-22")), false)));
         eq("D-65 기간은 할 일만", "마감: 기간은 할 일만 정할 수 있어요",

@@ -27,7 +27,7 @@ public final class TaskCheck {
             if (f.kind() == Task.Kind.FIXED) {
                 out.add(new String[] {"마감", "기간은 할 일만 정할 수 있어요"});
             } else if (f.dueDate().isBefore(f.date())) {
-                out.add(new String[] {"마감", "마감이 날짜보다 앞이에요"});
+                out.add(new String[] {"마감", "마감일이 시작일보다 앞이에요"});
             }
         }
         Integer start = f.startMinute();
@@ -68,8 +68,8 @@ public final class TaskCheck {
         }
         int copies = how.dates(from, to, Repeat.MAX_COPIES).size();
         if (copies == 0) {
-            return "끝 날짜 안에 반복하는 날이 없어요";
+            return "반복 끝나는 날 안에 반복하는 날이 없어요";
         }
-        return copies > Repeat.MAX_COPIES ? "반복이 너무 많아요. 끝 날짜를 앞당겨 주세요" : null;
+        return copies > Repeat.MAX_COPIES ? "반복이 너무 많아요. 반복 끝나는 날을 앞당겨 주세요" : null;
     }
 }
