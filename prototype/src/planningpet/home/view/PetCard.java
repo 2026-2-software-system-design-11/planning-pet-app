@@ -88,3 +88,93 @@ public final class PetCard extends JComponent {
         };
         addMouseListener(mouse);
         addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusGained(java.awt.event.FocusEvent e) {
+                repaint();
+            }
+
+            @Override
+            public void focusLost(java.awt.event.FocusEvent e) {
+                repaint();
+            }
+        });
+        getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "open");
+        getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "open");
+        getActionMap().put("open", new javax.swing.AbstractAction() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                open.run();
+            }
+        });
+        store.onChange(this::refresh);
+        refresh();
+    }
+
+    /** 화면 읽기 프로그램에는 누르는 버튼으로 알린다. 이름과 설명(펫, 레벨, 오늘 끝낸 일, 말)은 refresh가 채운다. */
+    @Override
+    public javax.accessibility.AccessibleContext getAccessibleContext() {
+        if (accessibleContext == null) {
+            accessibleContext = new AccessibleJComponent() {
+                @Override
+                public javax.accessibility.AccessibleRole getAccessibleRole() {
+                    return javax.accessibility.AccessibleRole.PUSH_BUTTON;
+                }
+            };
+        }
+        return accessibleContext;
+    }
+
+    /** 누른 것과 같다(QA가 부른다). */
+    public void click() {
+        open.run();
+    }
+
+    /** "나비". */
+    public String nameText() {
+        return store.pet().name;
+    }
+
+    /** "Lv. 3". */
+    public String levelText() {
+        return "Lv. " + Level.level(store.pet().exp);
+    }
+
+    /** "경험치 80 / 110", 레벨 10이면 "최고 레벨"(06의 10번). */
+    public String expText() {
+        return Level.expText(store.pet().exp);
+    }
+
+    /** "오늘 끝낸 일 1 / 4". 오늘 일정이 없으면 "0 / 0"이다(06의 13번). */
+    public String doneText() {
+        DailyProgress p = DailyProgress.of(store.book, store.today());
+        return "오늘 끝낸 일 " + p.done() + " / " + p.total();
+    }
+
+    /** 칸 막대의 켜진 칸 수와 칸 수(이어진 막대면 칸 수 0). 검사용. */
+    public String doneBarText() {
+        return Math.round(doneBar.ratio() * 100) + "% " + doneBar.segments() + "칸";
+    }
+
+    public String bubbleText() {
+        return store.talk == null ? "" : store.talk;
+    }
+
+    private void refresh() {
+        PetState p = store.pet();
+        expBar.set(Level.expRatio(p.exp));
+        DailyProgress d = DailyProgress.of(store.book, store.today());
+        doneBar.set((int) d.done(), d.total());
+        getAccessibleContext().setAccessibleDescription(nameText() + " " + levelText() + ", " + expText() + ", "
+                + doneText() + (bubbleText().isBlank() ? "" : ", " + bubbleText()));
+        revalidate();
+        repaint();
+    }
+
+    @Override
+    public void addNotify() {
+        super.addNotify();
+        if (clock == null) {
+            start = System.nanoTime();
+            clock = new javax.swing.Timer(40, e -> {
+                if (isShowing()) {
+                    t = (System.nanoTime() - start) / 1e9;
