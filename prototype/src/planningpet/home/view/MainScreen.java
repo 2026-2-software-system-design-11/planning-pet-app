@@ -26,6 +26,10 @@ public final class MainScreen extends JPanel {
     /** D-40: 칸 옆 "추가"는 Enter와 같다. "일정 추가"는 목록 제목 줄 오른쪽이다. */
     public final JButton quickButton = new JButton("추가");
     public final JButton addButton = new JButton("일정 추가");
+    /** D-74: 예시 일정이 남았을 때만 보인다. */
+    public final JButton sampleButton = new JButton("예시 지우기");
+    /** 예시 안내 띠(D-74). 예시 일정이 없으면 숨는다. */
+    private final JPanel sampleBar = new JPanel(new BorderLayout(8, 0));
     /** 펫 카드를 누르면 캐릭터 창을 연다(D-58, D-59). Main이 나의 방의 characterOpener로 잇는다. */
     public Runnable openCharacter = () -> { };
 
@@ -49,7 +53,20 @@ public final class MainScreen extends JPanel {
         head.add(addButton, BorderLayout.EAST);
         head.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Theme.CARD_EDGE),
                 BorderFactory.createEmptyBorder(0, 0, 8, 0)));
-        list.add(head, BorderLayout.NORTH);
+        // D-74: 예시 일정이 남아 있으면 제목 줄 아래 띠에 알리고 "예시 지우기"를 둔다.
+        sampleButton.addActionListener(e -> app.schedule.clearSamples());
+        sampleButton.setFont(Theme.bold(12));
+        sampleButton.setBorder(BorderFactory.createEmptyBorder(5, 12, 7, 12));
+        JLabel sampleNote = new JLabel("예시 일정이 들어 있어요. 다 봤으면 지워도 돼요");
+        sampleNote.setFont(Theme.font(12));
+        sampleNote.setForeground(Theme.INK_SUB);
+        sampleBar.add(sampleNote, BorderLayout.CENTER);
+        sampleBar.add(sampleButton, BorderLayout.EAST);
+        sampleBar.setBorder(BorderFactory.createEmptyBorder(6, 4, 0, 0));
+        JPanel top = new JPanel(new BorderLayout());
+        top.add(head, BorderLayout.NORTH);
+        top.add(sampleBar, BorderLayout.SOUTH);
+        list.add(top, BorderLayout.NORTH);
         JScrollPane scroll = new JScrollPane(rows, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scroll.setBorder(BorderFactory.createEmptyBorder());
         list.add(scroll, BorderLayout.CENTER);
@@ -143,6 +160,9 @@ public final class MainScreen extends JPanel {
         listTitle.setText(date.getMonthValue() + "월 " + date.getDayOfMonth() + "일 ("
                 + WEEK.charAt(date.getDayOfWeek().getValue() - 1) + ") 할 일");
         rows.showPlan(app.store.book.dayPlan(date));
+        boolean samples = !app.schedule.samples().isEmpty();
+        sampleBar.setVisible(samples);
+        sampleButton.setVisible(samples);
         calendar.refresh();
         pet.repaint();
     }

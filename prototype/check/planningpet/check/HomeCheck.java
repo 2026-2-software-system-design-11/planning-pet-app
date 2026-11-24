@@ -23,6 +23,7 @@ final class HomeCheck {
         doneGroup();
         calendar();
         weekStart();
+        examples();
     }
 
     static LocalDate d(String monthDay) {
@@ -202,5 +203,49 @@ final class HomeCheck {
     private static String firstCell(MainScreen main) {
         String t = plain(((javax.swing.JLabel) main.calendar.grid.getComponent(0)).getText());
         return t.isEmpty() ? "빈칸" : t.split(" ")[0];
+    }
+
+    /** T-EX-1~3. 첫 실행의 예시로 둘러보기, 예시 지우기, 바로 시작(D-74). */
+    static void examples() {
+        Store s = at("11-18T09:00");
+        planningpet.pet.view.PickDialog pd = new planningpet.pet.view.PickDialog();
+        pd.name.setText("콩");
+        pd.apply(s, true);
+        App app = Main.create(s);
+        app.control.windowShown();
+        MainScreen main = ProtoCheck.find(app.root, MainScreen.class);
+        StringBuilder fixed = new StringBuilder();
+        s.tasks.stream().filter(t -> t.kind == Task.Kind.FIXED).forEach(t -> fixed.append(t.date.toString().substring(5)).append(" "));
+        eq("T-EX-1", "9 true " + "11-16 11-18 11-17 11-19 / [ ] 고정 자료구조 09:00~10:15 75분 / [ ] 자소서 초안 메모 14:00~15:30 90분"
+                + " / 시각 없는 할 일 / [ ] 토익 단어 시각 정하기 30분 / 기간 안에 할 일 / [ ] E사 지원서 ~11/22까지 시각 정하기 120분"
+                + " / 끝낸 일 1개 / [x] 알고리즘 과제 2번 10:00~11:00 60분 / 0P / 처음 만났네! 나는 콩이야. 예시 일정을 넣어 뒀어. / true",
+                s.tasks.size() + " " + s.tasks.stream().allMatch(t -> s.sampleIds.contains(t.id)) + " " + fixed + "/ " + rows(main.rows)
+                + " / " + s.points + "P / " + s.talk + " / " + main.sampleButton.isVisible());
+        main.quick.setText("과제");
+        main.quick.postActionEvent();
+        PeriodCheck.box(main.rows, s.tasks.stream().filter(t -> t.title.equals("토익 단어")).findFirst().orElseThrow()).doClick();
+        main.rows.settle();
+        java.util.List<String> asked = new java.util.ArrayList<>();
+        int[] answer = {1};
+        app.schedule.chooser = (title, message, options) -> {
+            asked.add(title + " / " + message + " / " + String.join(", ", options));
+            return answer[0];
+        };
+        main.sampleButton.doClick();
+        String cancelled = s.tasks.size() + " " + s.sampleIds.size();
+        answer[0] = 0;
+        main.sampleButton.doClick();
+        planningpet.settings.view.SettingsScreen settings = ProtoCheck.find(app.root, planningpet.settings.view.SettingsScreen.class);
+        eq("T-EX-2", "예시 지우기 / 예시 일정 9개를 지울까요? 새로 넣은 일정은 그대로 남아요. / 지우기, 취소 | 10 9 | 과제 10P 0 false false 예시 일정이 없어요"
+                + " 예시를 지웠어. 수업부터 넣어 볼까?",
+                asked.get(0) + " | " + cancelled + " | " + String.join(" ", s.tasks.stream().map(t -> t.title).toList()) + " " + s.points + "P "
+                + s.sampleIds.size() + " " + main.sampleButton.isVisible() + " " + settings.clearSamples.isEnabled() + " "
+                + settings.sampleCount.getText() + " " + s.talk);
+        Store e = at("11-18T09:00");
+        new planningpet.pet.view.PickDialog().apply(e, false);
+        App ea = Main.create(e);
+        ea.control.windowShown();
+        eq("T-EX-3", "0 0 false 처음 만났네! 나는 나비야. 수업부터 넣어 볼까?", e.tasks.size() + " " + e.sampleIds.size() + " "
+                + ProtoCheck.find(ea.root, MainScreen.class).sampleButton.isVisible() + " " + e.talk);
     }
 }
