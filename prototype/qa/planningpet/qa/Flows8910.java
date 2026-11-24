@@ -105,13 +105,14 @@ final class Flows8910 {
         q.eq("목록", "시각 없는 할 일 / 시각 정하기 [x] 토익 RC 60분", q.rows());
         q.eq("말풍선", "11월 13일 할 일은 1개야.", q.app.store.talk);
         q.step("2", "pet에서 쿠션을 두 번 누른다");
-        q.app.show("pet");
+        q.app.show("나의 방");
         Flows12.press(q, "쿠션");
-        q.eq("첫 번째", "가진 아이템 1 / 13, 오늘은 아직 끝낸 일이 없어., 쿠션", q.pet());
+        q.eq("첫 번째", "배치 아이템 0 / 13, 하트, 쿠션 보유 중", q.pet());
         Flows12.press(q, "쿠션");
-        q.has("두 번째", "쿠션 ✓", q.pet());
+        q.has("두 번째", "쿠션 보유 중 ✓", q.pet());
         q.step("3", "상점을 연다");
-        q.has("상점", "쿠션 보유 중 버튼 없음 / 화분 살 수 있어요 켜짐", q.shop());
+        q.eq("상점", "털실 공 살 수 있어요 켜짐 / 뼈다귀 살 수 있어요 켜짐 / 쿠션 보유 중 방에서 치우기 켜짐 / 화분 살 수 있어요 켜짐 / 러그 살 수 있어요 켜짐 / 액자 살 수 있어요 켜짐"
+                + " / 걸이 화분 살 수 있어요 켜짐 / 조명 살 수 있어요 켜짐 / 책장 살 수 있어요 켜짐 / 책상 살 수 있어요 켜짐 / 소파 40P 모자라요 꺼짐 / 캣타워 90P 모자라요 꺼짐 / 우드 침대 140P 모자라요 꺼짐", q.shop());
         q.end();
     }
 
@@ -125,8 +126,9 @@ final class Flows8910 {
         q.open();
         q.eq("말풍선", "안녕, 나는 바둑이야. 일정관리에서 이번 학기 수업부터 넣어 볼까?", q.app.store.talk);
         q.step("2", "pet을 연다");
-        q.app.show("pet");
-        q.yes("부제", text(q.app.root).contains("강아지와 함께 성장하고, 작은 성취를 모아 보세요!"));
+        q.app.show("나의 방");
+        q.yes("부제", text(q.app.root).contains("나만의 공간을 꾸미고, 반려동물과 함께 시간을 보내요!"));
+        q.yes("강아지 칩", q.pet.summary().length() > 0 && text(q.app.root).contains("강아지"));
         q.end();
         return q;
     }

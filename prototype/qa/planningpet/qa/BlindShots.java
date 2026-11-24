@@ -69,7 +69,7 @@ public final class BlindShots {
             App app = Main.create(MockData.sample());
             app.control.windowShown();
             int n = 1;
-            for (String screen : new String[] {"홈", "일정관리", "pet", "설정"}) {
+            for (String screen : new String[] {"홈", "일정관리", "나의 방", "설정"}) {
                 app.show(screen);
                 shoot(app.root, new Dimension(1000, 680), null, images, key, n++, out, screen);
             }

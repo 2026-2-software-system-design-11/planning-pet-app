@@ -3,7 +3,6 @@ package planningpet.qa;
 import planningpet.common.view.RoundButtonUI;
 import planningpet.schedule.model.Planner;
 import planningpet.schedule.view.AutoPlaceDialog;
-import planningpet.shop.view.ShopDialog;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.GridLayout;
@@ -114,21 +113,22 @@ final class Qa extends QaDrive {
         return head.getText() + " / " + String.join(" / ", out);
     }
 
-    /** 상점 표를 "이름 상태 사기(켜짐, 꺼짐, 버튼 없음)"으로 읽는다. */
+    /** 나의 방 상점: 아이템마다 카드를 눌러 미리보기의 값과 버튼을 읽는다. "쿠션 보유 중 방에서 치우기 켜짐", "소파 180P 모자라요 꺼짐". */
     String shop() {
-        JPanel root = ShopDialog.content(app.store, x -> { }, new JButton("닫기"));
         List<String> out = new ArrayList<>();
-        Container grid = findGrid(root);
-        Component[] cells = grid.getComponents();
-        for (int i = 4; i + 3 < cells.length; i += 4) {
-            String state = plain(((JLabel) cells[i + 2]).getText());
-            out.add(plain(((JLabel) cells[i]).getText()) + " " + (state.isEmpty() ? "-" : state)
-                    + (cells[i + 3] instanceof JButton b ? (b.isEnabled() ? " 켜짐" : " 꺼짐") : " 버튼 없음"));
+        var sp = pet.shop;
+        for (String name : planningpet.shop.model.Shop.ITEMS.keySet()) {
+            sp.selected = null;
+            sp.select(name);
+            String state = app.store.owned.contains(name) ? "보유 중 " + sp.action.getText()
+                    : sp.lack.getText().isBlank() ? "살 수 있어요" : sp.lack.getText();
+            out.add(name + " " + state + (sp.action.isEnabled() ? " 켜짐" : " 꺼짐"));
         }
+        sp.select(null);
         return String.join(" / ", out);
     }
 
-    /** pet 화면: 꾸미기 진행도, 방 말풍선, 내 아이템(흐린 것은 "(흐림)"). */
+    /** 나의 방: 배치 아이템, 방 말풍선(글이 없으면 하트), 보유한 아이템 카드("쿠션 보유 중 ✓"는 방에 놓임). */
     String pet() {
         List<String> items = new ArrayList<>();
         for (Component c : pet.items.getComponents()) {

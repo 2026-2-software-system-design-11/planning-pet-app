@@ -113,17 +113,16 @@ final class Flows12 {
         q.attend();
         q.eq("포인트", 120, q.app.store.points);
         q.step("2", "pet을 연다");
-        q.app.show("pet");
-        q.eq("pet", "가진 아이템 3 / 13, 오늘 1개 끝냈어., 쿠션 ✓ 화분 ✓ 러그", q.pet());
+        q.app.show("나의 방");
+        q.eq("pet", "배치 아이템 2 / 13, 하트, 쿠션 보유 중 ✓, 화분 보유 중 ✓, 러그 보유 중", q.pet());
         q.yes("포인트 얻는 법 문장", Flows8910.text(q.app.root).contains(Ui.POINT_GUIDE));
         q.step("3", "상점을 연다");
-        q.eq("상점", "털실 공 살 수 있어요 켜짐 / 뼈다귀 살 수 있어요 켜짐 / 쿠션 보유 중 버튼 없음 / 화분 보유 중 버튼 없음 / 러그 보유 중 버튼 없음"
-                + " / 액자 살 수 있어요 켜짐 / 걸이 화분 10P 모자라요 꺼짐 / 조명 30P 모자라요 꺼짐 / 책장 80P 모자라요 꺼짐"
-                + " / 책상 130P 모자라요 꺼짐 / 소파 180P 모자라요 꺼짐 / 캣타워 230P 모자라요 꺼짐 / 우드 침대 280P 모자라요 꺼짐", q.shop());
+        q.eq("상점", "털실 공 살 수 있어요 켜짐 / 뼈다귀 살 수 있어요 켜짐 / 쿠션 보유 중 방에서 치우기 켜짐 / 화분 보유 중 방에서 치우기 켜짐 / 러그 보유 중 방에 놓기 켜짐 / 액자 살 수 있어요 켜짐"
+                + " / 걸이 화분 10P 모자라요 꺼짐 / 조명 30P 모자라요 꺼짐 / 책장 80P 모자라요 꺼짐 / 책상 130P 모자라요 꺼짐 / 소파 180P 모자라요 꺼짐 / 캣타워 230P 모자라요 꺼짐 / 우드 침대 280P 모자라요 꺼짐", q.shop());
         q.step("4", "액자를 산다");
         q.yes("샀음", q.buy("액자"));
         q.eq("포인트", 0, q.app.store.points);
-        q.eq("pet", "가진 아이템 4 / 13, 액자 고마워!, 쿠션 ✓ 화분 ✓ 러그 액자 ✓", q.pet());
+        q.eq("pet", "배치 아이템 3 / 13, 액자 고마워!, 쿠션 보유 중 ✓, 화분 보유 중 ✓, 러그 보유 중, 액자 보유 중 ✓", q.pet());
         q.step("5", "홈에서 알고리즘 과제 2번 체크를 푼다");
         q.app.show("홈");
         q.check(q.task("알고리즘 과제 2번"));
@@ -134,23 +133,24 @@ final class Flows12 {
         q.eq("상태", "0P 경험치210 횟수1 성취도1/4", st(q));
         q.yes("액자 그대로", q.app.store.owned.contains("액자"));
         q.step("7", "pet에서 러그를 두 번 누른다");
-        q.app.show("pet");
+        q.app.show("나의 방");
         press(q, "러그");
-        q.has("첫 번째", "러그 ✓", q.pet());
+        q.has("첫 번째", "러그 보유 중 ✓", q.pet());
         press(q, "러그");
-        q.has("두 번째", "러그 액자 ✓", q.pet());
+        q.has("두 번째", "러그 보유 중, 액자 보유 중 ✓", q.pet());
         q.end();
     }
 
     /** pet 화면 내 아이템 줄에서 이름이 name으로 시작하는 버튼을 누른다. */
+    /** 나의 방 상점에서 그 아이템 카드를 고르고 미리보기의 "방에 놓기" 또는 "방에서 치우기"를 누른다. */
     static void press(Qa q, String name) {
-        for (var c : q.pet.items.getComponents()) {
-            if (c instanceof AbstractButton b && !(c instanceof JButton) && b.getText().startsWith(name)) {
-                b.doClick();
-                return;
-            }
+        q.pet.shop.selected = null;
+        q.pet.shop.select(name);
+        if (!q.app.store.owned.contains(name)) {
+            throw new IllegalStateException("가진 아이템이 아님: " + name);
         }
-        throw new IllegalStateException("버튼 없음: " + name);
+        q.pet.shop.action.doClick();
+        q.pet.shop.select(null);
     }
 
     static Qa uf21(Qa q) {
