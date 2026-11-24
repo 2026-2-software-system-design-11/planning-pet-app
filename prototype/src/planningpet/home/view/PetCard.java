@@ -134,6 +134,11 @@ public final class PetCard extends JComponent {
         return store.pet().name;
     }
 
+    /** 이름 옆에 작게 적는 종류 "고양이"(D-81). */
+    public String kindText() {
+        return store.pet().kindName();
+    }
+
     /** "Lv. 3". */
     public String levelText() {
         return "Lv. " + Level.level(store.pet().exp);
@@ -318,18 +323,26 @@ public final class PetCard extends JComponent {
         int[] r = rows(f);
         int x = infoX(f);
         int w = infoW(f);
-        // 이름과 레벨: 한 줄, 아래 끝을 맞춘다. 이름이 길면 줄인다.
+        // 이름, 작은 종류, 레벨: 한 줄, 아래 끝을 맞춘다. 이름이 길면 줄인다(D-81).
         String level = levelText();
         g.setFont(Theme.heavy(24));
         FontMetrics lf = g.getFontMetrics();
         int lw = lf.stringWidth(level);
         int base = r[0] + 24;
         Icons.draw(g, Icons.Kind.PAW, x, base - 15, 15, Theme.ICON);
+        String kind = kindText();
+        g.setFont(Theme.font(11));
+        int kw = g.getFontMetrics().stringWidth(kind);
         g.setFont(Theme.bold(15));
-        String name = PetCardArt.fit(nameText(), g.getFontMetrics(), w - 22 - lw - 10);
+        String name = PetCardArt.fit(nameText(), g.getFontMetrics(), w - 22 - lw - 10 - kw - 5);
         g.setColor(Theme.INK);
         g.drawString(name, x + 21, base);
-        int nx = x + 21 + g.getFontMetrics().stringWidth(name) + 10;
+        int kx = x + 21 + g.getFontMetrics().stringWidth(name) + 5;
+        g.setFont(Theme.font(11));
+        g.setColor(Theme.INK_SUB);
+        g.drawString(kind, kx, base);
+        g.setColor(Theme.INK);
+        int nx = kx + kw + 10;
         g.setFont(Theme.heavy(24));
         g.drawString(level, nx, base);
         // 경험치: 민트빛 라벨, 막대(자식 Bar), 아래 오른쪽 숫자.

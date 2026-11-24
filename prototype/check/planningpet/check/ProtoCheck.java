@@ -396,7 +396,16 @@ public final class ProtoCheck {
         planningpet.pet.view.PetScreen cr = find(ca.root, planningpet.pet.view.PetScreen.class);
         java.util.List<String> opened = new java.util.ArrayList<>();
         cr.characterOpener = dress -> opened.add(ca.store.activeKind + (dress ? " 꾸미기 탭" : " 상태 탭"));
-        tipButton(cr.room, "나비").doClick();
+        StringBuilder pills = new StringBuilder();
+        for (planningpet.common.view.Pill pill : all(cr, planningpet.common.view.Pill.class)) {
+            if (pill.small() != null) {
+                pills.append(pill.getText()).append("(").append(pill.small()).append(") ");
+            }
+        }
+        planningpet.home.view.PetCard homeCard = find(ca.root, planningpet.home.view.MainScreen.class).pet;
+        eq("D-81 펫은 어디서나 지은 이름으로 부른다", "나비(고양이) 바둑이(강아지) 나비(고양이) 바둑이(강아지) / 바둑이 강아지 Lv. 1",
+                pills + "/ " + homeCard.nameText() + " " + homeCard.kindText() + " " + homeCard.levelText());
+        button(cr.room, "나비").doClick();
         eq("D-80 펫 칩은 고르기만 한다", "CAT ", ca.store.activeKind + " " + String.join(", ", opened));
         button(cr, "나비 꾸미기").doClick();
         eq("D-83 {이름} 꾸미기는 꾸미기 탭", "CAT 꾸미기 탭", String.join(", ", opened));
@@ -440,6 +449,20 @@ public final class ProtoCheck {
             }
         }
         return null;
+    }
+
+    /** c 아래의 type 부품 모두(그린 순서). */
+    static <T> java.util.List<T> all(java.awt.Component c, Class<T> type) {
+        java.util.List<T> out = new java.util.ArrayList<>();
+        if (type.isInstance(c)) {
+            out.add(type.cast(c));
+        }
+        if (c instanceof java.awt.Container k) {
+            for (java.awt.Component child : k.getComponents()) {
+                out.addAll(all(child, type));
+            }
+        }
+        return out;
     }
 
     /** 툴팁이 tip인 버튼. 없으면 null. */
