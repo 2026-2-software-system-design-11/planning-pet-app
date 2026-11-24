@@ -177,6 +177,7 @@ public final class ProtoCheck {
         newRules();
         PeriodCheck.run();
         DayCheck.run();
+        HomeCheck.run();
         System.out.println(failed == 0 ? "모두 통과" : failed + "개 실패");
         System.exit(failed == 0 ? 0 : 1);
     }

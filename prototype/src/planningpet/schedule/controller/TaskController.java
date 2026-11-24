@@ -136,6 +136,9 @@ public final class TaskController {
                 if (d.repeat() != null && !d.repeat().daily()) {
                     // D-75: 날짜 칸이 고른 요일이 아니어도 막지 않고 처음 들어간 날을 알린다.
                     app.store.say(app.talk.weeklyAdded(made));
+                } else if (fromHome()) {
+                    // D-90: 홈에서 넣으면 펫이 넣은 일의 이름과 오늘 남은 수를 말한다.
+                    app.store.say(app.talk.added(made.get(0)));
                 }
             } else {
                 app.store.book.update(editing, d, scope == 1);
@@ -150,8 +153,16 @@ public final class TaskController {
         if (title.isEmpty() || title.length() > 100) {
             return false;
         }
-        app.control.change(() -> app.store.book.add(Task.Kind.TASK, title, date, null, 30, "", null));
+        app.control.change(() -> {
+            Task made = app.store.book.add(Task.Kind.TASK, title, date, null, 30, "", null).get(0);
+            app.store.say(app.talk.added(made)); // D-90
+        });
         return true;
+    }
+
+    /** 일정 입력 창을 홈에서 열었는가(D-90). 일정관리에서 넣으면 일정관리의 펫 말(D-39)을 따른다. */
+    private boolean fromHome() {
+        return "홈".equals(app.current());
     }
 
     /** 시각 고치기 창의 저장(D-32, D-42). 반복 사본이면 범위를 묻고, 취소하면 false. day는 창을 연 목록의 날이다(D-65). */
