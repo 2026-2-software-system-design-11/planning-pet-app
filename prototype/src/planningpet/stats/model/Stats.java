@@ -88,3 +88,15 @@ public final class Stats {
             if (!in.isEmpty()) {
                 out.put(c, rate(in));
             }
+        }
+        return out;
+    }
+
+    /** 그 기간에 얻은 포인트: 그 기간에 받은 완료 보상(지운 일정 것도, D-19)과 출석. */
+    public static int points(Store s, Period p) {
+        int tasks = s.book.rewardHistory().stream().filter(t -> p.contains(t.rewardDay))
+                .mapToInt(t -> t.rewardPoints).sum();
+        long attend = s.attendDays.stream().filter(p::contains).count();
+        return tasks + (int) attend * Game.ATTEND_POINTS;
+    }
+}
