@@ -181,6 +181,14 @@ final class PeriodCheck {
         Task p = period(s, "P", "11-16", "11-18", 30);
         eq("D-65 기간 동안 날마다", "x period period due x ~11/18까지",
                 groups(s, p, "11-15", "11-16", "11-17", "11-18", "11-19") + " " + TaskBook.dueText(p));
+        Store today = at("11-18T09:00");
+        today.book.add(Task.Kind.TASK, "과제", d("11-18"), null, 30, "", null).get(0).done = true;
+        today.book.add(Task.Kind.TASK, "빨래", d("11-18"), null, 30, "", null);
+        Task e2 = period(today, "E사 지원서", "11-16", "11-22", 120);
+        String plan = names(today.book.dayPlan(d("11-18")));
+        today.book.setTime(e2, LocalTime.of(14, 0), 120, d("11-18"), false);
+        eq("D-70 오늘로 정하면 오늘 할 일", "untimed 과제 빨래 period E사 지원서 / timed E사 지원서 untimed 과제 빨래",
+                plan + " / " + names(today.book.dayPlan(d("11-18"))));
         App app = Main.create(at("11-18T09:00"));
         period(app.store, "P", "11-12", "11-20", 30);
         period(app.store, "Q", "11-10", "11-17", 30);
@@ -198,6 +206,20 @@ final class PeriodCheck {
         DailyProgress last = DailyProgress.of(g.book, g.today());
         eq("D-70 기간 안에 할 일은 세지 않는다", "1/1 기간 할 일 1개 (~11/22), 마감 날 0/1", pr.done() + "/" + pr.total() + " " + card
                 + ", 마감 날 " + last.done() + "/" + last.total());
+    }
+
+    /** 묶음마다 이름과 제목. 빈 묶음은 뺀다. */
+    static String names(TaskBook.DayPlan p) {
+        StringBuilder b = new StringBuilder();
+        String[] heads = {"due", "timed", "untimed", "period"};
+        List<List<Task>> all = List.of(p.dueToday(), p.timed(), p.untimed(), p.period());
+        for (int i = 0; i < 4; i++) {
+            if (!all.get(i).isEmpty()) {
+                b.append(b.length() == 0 ? "" : " ").append(heads[i]).append(" ")
+                        .append(all.get(i).stream().map(t -> t.title).collect(Collectors.joining(" ")));
+            }
+        }
+        return b.toString();
     }
 
     static void rewards() {
@@ -246,6 +268,16 @@ final class PeriodCheck {
         s.book.add(Task.Kind.TASK, "과제", d("11-16"), null, 30, "", null);
         eq("D-65 브리핑의 기간 할 일", "오늘은 할 일이 없어. 어제 못 끝낸 일 1개는 달력에 남아 있어. 'F사 서류' 마감이 내일이야.",
                 new Talk(s).briefing());
+        App done = Main.create(at("11-18T09:00"));
+        done.store.book.add(Task.Kind.TASK, "과제", d("11-18"), null, 30, "", null).get(0).done = true;
+        Task laundry = done.store.book.add(Task.Kind.TASK, "빨래", d("11-18"), null, 30, "", null).get(0);
+        period(done.store, "E사 지원서", "11-16", "11-22", 120);
+        done.schedule.check(laundry);
+        eq("D-70 다 끝내면 기간 할 일 안내", "오늘 할 일 다 끝냈어! E사 지원서는 22일까지야, 4일 남았어.", done.store.talk);
+        Store last = at("11-22T09:00");
+        Task due = period(last, "E사 지원서", "11-16", "11-22", 120);
+        eq("D-70 마감 날", "오늘 할 일 1개 남았어. 오늘이 E사 지원서 마감이야! true", new Talk(last).briefing() + " "
+                + last.book.dayPlan(d("11-22")).dueToday().contains(due));
         Store c = MockData.empty();
         period(c, "E사 지원서", "11-16", "11-22", 120);
         TaskBook.CellPreview c22 = c.book.cellPreview(d("11-22"));

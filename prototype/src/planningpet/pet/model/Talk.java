@@ -39,7 +39,12 @@ public final class Talk {
         if (yesterday > 0) {
             b.append(" 어제 못 끝낸 일 ").append(yesterday).append("개는 달력에 남아 있어.");
         }
-        Task near = s.tasks.stream()
+        Task dueToday = s.book.dayPlan(today).dueToday().stream().findFirst().orElse(null);
+        if (dueToday != null) {
+            // D-70: 마감 날까지 못 한 기간 할 일.
+            b.append(" 오늘이 ").append(Rules.shortTitle(dueToday.title)).append(" 마감이야!");
+        }
+        Task near = dueToday != null ? null : s.tasks.stream()
                 .filter(t -> t.kind == Task.Kind.TASK && !t.done)
                 .filter(t -> t.countDay().isAfter(today) && !t.countDay().isAfter(today.plusDays(3)))
                 .min(Comparator.comparing(Task::countDay).thenComparingLong(t -> t.seq))
@@ -49,7 +54,7 @@ public final class Talk {
             b.append(" '").append(Rules.shortTitle(near.title)).append("' 마감이 ")
                     .append(when[(int) ChronoUnit.DAYS.between(today, near.countDay())]).append(".");
         }
-        if (s.book.checkables(today).isEmpty() && near == null) {
+        if (s.book.checkables(today).isEmpty() && near == null && dueToday == null) {
             b.append(" 아래 칸에 하나 적어 볼까?");
         }
         return b.toString();
@@ -90,6 +95,14 @@ public final class Talk {
             return "잘했어! 오늘 보상은 다 받았지만 체크는 계속 돼.";
         }
         boolean allDone = t.countDay().equals(s.today()) && s.book.checkables(s.today()).stream().allMatch(x -> x.done);
-        return allDone ? "오늘 할 일을 다 끝냈어! 푹 쉬어." : "잘했어! +10P";
+        if (!allDone) {
+            return "잘했어! +10P";
+        }
+        // D-70: 기간 안에 할 일이 남았으면 가장 가까운 마감을 함께 말한다.
+        return s.book.dayPlan(s.today()).period().stream()
+                .min(Comparator.comparing((Task x) -> x.dueDate).thenComparingLong(x -> x.seq))
+                .map(p -> "오늘 할 일 다 끝냈어! " + Rules.shortTitle(p.title) + Rules.josa(p.title, "은", "는") + " "
+                        + p.dueDate.getDayOfMonth() + "일까지야, " + ChronoUnit.DAYS.between(s.today(), p.dueDate) + "일 남았어.")
+                .orElse("오늘 할 일을 다 끝냈어! 푹 쉬어.");
     }
 }

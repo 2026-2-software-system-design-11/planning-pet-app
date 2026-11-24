@@ -160,6 +160,11 @@ public final class PetCard extends JComponent {
         return store.book.periodNote();
     }
 
+    /** 흰 작은 카드의 높이. 기간 할 일 글이 있으면 한 줄 늘린다. */
+    private int miniHeight() {
+        return periodText() == null ? 52 : 70;
+    }
+
     /** 칸 막대의 켜진 칸 수와 칸 수(이어진 막대면 칸 수 0). 검사용. */
     public String doneBarText() {
         return Math.round(doneBar.ratio() * 100) + "% " + doneBar.segments() + "칸";
@@ -240,7 +245,7 @@ public final class PetCard extends JComponent {
         int expRow = y;
         y += 8 + 4 + 16 + GAP;
         int mini = y;
-        y += 52 + GAP;
+        y += miniHeight() + GAP;
         int bubble = y;
         return new int[] {nameRow, expRow, mini, bubble};
     }
@@ -378,9 +383,10 @@ public final class PetCard extends JComponent {
         // 흰 작은 카드: 제목과 발자국 숫자, 아래 칸 막대(자식 Bar).
         int my = r[2];
         g.setColor(new Color(255, 255, 255, 215));
-        g.fillRoundRect(x, my, w, 52, 14, 14);
+        int mh = miniHeight();
+        g.fillRoundRect(x, my, w, mh, 14, 14);
         g.setColor(new Color(255, 255, 255, 240));
-        g.drawRoundRect(x, my, w - 1, 51, 14, 14);
+        g.drawRoundRect(x, my, w - 1, mh - 1, 14, 14);
         g.setFont(Theme.bold(12));
         g.setColor(Theme.INK_SUB);
         g.drawString("오늘 끝낸 일", x + 12, my + 22);
@@ -392,5 +398,12 @@ public final class PetCard extends JComponent {
         g.setColor(Theme.INK);
         g.drawString(count, x + w - 12 - cw, my + 23);
         Icons.draw(g, Icons.Kind.PAW, x + w - 12 - cw - 20, my + 9, 15, Theme.ICON);
+        String period = periodText();
+        if (period != null) {
+            // D-70: 막대 아래에 기간 할 일 수와 가장 가까운 마감.
+            g.setFont(Theme.font(11));
+            g.setColor(Theme.INK_SUB);
+            g.drawString(PetCardArt.fit(period, g.getFontMetrics(), w - 24), x + 12, my + 60);
+        }
     }
 }
