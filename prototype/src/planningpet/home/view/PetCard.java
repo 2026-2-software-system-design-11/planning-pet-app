@@ -268,3 +268,93 @@ public final class PetCard extends JComponent {
     }
 
     @Override
+    protected void paintComponent(Graphics graphics) {
+        Graphics2D g = (Graphics2D) graphics.create();
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        Rectangle f = frame();
+        int r = Theme.CARD_RADIUS;
+        Card.shadow(g, f.x, f.y, f.width, f.height, r);
+        Shape clip = new RoundRectangle2D.Double(f.x, f.y, f.width, f.height, r, r);
+        Graphics2D s = (Graphics2D) g.create();
+        s.clip(clip);
+        PetCardArt.scene(s, f, ground(f));
+        pet(s, f);
+        s.dispose();
+        info(g, f);
+        boolean[] cut = {false};
+        bubbleBox = PetCardArt.bubble(g, bubbleText(), infoX(f), rows(f)[3], infoW(f), f.y + f.height - 12, cut);
+        bubbleCut = cut[0];
+        g.setColor(down ? Theme.MINT : over ? Theme.MINT_LINE : Theme.CARD_EDGE);
+        g.setStroke(new BasicStroke(down ? 2f : 1.2f));
+        g.draw(new RoundRectangle2D.Double(f.x + 0.5, f.y + 0.5, f.width - 1, f.height - 1, r, r));
+        if (isFocusOwner()) {
+            g.setColor(new Color(0x1F, 0xB9, 0x9C, 110));
+            g.setStroke(new BasicStroke(2f));
+            g.draw(new RoundRectangle2D.Double(f.x + 3, f.y + 3, f.width - 6, f.height - 6, r - 4, r - 4));
+        }
+        g.dispose();
+    }
+
+    /** 펫: 카드 왼쪽에 발을 풀밭에 붙인다. 크기는 3단계 그림이 위쪽 여백을 빼고 꽉 차는 상자이고, 단계는 그 안의 크기로 보인다(D-50). */
+    private void pet(Graphics2D g, Rectangle f) {
+        PetState p = store.pet();
+        int ground = ground(f);
+        int pw = petWidth(f);
+        int cx = f.x + pw / 2 + 6;
+        int size = (int) Math.min(pw * 1.7, (ground - f.y - 14) / 0.97);
+        int drawn = Pet.drawnHeight(p, size);
+        g.setColor(new Color(0x5E, 0x8A, 0x3C, 45));
+        g.fillOval(cx - size * 3 / 10, ground - size / 26, size * 3 / 5, size / 13);
+        Pet.drawAt(g, p, cx, ground, size, t);
+        // 강조선은 오른쪽 귀 옆에 작게 둔다(나의 방보다 작다). 더 오른쪽은 이름과 흰 작은 카드 자리다.
+        int sp = Math.max(14, size / 8);
+        Icons.draw(g, Icons.Kind.SPARK, Math.min(cx + size / 6, infoX(f) - sp - 4), Math.max(f.y + 4, ground - drawn - sp / 3), sp, Theme.SPARK);
+    }
+
+    /** 오른쪽 열: 발자국과 이름, Lv, 경험치 라벨과 막대와 숫자, 흰 작은 카드(오늘 끝낸 일). */
+    private void info(Graphics2D g, Rectangle f) {
+        int[] r = rows(f);
+        int x = infoX(f);
+        int w = infoW(f);
+        // 이름과 레벨: 한 줄, 아래 끝을 맞춘다. 이름이 길면 줄인다.
+        String level = levelText();
+        g.setFont(Theme.heavy(24));
+        FontMetrics lf = g.getFontMetrics();
+        int lw = lf.stringWidth(level);
+        int base = r[0] + 24;
+        Icons.draw(g, Icons.Kind.PAW, x, base - 15, 15, Theme.ICON);
+        g.setFont(Theme.bold(15));
+        String name = PetCardArt.fit(nameText(), g.getFontMetrics(), w - 22 - lw - 10);
+        g.setColor(Theme.INK);
+        g.drawString(name, x + 21, base);
+        int nx = x + 21 + g.getFontMetrics().stringWidth(name) + 10;
+        g.setFont(Theme.heavy(24));
+        g.drawString(level, nx, base);
+        // 경험치: 민트빛 라벨, 막대(자식 Bar), 아래 오른쪽 숫자.
+        int chip = chipWidth();
+        g.setColor(Theme.MINT_SOFT);
+        g.fillRoundRect(x, r[1] - 5, chip, 18, 18, 18);
+        g.setFont(Theme.bold(11));
+        g.setColor(Theme.ICON);
+        g.drawString("경험치", x + 8, r[1] + 8);
+        String exp = expText();
+        String nums = exp.startsWith("경험치 ") ? exp.substring(4) : exp;
+        g.setFont(Theme.bold(13));
+        g.setColor(Theme.INK);
+        FontMetrics nf = g.getFontMetrics();
+        g.drawString(nums, x + w - nf.stringWidth(nums), r[1] + 8 + 4 + nf.getAscent());
+        // 흰 작은 카드: 제목과 발자국 숫자, 아래 칸 막대(자식 Bar).
+        int my = r[2];
+        g.setColor(new Color(255, 255, 255, 215));
+        g.fillRoundRect(x, my, w, 52, 14, 14);
+        g.setColor(new Color(255, 255, 255, 240));
+        g.drawRoundRect(x, my, w - 1, 51, 14, 14);
+        g.setFont(Theme.bold(12));
+        g.setColor(Theme.INK_SUB);
+        g.drawString("오늘 끝낸 일", x + 12, my + 22);
+        DailyProgress d = DailyProgress.of(store.book, store.today());
+        String count = d.done() + " / " + d.total();
+        g.setFont(Theme.heavy(16));
+        FontMetrics cf = g.getFontMetrics();
