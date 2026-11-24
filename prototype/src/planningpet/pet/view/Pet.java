@@ -17,10 +17,10 @@ public final class Pet {
         drawAt(g, p, p.pose, p.wear, x, ground, size);
     }
 
-    /** 움직이는 자리(홈 펫 카드): t초의 숨쉬기와 꼬리로 그린다(PetArt 머리 주석). */
+    /** 움직이는 자리(홈 펫 카드): t초의 숨쉬기와 꼬리로 그린다(PetArt 머리 주석). 단계별 크기는 홈 카드 비율이다(D-93). */
     public static void drawAt(Graphics2D g, PetState p, int x, int ground, int size, double t) {
         int stage = Level.stage(Level.level(p.exp));
-        double box = size * PetArt.stageScale(stage);
+        double box = size * PetArt.cardScale(stage);
         PetArt.drawAt(g, art(p.kind), pose(p.pose), new java.util.HashSet<>(p.wear.values()), t, 99, x, ground, box);
     }
 
@@ -61,6 +61,12 @@ public final class Pet {
     /** drawAt이 size 상자에 그리는 그림의 실제 높이. 머리 위 말풍선과 하트 자리에 쓴다. */
     public static int drawnHeight(PetState p, int size) {
         double box = size * PetArt.stageScale(Level.stage(Level.level(p.exp)));
+        return (int) (box * PetArt.heightRatio(art(p.kind), pose(p.pose)));
+    }
+
+    /** 홈 펫 카드(drawAt의 t 판)가 size 상자에 그리는 그림의 실제 높이(D-93). */
+    public static int cardDrawnHeight(PetState p, int size) {
+        double box = size * PetArt.cardScale(Level.stage(Level.level(p.exp)));
         return (int) (box * PetArt.heightRatio(art(p.kind), pose(p.pose)));
     }
 

@@ -57,7 +57,7 @@ Windows는 `prototype\run.bat`이다.
 | 일정 입력 창 | ![일정 입력](screenshots/3-form.png) |
 | 자동 배치 결과 창 | ![자동 배치](screenshots/4-autoplace.png) |
 | 나의 방(상점 칸 포함) | ![나의 방](screenshots/5-room.png) |
-| 캐릭터 창(홈 펫 카드나 나의 방의 펫 칩으로 연다) | ![캐릭터 창](screenshots/6-character.png) |
+| 캐릭터 창(홈 펫 카드, 나의 방의 장신구 칸과 "{이름} 꾸미기"로 연다) | ![캐릭터 창](screenshots/6-character.png) |
 | 통계 | ![통계](screenshots/10-stats.png) |
 | 반려동물 고르기 창 | ![고르기](screenshots/7-pick.png) |
 | 설정 | ![설정](screenshots/8-settings.png) |

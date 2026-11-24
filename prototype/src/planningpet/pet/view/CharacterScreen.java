@@ -46,6 +46,8 @@ public final class CharacterScreen extends JPanel {
     private final JPanel petTabs = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
     private final JPanel poses = new JPanel(new GridLayout(1, Poses.ALL.size(), 10, 0));
     public final JLabel name = new JLabel();
+    /** 이름 옆 작은 종류(D-81). */
+    public final JLabel kindTag = new JLabel();
     public final JButton rename = new JButton("이름 변경");
     public final JLabel level = new JLabel();
     public final JLabel bond = new JLabel();
@@ -95,7 +97,7 @@ public final class CharacterScreen extends JPanel {
         roomCard.setBorder(BorderFactory.createEmptyBorder(5, 5, 7, 5));
         roomCard.add(stageView);
         col.add(roomCard, BorderLayout.CENTER);
-        poses.setPreferredSize(new Dimension(0, 92));
+        poses.setPreferredSize(new Dimension(0, 100));
         col.add(poses, BorderLayout.SOUTH);
         return col;
     }
@@ -199,8 +201,16 @@ public final class CharacterScreen extends JPanel {
         rename.setIconTextGap(6);
         rename.setBorder(BorderFactory.createEmptyBorder(6, 12, 8, 14));
         rename.addActionListener(e -> askRename());
+        kindTag.setFont(Theme.font(14));
+        kindTag.setForeground(Theme.INK_SUB);
+        JPanel nameRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        nameRow.add(name);
+        nameRow.add(javax.swing.Box.createHorizontalStrut(8));
+        nameRow.add(kindTag);
+        JPanel nameWrap = new JPanel(new java.awt.GridBagLayout());
+        nameWrap.add(nameRow);
         JPanel top = new JPanel(new BorderLayout());
-        top.add(name, BorderLayout.WEST);
+        top.add(nameWrap, BorderLayout.WEST);
         top.add(rename, BorderLayout.EAST);
         level.setFont(Theme.heavy(30));
         bond.setFont(Theme.bold(14));
@@ -391,7 +401,7 @@ public final class CharacterScreen extends JPanel {
         };
     }
 
-    /** 자세 칸 하나. 고른 자세는 민트 테두리다. 누르면 바로 바뀐다(D-50). */
+    /** 자세 칸 하나. 그림 아래에 이름을 늘 적고 고른 자세는 민트 테두리다(D-84). 누르면 바로 바뀐다(D-50). */
     private JComponent poseCard(PetState p, String pose) {
         JToggleButton b = new JToggleButton(pose, pose.equals(p.pose)) {
             @Override
@@ -407,8 +417,14 @@ public final class CharacterScreen extends JPanel {
                 g.setColor(isSelected() ? Theme.MINT : Theme.CARD_EDGE);
                 g.setStroke(new java.awt.BasicStroke(isSelected() ? 2.2f : 1f));
                 g.drawRoundRect(2, 2, w, h, 16, 16);
-                int size = Math.min(w, h) - 14;
-                Pet.drawStage(g, p.kind, pose, p.wear, 3, 2 + w / 2, h - 4, size);
+                g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                g.setFont(Theme.bold(12));
+                java.awt.FontMetrics fm = g.getFontMetrics();
+                int label = fm.getHeight() + 8;
+                int size = Math.min(w - 8, h - label - 6);
+                Pet.drawStage(g, p.kind, pose, p.wear, 3, 2 + w / 2, h - label, size);
+                g.setColor(isSelected() ? Theme.ICON : Theme.INK);
+                g.drawString(pose, 2 + (w - fm.stringWidth(pose)) / 2, h - 4 - fm.getDescent());
                 g.dispose();
             }
         };
@@ -502,8 +518,9 @@ public final class CharacterScreen extends JPanel {
             if (q == null) {
                 continue;
             }
-            Pill tab = new Pill(q.kindName(), null, 18).picture(Pet.face(q));
-            tab.setPreferredSize(new Dimension(200, 58));
+            // D-81: 지은 이름과 레벨, 종류는 이름 옆에 작게.
+            Pill tab = new Pill(q.name, null, 16).small(q.kindName()).picture(Pet.face(q)).second("Lv. " + Level.level(q.exp));
+            tab.setPreferredSize(new Dimension(Math.max(200, tab.getPreferredSize().width), 58));
             tab.setSelected(q == p);
             tab.addActionListener(e -> {
                 // D-61: 입혀 본 것이 있으면 묻고, 취소면 고른 펫과 탭을 그대로 둔다.
@@ -526,6 +543,7 @@ public final class CharacterScreen extends JPanel {
         poses.revalidate();
         int lv = Level.level(p.exp);
         name.setText(p.name);
+        kindTag.setText(p.kindName());
         level.setText("Lv. " + lv);
         bond.setText("친밀도 " + Bond.percent(s.book.rewardHistory(), p.kind) + "%");
         expText.setText(Level.expText(p.exp));

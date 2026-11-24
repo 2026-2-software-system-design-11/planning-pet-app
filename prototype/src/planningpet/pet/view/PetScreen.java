@@ -57,6 +57,8 @@ public final class PetScreen extends JPanel {
     /** 펫 패널. */
     private final JPanel petTabs = new JPanel(new GridLayout(1, 0, 8, 0));
     private final JLabel name = new JLabel();
+    /** 이름 옆 작은 종류(D-81). */
+    private final JLabel kindTag = new JLabel();
     private final JLabel level = new JLabel();
     private final JLabel expText = new JLabel();
     private final Bar expBar = new Bar(0, 10);
@@ -156,9 +158,16 @@ public final class PetScreen extends JPanel {
         level.setFont(Theme.heavy(26));
         expText.setFont(Theme.font(12));
         expText.setForeground(Theme.INK_SUB);
+        kindTag.setFont(Theme.font(11));
+        kindTag.setForeground(Theme.INK_SUB);
+        JPanel nameRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        nameRow.add(name);
+        nameRow.add(Box.createHorizontalStrut(5));
+        nameRow.add(kindTag);
+        nameRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, nameRow.getPreferredSize().height + 4));
         JPanel info = new JPanel();
         info.setLayout(new BoxLayout(info, BoxLayout.Y_AXIS));
-        for (JComponent part : new JComponent[] {name, level, expText}) {
+        for (JComponent part : new JComponent[] {nameRow, level, expText}) {
             part.setAlignmentX(Component.LEFT_ALIGNMENT);
             info.add(part);
         }
@@ -275,14 +284,14 @@ public final class PetScreen extends JPanel {
             if (q == null) {
                 continue;
             }
-            Pill chip = new Pill(q.kindName(), null, 13).picture(Pet.face(q)).second("Lv. " + Level.level(q.exp));
+            // D-81: 지은 이름과 레벨, 종류는 이름 옆에 작게.
+            Pill chip = new Pill(q.name, null, 13).small(q.kindName()).picture(Pet.face(q)).second("Lv. " + Level.level(q.exp));
             chip.setSelected(q == p);
-            chip.setToolTipText(q.name);
             // D-80: 펫 칩은 그 펫을 고르기만 한다. 캐릭터 창은 홈 펫 카드, 장신구 칸, "{이름} 꾸미기"로 연다.
             chip.addActionListener(e -> app.pet.select(kind));
             chipGroup.add(chip);
             chips.add(chip);
-            Pill tab = new Pill(q.kindName(), null, 14).picture(Pet.face(q));
+            Pill tab = new Pill(q.name, null, 13).small(q.kindName()).picture(Pet.face(q)).second("Lv. " + Level.level(q.exp));
             tab.setSelected(q == p);
             tab.addActionListener(e -> app.pet.select(kind));
             tabGroup.add(tab);
@@ -294,6 +303,7 @@ public final class PetScreen extends JPanel {
         chips.revalidate();
         petTabs.revalidate();
         name.setText(p.name);
+        kindTag.setText(p.kindName());
         dressButton.setText(p.name + " 꾸미기");
         level.setText("Lv. " + Level.level(p.exp));
         expText.setText(Level.expText(p.exp));

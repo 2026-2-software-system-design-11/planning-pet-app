@@ -396,7 +396,16 @@ public final class ProtoCheck {
         planningpet.pet.view.PetScreen cr = find(ca.root, planningpet.pet.view.PetScreen.class);
         java.util.List<String> opened = new java.util.ArrayList<>();
         cr.characterOpener = dress -> opened.add(ca.store.activeKind + (dress ? " 꾸미기 탭" : " 상태 탭"));
-        tipButton(cr.room, "나비").doClick();
+        StringBuilder pills = new StringBuilder();
+        for (planningpet.common.view.Pill pill : all(cr, planningpet.common.view.Pill.class)) {
+            if (pill.small() != null) {
+                pills.append(pill.getText()).append("(").append(pill.small()).append(") ");
+            }
+        }
+        planningpet.home.view.PetCard homeCard = find(ca.root, planningpet.home.view.MainScreen.class).pet;
+        eq("D-81 펫은 어디서나 지은 이름으로 부른다", "나비(고양이) 바둑이(강아지) 나비(고양이) 바둑이(강아지) / 바둑이 강아지 Lv. 1",
+                pills + "/ " + homeCard.nameText() + " " + homeCard.kindText() + " " + homeCard.levelText());
+        button(cr.room, "나비").doClick();
         eq("D-80 펫 칩은 고르기만 한다", "CAT ", ca.store.activeKind + " " + String.join(", ", opened));
         button(cr, "나비 꾸미기").doClick();
         eq("D-83 {이름} 꾸미기는 꾸미기 탭", "CAT 꾸미기 탭", String.join(", ", opened));
@@ -415,6 +424,40 @@ public final class ProtoCheck {
         eq("D-93 캐릭터 창은 늘 상태 탭으로 열린다", "상태", cr.character.tab());
         cr.character.nextPet.doClick();
         eq("D-80 캐릭터 창 화살표는 펫을 바꾼다", "DOG " + ca.store.pet("CAT").pose, ca.store.activeKind + " " + ca.store.pet("CAT").pose);
+        ca.pet.pose("DOG", "기지개");
+        StringBuilder poseCells = new StringBuilder();
+        for (javax.swing.JToggleButton b : all(cr.character, javax.swing.JToggleButton.class)) {
+            if (Poses.ALL.contains(b.getText())) {
+                poseCells.append(b.getText()).append(b.isSelected() ? "(고름) " : " ");
+            }
+        }
+        eq("D-84 자세 칸은 이름을 늘 적고 고른 칸을 보인다", "앉기 자기 기지개(고름) 밥 먹기 노래 ", poseCells.toString());
+        eq("D-93 캐릭터 창은 메인 창의 3분의 2쯤, 최소 800x580", "800x580 960x600", sizeText(planningpet.pet.view.CharacterDialog.size(1000, 680))
+                + " " + sizeText(planningpet.pet.view.CharacterDialog.size(1440, 900)));
+        StringBuilder fills = new StringBuilder();
+        for (String kind : new String[] {"CAT", "DOG"}) {
+            Store small = MockData.sample();
+            small.pets.clear();
+            small.pets.add(new PetState(kind, "작은 펫"));
+            small.activeKind = kind;
+            App sa = Main.create(small);
+            planningpet.home.view.PetCard card = find(sa.root, planningpet.home.view.MainScreen.class).pet;
+            for (java.awt.Dimension d : new java.awt.Dimension[] {card.getMinimumSize(), card.getPreferredSize(), new java.awt.Dimension(700, 400)}) {
+                card.setSize(d);
+                fills.append(card.petFill() > 2 / 3.0 ? "넘음 " : String.format("%.2f ", card.petFill()));
+            }
+        }
+        eq("D-93 홈 펫 카드의 1단계 펫은 카드 칸의 3분의 2 넘게", "넘음 넘음 넘음 넘음 넘음 넘음 ", fills.toString());
+        planningpet.shop.view.ShopPanel shopPanel = cr.shop;
+        String menu0 = shopPanel.shopMode.isSelected() + " " + shopPanel.ownedMode.isSelected() + " " + shopPanel.previewToggle.isSelected();
+        shopPanel.ownedMode.doClick();
+        String menu1 = shopPanel.shopMode.isSelected() + " " + shopPanel.ownedMode.isSelected() + " " + shopPanel.previewToggle.isSelected();
+        shopPanel.previewToggle.doClick();
+        String menu2 = shopPanel.shopMode.isSelected() + " " + shopPanel.ownedMode.isSelected() + " " + shopPanel.previewToggle.isSelected();
+        eq("D-82 상점 탭은 하나만 눌리고 미리보기는 따로 켜고 끄는 스위치", "true false true / false true true / false true false / Switch",
+                menu0 + " / " + menu1 + " / " + menu2 + " / " + shopPanel.previewToggle.getClass().getSimpleName());
+        shopPanel.shopMode.doClick();
+        shopPanel.previewToggle.doClick();
         App one = Main.create(MockData.sample());
         planningpet.pet.view.PetScreen oneRoom = find(one.root, planningpet.pet.view.PetScreen.class);
         oneRoom.character.opened(false);
@@ -440,6 +483,24 @@ public final class ProtoCheck {
             }
         }
         return null;
+    }
+
+    static String sizeText(java.awt.Dimension d) {
+        return d.width + "x" + d.height;
+    }
+
+    /** c 아래의 type 부품 모두(그린 순서). */
+    static <T> java.util.List<T> all(java.awt.Component c, Class<T> type) {
+        java.util.List<T> out = new java.util.ArrayList<>();
+        if (type.isInstance(c)) {
+            out.add(type.cast(c));
+        }
+        if (c instanceof java.awt.Container k) {
+            for (java.awt.Component child : k.getComponents()) {
+                out.addAll(all(child, type));
+            }
+        }
+        return out;
     }
 
     /** 툴팁이 tip인 버튼. 없으면 null. */

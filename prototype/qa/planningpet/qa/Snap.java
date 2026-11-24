@@ -36,10 +36,10 @@ public final class Snap {
             app.show(screen[0]);
             save(app.root, new Dimension(1000, 680), new File(dir, screen[1] + ".png"));
         }
-        // 캐릭터 창(D-58)은 메인 창 1000x680 위에 뜨는 크기(폭 0.88배, 높이 0.86배)의 창 안이다.
+        // 캐릭터 창(D-58)은 메인 창 1000x680 위에 뜨는 크기(D-93: 메인의 3분의 2쯤, 최소 800x580)의 창 안이다.
         PetScreen room = QaDrive.find(app.root, PetScreen.class);
         room.character.opened(false);
-        save(CharacterDialog.content(room.character), new Dimension(880, 585), new File(dir, "6-character.png"));
+        save(CharacterDialog.content(room.character), CharacterDialog.size(1000, 680), new File(dir, "6-character.png"));
         // 예시 그림과 같은 비율(16:9)로 넓게 그린 판. 강아지를 데려와 두 마리인 상태다(D-48).
         app.pet.adopt(true, "");
         app.pet.select("CAT");
@@ -57,7 +57,7 @@ public final class Snap {
             }
         }
         room.character.opened(false);
-        save(CharacterDialog.content(room.character), new Dimension(1267, 697), new File(dir, "6-character-wide.png"));
+        save(CharacterDialog.content(room.character), CharacterDialog.size(1440, 810), new File(dir, "6-character-wide.png"));
         LocalDate monday = TaskBook.mondayOf(app.store.today());
         save(TaskDialog.content(new TaskForm(null, app.store.today(), app.store.now), new JButton("취소"), new JButton("저장"), null), null, new File(dir, "3-form.png"));
         save(AutoPlaceDialog.content(app.store, monday, Planner.place(app.store, monday), new JButton("취소"),
