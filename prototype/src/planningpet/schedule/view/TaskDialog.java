@@ -37,7 +37,7 @@ public final class TaskDialog {
 
     /** 창의 칸. 반복 사본을 고치면 반복 칸이 그 반복의 방식과 마지막 날짜를 보인다(D-42). */
     public static TaskForm form(App app, Task editing, LocalDate defaultDate) {
-        TaskForm f = new TaskForm(editing, defaultDate, app.store.now);
+        TaskForm f = new TaskForm(editing, defaultDate, app.store.now, app.store.weekStart);
         if (editing != null && editing.seriesId != null) {
             f.showSeries(editing.repeat, app.store.book.seriesEnd(editing));
         }

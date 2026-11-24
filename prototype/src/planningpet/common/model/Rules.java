@@ -3,13 +3,18 @@ package planningpet.common.model;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-/** 06의 작은 규칙들: 앱 날짜(1번), 여러 도메인이 쓰는 글자 규칙(16번의 받침, 조사, 제목 줄임). */
+/** 06의 작은 규칙들: 앱 날짜(1번), 한 주(데이터 절, D-91), 여러 도메인이 쓰는 글자 규칙(16번의 받침, 조사, 제목 줄임). */
 public final class Rules {
     private Rules() {
     }
 
     public static LocalDate appDay(LocalDateTime time) {
         return time.minusHours(4).toLocalDate();
+    }
+
+    /** 06 데이터 절의 한 주(D-91): 그 날짜가 든 주의 첫날. 한 주는 first부터 7일이다. */
+    public static LocalDate weekStart(LocalDate date, java.time.DayOfWeek first) {
+        return date.with(java.time.temporal.TemporalAdjusters.previousOrSame(first));
     }
 
     /** 이름 마지막 글자가 받침 있는 한글이면 "이야", 그 밖은 "야". */

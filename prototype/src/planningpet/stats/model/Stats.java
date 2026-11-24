@@ -16,9 +16,15 @@ import java.util.Map;
 public final class Stats {
     /** 기간. 두 끝을 모두 넣는다. */
     public record Period(LocalDate from, LocalDate to, boolean monthly) {
+        /** 월요일부터 일요일(한 주 시작이 처음 값일 때). */
         public static Period week(LocalDate any) {
-            LocalDate monday = any.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
-            return new Period(monday, monday.plusDays(6), false);
+            return week(any, DayOfWeek.MONDAY);
+        }
+
+        /** D-91: 한 주 시작(first)부터 7일. */
+        public static Period week(LocalDate any, DayOfWeek first) {
+            LocalDate start = any.with(TemporalAdjusters.previousOrSame(first));
+            return new Period(start, start.plusDays(6), false);
         }
 
         public static Period month(LocalDate any) {
@@ -28,7 +34,7 @@ public final class Stats {
 
         /** 앞(-1)이나 뒤(+1) 기간. */
         public Period step(int delta) {
-            return monthly ? month(from.plusMonths(delta)) : week(from.plusWeeks(delta));
+            return monthly ? month(from.plusMonths(delta)) : week(from.plusWeeks(delta), from.getDayOfWeek());
         }
 
         public boolean contains(LocalDate d) {
@@ -67,12 +73,13 @@ public final class Stats {
         return rate(counted(s, p.from(), p.to()));
     }
 
-    /** 주간은 날마다, 월간은 월요일로 끊은 주마다. */
+    /** 주간은 날마다, 월간은 한 주의 마지막 날에서 끊은 주마다(D-91). */
     public static List<Bucket> trend(Store s, Period p) {
+        DayOfWeek last = s.weekStart.minus(1);
         List<Bucket> out = new ArrayList<>();
         LocalDate d = p.from();
         while (!d.isAfter(p.to())) {
-            LocalDate end = p.monthly() ? d.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY)) : d;
+            LocalDate end = p.monthly() ? d.with(TemporalAdjusters.nextOrSame(last)) : d;
             if (end.isAfter(p.to())) {
                 end = p.to();
             }
