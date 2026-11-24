@@ -13,11 +13,17 @@ import java.util.function.LongSupplier;
 public final class TaskBook {
     private final List<Task> tasks;
     private final LongSupplier nextSeq;
+    private final java.util.function.Supplier<LocalDate> today;
 
-    /** nextSeq는 앱 데이터의 다음 넣은 순 번호를 하나 꺼내고 늘린다. */
-    public TaskBook(List<Task> tasks, LongSupplier nextSeq) {
+    /** nextSeq는 앱 데이터의 다음 넣은 순 번호를 하나 꺼내고 늘린다. today는 앱의 오늘이다(못 끝낸 계획, D-67). */
+    public TaskBook(List<Task> tasks, LongSupplier nextSeq, java.util.function.Supplier<LocalDate> today) {
         this.tasks = tasks;
         this.nextSeq = nextSeq;
+        this.today = today;
+    }
+
+    public LocalDate today() {
+        return today.get();
     }
 
     /** 06의 3번. 검사(2번)를 통과한 입력으로 일정을 만든다. 반복이면 반복하는 날마다 사본을 만든다(D-17, D-64). */
