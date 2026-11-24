@@ -358,3 +358,44 @@ final class TrendChart extends JComponent {
     /** 오른쪽 위 범례: 완료율 점과 완료 일정 수 막대(예시의 범례). */
     private static void legend(Graphics2D g, int right) {
         g.setFont(Theme.font(12));
+        FontMetrics fm = g.getFontMetrics();
+        String a = "완료율(%)";
+        String b = "완료 일정 수";
+        int y = 10;
+        int x = right - (15 + fm.stringWidth(a) + 14 + 19 + fm.stringWidth(b));
+        g.setColor(LINE);
+        g.fillOval(x, y - 5, 10, 10);
+        g.setColor(Color.WHITE);
+        g.fillOval(x + 3, y - 2, 4, 4);
+        x += 15;
+        g.setColor(Theme.INK_SUB);
+        g.drawString(a, x, y + fm.getAscent() / 2 - 1);
+        x += fm.stringWidth(a) + 14;
+        g.setPaint(new GradientPaint(0, y - 6, BAR_TOP, 0, y + 6, BAR_BOTTOM));
+        g.fillRoundRect(x, y - 6, 14, 12, 4, 4);
+        x += 19;
+        g.setColor(Theme.INK_SUB);
+        g.drawString(b, x, y + fm.getAscent() / 2 - 1);
+    }
+
+    private static int yOf(int percent, int y0, int y1) {
+        return (int) Math.round(y1 - (y1 - y0) * percent / 100.0);
+    }
+
+    private static Color fade(Color c) {
+        return new Color(c.getRed(), c.getGreen(), c.getBlue(), 102);
+    }
+
+    /** 위 두 모서리만 둥근 막대. */
+    private static Path2D topRounded(double x, double y, double w, double h, double r) {
+        Path2D p = new Path2D.Double();
+        p.moveTo(x, y + h);
+        p.lineTo(x, y + r);
+        p.quadTo(x, y, x + r, y);
+        p.lineTo(x + w - r, y);
+        p.quadTo(x + w, y, x + w, y + r);
+        p.lineTo(x + w, y + h);
+        p.closePath();
+        return p;
+    }
+}
