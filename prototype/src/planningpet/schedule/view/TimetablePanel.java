@@ -17,18 +17,22 @@ import java.util.Map;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 
-/** 일정관리의 일주일 시간표(05 일정관리). 0시부터 24시까지 그린다. */
+/** 일정관리의 일주일 시간표(05 일정관리). 0시부터 다음 날 4시(28:00)까지 그린다(D-77). */
 public final class TimetablePanel extends JComponent {
     public static final int HOUR = 44;
     public static final int GUTTER = 52;
+    /** 그리는 시간 수(D-77): 0시부터 다음 날 4시까지. */
+    public static final int HOURS = Task.DAY_END / 60;
     private final Store store;
     private final Map<Rectangle, Task> blocks = new LinkedHashMap<>();
     private final Map<Rectangle, Task> boxes = new LinkedHashMap<>();
     LocalDate monday;
+    /** 자정 아래 "다음 날" 칸의 바탕(D-77). */
+    private static final Color NIGHT = new Color(0x1B, 0x22, 0x38, 14);
 
     public TimetablePanel(Store store, TaskController control) {
         this.store = store;
-        setPreferredSize(new Dimension(300, HOUR * 24));
+        setPreferredSize(new Dimension(300, HOUR * HOURS));
         setToolTipText("");
         addMouseListener(new MouseAdapter() {
             @Override
@@ -106,12 +110,22 @@ public final class TimetablePanel extends JComponent {
             g.setColor(Theme.DAY);
             g.fillRect(GUTTER + today * day, 0, day, getHeight());
         }
-        for (int h = 0; h < 24; h++) {
+        // D-77: 자정 아래 네 시간은 그날 밤에 이어진 "다음 날" 칸이다. 옅게 칠하고 시각을 00:00부터 다시 적는다.
+        g.setColor(NIGHT);
+        g.fillRect(GUTTER, 24 * HOUR, getWidth() - GUTTER, (HOURS - 24) * HOUR);
+        for (int h = 0; h < HOURS; h++) {
             g.setColor(Theme.CARD_LINE);
             g.drawLine(GUTTER, h * HOUR, getWidth(), h * HOUR);
             g.setColor(Theme.INK_DIM);
-            g.drawString(String.format("%02d:00", h), 6, h * HOUR + 14);
+            g.drawString(String.format("%02d:00", h % 24), 6, h * HOUR + 14);
         }
+        Graphics2D mid = (Graphics2D) g.create();
+        mid.setColor(Theme.INK_SUB);
+        mid.drawLine(GUTTER, 24 * HOUR, getWidth(), 24 * HOUR);
+        mid.setFont(Theme.font(11));
+        mid.drawString("자정", 6, 24 * HOUR - 4);
+        mid.drawString("다음 날", 6, 24 * HOUR + 28);
+        mid.dispose();
         blocks.clear();
         boxes.clear();
         for (int i = 0; i < 7; i++) {

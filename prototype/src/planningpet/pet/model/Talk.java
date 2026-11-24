@@ -42,7 +42,7 @@ public final class Talk {
         }
         // D-67: 어제로 시각을 정한 기간 할 일을 못 끝냈으면 그다음 날 아침 한 번 말한다.
         s.tasks.stream().filter(t -> t.missed(today) && t.date.equals(today.minusDays(1)))
-                .min(Comparator.comparing((Task t) -> t.start).thenComparingLong(t -> t.seq))
+                .min(Comparator.comparingInt(Task::startMinute).thenComparingLong(t -> t.seq))
                 .ifPresent(t -> b.append(" 어제 하기로 한 '").append(Rules.shortTitle(t.title)).append("'")
                         .append(Rules.josa(t.title, "을", "를")).append(" 못 했어. 마감은 ").append(t.dueDate.getDayOfMonth())
                         .append("일이야."));

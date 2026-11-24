@@ -176,7 +176,7 @@ public final class TaskController {
     /** 자동 배치 결과 창의 적용(UC-11). */
     public void applyPlacement(Planner.Placement p) {
         app.control.change(() -> p.placed().forEach(x -> {
-            x.task().start = x.start();
+            x.task().setStart(x.start().getHour() * 60 + x.start().getMinute());
             if (x.task().dueDate != null) {
                 // D-65: 기간 할 일은 놓은 날로 옮긴다. 마감은 그대로다.
                 x.task().date = x.day();
