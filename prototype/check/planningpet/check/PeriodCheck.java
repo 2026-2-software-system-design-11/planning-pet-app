@@ -74,7 +74,7 @@ final class PeriodCheck {
         eq("D-69 지난 사본도 체크", "true", runs.get(0).done);
         TaskBook.CellPreview c17 = app.store.book.cellPreview(d("11-17"));
         TaskBook.CellPreview c18 = app.store.book.cellPreview(d("11-18"));
-        eq("D-69 지난 반복 사본은 진하지 않다", "운동 false 운동 true", c17.title() + " " + c17.open() + " " + c18.title() + " " + c18.open());
+        eq("D-69 지난 반복 사본은 진하지 않다", "1개 false 1개 true", c17.text() + " " + c17.open() + " " + c18.text() + " " + c18.open());
         App fin = Main.create(at("11-18T09:00"));
         fin.store.book.add(Task.Kind.TASK, "과제", d("11-16"), null, 30, "", null).get(0).done = true;
         fin.store.book.add(Task.Kind.TASK, "빨래", d("11-16"), null, 30, "", null);
@@ -264,9 +264,9 @@ final class PeriodCheck {
         TaskForm lf = new TaskForm(lp, lp.date, later.store.now);
         Ui.setDate(lf.due, d("11-24"));
         TaskDialog.trySave(later, lf, lp);
-        eq("D-93 마감 미루기", "2026-11-16 2026-11-18 09:00 90 초안 2026-11-24 ~11/24까지 null P", lp.startDay + " " + lp.date + " "
+        eq("D-93 마감 미루기", "2026-11-16 2026-11-18 09:00 90 초안 2026-11-24 ~11/24까지 null [P]", lp.startDay + " " + lp.date + " "
                 + lp.start + " " + lp.minutes + " " + lp.memo + " " + lp.dueDate + " " + TaskBook.dueText(lp) + " "
-                + later.store.book.cellPreview(d("11-22")) + " " + later.store.book.cellPreview(d("11-24")).title());
+                + later.store.book.cellPreview(d("11-22")) + " " + later.store.book.cellPreview(d("11-24")).due());
         TaskForm weekly = new TaskForm(null, d("11-18"), later.store.now);
         weekly.repeat.setSelectedIndex(2);
         StringBuilder picked = new StringBuilder();
@@ -440,7 +440,8 @@ final class PeriodCheck {
         Store c = MockData.empty();
         period(c, "E사 지원서", "11-16", "11-22", 120);
         TaskBook.CellPreview c22 = c.book.cellPreview(d("11-22"));
-        eq("D-65 기간 할 일은 마감 날 칸", "null E사 지원… true", c.book.cellPreview(d("11-16")) + " " + c22.title() + " " + c22.open());
+        eq("D-65 기간 할 일은 마감 날 칸", "null 1개 true [E사 지원서]", c.book.cellPreview(d("11-16")) + " " + c22.text() + " " + c22.open()
+                + " " + c22.due());
     }
 
     static String placed(Planner.Placement p) {
