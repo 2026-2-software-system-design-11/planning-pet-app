@@ -164,6 +164,7 @@ public final class ProtoCheck {
         eq("D-42 반복 끝 밖으로 옮겨 저장, 반복 표시", "true true 2026-12-29", moveLastCopy());
         eq("D-42 시각 창의 이후 반복 모두는 시각만", "11:00 보강 11:00", timeOnly());
         newRules();
+        PeriodCheck.run();
         System.out.println(failed == 0 ? "모두 통과" : failed + "개 실패");
         System.exit(failed == 0 ? 0 : 1);
     }
