@@ -68,30 +68,50 @@ public final class PetScreen extends JPanel {
         super(new BorderLayout(0, Theme.GAP));
         this.app = app;
         room = new RoomView(app.store);
-        JPanel top = new JPanel(new BorderLayout(12, 0));
-        top.add(name, BorderLayout.WEST);
-        top.add(expBar, BorderLayout.CENTER);
-        top.add(expText, BorderLayout.EAST);
-        add(top, BorderLayout.NORTH);
-        Card roomCard = new Card(new BorderLayout());
+        room.add(chips);
+        room.add(left);
+        room.add(right);
+        left.addActionListener(e -> app.pet.step(-1));
+        right.addActionListener(e -> app.pet.step(1));
+        adopt.addActionListener(e -> PickDialog.adopt(app));
+        Card roomCard = new Card(new BorderLayout(), Theme.CARD_RADIUS) {
+            @Override
+            public void doLayout() {
+                super.doLayout();
+                int w = room.getWidth();
+                int h = room.getHeight();
+                Dimension c = chips.getPreferredSize();
+                chips.setBounds(14, 12, Math.min(c.width, w - 28), c.height);
+                left.setBounds(10, (h - 40) / 2, 40, 40);
+                right.setBounds(w - 50, (h - 40) / 2, 40, 40);
+            }
+        };
+        roomCard.setBorder(BorderFactory.createEmptyBorder(5, 5, 7, 5));
         roomCard.add(room);
-        add(roomCard, BorderLayout.CENTER);
-        JPanel bottom = new Card(new BorderLayout());
-        decoBar.setPreferredSize(new Dimension(90, 10));
-        bottom.add(Ui.flow(new JLabel("<html><b>내 아이템</b></html>"), Ui.hint("누르면 방에 놓거나 치워요"), decoText, decoBar),
-                BorderLayout.NORTH);
-        JPanel row = new JPanel(new BorderLayout());
-        row.add(items, BorderLayout.CENTER);
-        shopButton.addActionListener(e -> ShopDialog.open(app, this));
-        row.add(Ui.flow(shopButton), BorderLayout.EAST);
-        bottom.add(row, BorderLayout.CENTER);
-        bottom.add(Ui.hint(Ui.POINT_GUIDE), BorderLayout.SOUTH);
-        bottom.setPreferredSize(new Dimension(0, 130));
-        add(bottom, BorderLayout.SOUTH);
+        chips.setOpaque(false);
+        JComponent side = petPanel();
+        JPanel middle = new JPanel(null) {
+            @Override
+            public void doLayout() {
+                int sideW = Math.max(SIDE_W - 30, Math.min(SIDE_W + 60, getWidth() / 4));
+                int roomW = getWidth() - sideW - Theme.GAP;
+                roomCard.setBounds(0, 0, roomW, getHeight());
+                side.setBounds(roomW + Theme.GAP, 0, sideW, getHeight());
+                roomCard.doLayout();
+            }
+        };
+        middle.add(roomCard);
+        middle.add(side);
+        add(middle, BorderLayout.CENTER);
+        // 산 뒤 한 번 하는 말은 다음 데이터 변경까지 남는다. 화면 전환 같은 다시 그리기로는 지우지 않는다(D-56).
+        app.store.onChange(() -> room.bubble = "");
+        petCount = app.store.pets.size();
+        shop = new ShopPanel(app, this::sayOnce);
+        shop.setPreferredSize(new Dimension(0, 236));
+        add(shop, BorderLayout.SOUTH);
         app.watch(this::refresh);
     }
 
-    /** 상점에서 산 뒤처럼 한 번만 다른 말을 할 때. */
     public void sayOnce(String line) {
         said = line;
     }
