@@ -88,3 +88,93 @@ public final class CharacterScreen extends JPanel {
 
     /** 방 그림 위 큰 펫. 입혀 보는 장신구(draft)로 그린다. 양옆 화살표는 자세를 바꾼다. */
     private JComponent big() {
+        JComponent v = new JComponent() {
+            @Override
+            protected void paintComponent(Graphics graphics) {
+                Graphics2D g = (Graphics2D) graphics.create();
+                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                g.clip(new RoundRectangle2D.Double(0, 0, getWidth(), getHeight(), Theme.IMAGE_RADIUS, Theme.IMAGE_RADIUS));
+                if (Images.ROOM != null) {
+                    Images.cover(g, Images.ROOM, 0, 0, getWidth(), getHeight());
+                }
+                PetState p = app.store.pet();
+                int ground = getHeight() * 9 / 10;
+                int size = (int) Math.min(getWidth() * 0.62, getHeight() * 0.74);
+                java.awt.image.BufferedImage rug = Images.item("러그");
+                if (rug != null) {
+                    Images.fitBottom(g, rug, getWidth() / 2 - size * 3 / 5, ground - size / 5, size * 6 / 5, size / 4);
+                }
+                g.setColor(new Color(0x9A, 0x6A, 0x45, 40));
+                g.fillOval(getWidth() / 2 - size * 3 / 10, ground - size / 22, size * 3 / 5, size / 11);
+                Pet.drawAt(g, p, p.pose, draft, getWidth() / 2, ground, size);
+                java.awt.image.BufferedImage yarn = Images.item("털실 공");
+                if (yarn != null) {
+                    Images.fitBottom(g, yarn, getWidth() / 2 - size * 3 / 5, ground - size / 6, size / 5, size / 5);
+                }
+                int top = ground - Pet.drawnHeight(p, size);
+                Icons.draw(g, Icons.Kind.HEART, getWidth() / 2 - size * 2 / 5, top + size / 8, size / 7, Theme.HEART);
+                Icons.draw(g, Icons.Kind.HEART, getWidth() / 2 - size * 3 / 10, top + size / 30, size / 10, Theme.HEART);
+                Icons.draw(g, Icons.Kind.SPARK, getWidth() / 2 + size / 4, top + size / 6, size / 6, Theme.SPARK);
+                g.dispose();
+            }
+        };
+        v.setLayout(null);
+        CircleButton prev = new CircleButton(Icons.Kind.LEFT, 40, "앞 자세", false);
+        CircleButton next = new CircleButton(Icons.Kind.RIGHT, 40, "다음 자세", false);
+        prev.addActionListener(e -> stepPose(-1));
+        next.addActionListener(e -> stepPose(1));
+        v.add(prev);
+        v.add(next);
+        v.addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override
+            public void componentResized(java.awt.event.ComponentEvent e) {
+                prev.setBounds(12, (v.getHeight() - 40) / 2, 40, 40);
+                next.setBounds(v.getWidth() - 52, (v.getHeight() - 40) / 2, 40, 40);
+            }
+        });
+        return v;
+    }
+
+    private void stepPose(int delta) {
+        PetState p = app.store.pet();
+        int i = Poses.ALL.indexOf(p.pose);
+        app.pet.pose(p.kind, Poses.ALL.get(Math.floorMod(i + delta, Poses.ALL.size())));
+    }
+
+    /** 성장 단계(D-50): 같은 그림의 세 크기, 지금 단계에 연민트 바탕. */
+    private JComponent growth() {
+        JComponent v = new JComponent() {
+            @Override
+            protected void paintComponent(Graphics graphics) {
+                Graphics2D g = (Graphics2D) graphics.create();
+                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                PetState p = app.store.pet();
+                int now = Level.stage(Level.level(p.exp));
+                int cell = getWidth() / 3;
+                int size = Math.min(cell - 30, getHeight() - 8);
+                for (int i = 1; i <= 3; i++) {
+                    int cx = cell * (i - 1) + cell / 2;
+                    if (i == now) {
+                        g.setColor(Theme.MINT_PALE);
+                        g.fillRoundRect(cx - cell / 2 + 12, 0, cell - 24, getHeight(), 16, 16);
+                    }
+                    Pet.drawStage(g, p.kind, Poses.SIT, p.wear, i, cx, getHeight() - 6, size);
+                    if (i < 3) {
+                        Icons.draw(g, Icons.Kind.RIGHT, cell * i - 9, getHeight() / 2 - 9, 18, Theme.MINT_DEEP);
+                    }
+                }
+                g.dispose();
+            }
+        };
+        v.setPreferredSize(new Dimension(0, 84));
+        v.setToolTipText("레벨 1~3, 4~6, 7~10에서 자라요");
+        return v;
+    }
+
+    private JComponent right() {
+        Card c = new Card(new BorderLayout(0, 10), 20);
+        c.setBorder(BorderFactory.createEmptyBorder(12, 16, 14, 16));
+        name.setFont(Theme.heavy(22));
+        name.setIcon(Icons.icon(Icons.Kind.PAW, 24, Theme.ICON));
