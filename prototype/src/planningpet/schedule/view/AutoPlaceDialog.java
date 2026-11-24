@@ -55,7 +55,7 @@ public final class AutoPlaceDialog {
         JPanel middle = new JPanel(new BorderLayout(0, 8));
         middle.add(scroll, BorderLayout.CENTER);
         if (!p.unplaced().isEmpty()) {
-            middle.add(unplaced(p, weekStart), BorderLayout.SOUTH);
+            middle.add(unplaced(s, p, weekStart), BorderLayout.SOUTH);
         }
         root.add(middle, BorderLayout.CENTER);
         JPanel buttons = new JPanel(new BorderLayout());
@@ -65,7 +65,7 @@ public final class AutoPlaceDialog {
     }
 
     /** D-76: 표 아래 "놓지 못한 일" 칸. 일마다 제목, 마감 날짜, 빨간 까닭이고 맨 아래에 다음 할 일을 적는다. */
-    public static JPanel unplaced(Planner.Placement p, LocalDate weekStart) {
+    public static JPanel unplaced(Store s, Planner.Placement p, LocalDate weekStart) {
         JPanel box = new JPanel();
         box.setLayout(new javax.swing.BoxLayout(box, javax.swing.BoxLayout.Y_AXIS));
         box.setName("놓지 못한 일");
@@ -74,7 +74,7 @@ public final class AutoPlaceDialog {
         box.add(title);
         for (Task t : p.unplaced()) {
             JLabel line = new JLabel("<html><div style='width:520px'><b>" + Ui.esc(t.title) + "</b> " + Planner.dueText(t)
-                    + "<br><font color='#E55C64'>" + Planner.reason(t, weekStart) + "</font></div></html>");
+                    + "<br><font color='#E55C64'>" + Planner.reason(s, t, weekStart) + "</font></div></html>");
             line.setBorder(javax.swing.BorderFactory.createEmptyBorder(4, 0, 0, 0));
             box.add(line);
         }

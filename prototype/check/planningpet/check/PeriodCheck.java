@@ -502,7 +502,15 @@ final class PeriodCheck {
         eq("D-76 놓지 못한 일의 까닭", "P 마감 11/22(일) 마감까지 빈 시간이 모자라요 / Q 마감 11/29(일) 이번 주엔 자리가 없어요."
                 + " 마감 11/29(일)까지 시간이 있으니 다음 주에서 자동 배치하면 놓을 수 있어요 / E 날짜 11/22(일) 그날 빈 시간이 모자라요",
                 Planner.place(full, d("11-16")).unplaced().stream().map(t -> t.title + " " + Planner.dueText(t) + " "
-                        + Planner.reason(t, d("11-16"))).collect(Collectors.joining(" / ")));
+                        + Planner.reason(full, t, d("11-16"))).collect(Collectors.joining(" / ")));
+        Store busy = at("11-22T23:40");
+        Task wide = period(busy, "Q", "11-16", "11-29", 720);
+        String open = Planner.reason(busy, wide, d("11-16"));
+        for (LocalDate day = d("11-23"); day.isBefore(d("11-30")); day = day.plusDays(1)) {
+            busy.book.add(Task.Kind.FIXED, "알바", day, LocalTime.of(9, 0), 720, "", null);
+        }
+        eq("T-AUTO-17", "true / 이번 주엔 자리가 없어요. 다음 주에도 자리가 없어요. 걸리는 시간을 나누거나 다른 일을 옮겨 보세요",
+                open.endsWith("다음 주에서 자동 배치하면 놓을 수 있어요") + " / " + Planner.reason(busy, wide, d("11-16")));
         App again = Main.create(at("11-18T10:00"));
         Task m = period(again.store, "P", "11-16", "11-22", 30);
         again.store.book.setTime(m, LocalTime.of(9, 0), 30, d("11-17"), false);
