@@ -98,6 +98,17 @@ final class HomeCheck {
         f.sync();
         TaskDialog.trySave(app, f, null);
         eq("T-TALK-28", "일, 월, 화, 수, 목, 금, 토 / 17일(화)부터 일, 화마다 넣었어요", String.join(", ", order) + " / " + s.talk);
+        App end = Main.create(at("11-30T09:00"));
+        TaskForm t = TaskDialog.form(end, null, d("11-30"));
+        t.title.setText("운동");
+        t.repeat.setSelectedIndex(2);
+        for (int i = 0; i < 7; i++) {
+            t.days[i].setSelected(i == 1);
+        }
+        planningpet.common.view.Ui.setDate(t.repeatEnd, d("12-28"));
+        t.sync();
+        TaskDialog.trySave(end, t, null);
+        eq("T-TALK-29", "12월 1일(화)부터 화마다 넣었어요", end.store.talk);
     }
 
     /** T-TALK-23. 홈에서 넣으면 펫이 이름과 오늘 남은 수를 말한다(D-90). */
