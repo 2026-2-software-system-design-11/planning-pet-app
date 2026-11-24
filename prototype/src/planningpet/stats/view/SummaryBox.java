@@ -88,3 +88,46 @@ final class SummaryBox extends JComponent {
         g.setFont(Theme.font(14));
         g.setColor(monthly ? Theme.INK : Theme.TASK_TEXT);
         g.drawString(range, x, base);
+
+        // 아래: 달성률 | 포인트
+        int top = 8 + bandH;
+        int bodyH = h - top;
+        int half = w / 2;
+        int cy = top + bodyH / 2;
+        g.setColor(Theme.CARD_EDGE);
+        g.setStroke(new BasicStroke(1.4f));
+        g.drawLine(2 + half, cy - bodyH / 4, 2 + half, cy + bodyH / 4);
+        if (rate.total() == 0) {
+            g.setFont(Theme.font(12));
+            fm = g.getFontMetrics();
+            g.setColor(Theme.INK_SUB);
+            // 칸이 좁으면 두 줄로 쓴다.
+            String[] lines = fm.stringWidth(StatsArt.NONE) <= half - 16 ? new String[] {StatsArt.NONE} : new String[] {"아직 셀 일정이", "없어요"};
+            int ly = cy - (lines.length - 1) * fm.getHeight() / 2 + fm.getAscent() / 2;
+            for (String line : lines) {
+                g.drawString(line, 2 + (half - fm.stringWidth(line)) / 2, ly);
+                ly += fm.getHeight();
+            }
+        } else {
+            g.setFont(Theme.heavy(30));
+            fm = g.getFontMetrics();
+            String pct = rate.percent() + "%";
+            g.setColor(Theme.INK);
+            g.drawString(pct, 2 + (half - fm.stringWidth(pct)) / 2, cy + 4);
+            g.setFont(Theme.font(14));
+            FontMetrics fs = g.getFontMetrics();
+            String count = "(" + rate.done() + " / " + rate.total() + ")";
+            g.setColor(Theme.INK_SUB);
+            g.drawString(count, 2 + (half - fs.stringWidth(count)) / 2, cy + 4 + fs.getHeight() + 2);
+        }
+        int coin = 30;
+        int rx = 2 + half;
+        Icons.draw(g, Icons.Kind.COIN, rx + (half - coin) / 2, cy - coin - 2, coin, Theme.COIN);
+        g.setFont(Theme.heavy(22));
+        fm = g.getFontMetrics();
+        String p = String.format("+%,dP", points);
+        g.setColor(Theme.INK);
+        g.drawString(p, rx + (half - fm.stringWidth(p)) / 2, cy + fm.getAscent() - 2);
+        g.dispose();
+    }
+}
