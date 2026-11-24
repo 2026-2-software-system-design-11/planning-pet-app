@@ -43,7 +43,8 @@ public final class Planner {
     /** 대상: 시작 시각 없는, 끝내지 않은 할 일 가운데 놓을 수 있는 날이 있는 것. 날짜, 긴 순, 넣은 순. */
     public static List<Task> targets(Store s, LocalDate monday) {
         return s.tasks.stream()
-                .filter(t -> t.kind == Task.Kind.TASK && !t.timed() && !t.done && !days(t, monday, s.today()).isEmpty())
+                .filter(t -> t.kind == Task.Kind.TASK && !t.onTimetable(s.today()) && !t.done
+                        && !days(t, monday, s.today()).isEmpty())
                 .sorted(Comparator.comparing((Task t) -> t.date)
                         .thenComparing(t -> -t.minutes)
                         .thenComparingLong(t -> t.seq))

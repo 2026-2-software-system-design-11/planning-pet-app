@@ -65,18 +65,29 @@ public final class Task {
         return done ? doneOn() : dueDate;
     }
 
-    /** 시간표와 목록의 시각 있는 칸에 놓이는가. 끝낸 기간 할 일은 계획한 칸에서 빠진다(D-66). */
-    public boolean onTimetable() {
-        return timed() && !(period() && done);
+    /**
+     * 시각을 정한 날에 못 끝낸 기간 할 일인가(D-67): 끝내지 않았고, 시각을 정한 날이 오늘보다 앞이고 마감보다도 앞이다. 데이터는
+     * 그대로 두고 오늘로 계산한다.
+     */
+    public boolean missed(LocalDate today) {
+        return period() && !done && timed() && date.isBefore(today) && date.isBefore(dueDate);
+    }
+
+    /** 시간표와 목록의 시각 있는 칸에 놓이는가. 끝낸 기간 할 일(D-66)과 못 끝낸 계획(D-67)은 계획한 칸에서 빠진다. */
+    public boolean onTimetable(LocalDate today) {
+        return timed() && !(period() && done) && !missed(today);
     }
 
     /**
-     * 06 데이터 절의 보이는 날. 끝낸 기간 할 일은 끝낸 날에만(D-66), 끝내지 않은 시각 없는 기간 할 일은 날짜부터 마감까지(마감이 앞이면
-     * 날짜에만), 그 밖은 날짜.
+     * 06 데이터 절의 보이는 날. 끝낸 기간 할 일은 끝낸 날에만(D-66), 못 끝낸 계획은 정한 다음 날부터 마감까지(D-67), 끝내지 않은
+     * 시각 없는 기간 할 일은 날짜부터 마감까지(마감이 앞이면 날짜에만), 그 밖은 날짜.
      */
-    public boolean shownOn(LocalDate day) {
+    public boolean shownOn(LocalDate day, LocalDate today) {
         if (period() && done) {
             return doneOn().equals(day);
+        }
+        if (missed(today)) {
+            return day.isAfter(date) && !day.isAfter(dueDate);
         }
         if (!period() || timed()) {
             return date.equals(day);
