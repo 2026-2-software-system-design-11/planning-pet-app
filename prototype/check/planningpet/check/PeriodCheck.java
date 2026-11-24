@@ -268,3 +268,6 @@ final class PeriodCheck {
                 labels(child, out);
             }
         }
+        return out;
+    }
+}
