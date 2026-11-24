@@ -424,6 +424,14 @@ public final class ProtoCheck {
         eq("D-93 캐릭터 창은 늘 상태 탭으로 열린다", "상태", cr.character.tab());
         cr.character.nextPet.doClick();
         eq("D-80 캐릭터 창 화살표는 펫을 바꾼다", "DOG " + ca.store.pet("CAT").pose, ca.store.activeKind + " " + ca.store.pet("CAT").pose);
+        ca.pet.pose("DOG", "기지개");
+        StringBuilder poseCells = new StringBuilder();
+        for (javax.swing.JToggleButton b : all(cr.character, javax.swing.JToggleButton.class)) {
+            if (Poses.ALL.contains(b.getText())) {
+                poseCells.append(b.getText()).append(b.isSelected() ? "(고름) " : " ");
+            }
+        }
+        eq("D-84 자세 칸은 이름을 늘 적고 고른 칸을 보인다", "앉기 자기 기지개(고름) 밥 먹기 노래 ", poseCells.toString());
         App one = Main.create(MockData.sample());
         planningpet.pet.view.PetScreen oneRoom = find(one.root, planningpet.pet.view.PetScreen.class);
         oneRoom.character.opened(false);

@@ -97,7 +97,7 @@ public final class CharacterScreen extends JPanel {
         roomCard.setBorder(BorderFactory.createEmptyBorder(5, 5, 7, 5));
         roomCard.add(stageView);
         col.add(roomCard, BorderLayout.CENTER);
-        poses.setPreferredSize(new Dimension(0, 92));
+        poses.setPreferredSize(new Dimension(0, 100));
         col.add(poses, BorderLayout.SOUTH);
         return col;
     }
@@ -401,7 +401,7 @@ public final class CharacterScreen extends JPanel {
         };
     }
 
-    /** 자세 칸 하나. 고른 자세는 민트 테두리다. 누르면 바로 바뀐다(D-50). */
+    /** 자세 칸 하나. 그림 아래에 이름을 늘 적고 고른 자세는 민트 테두리다(D-84). 누르면 바로 바뀐다(D-50). */
     private JComponent poseCard(PetState p, String pose) {
         JToggleButton b = new JToggleButton(pose, pose.equals(p.pose)) {
             @Override
@@ -417,8 +417,14 @@ public final class CharacterScreen extends JPanel {
                 g.setColor(isSelected() ? Theme.MINT : Theme.CARD_EDGE);
                 g.setStroke(new java.awt.BasicStroke(isSelected() ? 2.2f : 1f));
                 g.drawRoundRect(2, 2, w, h, 16, 16);
-                int size = Math.min(w, h) - 14;
-                Pet.drawStage(g, p.kind, pose, p.wear, 3, 2 + w / 2, h - 4, size);
+                g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                g.setFont(Theme.bold(12));
+                java.awt.FontMetrics fm = g.getFontMetrics();
+                int label = fm.getHeight() + 8;
+                int size = Math.min(w - 8, h - label - 6);
+                Pet.drawStage(g, p.kind, pose, p.wear, 3, 2 + w / 2, h - label, size);
+                g.setColor(isSelected() ? Theme.ICON : Theme.INK);
+                g.drawString(pose, 2 + (w - fm.stringWidth(pose)) / 2, h - 4 - fm.getDescent());
                 g.dispose();
             }
         };
