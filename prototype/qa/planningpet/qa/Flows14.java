@@ -47,6 +47,11 @@ final class Flows14 {
         q.eq("홈 펫 카드", "나비 Lv. 3 / 이제 경험치는 내가 받을게! 오늘 할 일 3개 남았어.",
                 q.main.pet.nameText() + " " + q.main.pet.levelText() + " / " + q.main.pet.bubbleText());
         q.eq("방 말풍선은 하트", "", q.pet.room.bubble);
+        q.step("4-1", "나의 방에서 강아지를 누른다");
+        q.app.show("나의 방");
+        q.pet.room.pat("DOG");
+        q.eq("강아지 반응, 고른 펫 그대로", "멍멍, 좋아! / DOG / CAT", q.pet.room.bubble + " / " + q.pet.room.bubbleKind + " / "
+                + q.app.store.activeKind);
         q.step("5", "캐릭터 창에서 리본 목걸이를 입혀 보고 닫다가 취소한다");
         String[] asked = {""};
         q.pet.characterOpener = dress -> q.pet.character.opened(dress);

@@ -402,6 +402,12 @@ public final class ProtoCheck {
         opened.clear();
         find(ca.root, planningpet.home.view.MainScreen.class).pet.click();
         eq("D-59 홈 펫 카드를 누르면 캐릭터 창(지금 탭)", "CAT 지금 탭", String.join(", ", opened));
+        String talkBefore = ca.store.talk;
+        cr.room.pat("DOG");
+        String patted = cr.room.bubble + " " + cr.room.bubbleKind + " " + ca.store.activeKind + " " + talkBefore.equals(ca.store.talk);
+        Task patTask = ca.store.book.add(Task.Kind.TASK, "반응 뒤", ca.store.today(), null, 30, "", null).get(0);
+        ca.schedule.check(patTask);
+        eq("D-80 방의 펫을 누르면 반응한다", "멍멍, 좋아! DOG CAT true / ", patted + " / " + cr.room.bubble);
         eq("D-58 메뉴에 캐릭터가 없다", "true", String.valueOf(button(ca.root, "캐릭터") == null));
         cr.character.draft.clear();
         cr.character.opened(false);

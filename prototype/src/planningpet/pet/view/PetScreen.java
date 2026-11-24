@@ -110,7 +110,10 @@ public final class PetScreen extends JPanel {
         middle.add(side);
         add(middle, BorderLayout.CENTER);
         // 산 뒤 한 번 하는 말은 다음 데이터 변경까지 남는다. 화면 전환 같은 다시 그리기로는 지우지 않는다(D-56).
-        app.store.onChange(() -> room.bubble = "");
+        app.store.onChange(() -> {
+            room.bubble = "";
+            room.bubbleKind = null;
+        });
         petCount = app.store.pets.size();
         shop = new ShopPanel(app, this::sayOnce);
         shop.setPreferredSize(new Dimension(0, 236));
@@ -320,6 +323,7 @@ public final class PetScreen extends JPanel {
         petCount = s.pets.size();
         if (said != null) {
             room.bubble = said;
+            room.bubbleKind = null;
             said = null;
         }
         room.repaint();

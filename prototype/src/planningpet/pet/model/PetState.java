@@ -28,6 +28,11 @@ public final class PetState {
         return dog() ? "강아지" : "고양이";
     }
 
+    /** D-80. 나의 방에서 이 펫을 누르면 방 말풍선에 한 번 보이는 한마디(06의 16번 PETTED). */
+    public String pat() {
+        return dog() ? "멍멍, 좋아!" : "야옹, 좋아!";
+    }
+
     /** D-27. 이름을 비우면 붙는 이름. */
     public static String defaultName(String kind) {
         return "DOG".equals(kind) ? "바둑이" : "나비";
