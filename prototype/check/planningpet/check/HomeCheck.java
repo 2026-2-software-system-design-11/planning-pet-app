@@ -22,6 +22,7 @@ final class HomeCheck {
         added();
         doneGroup();
         calendar();
+        weekStart();
     }
 
     static LocalDate d(String monthDay) {
@@ -156,5 +157,50 @@ final class HomeCheck {
             }
         }
         return null;
+    }
+
+    /** T-DEF-15, T-AUTO-16, T-STAT-10과 화면. 한 주 시작(D-91)을 앱 전체가 따른다. */
+    static void weekStart() {
+        java.time.DayOfWeek sun = java.time.DayOfWeek.SUNDAY;
+        eq("T-DEF-15", "2026-11-21 2026-11-28 2026-11-28 2026-11-22",
+                planningpet.schedule.model.DefaultDates.due(d("11-18"), sun) + " " + planningpet.schedule.model.DefaultDates.due(d("11-21"), sun)
+                + " " + planningpet.schedule.model.DefaultDates.due(d("11-22"), sun) + " "
+                + planningpet.schedule.model.DefaultDates.forSchedule(d("11-22"), d("11-18")));
+        Store mon = at("11-16T15:23");
+        mon.book.add(Task.Kind.TASK, "Q", d("11-22"), null, 30, "", null);
+        var placed = planningpet.schedule.model.Planner.place(mon, d("11-16")).placed();
+        Store su = at("11-16T15:23");
+        su.weekStart = sun;
+        su.book.add(Task.Kind.TASK, "Q", d("11-22"), null, 30, "", null);
+        eq("T-AUTO-16", "Q 2026-11-22 09:00 / 0", placed.get(0).task().title + " " + placed.get(0).day() + " " + placed.get(0).start()
+                + " / " + planningpet.schedule.model.Planner.targets(su, d("11-15")).size());
+        Store st = at("11-17T09:00");
+        st.weekStart = sun;
+        planningpet.stats.model.Stats.Period w = planningpet.stats.model.Stats.Period.week(st.today(), sun);
+        StringBuilder cells = new StringBuilder();
+        planningpet.stats.model.Stats.trend(st, planningpet.stats.model.Stats.Period.month(d("11-14")))
+                .forEach(b -> cells.append(b.from().getDayOfMonth()).append("-").append(b.to().getDayOfMonth()).append(" "));
+        eq("T-STAT-10", "2026-11-15~2026-11-21 1-7 8-14 15-21 22-28 29-30 ", w.from() + "~" + w.to() + " " + cells);
+
+        App app = Main.create(MockData.sample());
+        app.redraw();
+        MainScreen main = ProtoCheck.find(app.root, MainScreen.class);
+        planningpet.schedule.view.ScheduleScreen sched = ProtoCheck.find(app.root, planningpet.schedule.view.ScheduleScreen.class);
+        planningpet.stats.view.StatsScreen stats = ProtoCheck.find(app.root, planningpet.stats.view.StatsScreen.class);
+        planningpet.settings.view.SettingsScreen settings = ProtoCheck.find(app.root, planningpet.settings.view.SettingsScreen.class);
+        String before = main.calendar.weekText() + " " + firstCell(main) + " " + sched.weekStart() + " " + stats.period().from()
+                + " " + planningpet.common.view.Ui.dateOf(TaskDialog.form(app, null, d("11-14")).due);
+        settings.sunday.doClick();
+        planningpet.schedule.view.TaskForm f = TaskDialog.form(app, null, d("11-14"));
+        String after = main.calendar.weekText() + " " + firstCell(main) + " " + sched.weekStart() + " " + stats.period().from()
+                + " " + planningpet.common.view.Ui.dateOf(f.due) + " " + app.store.weekStart;
+        eq("D-91 설정 한 주 시작을 앱 전체가 따른다", "월화수목금토일 빈칸 2026-11-09 2026-11-09 2026-11-15 / 일월화수목금토 1 2026-11-08 2026-11-08 2026-11-21 SUNDAY",
+                before + " / " + after);
+    }
+
+    /** 달력 첫 칸의 글. 빈 칸이면 "빈칸". */
+    private static String firstCell(MainScreen main) {
+        String t = plain(((javax.swing.JLabel) main.calendar.grid.getComponent(0)).getText());
+        return t.isEmpty() ? "빈칸" : t.split(" ")[0];
     }
 }
