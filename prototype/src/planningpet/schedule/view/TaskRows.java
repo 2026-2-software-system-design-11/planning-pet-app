@@ -178,6 +178,87 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
         return row;
     }
 
+    /**
+     * 제목 칸. 글(getText)은 HTML(QA와 화면 읽기 프로그램이 읽는다)이고, 그림은 한 줄로 그려 칸 폭을 넘으면 "…"로 줄인다.
+     * HTML 라벨은 좁으면 두 줄로 꺾여 줄 높이를 넘었다. 끝낸 일은 흐린 글에 취소선, 메모가 있으면 끝에 흐린 "메모".
+     */
+    private static JLabel title(Task t, String date, String html) {
+        JLabel label = new JLabel(html) {
+            @Override
+            protected void paintComponent(java.awt.Graphics graphics) {
+                java.awt.Graphics2D g = (java.awt.Graphics2D) graphics.create();
+                g.setRenderingHint(java.awt.RenderingHints.KEY_TEXT_ANTIALIASING, java.awt.RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                java.awt.FontMetrics fm = g.getFontMetrics(getFont());
+                java.awt.Font small = Theme.font(11);
+                java.awt.FontMetrics sm = g.getFontMetrics(small);
+                int memo = t.memo.isBlank() ? 0 : sm.stringWidth("메모") + 5;
+                String text = fit(date + t.title, fm, getWidth() - memo);
+                int y = (getHeight() + fm.getAscent() - fm.getDescent()) / 2;
+                g.setFont(getFont());
+                g.setColor(t.done ? Theme.INK_DIM : Theme.INK);
+                g.drawString(text, 0, y);
+                int tw = fm.stringWidth(text);
+                if (t.done) {
+                    int dx = fm.stringWidth(date);
+                    g.fillRect(dx, y - fm.getAscent() / 3 - 1, tw - dx, 1);
+                }
+                if (memo > 0) {
+                    g.setFont(small);
+                    g.setColor(Theme.INK_DIM);
+                    g.drawString("메모", tw + 5, y);
+                }
+                g.dispose();
+            }
+        };
+        label.setFont(Theme.font(14));
+        label.setMinimumSize(new Dimension(0, 0));
+        label.setPreferredSize(new Dimension(40, 24));
+        return label;
+    }
+
+    /** max 폭에 들어가게 끝을 "…"로 줄인다. */
+    private static String fit(String s, java.awt.FontMetrics fm, int max) {
+        if (fm.stringWidth(s) <= max) {
+            return s;
+        }
+        String cut = s;
+        while (cut.length() > 1 && fm.stringWidth(cut.strip() + "…") > max) {
+            cut = cut.substring(0, cut.length() - 1);
+        }
+        return cut.strip() + "…";
+    }
+
+    /** "고정" 표시(D-35): TRACK 바탕, CARD_LINE 테두리의 작은 둥근 꼬리표. */
+    private static JLabel fixedTag() {
+        JLabel tag = new JLabel("고정") {
+            @Override
+            protected void paintComponent(java.awt.Graphics graphics) {
+                java.awt.Graphics2D g = (java.awt.Graphics2D) graphics.create();
+                g.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+                g.setColor(Theme.TRACK);
+                g.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 10, 10);
+                g.setColor(Theme.CARD_LINE);
+                g.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 10, 10);
+                g.dispose();
+                super.paintComponent(graphics);
+            }
+        };
+        tag.setFont(Theme.bold(11));
+        tag.setForeground(Theme.INK_SUB);
+        tag.setBorder(BorderFactory.createEmptyBorder(2, 7, 2, 7));
+        return tag;
+    }
+
+    /** 부품을 가로로 놓고 줄 높이의 가운데에 맞춘다. */
+    private static JPanel middle(JComponent... parts) {
+        JPanel p = new JPanel(new java.awt.GridBagLayout());
+        java.awt.GridBagConstraints k = new java.awt.GridBagConstraints();
+        for (int i = 0; i < parts.length; i++) {
+            k.gridx = i;
+            k.insets = new java.awt.Insets(0, i == 0 ? 0 : 4, 0, 0);
+            p.add(parts[i], k);
+        }
+        return p;
     }
 
     /** 메모가 있으면 마우스를 올렸을 때 200자까지 보인다(D-33). */
