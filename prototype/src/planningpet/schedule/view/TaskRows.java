@@ -266,9 +266,16 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
         return t.missed(control.today()) ? t.date.getDayOfMonth() + "일에 하려던 일" : null;
     }
 
-    /** D-70: 끝내지 않은 기간 할 일을 마감 날 목록에서 보면 "오늘 마감", 아니면 null. */
-    private static String dueTag(Task t, java.time.LocalDate listDay) {
-        return t.period() && !t.done && t.dueDate.equals(listDay) ? "오늘 마감" : null;
+    /**
+     * D-70, D-93: 끝내지 않은 기간 할 일을 마감 날 목록에서 보면, 그날이 오늘이면 "오늘 마감", 앞날이면 "마감"이다. 마감이 지났으면
+     * "지난 날"만 붙으므로 null.
+     */
+    private String dueTag(Task t, java.time.LocalDate listDay) {
+        if (!t.period() || t.done || !t.dueDate.equals(listDay)) {
+            return null;
+        }
+        java.time.LocalDate today = control.today();
+        return listDay.equals(today) ? "오늘 마감" : listDay.isAfter(today) ? "마감" : null;
     }
 
     /** max 폭에 들어가게 끝을 "…"로 줄인다. */
