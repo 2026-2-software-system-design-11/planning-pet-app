@@ -135,23 +135,21 @@ public final class TaskBook {
                 .max(LocalDate::compareTo).orElse(task.date);
     }
 
-    /** 06의 6번. 메인 목록: 시각 있는 할 일을 시각 순으로 먼저, 없는 할 일을 넣은 순으로. */
-    public List<Task> forDate(LocalDate date) {
-        return tasks.stream()
-                .filter(t -> t.kind == Task.Kind.TASK && t.date.equals(date))
-                .sorted(Comparator.comparing((Task t) -> !t.timed())
-                        .thenComparing(t -> t.timed() ? t.start : LocalTime.MIN)
-                        .thenComparingLong(t -> t.seq))
-                .toList();
-    }
+    /** 시각 있는 일을 시각 순으로 먼저, 없는 일을 넣은 순으로(06의 6번과 26번의 순서). */
+    private static final Comparator<Task> ORDER = Comparator.comparing((Task t) -> !t.timed())
+            .thenComparing(t -> t.timed() ? t.start : LocalTime.MIN)
+            .thenComparingLong(t -> t.seq);
 
-    /** 그날 체크할 수 있는 일정(할 일과 고정 일정, D-35). 성취도 막대와 남은 수가 센다. */
+    /** 그날 보이는 일정(할 일과 고정 일정, D-35, D-65). 성취도 막대와 남은 수가 센다. */
     public List<Task> checkables(LocalDate date) {
-        return tasks.stream().filter(t -> t.date.equals(date)).toList();
+        DayPlan plan = dayPlan(date);
+        List<Task> all = new ArrayList<>(plan.timed());
+        all.addAll(plan.untimed());
+        return all;
     }
 
-    /** 06의 6번(D-31). 메인 목록의 하루 시간표: 시각 있는 할 일과 고정 일정, 그 아래 시각 없는 할 일. */
-    public record DayPlan(List<Task> timed, List<Task> untimed) {
+    /** 06의 6번(D-31). 메인 목록의 하루 시간표: 시각 있는 할 일과 고정 일정, 그 아래 그날 보이는 시각 없는 할 일. */
+    public record DayPlan(LocalDate date, List<Task> timed, List<Task> untimed) {
     }
 
     public DayPlan dayPlan(LocalDate date) {
@@ -159,18 +157,22 @@ public final class TaskBook {
                 .filter(t -> t.timed() && t.date.equals(date))
                 .sorted(Comparator.comparing((Task t) -> t.start).thenComparingLong(t -> t.seq))
                 .toList();
-        List<Task> untimed = forDate(date).stream().filter(t -> !t.timed()).toList();
-        return new DayPlan(timed, untimed);
+        List<Task> untimed = tasks.stream()
+                .filter(t -> t.kind == Task.Kind.TASK && !t.timed() && t.shownOn(date))
+                .sorted(Comparator.comparingLong(t -> t.seq))
+                .toList();
+        return new DayPlan(date, timed, untimed);
     }
 
-    /** 06의 26번(D-33). 달력 칸의 첫 할 일 제목과 끝내지 않은 일이 있는지. 할 일이 없으면 null. */
+    /** 06의 26번(D-33). 달력 칸의 첫 할 일 제목과 끝내지 않은 일이 있는지. 세는 날이 그날인 할 일이 없으면 null. */
     public record CellPreview(String title, boolean open) {
     }
 
     public CellPreview cellPreview(LocalDate date) {
-        DayPlan plan = dayPlan(date);
-        List<Task> list = new ArrayList<>(plan.timed().stream().filter(t -> t.kind == Task.Kind.TASK).toList());
-        list.addAll(plan.untimed());
+        List<Task> list = tasks.stream()
+                .filter(t -> t.kind == Task.Kind.TASK && t.countDay().equals(date))
+                .sorted(ORDER)
+                .toList();
         if (list.isEmpty()) {
             return null;
         }
@@ -181,19 +183,33 @@ public final class TaskBook {
         return new CellPreview(title, list.stream().anyMatch(t -> !t.done));
     }
 
+    /** 마감이 있는 할 일의 "~11/22까지"(06의 6번). 마감이 없으면 null. */
+    public static String dueText(Task t) {
+        return t.dueDate == null ? null : "~" + t.dueDate.getMonthValue() + "/" + t.dueDate.getDayOfMonth() + "까지";
+    }
+
     /** "10:00~11:00". 자정에 끝나면 "24:00". */
     public static String timeText(Task t) {
         int end = t.endMinute();
         return t.start + "~" + String.format("%02d:%02d", end / 60, end % 60);
     }
 
-    /** 06의 7번. 일정관리 오른쪽 목록. */
+    /** 06의 7번. 일정관리 오른쪽 목록: 그 주에 보이는 시각 없는 할 일을 한 번씩, 줄의 날짜 순, 같은 날은 넣은 순. */
     public List<Task> untimedOfWeek(LocalDate monday) {
         return tasks.stream()
-                .filter(t -> t.kind == Task.Kind.TASK && !t.timed())
-                .filter(t -> !t.date.isBefore(monday) && !t.date.isAfter(monday.plusDays(6)))
-                .sorted(Comparator.comparing((Task t) -> t.date).thenComparingLong(t -> t.seq))
+                .filter(t -> t.kind == Task.Kind.TASK && !t.timed() && rowDay(t, monday) != null)
+                .sorted(Comparator.comparing((Task t) -> rowDay(t, monday)).thenComparingLong(t -> t.seq))
                 .toList();
+    }
+
+    /** 일정관리 목록 줄의 날짜: 그 주에서 보이는 첫날. 그 주에 보이지 않으면 null(D-65). */
+    public static LocalDate rowDay(Task t, LocalDate monday) {
+        for (int i = 0; i < 7; i++) {
+            if (t.shownOn(monday.plusDays(i))) {
+                return monday.plusDays(i);
+            }
+        }
+        return null;
     }
 
     public List<Task> timedOn(LocalDate date) {
