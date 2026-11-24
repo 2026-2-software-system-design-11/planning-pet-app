@@ -22,7 +22,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
 /**
- * 메인의 달력(05 메인, UC-09). 한 주는 일요일부터 토요일까지다. 날짜 아래에 그날 일의 수, 기간 할 일 마감 날에는 빨간 점(D-86).
+ * 메인의 달력(05 메인, UC-09). 한 주는 설정의 한 주 시작(처음은 월요일)부터 7일이다(D-91). 날짜 아래에 그날 일의 수, 기간 할 일 마감 날에는 빨간 점(D-86).
  * 모양은 2026-11-24 홈 예시: 왼쪽에 달력 아이콘과 제목, 오른쪽에 원 꺾쇠, 칸 바탕 없이 숫자만, 오늘은 연민트 둥근 네모.
  */
 public final class CalendarPanel extends JPanel {
@@ -38,6 +38,9 @@ public final class CalendarPanel extends JPanel {
     public final CircleButton next = new CircleButton(Icons.Kind.RIGHT, 32, "다음 달", false);
     /** D-60: 오늘이 든 달로 옮기고 오늘을 고른다. 이미 그렇다면 흐리다. */
     public final javax.swing.JButton today = new javax.swing.JButton("오늘");
+    /** 요일 줄. 한 주 시작(D-91)이 바뀌면 다시 놓는다. */
+    private final JPanel week = new JPanel(new GridLayout(1, 7, 2, 0));
+    private java.time.DayOfWeek shownStart;
     private YearMonth month;
     private LocalDate selected;
 
@@ -68,17 +71,10 @@ public final class CalendarPanel extends JPanel {
         head.add(arrows, BorderLayout.EAST);
         head.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Theme.CARD_EDGE),
                 BorderFactory.createEmptyBorder(0, 0, 8, 0)));
-        JPanel week = new JPanel(new GridLayout(1, 7, 2, 0));
-        for (int i = 0; i < 7; i++) {
-            JLabel day = new JLabel(String.valueOf(DAYS.charAt(i)), SwingConstants.CENTER);
-            day.setForeground(i == 0 ? Theme.SUNDAY : i == 6 ? Theme.SATURDAY : Theme.INK_SUB);
-            day.setFont(Theme.bold(13));
-            day.setBorder(BorderFactory.createEmptyBorder(6, 0, 2, 0));
-            week.add(day);
-        }
         JPanel top = new JPanel(new BorderLayout());
         top.add(head, BorderLayout.NORTH);
         top.add(week, BorderLayout.SOUTH);
+        weekRow();
         add(top, BorderLayout.NORTH);
         add(grid, BorderLayout.CENTER);
     }
@@ -97,13 +93,41 @@ public final class CalendarPanel extends JPanel {
         refresh();
     }
 
+    /** 요일 줄을 한 주 시작부터 놓는다(D-91). */
+    private void weekRow() {
+        if (store.weekStart == shownStart) {
+            return;
+        }
+        shownStart = store.weekStart;
+        week.removeAll();
+        for (int i = 0; i < 7; i++) {
+            int dow = shownStart.plus(i).getValue() % 7;
+            JLabel day = new JLabel(String.valueOf(DAYS.charAt(dow)), SwingConstants.CENTER);
+            day.setForeground(dow == 0 ? Theme.SUNDAY : dow == 6 ? Theme.SATURDAY : Theme.INK_SUB);
+            day.setFont(Theme.bold(13));
+            day.setBorder(BorderFactory.createEmptyBorder(6, 0, 2, 0));
+            week.add(day);
+        }
+        week.revalidate();
+    }
+
+    /** 요일 줄의 글(첫 요일부터). */
+    public String weekText() {
+        StringBuilder b = new StringBuilder();
+        for (java.awt.Component c : week.getComponents()) {
+            b.append(((JLabel) c).getText());
+        }
+        return b.toString();
+    }
+
     public void refresh() {
+        weekRow();
         title.setText(month.getYear() + "년 " + month.getMonthValue() + "월");
         boolean atToday = month.equals(YearMonth.from(store.today())) && store.today().equals(selected);
         today.setEnabled(!atToday);
         today.setToolTipText(atToday ? "오늘을 보고 있어요" : null);
         grid.removeAll();
-        int offset = month.atDay(1).getDayOfWeek().getValue() % 7;
+        int offset = Math.floorMod(month.atDay(1).getDayOfWeek().getValue() - store.weekStart.getValue(), 7);
         int cells = (offset + month.lengthOfMonth() + 6) / 7 * 7;
         for (int cell = 0; cell < cells; cell++) {
             int dayNumber = cell - offset + 1;
