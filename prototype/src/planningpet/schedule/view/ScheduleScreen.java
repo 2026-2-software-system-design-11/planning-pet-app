@@ -33,6 +33,9 @@ public final class ScheduleScreen extends JPanel {
     private int lastTalk;
     private boolean wasVisible;
     private boolean showHint = true;
+    /** 주를 옮겨 처음 보이는 자리로 내려야 한다(D-89). */
+    private boolean scrollPending;
+    private final JScrollPane scroll;
 
     public ScheduleScreen(App app) {
         super(new BorderLayout(8, 8));
@@ -59,7 +62,7 @@ public final class ScheduleScreen extends JPanel {
         top.add(Ui.flow(swatch(Theme.TRACK, "고정 일정"), swatch(Theme.MINT_SOFT, "할 일"), swatch(Theme.DAY, "끝냄")),
                 BorderLayout.SOUTH);
         add(top, BorderLayout.NORTH);
-        JScrollPane scroll = new JScrollPane(table, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scroll = new JScrollPane(table, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scroll.setColumnHeaderView(header);
         scroll.getViewport().setViewPosition(new Point(0, 8 * TimetablePanel.HOUR));
         Card tableCard = new Card(new BorderLayout());
@@ -89,6 +92,19 @@ public final class ScheduleScreen extends JPanel {
         return monday;
     }
 
+    /** 시간표 맨 위가 앱 하루의 분 minute이 되게 내린다. 끝을 넘지 않는다. */
+    public void scrollTo(int minute) {
+        int view = scroll.getViewport().getExtentSize().height;
+        int max = Math.max(0, table.getPreferredSize().height - view);
+        int y = Math.min(Math.max(0, minute * TimetablePanel.HOUR / 60), max);
+        scroll.getViewport().setViewPosition(new Point(0, y));
+    }
+
+    /** 시간표 맨 위의 앱 하루의 분. */
+    public int topMinute() {
+        return (int) Math.round(scroll.getViewport().getViewPosition().y * 60.0 / TimetablePanel.HOUR);
+    }
+
     private static JLabel swatch(java.awt.Color color, String text) {
         JLabel l = new JLabel(text, new javax.swing.Icon() {
             @Override
@@ -116,6 +132,7 @@ public final class ScheduleScreen extends JPanel {
     public void move(LocalDate newMonday) {
         monday = newMonday;
         showHint = true;
+        scrollPending = true;
         app.redraw();
     }
 
@@ -152,6 +169,17 @@ public final class ScheduleScreen extends JPanel {
                     ? (n > 0 ? "이번 주 남은 날의 시각 없는 할 일이 " + n + "개 있어. 자동 배치를 눌러 볼래?" : "지금 자동 배치할 할 일은 없어.")
                     : app.store.talk;
             showHint = false;
+        }
+        // D-89: 자동 배치 뒤에는 놓인 블록으로, 화면을 열거나 주를 옮기면 처음 보이는 자리로 내린다. 데이터만 바뀌면 그대로다.
+        java.util.List<Task> placed = app.schedule.takePlaced();
+        if (!placed.isEmpty()) {
+            scrollTo(placed.stream().mapToInt(Task::startMinute).min().getAsInt() - 60);
+            table.flash(placed);
+        } else if (visible && (!wasVisible || scrollPending)) {
+            scrollTo(Planner.top(monday, app.store.now));
+        }
+        if (visible) {
+            scrollPending = false;
         }
         wasVisible = visible;
         if (text != null) {

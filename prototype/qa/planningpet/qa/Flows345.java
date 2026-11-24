@@ -218,13 +218,18 @@ final class Flows345 {
         q.step("1", "일정관리를 연다");
         q.app.show("일정관리");
         q.eq("펫", "이번 주 남은 날의 시각 없는 할 일이 3개 있어. 자동 배치를 눌러 볼래?", q.schedBubble());
+        q.eq("시간표 맨 위(D-89)", "20:40", Task.hhmm(q.sched.topMinute()));
         q.step("2", "자동 배치를 누른다");
         Planner.Placement p = q.place();
         q.eq("결과 창", "11월 17일 21:40부터 11월 22일까지, 할 일마다 그 날짜(기간 할 일은 기간) 안의 빈 시간에 놓았어요"
                 + " / 행정법 기출|11월 17일|21:40 ~ 22:40|60분 / 한국사 회독|11월 17일|22:40 ~ 23:40|60분"
                 + " / 놓지 못한 일 / 오답 정리 날짜 11/17(화) 그날 빈 시간이 모자라요 / " + Flows8910.HINT, q.placement(p));
         q.step("3", "적용을 누른다");
+        q.sched.scrollTo(8 * 60);
         q.apply(p);
+        q.eq("시간표(D-89)", "20:40 행정법 기출, 한국사 회독", Task.hhmm(q.sched.topMinute()) + " "
+                + QaDrive.find(q.app.root, planningpet.schedule.view.TimetablePanel.class).flashing().stream().sorted(java.util.Comparator.comparingInt(Task::startMinute))
+                        .map(t -> t.title).collect(java.util.stream.Collectors.joining(", ")));
         q.app.show("홈");
         q.has("목록 위쪽", "[ ] 행정법 기출 21:40~22:40 60분 / [ ] 한국사 회독 22:40~23:40 60분 / 시각 없는 할 일", q.rows());
         q.has("오답 정리는 그대로", "[ ] 오답 정리 시각 정하기 30분", q.rows());

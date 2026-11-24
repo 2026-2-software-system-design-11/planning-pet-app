@@ -184,8 +184,19 @@ public final class TaskController {
         return true;
     }
 
+    /** 방금 자동 배치로 놓은 일(D-89). 일정관리가 한 번 꺼내 그 자리로 내리고 진하게 보인다. */
+    private java.util.List<Task> justPlaced = java.util.List.of();
+
+    /** 방금 놓은 일을 돌려주고 비운다. */
+    public java.util.List<Task> takePlaced() {
+        java.util.List<Task> out = justPlaced;
+        justPlaced = java.util.List.of();
+        return out;
+    }
+
     /** 자동 배치 결과 창의 적용(UC-11). */
     public void applyPlacement(Planner.Placement p) {
+        justPlaced = p.placed().stream().map(Planner.Placed::task).toList();
         app.control.change(() -> p.placed().forEach(x -> {
             x.task().setStart(x.start().getHour() * 60 + x.start().getMinute());
             if (x.task().dueDate != null) {
