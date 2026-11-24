@@ -10,7 +10,6 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
-import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -29,12 +28,18 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
     public void showPlan(TaskBook.DayPlan plan) {
         removeAll();
         if (plan.timed().isEmpty() && plan.untimed().isEmpty()) {
-            add(Ui.hint("아직 일정이 없어요. 작은 계획을 추가해 보세요."));
+            JLabel none = Ui.hint("아직 일정이 없어요. 작은 계획을 추가해 보세요.");
+            none.setFont(Theme.font(13));
+            none.setForeground(Theme.INK_SUB);
+            none.setBorder(BorderFactory.createEmptyBorder(16, 6, 0, 0));
+            add(none);
         }
         plan.timed().forEach(t -> add(row(t, TaskBook.timeText(t), false)));
         if (!plan.untimed().isEmpty()) {
             JLabel head = Ui.hint("시각 없는 할 일");
-            head.setBorder(BorderFactory.createEmptyBorder(10, 0, 2, 0));
+            head.setFont(Theme.bold(12));
+            head.setForeground(Theme.INK_SUB);
+            head.setBorder(BorderFactory.createEmptyBorder(14, 6, 4, 0));
             add(head);
             plan.untimed().forEach(t -> add(row(t, "", false)));
         }
@@ -53,11 +58,12 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
         repaint();
     }
 
-    /** time이 null이면 시각 칸이 없고, ""이면 빈 시각 칸이다. 끝낸 할 일은 제자리에서 회색 취소선이 된다. */
+    /**
+     * time이 null이면 시각 알약이 없고(일정관리 목록), ""이면 "시각 정하기" 알약이다. 끝낸 할 일은 제자리에서 회색 취소선이 된다.
+     * 줄 순서는 둥근 체크, (고정 표시), 제목, 시각 알약, 걸리는 시간, 연필, 휴지통이다(D-59).
+     * 모양은 2026-11-24 홈 예시의 할 일 줄: 줄 사이 가는 선, 끝낸 줄은 민트빛 바탕, 마우스를 올린 줄은 DAY 바탕.
+     */
     private JPanel row(Task t, String time, boolean withDate) {
-        JPanel row = new JPanel(new BorderLayout(6, 0));
-        row.setBorder(BorderFactory.createEmptyBorder(3, 0, 3, 0));
-        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
         row.setAlignmentX(LEFT_ALIGNMENT);
         // D-35: 고정 일정도 체크한다. 체크박스 옆에 "고정" 표시를 둔다.
         JCheckBox box = new JCheckBox();

@@ -22,52 +22,70 @@ public final class MainScreen extends JPanel {
     public final TaskRows rows;
     public final PetCard pet;
     private final JLabel listTitle = new JLabel();
-    public final JLabel levelName = new JLabel();
-    private final javax.swing.JProgressBar levelBar = new javax.swing.JProgressBar(0, 1000);
-    public final JLabel levelText = new JLabel();
-    public final JTextField quick = new JTextField();
+    public final RoundField quick = new RoundField(Icons.Kind.PENCIL, "할 일을 쓰고 Enter");
     /** D-40: 칸 옆 "추가"는 Enter와 같다. "일정 추가"는 목록 제목 줄 오른쪽이다. */
     public final JButton quickButton = new JButton("추가");
     public final JButton addButton = new JButton("일정 추가");
+    /** 펫 카드를 누르면 캐릭터 창을 연다(D-58, D-59). Main이 나의 방의 characterOpener로 잇는다. */
+    public Runnable openCharacter = () -> { };
 
     public MainScreen(App app) {
-        super(new BorderLayout(0, 8));
+        super(null);
         this.app = app;
-        setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 12));
         calendar = new CalendarPanel(app.store, this::select);
         rows = new TaskRows(app.schedule);
+        pet = new PetCard(app.store, () -> openCharacter.run());
 
-        JPanel list = new Card(new BorderLayout(0, 6));
-        listTitle.setFont(Theme.font(23));
+        Card list = new Card(new BorderLayout(0, 8));
+        listTitle.setFont(Theme.heavy(21));
+        listTitle.setIcon(Icons.icon(Icons.Kind.CHECKLIST, 24, Theme.ICON));
+        listTitle.setIconTextGap(8);
+        addButton.setIcon(Icons.icon(Icons.Kind.PLUS, 16, Theme.ICON));
+        addButton.setIconTextGap(6);
         addButton.addActionListener(e -> app.schedule.add(calendar.selected()));
         JPanel head = new JPanel(new BorderLayout());
         head.add(listTitle, BorderLayout.CENTER);
         head.add(addButton, BorderLayout.EAST);
+        head.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Theme.CARD_EDGE),
+                BorderFactory.createEmptyBorder(0, 0, 8, 0)));
         list.add(head, BorderLayout.NORTH);
         JScrollPane scroll = new JScrollPane(rows, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scroll.setBorder(BorderFactory.createEmptyBorder());
         list.add(scroll, BorderLayout.CENTER);
         list.add(quickAdd(), BorderLayout.SOUTH);
 
-        JPanel body = new JPanel(new GridLayout(1, 2, 16, 0));
         Card calendarCard = new Card(new BorderLayout());
+        calendarCard.setBorder(BorderFactory.createEmptyBorder(14, 16, 14, 16));
         calendarCard.add(calendar);
-        body.add(calendarCard);
-        body.add(list);
-        add(body, BorderLayout.CENTER);
-
-        JPanel bottom = new Card(new BorderLayout());
-        JPanel top = new JPanel(new BorderLayout());
-        levelBar.setPreferredSize(new java.awt.Dimension(110, 10));
-        top.add(Ui.flow(levelName, levelBar, levelText), BorderLayout.EAST);
-        bottom.add(top, BorderLayout.NORTH);
-        bottom.add(new WalkBar(app.store), BorderLayout.CENTER);
-        add(bottom, BorderLayout.SOUTH);
+        add(pet);
+        add(calendarCard);
+        add(list);
         app.watch(this::refresh);
     }
 
+    /**
+     * 왼쪽 열은 본문 폭의 0.47(360에서 760 사이), 펫 카드 높이는 본문 높이의 0.42(236에서 400 사이)이고 나머지가 달력이다.
+     * 오른쪽 할 일 카드는 위아래를 다 쓴다(D-59).
+     */
+    @Override
+    public void doLayout() {
+        int w = getWidth();
+        int h = getHeight();
+        int gap = Theme.GAP;
+        int leftW = (int) Math.max(360, Math.min(760, w * 0.47));
+        int petH = (int) Math.max(236, Math.min(400, h * 0.42));
+        java.awt.Component[] parts = getComponents();
+        parts[0].setBounds(0, 0, leftW, petH);
+        parts[1].setBounds(0, petH + gap, leftW, h - petH - gap);
+        parts[2].setBounds(leftW + gap, 0, w - leftW - gap, h);
+        for (java.awt.Component c : parts) {
+            c.doLayout();
+        }
+    }
+
     private JPanel quickAdd() {
-        JPanel panel = new JPanel(new BorderLayout(6, 2));
+        JPanel panel = new JPanel(new BorderLayout(8, 6));
+        panel.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
         Ui.limit(quick, 100);
         Runnable put = () -> {
             if (app.schedule.quickAdd(quick.getText(), calendar.selected())) {
@@ -98,8 +116,10 @@ public final class MainScreen extends JPanel {
             }
         });
         JLabel hint = new JLabel("제목을 쓰고 Enter나 추가를 누르면 30분짜리 할 일로 들어가요");
-        hint.setForeground(Theme.INK_DIM);
+        hint.setForeground(Theme.INK_SUB);
         hint.setFont(Theme.font(12));
+        hint.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 0));
+        quickButton.setBorder(BorderFactory.createEmptyBorder(9, 18, 11, 18));
         panel.add(quick, BorderLayout.CENTER);
         panel.add(quickButton, BorderLayout.EAST);
         panel.add(hint, BorderLayout.SOUTH);
@@ -123,9 +143,6 @@ public final class MainScreen extends JPanel {
                 + WEEK.charAt(date.getDayOfWeek().getValue() - 1) + ") 할 일");
         rows.showPlan(app.store.book.dayPlan(date));
         calendar.refresh();
-        levelName.setText(app.store.pet().name + " Lv." + Level.level(app.store.pet().exp));
-        levelName.setFont(Theme.bold(15));
-        levelBar.setValue((int) (Level.expRatio(app.store.pet().exp) * 1000));
-        levelText.setText(Level.expText(app.store.pet().exp));
+        pet.repaint();
     }
 }
