@@ -64,60 +64,53 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
      * 모양은 2026-11-24 홈 예시의 할 일 줄: 줄 사이 가는 선, 끝낸 줄은 민트빛 바탕, 마우스를 올린 줄은 DAY 바탕.
      */
     private JPanel row(Task t, String time, boolean withDate) {
+        boolean[] over = {false};
+        JPanel row = new JPanel(new BorderLayout(6, 0)) {
+            @Override
+            protected void paintComponent(java.awt.Graphics graphics) {
+                java.awt.Graphics2D g = (java.awt.Graphics2D) graphics.create();
+                g.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+                if (t.done || over[0]) {
+                    g.setColor(over[0] ? Theme.DAY : Theme.ROW_DONE);
+                    g.fillRoundRect(0, 1, getWidth(), getHeight() - 3, 12, 12);
+                }
+                g.setColor(Theme.CARD_EDGE);
+                g.fillRect(6, getHeight() - 1, getWidth() - 12, 1);
+                g.dispose();
+            }
+        };
+        row.setOpaque(false);
+        row.setBorder(withDate ? BorderFactory.createEmptyBorder(3, 6, 3, 4) : BorderFactory.createEmptyBorder(5, 6, 6, 4));
         row.setAlignmentX(LEFT_ALIGNMENT);
         // D-35: 고정 일정도 체크한다. 체크박스 옆에 "고정" 표시를 둔다.
-        JCheckBox box = new JCheckBox();
+        JCheckBox box = RoundCheck.style(new JCheckBox());
         box.setSelected(t.done);
         box.putClientProperty(Task.class, t);
+        box.getAccessibleContext().setAccessibleName((t.done ? "끝냄 취소: " : "끝냄: ") + t.title);
         box.addActionListener(e -> control.check(t));
-        JComponent mark = box;
-        if (t.kind == Task.Kind.FIXED) {
-            JLabel tag = new JLabel("고정");
-            tag.setFont(Theme.font(11));
-            tag.setOpaque(true);
-            tag.setBackground(Theme.TRACK);
-            tag.setBorder(BorderFactory.createLineBorder(Theme.CARD_LINE));
-            mark = Ui.flow(box, tag);
-        }
-        JPanel left = Ui.flow();
-        if (time != null) {
-            // D-40: 시각 칸은 밑줄을 그어 누르는 곳임을 보인다.
-            // HTML 글은 setForeground를 따르지 않아 흐린 색(메모 표시와 같은 색)을 HTML 안에 넣는다.
-            String color = t.done || time.isEmpty() ? "<font color='#8A96A0'>" : "<font>";
-            JLabel when = new JLabel("<html>" + color + "<u>" + (time.isEmpty() ? "시각 정하기" : time) + "</u></font></html>");
-            when.setPreferredSize(new Dimension(92, 20));
-            when.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
-            when.setToolTipText("눌러서 시각을 바꿔요");
-            when.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    control.editTime(t, when);
-                }
-            });
-            left.add(when);
-        }
-        left.add(mark);
+        JPanel left = t.kind == Task.Kind.FIXED ? middle(box, fixedTag()) : middle(box);
         String date = withDate ? t.date.getMonthValue() + "/" + t.date.getDayOfMonth() + " " : "";
         String memoMark = t.memo.isBlank() ? "" : " <font size='2' color='#8A96A0'>메모</font>";
-        JLabel label = new JLabel("<html>" + date + (t.done ? "<s>" + Ui.esc(t.title) + "</s>" : Ui.esc(t.title))
+        JLabel label = title(t, date, "<html>" + date + (t.done ? "<s>" + Ui.esc(t.title) + "</s>" : Ui.esc(t.title))
                 + memoMark + "</html>");
         label.setToolTipText(memoTip(t));
         row.setToolTipText(memoTip(t));
-        label.setMinimumSize(new Dimension(0, 0));
-        label.setFont(Theme.font(15));
-        JLabel minutes = new JLabel(t.minutes + "분");
-        label.setForeground(t.done ? Theme.INK_DIM : Theme.INK);
-        minutes.setForeground(t.done ? Theme.INK_DIM : Theme.INK);
+        JLabel minutes = new JLabel(t.minutes + "분", JLabel.RIGHT);
+        minutes.setFont(Theme.font(13));
+        minutes.setForeground(t.done ? Theme.INK_DIM : Theme.INK_SUB);
+        minutes.setPreferredSize(new Dimension(Math.max(34, minutes.getPreferredSize().width), 20));
         row.add(left, BorderLayout.WEST);
         row.add(label, BorderLayout.CENTER);
-        JButton edit = small("수정");
+        int iconButton = withDate ? 26 : 28;
+        CircleButton edit = new CircleButton(Icons.Kind.PENCIL, iconButton, "수정", true);
         edit.addActionListener(e -> control.edit(t));
-        JButton delete = small("삭제");
+        CircleButton delete = new CircleButton(Icons.Kind.TRASH, iconButton, "삭제", true);
         delete.addActionListener(e -> control.delete(t));
+        java.util.List<JComponent> watched = new java.util.ArrayList<>(java.util.List.of(row, label, box, edit, delete));
         if (withDate) {
             // 일정관리 오른쪽 목록은 좁아서 버튼을 둘째 줄 오른쪽에 둔다.
-            row.add(minutes, BorderLayout.EAST);
-            JPanel buttons = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 4, 0));
+            row.add(middle(minutes), BorderLayout.EAST);
+            JPanel buttons = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 2, 0));
             buttons.add(edit);
             buttons.add(delete);
             // D-44: 오늘보다 앞선 날짜는 둘째 줄 왼쪽에 "지난 날". 제목 줄에 붙이면 좁은 목록에서 제목이 잘린다.
@@ -126,14 +119,24 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
                 JLabel past = new JLabel("지난 날");
                 past.setForeground(new java.awt.Color(0xC0392B));
                 past.setFont(Theme.font(12));
+                past.setBorder(BorderFactory.createEmptyBorder(0, RoundCheck.SIZE + 10, 0, 0));
                 second.add(past, BorderLayout.WEST);
             }
             second.add(buttons, BorderLayout.EAST);
             row.add(second, BorderLayout.SOUTH);
             row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 58));
         } else {
-            row.add(Ui.flow(minutes, edit, delete), BorderLayout.EAST);
-            row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
+            JComponent[] right;
+            if (time != null) {
+                TimePill when = new TimePill(time, t.done);
+                when.addActionListener(e -> control.editTime(t, when));
+                watched.add(when);
+                right = new JComponent[] {when, minutes, edit, delete};
+            } else {
+                right = new JComponent[] {minutes, edit, delete};
+            }
+            row.add(middle(right), BorderLayout.EAST);
+            row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
         }
         MouseAdapter mouse = new MouseAdapter() {
             @Override
