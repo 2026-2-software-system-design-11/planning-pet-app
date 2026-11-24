@@ -31,9 +31,9 @@ public final class TaskCheck {
                 out.add(new String[] {"마감", "마감이 날짜보다 앞이에요"});
             }
         }
-        LocalTime start = f.start();
+        Integer start = f.startMinute();
         int minutes = f.minutes();
-        if (start != null && start.getHour() * 60 + start.getMinute() + minutes > 24 * 60) {
+        if (start != null && start + minutes > 24 * 60) {
             out.add(new String[] {"시작 시각", "하루 안에 끝나야 해요"});
         }
         if (minutes % 5 != 0) {

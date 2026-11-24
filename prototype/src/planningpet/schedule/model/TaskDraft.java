@@ -8,17 +8,22 @@ import java.time.LocalTime;
  * 기간 안에 하기를 켜지 않았으면 dueDate는 null이다.
  */
 public record TaskDraft(Task.Kind kind, String title, String category, LocalDate date, LocalDate dueDate,
-        LocalTime start, int minutes, String memo, Repeat repeat, LocalDate repeatEnd) {
+        LocalTime start, int minutes, String memo, Repeat repeat, LocalDate repeatEnd, boolean nextDay) {
     /** 반복과 기간이 없는 입력. 유형은 기타다(D-54). */
     public TaskDraft(Task.Kind kind, String title, LocalDate date, LocalTime start, int minutes, String memo) {
-        this(kind, title, Categories.OTHER, date, null, start, minutes, memo, null, null);
+        this(kind, title, Categories.OTHER, date, null, start, minutes, memo, null, null, false);
+    }
+
+    /** 앱 하루의 시작 분(D-77). 시각이 없으면 null. */
+    public Integer startMinute() {
+        return start == null ? null : (nextDay ? Task.DAY : 0) + start.getHour() * 60 + start.getMinute();
     }
 
     public TaskDraft withDue(LocalDate due) {
-        return new TaskDraft(kind, title, category, date, due, start, minutes, memo, repeat, repeatEnd);
+        return new TaskDraft(kind, title, category, date, due, start, minutes, memo, repeat, repeatEnd, nextDay);
     }
 
     public TaskDraft withRepeat(Repeat how, LocalDate end) {
-        return new TaskDraft(kind, title, category, date, dueDate, start, minutes, memo, how, end);
+        return new TaskDraft(kind, title, category, date, dueDate, start, minutes, memo, how, end, nextDay);
     }
 }

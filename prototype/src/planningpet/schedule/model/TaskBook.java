@@ -51,6 +51,7 @@ public final class TaskBook {
             // D-68: 기간 할 일의 시각은 목록과 자동 배치로만 정하므로 시각 없이 만든다.
             Task t = new Task(UUID.randomUUID().toString(), nextSeq.getAsLong(), d.kind(), d.title().strip(), day,
                     period ? null : d.start(), d.minutes());
+            t.nextDay = !period && d.start() != null && d.nextDay();
             t.memo = d.memo();
             t.category = d.category();
             t.seriesId = series;
@@ -80,12 +81,14 @@ public final class TaskBook {
             if (!(task.period() && task.timed())) {
                 task.date = d.date();
                 task.start = null;
+                task.nextDay = false;
             }
             task.startDay = d.date();
             task.dueDate = d.dueDate();
         } else {
             task.date = d.date();
             task.start = d.start();
+            task.nextDay = d.start() != null && d.nextDay();
             if (task.seriesId == null) {
                 task.dueDate = null;
                 task.startDay = null;

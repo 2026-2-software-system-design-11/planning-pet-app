@@ -208,9 +208,10 @@ public final class TaskForm {
             Ui.setDate(due, DefaultDates.due(day));
         }
         minutesHint.setVisible(!editing && (int) minutes.getValue() == 30);
-        LocalTime s = startTime();
-        int end = s == null ? 0 : s.getHour() * 60 + s.getMinute() + (int) minutes.getValue();
+        Integer s = startTime();
+        int end = s == null ? 0 : s + (int) minutes.getValue();
         endLabel.setText(s == null ? "" : String.format("%02d:%02d에 끝나요", end / 60, end % 60));
+        realTime.setText(s == null ? "" : Times.real(day, s));
         syncing = false;
         if (checked) {
             showErrors(problems());
@@ -242,9 +243,11 @@ public final class TaskForm {
             }
             how = Repeat.weekly(picked);
         }
+        Integer s = startTime();
         return new TaskDraft(fixed.isSelected() ? Task.Kind.FIXED : Task.Kind.TASK, title.getText(),
                 (String) category.getSelectedItem(), Ui.dateOf(date), period.isSelected() ? Ui.dateOf(due) : null,
-                startTime(), (int) minutes.getValue(), memo.getText(), how, how == null ? null : Ui.dateOf(repeatEnd));
+                s == null ? null : LocalTime.of(s % Task.DAY / 60, s % 60), (int) minutes.getValue(), memo.getText(), how,
+                how == null ? null : Ui.dateOf(repeatEnd), s != null && s >= Task.DAY);
     }
 
     /** D-42: 반복 사본을 고칠 때 반복 칸을 그 반복의 방식인 채(비활성) 그 반복의 마지막 날짜와 함께 보인다. */
@@ -278,8 +281,9 @@ public final class TaskForm {
         return String.join(" / ", errors.values().stream().filter(JLabel::isVisible).map(JLabel::getText).toList());
     }
 
-    private LocalTime startTime() {
-        return timed.isSelected() ? LocalTime.parse((String) start.getValue()) : null;
+    /** 시작 칸의 앱 하루의 분(D-77). 시각을 정하지 않았으면 null. */
+    private Integer startTime() {
+        return timed.isSelected() ? Times.minuteOf(start.getValue()) : null;
     }
 
     private JLabel line(String label, JComponent field) {
