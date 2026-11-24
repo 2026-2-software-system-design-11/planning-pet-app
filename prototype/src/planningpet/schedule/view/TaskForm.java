@@ -38,8 +38,6 @@ public final class TaskForm {
     /** D-43: 추가 창에서 걸리는 시간이 30일 때만 보인다. */
     public final JLabel minutesHint = Ui.hint("안 바꾸면 30분으로 들어가요");
     private final boolean editing;
-    /** 고치는 일정. 추가면 null. */
-    private final Task editingTask;
     /** 반복 사본을 고치는 중(기간 칸은 꺼진 채 비활성, D-65). */
     private final boolean copy;
     /** sync 안에서 칸 값을 바꿀 때 다시 sync하지 않는다. */
@@ -52,7 +50,6 @@ public final class TaskForm {
 
     public TaskForm(Task t, LocalDate defaultDate, java.time.LocalDateTime now) {
         editing = t != null;
-        editingTask = t;
         copy = t != null && t.seriesId != null;
         Ui.limit(title, 100);
         Ui.limit(memo, 1000);
@@ -199,9 +196,9 @@ public final class TaskForm {
         }
     }
 
-    /** 06의 2번 검사. 끝낸 일정은 마감이 날짜보다 앞인지 보지 않는다(D-65). */
+    /** 06의 2번 검사. */
     public java.util.List<String[]> problems() {
-        return TaskCheck.check(draft(), editing, editingTask != null && editingTask.done);
+        return TaskCheck.check(draft(), editing);
     }
 
     public boolean editing() {

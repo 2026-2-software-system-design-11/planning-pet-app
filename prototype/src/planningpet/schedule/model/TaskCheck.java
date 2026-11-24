@@ -10,16 +10,11 @@ public final class TaskCheck {
     private TaskCheck() {
     }
 
-    /** 끝내지 않은 일정의 검사. */
-    public static List<String[]> check(TaskDraft f, boolean editing) {
-        return check(f, editing, false);
-    }
-
     /**
      * 06의 2번 검사 가운데 화면에서 걸릴 수 있는 것. 칸 순서(제목, 마감, 시작 시각, 걸리는 시간, 메모, 반복)로 {칸, 문장}을 모두
-     * 담는다. 비어 있으면 통과. done이면 마감이 날짜보다 앞인지 보지 않는다(끝낸 날로 옮겨진 날짜, D-65).
+     * 담는다. 비어 있으면 통과. 끝낸 기간 할 일도 날짜(기간 첫날)가 그대로이므로 마감을 검사한다(D-66).
      */
-    public static List<String[]> check(TaskDraft f, boolean editing, boolean done) {
+    public static List<String[]> check(TaskDraft f, boolean editing) {
         List<String[]> out = new ArrayList<>();
         if (f.title().isBlank()) {
             out.add(new String[] {"제목", "제목을 써 주세요"});
@@ -29,7 +24,7 @@ public final class TaskCheck {
         if (f.dueDate() != null) {
             if (f.kind() == Task.Kind.FIXED) {
                 out.add(new String[] {"마감", "기간은 할 일만 정할 수 있어요"});
-            } else if (!done && f.dueDate().isBefore(f.date())) {
+            } else if (f.dueDate().isBefore(f.date())) {
                 out.add(new String[] {"마감", "마감이 날짜보다 앞이에요"});
             }
         }

@@ -72,11 +72,17 @@ final class PeriodCheck {
                 msgs(TaskCheck.check(task.withRepeat(wed, d("11-17")), false)) + " / "
                 + msgs(TaskCheck.check(task.withRepeat(wed, d("11-18")), false)));
         TaskDraft p18 = draft(Task.Kind.TASK, "11-18", null);
-        eq("D-65 마감은 날짜와 같거나 뒤", "마감: 마감이 날짜보다 앞이에요 / 오류 없음 / 마감: 마감이 날짜보다 앞이에요 / 오류 없음",
+        eq("D-65 마감은 날짜와 같거나 뒤", "마감: 마감이 날짜보다 앞이에요 / 오류 없음 / 마감: 마감이 날짜보다 앞이에요",
                 msgs(TaskCheck.check(p18.withDue(d("11-17")), false)) + " / "
                 + msgs(TaskCheck.check(p18.withDue(d("11-18")), false)) + " / "
-                + msgs(TaskCheck.check(p18.withDue(d("11-17")), true)) + " / "
-                + msgs(TaskCheck.check(p18.withDue(d("11-17")), true, true)));
+                + msgs(TaskCheck.check(p18.withDue(d("11-17")), true)));
+        // T-VAL-17의 끝낸 할 일: 끝내도 날짜 칸(기간 첫날)이 그대로이므로 수정 창에서 마감을 검사한다(D-66).
+        App app = Main.create(at("11-18T09:00"));
+        Task done = period(app.store, "끝냄", "11-18", "11-22", 30);
+        app.schedule.check(done);
+        TaskForm f = new TaskForm(done, done.date, app.store.now);
+        Ui.setDate(f.due, d("11-17"));
+        eq("D-66 끝낸 할 일도 마감 검사", "마감: 마감이 날짜보다 앞이에요", msgs(f.problems()));
         eq("D-65 기간 할 일은 반복하지 않는다", "반복: 기간 안에 하는 할 일은 반복할 수 없어요",
                 msgs(TaskCheck.check(task.withDue(d("11-22")).withRepeat(Repeat.DAILY, d("11-22")), false)));
         eq("D-65 기간은 할 일만", "마감: 기간은 할 일만 정할 수 있어요",
