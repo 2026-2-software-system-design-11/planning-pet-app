@@ -14,6 +14,9 @@ public final class TaskCheck {
      * 06의 2번 검사 가운데 화면에서 걸릴 수 있는 것. 칸 순서(제목, 마감, 시작 시각, 걸리는 시간, 메모, 반복)로 {칸, 문장}을 모두
      * 담는다. 비어 있으면 통과. 끝낸 기간 할 일도 날짜(기간 첫날)가 그대로이므로 마감을 검사한다(D-66).
      */
+    /** 끝이 다음 날 04:00을 넘을 때의 문장(D-77). */
+    public static final String END_PROBLEM = "다음 날 04:00까지 끝나야 해요";
+
     public static List<String[]> check(TaskDraft f, boolean editing) {
         List<String[]> out = new ArrayList<>();
         if (f.title().isBlank()) {

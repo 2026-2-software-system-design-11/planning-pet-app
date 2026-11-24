@@ -14,6 +14,9 @@ public final class DefaultDates {
         return TaskBook.mondayOf(today).equals(shownMonday) ? today : shownMonday;
     }
 
+    /** 시작 칸의 마지막 값(D-77): 다음 날 03:55. */
+    public static final int LAST_START = Task.DAY_END - 5;
+
     /** 오늘이면 지금을 5분 단위로 올린 시각과 09:00 중 늦은 것(23:55까지), 다른 날이면 09:00. */
     public static LocalTime start(LocalDate date, LocalDateTime now) {
         if (!date.equals(now.toLocalDate())) {

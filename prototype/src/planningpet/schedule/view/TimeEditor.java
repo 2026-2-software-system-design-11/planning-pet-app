@@ -22,6 +22,8 @@ import javax.swing.SwingUtilities;
 /** 시각 고치기 창(05, D-32). 메인 시각 칸 아래에 떠서 시작 시각과 걸리는 시간만 고친다. */
 public final class TimeEditor {
     public final JSpinner start = new JSpinner(new SpinnerListModel(Ui.times()));
+    /** 다음 날 새벽 값이면 칸 옆에 실제 날과 시각 "(토 01:30)"(D-77). */
+    public final JLabel realTime = new JLabel();
     public final JSpinner minutes;
     public final JLabel error = new JLabel(" ");
     public final JButton clear = new JButton("시각 빼기");
@@ -50,7 +52,7 @@ public final class TimeEditor {
         JLabel name = new JLabel("<html><b>" + Ui.esc(t.title) + "</b></html>");
         JPanel fields = new JPanel(new BorderLayout(0, 4));
         fields.add(name, BorderLayout.NORTH);
-        fields.add(Ui.flow(new JLabel("시작 시각"), start, new JLabel("걸리는 시간"), minutes, new JLabel("분")), BorderLayout.CENTER);
+        fields.add(Ui.flow(new JLabel("시작 시각"), start, realTime, new JLabel("걸리는 시간"), minutes, new JLabel("분")), BorderLayout.CENTER);
         panel.add(fields, BorderLayout.NORTH);
         panel.add(error, BorderLayout.CENTER);
         clear.setVisible(placed && t.kind == Task.Kind.TASK);
@@ -76,7 +78,7 @@ public final class TimeEditor {
             e.error.setText(problem);
             return false;
         }
-        return app.schedule.saveTime(t, LocalTime.parse((String) e.start.getValue()), (int) e.minutes.getValue(), e.day);
+        return app.schedule.saveTime(t, Times.minuteOf(e.start.getValue()), (int) e.minutes.getValue(), e.day);
     }
 
     /** 시각 빼기 버튼과 같다. 반복 사본의 범위 물음에서 취소하면 false(창은 열린 채다, D-72). */

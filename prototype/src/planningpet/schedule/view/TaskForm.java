@@ -19,6 +19,8 @@ public final class TaskForm {
     public final JSpinner date = new JSpinner(new SpinnerDateModel());
     public final JCheckBox timed = new JCheckBox("정하기");
     public final JSpinner start = new JSpinner(new SpinnerListModel(Ui.times()));
+    /** 다음 날 새벽 값이면 시작 칸 옆에 적는 실제 날과 시각 "(토 01:30)"(D-77). */
+    public final JLabel realTime = new JLabel();
     public final JSpinner minutes = Ui.minutes(30);
     /** 7번 반복(D-64): 안 함, 매일, 요일. 요일이면 요일 단추 일곱(월부터 일)에서 하나 이상 고른다. */
     public final JComboBox<String> repeat = new JComboBox<>(new String[] {"안 함", "매일", "요일"});
@@ -84,7 +86,7 @@ public final class TaskForm {
         dateLabel = line("날짜", date);
         line("기간", Ui.flow(period, periodHint, dueLabel, due));
         line("", errors.get("마감"));
-        line("시작 시각", Ui.flow(timed, start));
+        line("시작 시각", Ui.flow(timed, start, realTime));
         line("", errors.get("시작 시각"));
         line("걸리는 시간 (분)", Ui.flow(minutes, endLabel));
         line("", errors.get("걸리는 시간"));
@@ -108,7 +110,7 @@ public final class TaskForm {
         if (t != null) {
             fixed.setSelected(t.kind == Task.Kind.FIXED);
             timed.setSelected(t.timed() && !t.period());
-            start.setValue(t.timed() ? t.start.toString() : "09:00");
+            start.setValue(t.timed() ? Times.value(t.startMinute()) : "09:00");
             minutes.setValue(t.minutes);
             memo.setText(t.memo);
             category.setSelectedItem(t.category);
