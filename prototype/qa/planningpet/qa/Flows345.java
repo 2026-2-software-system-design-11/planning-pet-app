@@ -218,11 +218,12 @@ final class Flows345 {
         q.open();
         q.eq("말풍선", "오늘 할 일은 다 끝냈어!", q.app.store.talk);
         q.eq("위 막대", "연속 접속 3일, 보유 5P, 출석 +20P", q.top());
+        q.eq("성취도, 레벨", "1/1 초코 Lv. 2 경험치 5 / 80", q.progress() + " " + q.level());
         q.step("2", "잡코리아 공고 정리 체크를 푼다");
         q.check(q.task("잡코리아 공고 정리"));
         q.eq("상태", "-5P 경험치45 횟수0 성취도0/1", st(q));
         q.eq("말풍선", "체크를 풀었어. -10P, 이제 Lv.1", q.app.store.talk);
-        q.eq("레벨", "초코 Lv.1 경험치 45 / 50", q.level());
+        q.eq("레벨", "초코 Lv. 1 경험치 45 / 50", q.level());
         q.step("3", "달력 17에서 포트폴리오 정리 체크를 푼다");
         q.select("2026-11-17");
         q.check(q.task("포트폴리오 정리"));

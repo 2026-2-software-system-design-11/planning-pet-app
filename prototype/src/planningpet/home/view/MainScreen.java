@@ -2,27 +2,25 @@ package planningpet.home.view;
 
 import planningpet.app.view.App;
 import planningpet.common.view.*;
-import planningpet.reward.model.Level;
-import planningpet.reward.view.WalkBar;
 import planningpet.schedule.view.TaskRows;
 import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.FlowLayout;
-import java.awt.GridLayout;
 import java.time.LocalDate;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTextField;
 
-/** 메인(05 메인). 하루는 이 화면에서 끝난다. */
+/**
+ * 메인(05 메인, D-59). 하루는 이 화면에서 끝난다. 왼쪽 위 펫 카드, 왼쪽 아래 달력, 오른쪽 위아래 할 일 목록이다.
+ * 모양은 2026-11-24 홈 예시를 따르고, 값은 디자인 시스템 10절 "홈"에 있다.
+ */
 public final class MainScreen extends JPanel {
     private static final String WEEK = "월화수목금토일";
     private final App app;
     public final CalendarPanel calendar;
     public final TaskRows rows;
+    public final PetCard pet;
     private final JLabel listTitle = new JLabel();
     public final JLabel levelName = new JLabel();
     private final javax.swing.JProgressBar levelBar = new javax.swing.JProgressBar(0, 1000);

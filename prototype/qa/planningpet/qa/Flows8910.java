@@ -80,7 +80,7 @@ final class Flows8910 {
         q.open();
         q.eq("말풍선", "오랜만이야! 다시 와서 반가워. 오늘 할 일은 1개야.", q.app.store.talk);
         q.eq("위 막대", "연속 접속 1일, 보유 260P, 출석 +20P", q.top());
-        q.eq("레벨", "호두 Lv.3 경험치 20 / 110", q.level());
+        q.eq("레벨", "호두 Lv. 3 경험치 20 / 110", q.level());
         q.end();
         return q;
     }
@@ -102,7 +102,7 @@ final class Flows8910 {
         q.step("1", "달력 13을 누른다");
         q.select("2026-11-13");
         q.eq("달력 13", "13 토익 RC(흐림)", q.cell(13));
-        q.eq("목록", "시각 없는 할 일 / 시각 정하기 [x] 토익 RC 60분", q.rows());
+        q.eq("목록", "시각 없는 할 일 / [x] 토익 RC 시각 정하기 60분", q.rows());
         q.eq("말풍선", "11월 13일 할 일은 1개야.", q.app.store.talk);
         q.step("2", "pet에서 쿠션을 두 번 누른다");
         q.app.show("나의 방");
@@ -173,7 +173,7 @@ final class Flows8910 {
         TaskForm f = timed(q, "논문 읽기", "23:30", 30);
         q.eq("끝", "끝 24:00", f.endLabel.getText());
         q.yes("저장", q.save(f, null));
-        q.has("목록", "23:30~24:00 [ ] 논문 읽기 30분", q.rows());
+        q.has("목록", "[ ] 논문 읽기 23:30~24:00 30분", q.rows());
         q.step("2", "논문 정리 23:30 40분으로 저장한다");
         TaskForm g = timed(q, "논문 정리", "23:30", 40);
         q.eq("끝, 저장", "끝 24:10 false 하루 안에 끝나야 해요", g.endLabel.getText() + " " + q.save(g, null) + " " + g.errorText());
@@ -182,7 +182,7 @@ final class Flows8910 {
         h.title.setText("실험 정리");
         h.minutes.setValue(720);
         q.yes("저장", q.save(h, null));
-        q.has("목록", "시각 정하기 [ ] 실험 정리 720분", q.rows());
+        q.has("목록", "[ ] 실험 정리 시각 정하기 720분", q.rows());
         q.step("4", "실험 정리 걸리는 시간에 730을 쳐 넣고 칸을 벗어난다");
         Task exp = q.task("실험 정리");
         TaskForm edit = new TaskForm(exp, exp.date, q.app.store.now);

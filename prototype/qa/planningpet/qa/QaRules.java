@@ -164,9 +164,15 @@ final class QaRules {
         Map<String, List<String>> where = new TreeMap<>();
         screens.forEach((name, root) -> {
             for (Component c : all(root, JComponent.class)) {
-                String t = c instanceof JLabel l ? Qa.plain(l.getText()) : c instanceof AbstractButton b ? b.getText() : null;
+                String t = c instanceof JLabel l ? Qa.plain(l.getText()) : c instanceof AbstractButton b ? label(b) : null;
                 if (t != null && !t.isBlank() && shown(c, root)) {
                     where.computeIfAbsent(t.strip(), k -> new ArrayList<>()).add(name);
+                }
+                // 홈 펫 카드(D-59)는 글을 손수 그린다. 그린 글을 부품 글과 같이 센다.
+                if (c instanceof planningpet.home.view.PetCard card && shown(c, root)) {
+                    for (String w : new String[] {card.nameText(), card.levelText(), card.expText(), "오늘 끝낸 일"}) {
+                        where.computeIfAbsent(w, k -> new ArrayList<>()).add(name);
+                    }
                 }
             }
         });
@@ -196,12 +202,21 @@ final class QaRules {
         }
     }
 
+    /** 버튼의 이름: 글이 있으면 글, 아이콘만 있으면 툴팁(사용자가 마우스를 올려 읽는 이름, 예: 연필 "수정"). */
+    private static String label(AbstractButton b) {
+        String t = b.getText();
+        if (t != null && !t.isBlank()) {
+            return t;
+        }
+        return b.getToolTipText() == null ? "" : b.getToolTipText();
+    }
+
     /** 규칙 4: 같은 글의 버튼이 화면마다 같은 자리(묶음 판 안의 위, 아래, 왼쪽, 오른쪽)에 있는지 본다. */
     private void places(Map<String, JComponent> screens) {
         Map<String, List<String>> at = new TreeMap<>();
         screens.forEach((name, root) -> {
             for (JButton b : all(root, JButton.class)) {
-                if (b.getText().isBlank() || !shown(b, root)) {
+                if (label(b).isBlank() || !shown(b, root)) {
                     continue;
                 }
                 // 목록 줄 안의 버튼은 그 줄 안의 자리, 나머지는 묶음 판(Card) 안의 자리를 본다.
@@ -211,7 +226,7 @@ final class QaRules {
                 Point p = SwingUtilities.convertPoint(b, b.getWidth() / 2, b.getHeight() / 2, frame);
                 String v = p.y < frame.getHeight() / 3 ? "위" : p.y > frame.getHeight() * 2 / 3 ? "아래" : "가운데";
                 String h = p.x < frame.getWidth() / 3 ? "왼쪽" : p.x > frame.getWidth() * 2 / 3 ? "오른쪽" : "가운데";
-                at.computeIfAbsent(b.getText(), k -> new ArrayList<>()).add(name + "|" + v + " " + h);
+                at.computeIfAbsent(label(b), k -> new ArrayList<>()).add(name + "|" + v + " " + h);
             }
         });
         at.forEach((text, places) -> {
