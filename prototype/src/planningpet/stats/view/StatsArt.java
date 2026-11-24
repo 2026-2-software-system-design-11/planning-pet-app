@@ -178,3 +178,34 @@ final class StatsArt {
                 g.setStroke(new BasicStroke(2.8f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
                 g.draw(path(9.5, 5.5, 16, 12, 9.5, 18.5));
             }
+            case RING -> {
+                g.setStroke(new BasicStroke(2.4f));
+                g.draw(new Ellipse2D.Double(2.5, 2.5, 19, 19));
+            }
+        }
+        g.dispose();
+    }
+
+    /** 카드 오른쪽 위의 옅은 발자국 둘(예시의 카드 장식). */
+    static void paws(Graphics2D g, int x, int y) {
+        Color c = new Color(Theme.MINT_SELECTED.getRed(), Theme.MINT_SELECTED.getGreen(), Theme.MINT_SELECTED.getBlue(), 150);
+        Icons.draw(g, Icons.Kind.PAW, x, y + 10, 22, c);
+        Icons.draw(g, Icons.Kind.PAW, x + 18, y, 18, c);
+    }
+
+    private static Path2D path(double... xy) {
+        Path2D p = new Path2D.Double();
+        p.moveTo(xy[0], xy[1]);
+        for (int i = 2; i < xy.length; i += 2) {
+            p.lineTo(xy[i], xy[i + 1]);
+        }
+        return p;
+    }
+
+    /** 통계 부품이 같이 쓰는 매끄럽게 그리기 설정. */
+    static void smooth(Graphics2D g) {
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
+    }
+}
