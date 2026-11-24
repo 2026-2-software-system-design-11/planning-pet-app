@@ -57,6 +57,38 @@ final class PeriodCheck {
         rewards();
         talkAndCalendar();
         autoPlace();
+        pastCopies();
+    }
+
+    /** D-69: 지난 반복 사본은 밀린 일로 보이지 않는다. */
+    static void pastCopies() {
+        App app = Main.create(at("11-18T09:00"));
+        List<Task> runs = daily(app.store);
+        app.store.book.add(Task.Kind.TASK, "과제", d("11-16"), null, 30, "", null);
+        app.show("일정관리");
+        app.store.changed();
+        ScheduleScreen sched = ProtoCheck.find(app.root, ScheduleScreen.class);
+        eq("D-69 지난 반복 사본", "11/16 운동 30분 / 11/16 과제 30분 지난 날 / 11/17 운동 30분", String.join(" / ",
+                java.util.Arrays.asList(rows(sched.untimed).split(" / ")).subList(0, 3)));
+        box(sched.untimed, runs.get(0)).doClick();
+        eq("D-69 지난 사본도 체크", "true", runs.get(0).done);
+        TaskBook.CellPreview c17 = app.store.book.cellPreview(d("11-17"));
+        TaskBook.CellPreview c18 = app.store.book.cellPreview(d("11-18"));
+        eq("D-69 지난 반복 사본은 진하지 않다", "운동 false 운동 true", c17.title() + " " + c17.open() + " " + c18.title() + " " + c18.open());
+        App fin = Main.create(at("11-18T09:00"));
+        fin.store.book.add(Task.Kind.TASK, "과제", d("11-16"), null, 30, "", null).get(0).done = true;
+        fin.store.book.add(Task.Kind.TASK, "빨래", d("11-16"), null, 30, "", null);
+        fin.show("일정관리");
+        fin.store.changed();
+        eq("D-78 끝낸 일에는 지난 날이 없다", "11/16 과제 30분 / 11/16 빨래 30분 지난 날",
+                rows(ProtoCheck.find(fin.root, ScheduleScreen.class).untimed));
+        Store b = at("11-18T09:00");
+        daily(b);
+        b.book.add(Task.Kind.TASK, "과제", d("11-17"), null, 30, "", null);
+        eq("D-69 놓친 반복은 어제 일로 세지 않는다", "오늘 할 일 1개 남았어. 어제 못 끝낸 일 1개는 달력에 남아 있어. 내일 '운동'이 있어.",
+                new Talk(b).briefing());
+        Stats.Rate week = Stats.rate(b, Stats.Period.week(d("11-16")));
+        eq("D-69 통계에는 센다", "0/3", week.done() + "/" + week.total());
     }
 
     static void validate() {
@@ -163,6 +195,54 @@ final class PeriodCheck {
         s.book.update(c19, new TaskDraft(Task.Kind.TASK, "운동 30분", c19.date, null, 30, ""), true);
         eq("D-64 할 일 반복도 범위를 묻는다", "운동 운동 운동 운동 30분 운동 30분 운동 30분 운동 30분",
                 made.stream().map(t -> t.title).collect(Collectors.joining(" ")));
+        App rc = Main.create(at("11-16T09:00"));
+        List<Task> runs = rc.store.book.add(new TaskDraft(Task.Kind.TASK, "운동", d("11-16"), LocalTime.of(7, 0), 30, "")
+                .withRepeat(Repeat.DAILY, d("11-22")));
+        String[] asked = {""};
+        int[] answer = {0};
+        rc.schedule.chooser = new planningpet.schedule.controller.TaskController.Chooser() {
+            @Override
+            public int choose(String title, String message, String[] options) {
+                return choose(title, message, options, options.length - 1);
+            }
+
+            @Override
+            public int choose(String title, String message, String[] options, int initial) {
+                asked[0] = message + " " + String.join(", ", options) + " 처음 " + options[initial];
+                return answer[0];
+            }
+        };
+        TimeEditor.clear(rc, runs.get(2));
+        String one = runs.stream().map(t -> String.valueOf(t.start)).collect(Collectors.joining(" "));
+        answer[0] = 1;
+        TimeEditor.clear(rc, runs.get(3));
+        eq("D-72 반복 사본의 시각 빼기", "'운동'은 반복 일정이에요. 어디까지 시각을 뺄까요? 이 일정만, 이후 반복 모두, 취소 처음 이 일정만"
+                + " / 07:00 07:00 null 07:00 07:00 07:00 07:00 / 07:00 07:00 null null null null null", asked[0] + " / " + one + " / "
+                + runs.stream().map(t -> String.valueOf(t.start)).collect(Collectors.joining(" ")));
+        App pc = Main.create(at("11-18T09:00"));
+        Task pp = period(pc.store, "P", "11-16", "11-22", 30);
+        pc.store.book.setTime(pp, LocalTime.of(14, 0), 30, d("11-20"), false);
+        TimeEditor.clear(pc, pp);
+        eq("D-72 기간 할 일의 시각 빼기", "null 2026-11-18 2026-11-16 2026-11-22 / x x period period period period due",
+                pp.start + " " + pp.date + " " + pp.startDay + " " + pp.dueDate + " / "
+                + groups(pc.store, pp, "11-16", "11-17", "11-18", "11-19", "11-20", "11-21", "11-22"));
+        App later = Main.create(at("11-17T09:00"));
+        TaskDraft pd = new TaskDraft(Task.Kind.TASK, "P", d("11-16"), null, 90, "초안").withDue(d("11-22"));
+        Task lp = later.store.book.add(pd).get(0);
+        later.store.book.setTime(lp, LocalTime.of(9, 0), 90, d("11-18"), false);
+        TaskForm lf = new TaskForm(lp, lp.date, later.store.now);
+        Ui.setDate(lf.due, d("11-24"));
+        TaskDialog.trySave(later, lf, lp);
+        eq("D-93 마감 미루기", "2026-11-16 2026-11-18 09:00 90 초안 2026-11-24 ~11/24까지 null P", lp.startDay + " " + lp.date + " "
+                + lp.start + " " + lp.minutes + " " + lp.memo + " " + lp.dueDate + " " + TaskBook.dueText(lp) + " "
+                + later.store.book.cellPreview(d("11-22")) + " " + later.store.book.cellPreview(d("11-24")).title());
+        TaskForm weekly = new TaskForm(null, d("11-18"), later.store.now);
+        weekly.repeat.setSelectedIndex(2);
+        StringBuilder picked = new StringBuilder();
+        for (javax.swing.JToggleButton b : weekly.days) {
+            picked.append(b.isSelected() ? b.getText() : "");
+        }
+        eq("D-93 요일 반복의 처음 칸", "수", picked);
         App a = Main.create(MockData.empty());
         Task q = period(a.store, "Q", "11-16", "11-22", 30);
         TaskForm f = new TaskForm(q, q.date, a.store.now);
@@ -193,6 +273,11 @@ final class PeriodCheck {
         TimeEditor.save(miss, m, e);
         eq("D-67 정한 날을 놓치면 다음 날부터", "x period period due / 기간 안에 할 일 / P ~11/22까지 17일에 하려던 일 30분"
                 + " / 11-18 timed", before + " / " + row + " / " + m.date.toString().substring(5) + " " + group(miss.store, m, "11-18"));
+        Store over = at("11-18T09:00");
+        Task o = period(over, "P", "11-16", "11-22", 30);
+        over.book.setTime(o, LocalTime.of(9, 0), 30, d("11-17"), false);
+        over.now = d("11-23").atTime(9, 0);
+        eq("D-67 마감이 지나면 마감 날에만", "x x x due x", groups(over, o, "11-17", "11-18", "11-21", "11-22", "11-23"));
         Store today = at("11-18T09:00");
         today.book.add(Task.Kind.TASK, "과제", d("11-18"), null, 30, "", null).get(0).done = true;
         today.book.add(Task.Kind.TASK, "빨래", d("11-18"), null, 30, "", null);
@@ -207,7 +292,19 @@ final class PeriodCheck {
         app.show("일정관리");
         app.store.changed();
         ScheduleScreen sched = ProtoCheck.find(app.root, ScheduleScreen.class);
-        eq("D-65 기간 할 일은 한 줄", "11/16 P ~11/20까지 30분 / 11/16 Q ~11/17까지 30분 지난 날", rows(sched.untimed));
+        eq("D-65 기간 할 일은 한 줄", "11/16 P ~11/20까지 30분 / 11/17 Q ~11/17까지 30분 지난 날 / 11/20 P ~11/20까지 마감 30분",
+                rows(sched.untimed));
+        app.store.now = d("11-20").atTime(9, 0);
+        app.store.changed();
+        eq("D-93 마감 날이 오늘이면 오늘 마감", "11/16 P ~11/20까지 30분 / 11/17 Q ~11/17까지 30분 지난 날 / 11/20 P ~11/20까지 오늘 마감 30분",
+                rows(sched.untimed));
+        App wk = Main.create(at("11-17T09:00"));
+        period(wk.store, "P", "11-16", "11-20", 30);
+        period(wk.store, "Q", "11-16", "11-29", 30);
+        Task r = period(wk.store, "R", "11-16", "11-19", 30);
+        wk.schedule.check(r);
+        eq("D-93 첫날과 마감 날", "11/16 P, 11/16 Q, 11/17 R, 11/20 P", wk.store.book.untimedOfWeek(d("11-16")).stream()
+                .map(x -> x.day().getMonthValue() + "/" + x.day().getDayOfMonth() + " " + x.task().title).collect(Collectors.joining(", ")));
         App ga = Main.create(at("11-17T09:00"));
         Store g = ga.store;
         g.book.add(Task.Kind.TASK, "끝냄", d("11-17"), null, 30, "", null).get(0).done = true;

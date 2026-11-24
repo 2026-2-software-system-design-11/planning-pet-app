@@ -113,6 +113,21 @@ public final class TaskBook {
         }
     }
 
+    /**
+     * 시각 고치기 창의 시각 빼기(D-72). thisAndAfter면 같은 반복의 같거나 뒤 날짜 사본의 시각도 뺀다. 기간 할 일은 계획한 날에서
+     * 빠져 오늘(첫날이 뒤면 첫날, 마감이 지났으면 마감)부터 보이도록 날짜를 옮긴다. startDay와 마감은 그대로다.
+     */
+    public void clearTime(Task task, boolean thisAndAfter) {
+        if (thisAndAfter && task.seriesId != null) {
+            tasks.stream().filter(t -> task.seriesId.equals(t.seriesId) && !t.date.isBefore(task.date)).forEach(t -> t.start = null);
+        }
+        task.start = null;
+        if (task.period()) {
+            LocalDate from = today().isBefore(task.startDay) ? task.startDay : today();
+            task.date = from.isAfter(task.dueDate) ? task.dueDate : from;
+        }
+    }
+
     /** 지운 일정 가운데 보상을 받았던 것. 친밀도(D-49)와 통계 포인트(D-55)가 지워도 줄지 않게 센다(D-19). */
     public final List<Task> deletedRewarded = new ArrayList<>();
 
@@ -225,7 +240,8 @@ public final class TaskBook {
         if (title.length() > 5) {
             title = title.substring(0, 5).stripTrailing() + "…";
         }
-        return new CellPreview(title, list.stream().anyMatch(t -> !t.done));
+        LocalDate now = today();
+        return new CellPreview(title, list.stream().anyMatch(t -> !t.done && !t.pastCopy(now)));
     }
 
     /** 마감이 있는 할 일의 "~11/22까지"(06의 6번). 마감이 없으면 null. */
@@ -239,13 +255,30 @@ public final class TaskBook {
         return t.start + "~" + String.format("%02d:%02d", end / 60, end % 60);
     }
 
-    /** 06의 7번. 일정관리 오른쪽 목록: 그 주에 보이는 시각 없는 할 일을 한 번씩, 줄의 날짜 순, 같은 날은 넣은 순. */
-    public List<Task> untimedOfWeek(LocalDate monday) {
+    /** 일정관리 오른쪽 목록의 한 줄: 일정과 줄 앞에 붙일 날짜. */
+    public record WeekRow(Task task, LocalDate day) {
+    }
+
+    /**
+     * 06의 7번. 일정관리 오른쪽 목록: 그 주에 보이는 시각 없는 할 일을 그 주에서 보이는 첫날에 한 줄씩. 끝내지 않은 기간 할 일은
+     * 마감 날이 그 주에 있고 첫날과 다르면 마감 날에 한 줄을 더한다(D-93). 줄의 날짜 순, 같은 날은 넣은 순.
+     */
+    public List<WeekRow> untimedOfWeek(LocalDate monday) {
         LocalDate now = today();
-        return tasks.stream()
-                .filter(t -> t.kind == Task.Kind.TASK && !t.onTimetable(now) && rowDay(t, monday, now) != null)
-                .sorted(Comparator.comparing((Task t) -> rowDay(t, monday, now)).thenComparingLong(t -> t.seq))
-                .toList();
+        List<WeekRow> rows = new ArrayList<>();
+        tasks.stream().filter(t -> t.kind == Task.Kind.TASK && !t.onTimetable(now)).forEach(t -> {
+            LocalDate first = rowDay(t, monday, now);
+            if (first == null) {
+                return;
+            }
+            rows.add(new WeekRow(t, first));
+            boolean dueInWeek = t.period() && !t.done && !t.dueDate.isBefore(monday) && t.dueDate.isBefore(monday.plusDays(7));
+            if (dueInWeek && !t.dueDate.equals(first) && t.shownOn(t.dueDate, now)) {
+                rows.add(new WeekRow(t, t.dueDate));
+            }
+        });
+        rows.sort(Comparator.comparing(WeekRow::day).thenComparingLong(r -> r.task().seq));
+        return rows;
     }
 
     /** 일정관리 목록 줄의 날짜: 그 주에서 보이는 첫날. 그 주에 보이지 않으면 null(D-65). */

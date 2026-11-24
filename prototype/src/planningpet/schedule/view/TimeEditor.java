@@ -79,9 +79,9 @@ public final class TimeEditor {
         return app.schedule.saveTime(t, LocalTime.parse((String) e.start.getValue()), (int) e.minutes.getValue(), e.day);
     }
 
-    /** 시각 빼기 버튼과 같다. */
-    public static void clear(App app, Task t) {
-        app.schedule.clearTime(t);
+    /** 시각 빼기 버튼과 같다. 반복 사본의 범위 물음에서 취소하면 false(창은 열린 채다, D-72). */
+    public static boolean clear(App app, Task t) {
+        return app.schedule.clearTime(t);
     }
 
     public static void open(App app, Task t, java.time.LocalDate day, Component anchor) {
@@ -96,8 +96,9 @@ public final class TimeEditor {
         d.setContentPane(e.panel);
         e.cancel.addActionListener(x -> d.dispose());
         e.clear.addActionListener(x -> {
-            clear(app, t);
-            d.dispose();
+            if (clear(app, t)) {
+                d.dispose();
+            }
         });
         e.save.addActionListener(x -> {
             if (save(app, t, e)) {

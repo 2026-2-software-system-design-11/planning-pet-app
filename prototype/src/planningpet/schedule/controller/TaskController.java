@@ -21,9 +21,24 @@ public final class TaskController {
     /** 삭제 확인 창. 고른 버튼의 번호를 돌려준다. QA는 이것을 바꿔 끼운다. */
     public interface Chooser {
         int choose(String title, String message, String[] options);
+
+        /** initial은 처음 골라 둘 버튼의 번호다(D-72). 바꿔 끼운 것은 따로 정하지 않으면 무시한다. */
+        default int choose(String title, String message, String[] options, int initial) {
+            return choose(title, message, options);
+        }
     }
 
-    public Chooser chooser = this::ask;
+    public Chooser chooser = new Chooser() {
+        @Override
+        public int choose(String title, String message, String[] options) {
+            return ask(title, message, options, options.length - 1);
+        }
+
+        @Override
+        public int choose(String title, String message, String[] options, int initial) {
+            return ask(title, message, options, initial);
+        }
+    };
 
     /** 일정 입력 창을 연다. editing이 null이면 추가다. QA는 이것을 바꿔 끼운다. */
     public interface Opener {
@@ -32,9 +47,9 @@ public final class TaskController {
 
     public Opener opener;
 
-    private int ask(String title, String message, String[] options) {
-        return JOptionPane.showOptionDialog(app.root, message, title,
-                JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[options.length - 1]);
+    private int ask(String title, String message, String[] options, int initial) {
+        return JOptionPane.showOptionDialog(app.root, message, title, JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE,
+                null, options, options[initial]);
     }
 
     /** UC-07, UC-08. */
@@ -138,9 +153,20 @@ public final class TaskController {
         return true;
     }
 
-    /** 시각 빼기. */
-    public void clearTime(Task t) {
-        app.control.change(() -> t.start = null);
+    /** 시각 빼기(D-72). 반복 사본이면 범위를 묻고 처음 골라 둔 버튼은 "이 일정만"이다. 취소하면 false. */
+    public boolean clearTime(Task t) {
+        int scope = 0;
+        if (t.seriesId != null) {
+            int answer = chooser.choose("시각 빼기", "'" + t.title + "'" + Rules.josa(t.title, "은", "는")
+                    + " 반복 일정이에요. 어디까지 시각을 뺄까요?", new String[] {"이 일정만", "이후 반복 모두", "취소"}, 0);
+            scope = answer == 0 || answer == 1 ? answer : -1;
+        }
+        if (scope < 0) {
+            return false;
+        }
+        boolean all = scope == 1;
+        app.control.change(() -> app.store.book.clearTime(t, all));
+        return true;
     }
 
     /** 자동 배치 결과 창의 적용(UC-11). */

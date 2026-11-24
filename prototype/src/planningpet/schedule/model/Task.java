@@ -73,18 +73,30 @@ public final class Task {
         return period() && !done && timed() && date.isBefore(today) && date.isBefore(dueDate);
     }
 
+    /**
+     * 지난 반복 사본인가(D-69): 끝내지 않은 할 일 반복 사본이고 날짜가 오늘보다 앞이다. 놓친 습관 날은 밀린 일이 아니라서
+     * "지난 날", 달력 칸의 진한 색, 브리핑의 어제 못 끝낸 일에 넣지 않는다. 통계에는 센다.
+     */
+    public boolean pastCopy(LocalDate today) {
+        return kind == Kind.TASK && seriesId != null && !done && date.isBefore(today);
+    }
+
     /** 시간표와 목록의 시각 있는 칸에 놓이는가. 끝낸 기간 할 일(D-66)과 못 끝낸 계획(D-67)은 계획한 칸에서 빠진다. */
     public boolean onTimetable(LocalDate today) {
         return timed() && !(period() && done) && !missed(today);
     }
 
     /**
-     * 06 데이터 절의 보이는 날. 끝낸 기간 할 일은 끝낸 날에만(D-66), 못 끝낸 계획은 정한 다음 날부터 마감까지(D-67), 끝내지 않은
+     * 06 데이터 절의 보이는 날. 끝낸 기간 할 일은 끝낸 날에만(D-66), 마감이 지난 기간 할 일은 마감 날에만, 못 끝낸 계획은 정한 다음 날부터 마감까지(D-67), 끝내지 않은
      * 시각 없는 기간 할 일은 날짜부터 마감까지(마감이 앞이면 날짜에만), 그 밖은 날짜.
      */
     public boolean shownOn(LocalDate day, LocalDate today) {
         if (period() && done) {
             return doneOn().equals(day);
+        }
+        if (period() && dueDate.isBefore(today)) {
+            // D-67 5번: 마감이 지나도 못 끝낸 기간 할 일은 보통 할 일처럼 마감 날에만 보인다.
+            return dueDate.equals(day);
         }
         if (missed(today)) {
             return day.isAfter(date) && !day.isAfter(dueDate);
