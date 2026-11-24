@@ -48,7 +48,13 @@ public final class ProtoCheck {
         f.start.setValue("23:30");
         eq("T-VAL-7", null, msgs(f));
         f.minutes.setValue(40);
+        eq("T-VAL-20 23:30 40분", null, msgs(f));
+        f.minutes.setValue(90);
+        eq("T-VAL-20 23:30 90분", null, msgs(f));
         f.start.setValue("03:30(다음 날)");
+        f.minutes.setValue(30);
+        eq("T-VAL-8 30분", null, msgs(f));
+        f.minutes.setValue(40);
         eq("T-VAL-8", "다음 날 04:00까지 끝나야 해요", msgs(f));
         f.title.setText("");
         eq("T-VAL-14", "제목을 써 주세요 / 다음 날 04:00까지 끝나야 해요", msgs(f));
@@ -95,6 +101,9 @@ public final class ProtoCheck {
         TimeEditor longOne = new TimeEditor(late, t1523);
         longOne.minutes.setValue(40);
         eq("D-77 시각 고치기 자정 넘김", null, longOne.check());
+        longOne.start.setValue("03:30(다음 날)");
+        eq("D-77 시각 고치기 04:00 넘김", "다음 날 04:00까지 끝나야 해요 (화 03:30)",
+                longOne.check() + " " + longOne.realTime.getText());
         eq("시간 빼기는 할 일만", "true false", longOne.clear.isVisible() + " "
                 + new TimeEditor(d.book.dayPlan(nov16).timed().get(1), t1523).clear.isVisible());
         Store r = MockData.empty();
@@ -167,6 +176,7 @@ public final class ProtoCheck {
         eq("D-42 시각 창의 이후 반복 모두는 시각만", "11:00 보강 11:00", timeOnly());
         newRules();
         PeriodCheck.run();
+        DayCheck.run();
         System.out.println(failed == 0 ? "모두 통과" : failed + "개 실패");
         System.exit(failed == 0 ? 0 : 1);
     }

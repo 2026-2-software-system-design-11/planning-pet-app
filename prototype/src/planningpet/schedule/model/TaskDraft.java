@@ -14,6 +14,13 @@ public record TaskDraft(Task.Kind kind, String title, String category, LocalDate
         this(kind, title, Categories.OTHER, date, null, start, minutes, memo, null, null, false);
     }
 
+    /** 앱 하루의 분(D-77)으로 시작 시각을 준 입력. minute이 null이면 시각 없음. */
+    public static TaskDraft at(Task.Kind kind, String title, LocalDate date, Integer minute, int minutes) {
+        return new TaskDraft(kind, title, Categories.OTHER, date, null,
+                minute == null ? null : LocalTime.of(minute % Task.DAY / 60, minute % 60), minutes, "", null, null,
+                minute != null && minute >= Task.DAY);
+    }
+
     /** 앱 하루의 시작 분(D-77). 시각이 없으면 null. */
     public Integer startMinute() {
         return start == null ? null : (nextDay ? Task.DAY : 0) + start.getHour() * 60 + start.getMinute();
