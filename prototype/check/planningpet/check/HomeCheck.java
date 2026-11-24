@@ -25,6 +25,30 @@ final class HomeCheck {
         calendar();
         weekStart();
         examples();
+        editedSamples();
+    }
+
+    /** T-EX-4. 사용자가 고친 예시는 예시 지우기가 남긴다(D-94). */
+    static void editedSamples() {
+        Store s = at("11-18T09:00");
+        planningpet.pet.view.PickDialog pd = new planningpet.pet.view.PickDialog();
+        pd.apply(s, true);
+        App app = Main.create(s);
+        MainScreen main = ProtoCheck.find(app.root, MainScreen.class);
+        Task draft = s.tasks.stream().filter(t -> t.title.equals("자소서 초안")).findFirst().orElseThrow();
+        TaskForm f = new TaskForm(draft, draft.date, s.now);
+        f.title.setText("내 자소서 진짜 초안");
+        f.memo.setText("2번 문항부터");
+        TaskDialog.trySave(app, f, draft);
+        int all = s.tasks.size();
+        java.util.List<String> asked = new java.util.ArrayList<>();
+        app.schedule.chooser = (title, message, options) -> {
+            asked.add(message);
+            return 0;
+        };
+        main.sampleButton.doClick();
+        eq("T-EX-4", "예시 일정 " + (all - 1) + "개를 지울까요? 새로 넣은 일정은 그대로 남아요. 고친 예시 1개는 남아요. / 내 자소서 진짜 초안 0",
+                asked.get(0) + " / " + String.join(" ", s.tasks.stream().map(t -> t.title).toList()) + " " + s.sampleIds.size());
     }
 
     static LocalDate d(String monthDay) {

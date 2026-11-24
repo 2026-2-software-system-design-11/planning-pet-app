@@ -37,6 +37,8 @@ public final class Store {
     public boolean calendarFixed;
     /** 첫 실행의 "예시로 둘러보기"로 넣은 예시 일정의 id(D-74). 예시 지우기가 지우고 비운다. */
     public final Set<String> sampleIds = new LinkedHashSet<>();
+    /** 예시 일정마다 넣을 때의 제목, 시각, 메모, 날짜(D-94). 이와 다르면 사용자가 고친 예시라 예시 지우기가 남긴다. */
+    public final java.util.Map<String, String> sampleLooks = new java.util.HashMap<>();
     /** 설정 "한 주 시작"(D-91). 앱의 한 주는 이 요일부터 7일이다. 처음은 월요일. */
     public java.time.DayOfWeek weekStart = java.time.DayOfWeek.MONDAY;
     public String talk = "";

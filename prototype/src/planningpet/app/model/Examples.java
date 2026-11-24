@@ -30,6 +30,18 @@ public final class Examples {
         TaskDraft e = new TaskDraft(Task.Kind.TASK, "E사 지원서", today, null, 120, "")
                 .withDue(DefaultDates.due(today, s.weekStart));
         mark(s, s.book.add(e).get(0)).category = "프로젝트";
+        // D-94: 넣을 때의 모양을 적어 두고, 사용자가 고친 예시는 예시 지우기가 남긴다.
+        s.tasks.stream().filter(t -> s.sampleIds.contains(t.id)).forEach(t -> s.sampleLooks.put(t.id, look(t)));
+    }
+
+    /** 고친 예시인지 견주는 모양: 제목, 시작 시각(다음 날 포함), 메모, 날짜(D-94). */
+    public static String look(Task t) {
+        return t.title + "|" + t.start + "|" + t.nextDay + "|" + t.memo + "|" + t.date;
+    }
+
+    /** 사용자가 제목, 시각, 메모, 날짜 가운데 하나라도 고친 예시인가(D-94). */
+    public static boolean edited(Store s, Task t) {
+        return s.sampleLooks.containsKey(t.id) && !s.sampleLooks.get(t.id).equals(look(t));
     }
 
     /** 그 주에서 그 요일인 날. */
