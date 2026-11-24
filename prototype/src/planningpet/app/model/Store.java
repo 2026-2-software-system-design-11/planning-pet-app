@@ -35,6 +35,8 @@ public final class Store {
     public final Set<String> placed = new LinkedHashSet<>();
     /** 설정 "달력에 고정 일정 보이기"(D-86). 처음은 끔. */
     public boolean calendarFixed;
+    /** 첫 실행의 "예시로 둘러보기"로 넣은 예시 일정의 id(D-74). 예시 지우기가 지우고 비운다. */
+    public final Set<String> sampleIds = new LinkedHashSet<>();
     /** 설정 "한 주 시작"(D-91). 앱의 한 주는 이 요일부터 7일이다. 처음은 월요일. */
     public java.time.DayOfWeek weekStart = java.time.DayOfWeek.MONDAY;
     public String talk = "";

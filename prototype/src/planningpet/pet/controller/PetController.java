@@ -24,12 +24,20 @@ public final class PetController {
         return picked.isEmpty() ? PetState.defaultName(dog ? "DOG" : "CAT") : picked;
     }
 
-    /** 시작하기(UC-17). 이름은 10자까지, 비우면 나비, 바둑이. */
+    /** 바로 시작(UC-17). 이름은 10자까지, 비우면 나비, 바둑이. */
     public void choose(boolean dog, String name) {
+        choose(dog, name, false);
+    }
+
+    /** UC-17. examples면 예시로 둘러보기이고 오늘과 이번 주에 맞춘 예시 일정을 함께 넣는다(D-74, 06의 31번). */
+    public void choose(boolean dog, String name, boolean examples) {
         control.change(() -> {
             store.pets.clear();
             store.pets.add(new PetState(dog ? "DOG" : "CAT", nameOf(dog, name)));
             store.activeKind = dog ? "DOG" : "CAT";
+            if (examples) {
+                planningpet.app.model.Examples.fill(store);
+            }
         });
     }
 

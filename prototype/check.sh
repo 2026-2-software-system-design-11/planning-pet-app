@@ -10,7 +10,7 @@ cd "$(dirname "$0")"
 # 알림(changed)은 앱 controller만 보낸다.
 fields="calendarFixed|weekStart|petKind|petName|points|exp|streak|attendanceDay|lastOpenDay|start|title|minutes|memo|done|date|rewardPoints|rewardExp|rewardDay|rewardCount|rewardCountDay|talk|talkSeq|now|seriesId|kind|seq|nextSeq|dueDate|startDay|doneDay|repeat|nextDay"
 bad=$( (grep -rnE "javax\.swing|java\.awt" src/planningpet/*/model
-        grep -rnE "\.(changed|say)\(|book\.(add|delete|applyToSeries|update|setTime)\(|game\.(complete|uncomplete|attend)\(|\.buy\([^,)]*\)|Visits\.|\.($fields) *([-+*/]?=[^=]|\+\+|--)|\.(placed|owned|tasks)\.(add|remove|clear|removeIf|addAll)\(" src/planningpet/*/view | grep -v "this\.[a-zA-Z]* = "
+        grep -rnE "\.(changed|say)\(|book\.(add|delete|applyToSeries|update|setTime)\(|game\.(complete|uncomplete|attend)\(|\.buy\([^,)]*\)|Visits\.|\.($fields) *([-+*/]?=[^=]|\+\+|--)|\.(placed|owned|tasks|sampleIds)\.(add|remove|clear|removeIf|addAll)\(" src/planningpet/*/view | grep -v "this\.[a-zA-Z]* = "
         grep -rn "\.changed()" src | grep -v "src/planningpet/app/controller/AppController.java") || true)
 if [ -n "$bad" ]; then
     echo "D-46 어긋남:"
