@@ -448,3 +448,31 @@ public final class CharacterScreen extends JPanel {
         poses.revalidate();
         int lv = Level.level(p.exp);
         name.setText(p.name);
+        level.setText("Lv. " + lv);
+        bond.setText("친밀도 " + Bond.percent(s.book.rewardHistory(), p.kind) + "%");
+        expText.setText(Level.expText(p.exp));
+        expBar.set(Level.expRatio(p.exp));
+        for (int i = 0; i < slotButtons.length; i++) {
+            slotButtons[i].setSelected(Wardrobe.SLOTS.get(i).equals(slot));
+        }
+        wears.removeAll();
+        for (Wardrobe.Wear w : Wardrobe.inSlot(slot)) {
+            wears.add(wearCard(w, lv));
+        }
+        for (int i = wears.getComponentCount(); i < 4; i++) {
+            wears.add(new JPanel());
+        }
+        wears.revalidate();
+        wears.repaint();
+        apply.setEnabled(!draft.equals(p.wear));
+        long done = s.book.checkables(s.today()).stream().filter(t -> t.done).count();
+        stateText.setText("<html>오늘 끝낸 일 <b>" + done + "개</b><br><br>친밀도 <b>" + Bond.percent(s.book.rewardHistory(), p.kind)
+                + "%</b> (함께한 날 " + Bond.days(s.book.rewardHistory(), p.kind) + "일)<br><br>누적 경험치 <b>" + p.exp + "</b></html>");
+        StringBuilder worn = new StringBuilder();
+        p.wear.values().forEach(v -> worn.append(worn.length() > 0 ? ", " : "").append(v));
+        infoText.setText("<html>종류 <b>" + p.kindName() + "</b><br><br>이름 <b>" + Ui.esc(p.name) + "</b><br><br>자세 <b>" + p.pose
+                + "</b><br><br>입은 장신구 <b>" + (worn.length() == 0 ? "없음" : worn) + "</b></html>");
+        stageView.repaint();
+        stages.repaint();
+    }
+}
