@@ -16,6 +16,12 @@ import java.awt.CardLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
+import java.awt.GradientPaint;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.util.Map;
+import javax.swing.SwingConstants;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -35,7 +41,8 @@ public final class App {
     public final ShopController shop;
     public final PetController pet;
     private final RewardController reward;
-    public final JPanel root = new JPanel(new BorderLayout()) {
+    /** 창 바탕(디자인 시스템 1절): 아쿠아 그라데이션, 왼쪽 아래에 구름과 덤불. */
+    public final JPanel root = new JPanel(new BorderLayout(Theme.GAP, 0)) {
         @Override
         protected void paintComponent(java.awt.Graphics g) {
             super.paintComponent(g);

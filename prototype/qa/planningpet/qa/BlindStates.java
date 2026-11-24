@@ -6,7 +6,6 @@ import planningpet.app.view.App;
 import planningpet.common.model.Rules;
 import planningpet.schedule.model.*;
 import planningpet.schedule.view.*;
-import planningpet.shop.view.ShopDialog;
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -61,10 +60,6 @@ public final class BlindStates {
             fixedForm.showSeries(app.store.book.seriesEnd(fixed));
             BlindShots.shoot(TaskDialog.content(fixedForm, new JButton("취소"),
                     new JButton("저장"), new JButton("삭제")), null, "일정 수정", images, key, n++, out, "일정 입력 창(고정 일정 수정)");
-            Store rich = MockData.sample();
-            rich.points = 300;
-            BlindShots.shoot(ShopDialog.content(rich, item -> { }, new JButton("닫기")), null, "상점", images, key, n++, out,
-                    "상점 창(300P, 살 수 있는 것 있음)");
             app.store.book.add(Task.Kind.TASK, "기말 프로젝트", today, null, 600, "", null);
             LocalDate monday = TaskBook.mondayOf(today);
             BlindShots.shoot(AutoPlaceDialog.content(app.store, monday, Planner.place(app.store, monday), new JButton("취소"),

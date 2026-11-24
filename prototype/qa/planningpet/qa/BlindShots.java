@@ -8,7 +8,6 @@ import planningpet.pet.view.PickDialog;
 import planningpet.common.model.Rules;
 import planningpet.schedule.model.*;
 import planningpet.schedule.view.*;
-import planningpet.shop.view.ShopDialog;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
@@ -69,7 +68,7 @@ public final class BlindShots {
             App app = Main.create(MockData.sample());
             app.control.windowShown();
             int n = 1;
-            for (String screen : new String[] {"홈", "일정관리", "나의 방", "설정"}) {
+            for (String screen : new String[] {"홈", "일정관리", "캐릭터", "나의 방", "통계", "설정"}) {
                 app.show(screen);
                 shoot(app.root, new Dimension(1000, 680), null, images, key, n++, out, screen);
             }
@@ -82,8 +81,6 @@ public final class BlindShots {
             shoot(new TimeEditor(essay, app.store.now).panel, null, null, images, key, n++, out, "시각 고치기 창");
             shoot(AutoPlaceDialog.content(app.store, monday, Planner.place(app.store, monday), new JButton("취소"),
                     new JButton("적용")), null, "자동 배치 결과", images, key, n++, out, "자동 배치 결과 창");
-            shoot(ShopDialog.content(app.store, item -> { }, new JButton("닫기")), null, "상점", images, key, n++, out,
-                    "상점 창");
             shoot(new PickDialog().panel, null, "플래닝펫 시작", images, key, n++, out, "반려동물 고르기 창");
             // TaskController.delete가 반복 일정에 띄우는 확인 창과 같은 글과 버튼이다.
             Task series = app.store.tasks.stream().filter(x -> x.seriesId != null).findFirst().orElseThrow();
