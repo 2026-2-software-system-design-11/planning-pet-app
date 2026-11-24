@@ -45,7 +45,7 @@ public final class BlindStates {
             TaskForm bad = new TaskForm(null, today, app.store.now);
             bad.timed.setSelected(true);
             bad.sync();
-            bad.start.setValue("23:30");
+            bad.start.setValue("03:30(다음 날)");
             bad.minutes.setValue(40);
             bad.showErrors(TaskCheck.check(bad.draft(), bad.editing()));
             BlindShots.shoot(TaskDialog.content(bad, new JButton("취소"), new JButton("저장"), null), null, "일정 추가",
