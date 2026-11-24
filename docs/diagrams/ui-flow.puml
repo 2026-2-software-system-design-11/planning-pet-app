@@ -15,7 +15,6 @@ state "트레이" as Tray
 state "메인 창" as Win {
   state "메인" as Main
   state "일정관리" as Sched
-  state "캐릭터" as Char
   state "나의 방" as Room
   state "통계" as Stat
   state "설정" as Set
@@ -23,6 +22,7 @@ state "메인 창" as Win {
 state "일정 입력" as Form
 state "자동 배치 결과" as Place
 state "펫 데려오기" as Adopt
+state "캐릭터" as Char
 state "이름 변경" as Rename
 state "시각 고치기" as Time
 
@@ -35,6 +35,7 @@ Main --> Time : 시각 칸 누르기
 Sched --> Form : 일정 추가, 두 번 누르기
 Sched --> Place : 자동 배치
 Room --> Adopt : "+"
+Room --> Char : 펫 칩, 장신구 칸,\n캐릭터에서 꾸미기
 Char --> Rename : 이름 변경
 Win --> Tray : 창 닫기
 Tray --> Win : 메뉴의 열기, 알림 누르기
