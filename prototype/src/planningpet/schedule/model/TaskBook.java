@@ -136,8 +136,8 @@ public final class TaskBook {
     }
 
     /** 시각 있는 일을 시각 순으로 먼저, 없는 일을 넣은 순으로(06의 6번과 26번의 순서). */
-    private static final Comparator<Task> ORDER = Comparator.comparing((Task t) -> !t.timed())
-            .thenComparing(t -> t.timed() ? t.start : LocalTime.MIN)
+    private static final Comparator<Task> ORDER = Comparator.comparing((Task t) -> !t.onTimetable())
+            .thenComparing(t -> t.onTimetable() ? t.start : LocalTime.MIN)
             .thenComparingLong(t -> t.seq);
 
     /** 그날 보이는 일정(할 일과 고정 일정, D-35, D-65). 성취도 막대와 남은 수가 센다. */
@@ -154,11 +154,11 @@ public final class TaskBook {
 
     public DayPlan dayPlan(LocalDate date) {
         List<Task> timed = tasks.stream()
-                .filter(t -> t.timed() && t.date.equals(date))
+                .filter(t -> t.onTimetable() && t.date.equals(date))
                 .sorted(Comparator.comparing((Task t) -> t.start).thenComparingLong(t -> t.seq))
                 .toList();
         List<Task> untimed = tasks.stream()
-                .filter(t -> t.kind == Task.Kind.TASK && !t.timed() && t.shownOn(date))
+                .filter(t -> t.kind == Task.Kind.TASK && !t.onTimetable() && t.shownOn(date))
                 .sorted(Comparator.comparingLong(t -> t.seq))
                 .toList();
         return new DayPlan(date, timed, untimed);
@@ -197,7 +197,7 @@ public final class TaskBook {
     /** 06의 7번. 일정관리 오른쪽 목록: 그 주에 보이는 시각 없는 할 일을 한 번씩, 줄의 날짜 순, 같은 날은 넣은 순. */
     public List<Task> untimedOfWeek(LocalDate monday) {
         return tasks.stream()
-                .filter(t -> t.kind == Task.Kind.TASK && !t.timed() && rowDay(t, monday) != null)
+                .filter(t -> t.kind == Task.Kind.TASK && !t.onTimetable() && rowDay(t, monday) != null)
                 .sorted(Comparator.comparing((Task t) -> rowDay(t, monday)).thenComparingLong(t -> t.seq))
                 .toList();
     }
@@ -213,7 +213,7 @@ public final class TaskBook {
     }
 
     public List<Task> timedOn(LocalDate date) {
-        return tasks.stream().filter(t -> t.timed() && t.date.equals(date)).toList();
+        return tasks.stream().filter(t -> t.onTimetable() && t.date.equals(date)).toList();
     }
 
     public static LocalDate mondayOf(LocalDate date) {

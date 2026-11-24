@@ -181,15 +181,26 @@ final class PeriodCheck {
         main.selectDate(d("11-18"));
         javax.swing.JCheckBox box = box(main.rows, p);
         box.doClick();
-        eq("D-65 끝내면 끝낸 날로", "10P 보상 10 2026-11-17 2026-11-22 true false false 18일 목록에 없음 true",
-                app.store.points + "P 보상 " + p.rewardPoints + " " + p.date + " " + p.dueDate + " " + on(app.store, p, "11-17")
+        eq("D-66 끝내면 끝낸 날에만", "10P 보상 10 2026-11-16 2026-11-17 2026-11-22 true false false 18일 목록에 없음 true",
+                app.store.points + "P 보상 " + p.rewardPoints + " " + p.date + " " + p.doneDay + " " + p.dueDate + " "
+                + app.store.book.dayPlan(d("11-17")).untimed().contains(p)
                 + " " + on(app.store, p, "11-16") + " " + on(app.store, p, "11-18") + " 18일 목록에 없음 " + (box(main.rows, p) == null));
         app.schedule.check(p);
         StringBuilder days = new StringBuilder();
         for (String day : new String[] {"11-16", "11-17", "11-18", "11-19", "11-20", "11-21", "11-22"}) {
             days.append(on(app.store, p, day) ? "o" : "x");
         }
-        eq("D-65 취소해도 날짜는 그대로", "false 2026-11-17 2026-11-22 xoooooo", p.done + " " + p.date + " " + p.dueDate + " " + days);
+        eq("D-66 풀면 처음 계획으로", "false 2026-11-16 null 2026-11-22 ooooooo", p.done + " " + p.date + " " + p.doneDay + " "
+                + p.dueDate + " " + days);
+        App plan = Main.create(at("11-16T09:00"));
+        Task q = period(plan.store, "Q", "11-16", "11-22", 60);
+        plan.store.book.setTime(q, LocalTime.of(9, 0), 60, d("11-18"), false);
+        plan.schedule.check(q);
+        String afterDone = q.date + " " + q.start + " " + q.doneDay + " " + plan.store.book.dayPlan(d("11-16")).untimed().contains(q)
+                + " " + on(plan.store, q, "11-18") + " " + plan.store.book.timedOn(d("11-18")).isEmpty();
+        plan.schedule.check(q);
+        eq("D-66 계획한 칸이 빈다", "2026-11-18 09:00 2026-11-16 true false true, 풀면 true false",
+                afterDone + ", 풀면 " + plan.store.book.dayPlan(d("11-18")).timed().contains(q) + " " + on(plan.store, q, "11-16"));
         Store st = at("11-16T09:00");
         period(st, "P", "11-09", "11-16", 30);
         period(st, "Q", "11-16", "11-22", 30);
@@ -198,7 +209,7 @@ final class PeriodCheck {
         st.now = d("11-17").atTime(9, 0);
         Stats.Rate week = Stats.rate(st, Stats.Period.week(d("11-16")));
         Stats.Rate last = Stats.rate(st, Stats.Period.week(d("11-09")));
-        eq("D-65 기간 할 일은 마감 날에 센다", "R 2026-11-16, 1/2 50%, 0/0", "R " + r.date + ", " + week.done() + "/" + week.total()
+        eq("D-65 기간 할 일은 마감 날에 센다", "R 2026-11-16, 1/2 50%, 0/0", "R " + r.doneDay + ", " + week.done() + "/" + week.total()
                 + " " + week.percent() + "%, " + last.done() + "/" + last.total());
     }
 
