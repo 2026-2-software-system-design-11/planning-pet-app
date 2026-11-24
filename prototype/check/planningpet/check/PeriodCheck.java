@@ -178,3 +178,93 @@ final class PeriodCheck {
         App app = Main.create(at("11-17T09:00"));
         Task p = period(app.store, "P", "11-16", "11-22", 30);
         MainScreen main = ProtoCheck.find(app.root, MainScreen.class);
+        main.selectDate(d("11-18"));
+        javax.swing.JCheckBox box = box(main.rows, p);
+        box.doClick();
+        eq("D-65 끝내면 끝낸 날로", "10P 보상 10 2026-11-17 2026-11-22 true false false 18일 목록에 없음 true",
+                app.store.points + "P 보상 " + p.rewardPoints + " " + p.date + " " + p.dueDate + " " + on(app.store, p, "11-17")
+                + " " + on(app.store, p, "11-16") + " " + on(app.store, p, "11-18") + " 18일 목록에 없음 " + (box(main.rows, p) == null));
+        app.schedule.check(p);
+        StringBuilder days = new StringBuilder();
+        for (String day : new String[] {"11-16", "11-17", "11-18", "11-19", "11-20", "11-21", "11-22"}) {
+            days.append(on(app.store, p, day) ? "o" : "x");
+        }
+        eq("D-65 취소해도 날짜는 그대로", "false 2026-11-17 2026-11-22 xoooooo", p.done + " " + p.date + " " + p.dueDate + " " + days);
+        Store st = at("11-16T09:00");
+        period(st, "P", "11-09", "11-16", 30);
+        period(st, "Q", "11-16", "11-22", 30);
+        Task r = period(st, "R", "11-10", "11-20", 30);
+        new Game(st).complete(r);
+        st.now = d("11-17").atTime(9, 0);
+        Stats.Rate week = Stats.rate(st, Stats.Period.week(d("11-16")));
+        Stats.Rate last = Stats.rate(st, Stats.Period.week(d("11-09")));
+        eq("D-65 기간 할 일은 마감 날에 센다", "R 2026-11-16, 1/2 50%, 0/0", "R " + r.date + ", " + week.done() + "/" + week.total()
+                + " " + week.percent() + "%, " + last.done() + "/" + last.total());
+    }
+
+    static void talkAndCalendar() {
+        Store s = at("11-17T09:00");
+        period(s, "E사 지원서", "11-16", "11-22", 120);
+        period(s, "F사 서류", "11-16", "11-18", 30);
+        s.book.add(Task.Kind.TASK, "과제", d("11-16"), null, 30, "", null);
+        eq("D-65 브리핑의 기간 할 일", "오늘 할 일 2개 남았어. 어제 못 끝낸 일 1개는 달력에 남아 있어. 'F사 서류' 마감이 내일이야.",
+                new Talk(s).briefing());
+        Store c = MockData.empty();
+        period(c, "E사 지원서", "11-16", "11-22", 120);
+        TaskBook.CellPreview c22 = c.book.cellPreview(d("11-22"));
+        eq("D-65 기간 할 일은 마감 날 칸", "null E사 지원… true", c.book.cellPreview(d("11-16")) + " " + c22.title() + " " + c22.open());
+    }
+
+    static String placed(Planner.Placement p) {
+        return p.placed().stream().map(x -> x.task().title + " " + x.day() + " " + x.start()).collect(Collectors.joining(", "))
+                + (p.unplaced().isEmpty() ? "" : " / 놓지 못함 " + p.unplaced().size());
+    }
+
+    static void autoPlace() {
+        App app = Main.create(at("11-16T22:30"));
+        Task p = period(app.store, "P", "11-14", "11-18", 120);
+        Planner.Placement pl = Planner.place(app.store, d("11-16"));
+        String got = placed(pl);
+        AutoPlaceDialog.apply(app, pl);
+        eq("D-65 빈 시간이 있는 가장 이른 날", "P 2026-11-17 09:00, 적용 뒤 2026-11-17 2026-11-18",
+                got + ", 적용 뒤 " + p.date + " " + p.dueDate);
+        Store q = at("11-16T15:23");
+        period(q, "Q", "11-19", "11-22", 30);
+        eq("D-65 첫날이 앞날이면 첫날부터", "Q 2026-11-19 09:00", placed(Planner.place(q, d("11-16"))));
+        Store s = at("11-16T15:23");
+        period(s, "S", "11-16", "11-25", 30);
+        eq("T-AUTO-13 보이는 주 안에서만", "S 2026-11-23 09:00", placed(Planner.place(s, d("11-23"))));
+    }
+
+    static javax.swing.JCheckBox box(java.awt.Component c, Task t) {
+        if (c instanceof javax.swing.JCheckBox b && b.getClientProperty(Task.class) == t) {
+            return b;
+        }
+        if (c instanceof java.awt.Container k) {
+            for (java.awt.Component child : k.getComponents()) {
+                javax.swing.JCheckBox b = box(child, t);
+                if (b != null) {
+                    return b;
+                }
+            }
+        }
+        return null;
+    }
+
+    /** 목록의 줄마다 글(라벨)을 화면 순서대로 잇는다. 줄 사이는 " / ". */
+    static String rows(java.awt.Container list) {
+        return java.util.Arrays.stream(list.getComponents()).map(row -> String.join(" ", labels(row, new java.util.ArrayList<>())))
+                .collect(Collectors.joining(" / "));
+    }
+
+    private static List<String> labels(java.awt.Component c, List<String> out) {
+        if (c instanceof javax.swing.JLabel l) {
+            String t = l.getText() == null ? "" : l.getText().replaceAll("<[^>]+>", " ").replaceAll("\\s+", " ").strip();
+            if (!t.isEmpty()) {
+                out.add(t);
+            }
+        } else if (c instanceof java.awt.Container k) {
+            for (java.awt.Component child : k.getComponents()) {
+                labels(child, out);
+            }
+        }
