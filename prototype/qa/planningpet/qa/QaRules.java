@@ -336,6 +336,15 @@ final class QaRules {
     private static String name(AbstractButton b) {
         String t = b.getText();
         if (t != null && !t.isBlank()) {
+            return t.replaceAll("<[^>]+>", "");
+        }
+        if (b.getToolTipText() != null) {
+            return b.getToolTipText();
+        }
+        String a = b.getAccessibleContext().getAccessibleName();
+        return a == null ? b.getClass().getSimpleName() : a;
+    }
+
     private void write(File out) throws Exception {
         List<String> lines = new ArrayList<>();
         lines.add("# 사용성 자동 규칙");

@@ -221,7 +221,22 @@ public final class App {
         JLabel icon = new JLabel(Icons.icon(kind, 40, Theme.ICON));
         JLabel title = new JLabel(name);
         title.setFont(Theme.heavy(26));
-        JLabel sub = new JLabel(subtitle, Icons.icon(Icons.Kind.PAW, 13, Theme.ICON), SwingConstants.LEFT);
+        // 기본 창(1000x680)에서 오른쪽 카드가 넓은 화면은 부제가 잘렸다. 자리가 모자라면 발자국을 빼고 12로 줄이고,
+        // 그래도 모자라면 가운데에 가까운 띄어쓰기에서 두 줄로 나눈다.
+        JLabel sub = new JLabel(subtitle, Icons.icon(Icons.Kind.PAW, 13, Theme.ICON), SwingConstants.LEFT) {
+            @Override
+            public void setBounds(int x, int y, int w, int h) {
+                super.setBounds(x, y, w, h);
+                boolean full = w >= getFontMetrics(Theme.font(13)).stringWidth(subtitle) + 6 + 13;
+                boolean one = full || w >= getFontMetrics(Theme.font(12)).stringWidth(subtitle);
+                String text = one ? subtitle : twoLines(subtitle);
+                if (!text.equals(getText()) || full != (getIcon() != null)) {
+                    setFont(Theme.font(full ? 13 : 12));
+                    setIcon(full ? Icons.icon(Icons.Kind.PAW, 13, Theme.ICON) : null);
+                    setText(text);
+                }
+            }
+        };
         sub.setHorizontalTextPosition(SwingConstants.LEFT);
         sub.setIconTextGap(6);
         sub.setFont(Theme.font(13));
@@ -266,5 +281,17 @@ public final class App {
         boolean attended = store.today().equals(store.attendanceDay);
         attend.setText(attended ? "출석 완료" : "출석 +20P");
         attend.setEnabled(!attended);
+    }
+
+    /** 가운데에 가장 가까운 띄어쓰기에서 두 줄로 나눈 HTML. 띄어쓰기가 없으면 그대로다. */
+    static String twoLines(String text) {
+        int mid = text.length() / 2;
+        int best = -1;
+        for (int i = 0; i < text.length(); i++) {
+            if (text.charAt(i) == ' ' && (best < 0 || Math.abs(i - mid) < Math.abs(best - mid))) {
+                best = i;
+            }
+        }
+        return best < 0 ? text : "<html>" + text.substring(0, best) + "<br>" + text.substring(best + 1) + "</html>";
     }
 }

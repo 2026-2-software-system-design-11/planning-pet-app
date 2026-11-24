@@ -12,6 +12,24 @@ import javax.swing.JSpinner;
 
 /** 화면 여러 곳이 같이 쓰는 작은 부품. */
 public final class Ui {
+    /** 창이 뜨면 이 칸에 포커스를 준다. JOptionPane은 처음 값 버튼에 포커스를 주어서, 이름 칸에 바로 쓸 수 없었다. */
+    public static void focusWhenShown(JComponent c) {
+        c.addAncestorListener(new javax.swing.event.AncestorListener() {
+            @Override
+            public void ancestorAdded(javax.swing.event.AncestorEvent e) {
+                javax.swing.SwingUtilities.invokeLater(c::requestFocusInWindow);
+            }
+
+            @Override
+            public void ancestorRemoved(javax.swing.event.AncestorEvent e) {
+            }
+
+            @Override
+            public void ancestorMoved(javax.swing.event.AncestorEvent e) {
+            }
+        });
+    }
+
     private Ui() {
     }
 

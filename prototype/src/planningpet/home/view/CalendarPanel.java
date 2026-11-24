@@ -34,6 +34,8 @@ public final class CalendarPanel extends JPanel {
     private final JLabel title = new JLabel();
     public final CircleButton prev = new CircleButton(Icons.Kind.LEFT, 32, "이전 달", false);
     public final CircleButton next = new CircleButton(Icons.Kind.RIGHT, 32, "다음 달", false);
+    /** D-60: 오늘이 든 달로 옮기고 오늘을 고른다. 이미 그렇다면 흐리다. */
+    public final javax.swing.JButton today = new javax.swing.JButton("오늘");
     private YearMonth month;
     private LocalDate selected;
 
@@ -45,10 +47,18 @@ public final class CalendarPanel extends JPanel {
         this.month = YearMonth.from(selected);
         prev.addActionListener(e -> move(-1));
         next.addActionListener(e -> move(1));
+        today.setFont(Theme.bold(12));
+        today.setBorder(BorderFactory.createEmptyBorder(5, 12, 7, 12));
+        today.addActionListener(e -> {
+            selected = store.today();
+            month = YearMonth.from(selected);
+            onSelect.accept(selected);
+        });
         title.setIcon(Icons.icon(Icons.Kind.CALENDAR, 24, Theme.ICON));
         title.setIconTextGap(8);
         title.setFont(Theme.heavy(21));
-        JPanel arrows = new JPanel(new GridLayout(1, 2, 4, 0));
+        JPanel arrows = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 4, 0));
+        arrows.add(today);
         arrows.add(prev);
         arrows.add(next);
         JPanel head = new JPanel(new BorderLayout());
@@ -87,6 +97,9 @@ public final class CalendarPanel extends JPanel {
 
     public void refresh() {
         title.setText(month.getYear() + "년 " + month.getMonthValue() + "월");
+        boolean atToday = month.equals(YearMonth.from(store.today())) && store.today().equals(selected);
+        today.setEnabled(!atToday);
+        today.setToolTipText(atToday ? "오늘을 보고 있어요" : null);
         grid.removeAll();
         int offset = month.atDay(1).getDayOfWeek().getValue() % 7;
         int cells = (offset + month.lengthOfMonth() + 6) / 7 * 7;

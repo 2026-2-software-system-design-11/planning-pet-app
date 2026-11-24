@@ -42,7 +42,7 @@ public final class PetController {
         control.change(() -> {
             store.pets.add(new PetState(kind, nameOf(dog, name)));
             store.activeKind = kind;
-            store.say("안녕, 나는 " + store.pet().name + planningpet.common.model.Rules.iya(store.pet().name) + ". 잘 부탁해!");
+            store.say("안녕, 나는 " + store.pet().name + planningpet.common.model.Rules.iya(store.pet().name) + ". 이제 경험치는 내가 받을게!");
         });
         return true;
     }
@@ -52,7 +52,11 @@ public final class PetController {
         if (store.pet(kind) == null || kind.equals(store.activeKind)) {
             return;
         }
-        control.change(() -> store.activeKind = kind);
+        control.change(() -> {
+            store.activeKind = kind;
+            // D-62: 새로 고른 펫이 경험치를 받는다고 알리고 평소 말을 잇는다.
+            store.say("이제 경험치는 내가 받을게! " + new planningpet.pet.model.Talk(store).usual());
+        });
     }
 
     /** D-56. 방 화살표: 다음(+1) 또는 앞(-1) 펫을 고른다. */
@@ -65,7 +69,11 @@ public final class PetController {
     /** 이름 변경(D-27의 이름 규칙). */
     public void rename(String kind, String name) {
         PetState p = store.pet(kind);
-        control.change(() -> p.name = nameOf(p.dog(), name));
+        control.change(() -> {
+            p.name = nameOf(p.dog(), name);
+            // D-62: 바뀐 이름으로 말한다. 옛 이름이 든 말이 남지 않는다.
+            store.say("이제 내 이름은 " + p.name + planningpet.common.model.Rules.iya(p.name) + ".");
+        });
     }
 
     /** D-50. 자세를 고른다. */
