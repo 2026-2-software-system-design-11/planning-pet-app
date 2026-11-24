@@ -18,10 +18,44 @@ import javax.swing.JPanel;
 /** 할 일 줄 목록. 메인의 하루 시간표와 일정관리의 시각 없는 할 일 목록이 같이 쓴다. */
 public final class TaskRows extends JPanel implements javax.swing.Scrollable {
     private final TaskController control;
+    /** D-88: 홈 목록에서 방금 체크해 아직 제자리에 머무는 일. 1.5초 뒤 "끝낸 일" 묶음으로 내려간다. */
+    private final java.util.Set<Task> lingering = new java.util.HashSet<>();
+    /** D-88: 마지막 체크에서 1.5초 뒤 머물던 일을 모두 내려보낸다. 이어서 체크하면 다시 센다. */
+    private final javax.swing.Timer settleTimer = new javax.swing.Timer(1500, e -> settle());
+    /** "끝낸 일" 묶음을 접었는가. 앱을 끌 때까지 남고 저장하지 않는다. */
+    private boolean doneFolded;
+    /** 머물던 줄을 내려보낸 뒤 목록을 다시 만든다. 메인이 넣는다. */
+    public Runnable resort = () -> { };
+    /** "끝낸 일 {수}개" 묶음 제목. 묶음이 없으면 목록에 없다. */
+    public final javax.swing.JButton doneHead = new javax.swing.JButton();
 
     public TaskRows(TaskController control) {
         this.control = control;
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+        settleTimer.setRepeats(false);
+        doneHead.putClientProperty(RoundButtonUI.NAV, Boolean.TRUE);
+        doneHead.setFont(Theme.bold(12));
+        doneHead.setForeground(Theme.INK_SUB);
+        doneHead.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        doneHead.setBorder(BorderFactory.createEmptyBorder(14, 6, 4, 0));
+        doneHead.setAlignmentX(LEFT_ALIGNMENT);
+        doneHead.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
+        doneHead.addActionListener(e -> {
+            doneFolded = !doneFolded;
+            resort.run();
+        });
+    }
+
+    /** D-88: 머물던 끝낸 줄을 "끝낸 일" 묶음으로 내려보낸다(1.5초가 지난 것과 같다). */
+    public void settle() {
+        settleTimer.stop();
+        lingering.clear();
+        resort.run();
+    }
+
+    /** 체크한 뒤 아직 제자리에 머무는 일이 있는가(D-88). */
+    public boolean settling() {
+        return !lingering.isEmpty();
     }
 
     /**
@@ -43,6 +77,34 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
         group("기간 안에 할 일", plan.period(), plan.date());
         revalidate();
         repaint();
+    }
+
+    /** 묶음 제목 앞의 작은 삼각형. 펼쳤으면 아래, 접었으면 오른쪽을 가리킨다. */
+    private static javax.swing.Icon fold(boolean folded) {
+        return new javax.swing.Icon() {
+            @Override
+            public void paintIcon(java.awt.Component c, java.awt.Graphics graphics, int x, int y) {
+                java.awt.Graphics2D g = (java.awt.Graphics2D) graphics.create();
+                g.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+                g.setColor(Theme.INK_SUB);
+                if (folded) {
+                    g.fillPolygon(new int[] {x + 2, x + 8, x + 2}, new int[] {y + 1, y + 5, y + 9}, 3);
+                } else {
+                    g.fillPolygon(new int[] {x, x + 10, x + 5}, new int[] {y + 2, y + 2, y + 8}, 3);
+                }
+                g.dispose();
+            }
+
+            @Override
+            public int getIconWidth() {
+                return 10;
+            }
+
+            @Override
+            public int getIconHeight() {
+                return 10;
+            }
+        };
     }
 
     /** 제목 아래에 묶음의 줄. 비면 제목도 없다. */

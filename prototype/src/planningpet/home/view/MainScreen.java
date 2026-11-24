@@ -34,6 +34,7 @@ public final class MainScreen extends JPanel {
         this.app = app;
         calendar = new CalendarPanel(app.store, this::select);
         rows = new TaskRows(app.schedule);
+        rows.resort = this::refresh;
         pet = new PetCard(app.store, () -> openCharacter.run());
 
         Card list = new Card(new BorderLayout(0, 8));

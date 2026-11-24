@@ -52,4 +52,36 @@ final class HomeCheck {
         eq("T-TALK-23", "'통계 레포트' 넣었구나! 오늘 남은 일 2개야. / '은행 서류' 11/20에 넣었어. / true '은행 서류' 11/20에 넣었어.",
                 today + " / " + other + " / " + saved + " " + s.talk);
     }
+
+    /** 목록을 줄마다 "[x] 제목 시각 분"처럼 읽는다(QA의 rows와 같다). */
+    static String rows(java.awt.Container list) {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        for (java.awt.Component c : list.getComponents()) {
+            java.util.List<String> parts = new java.util.ArrayList<>();
+            collect(c, parts);
+            out.add(String.join(" ", parts));
+        }
+        return String.join(" / ", out);
+    }
+
+    private static void collect(java.awt.Component c, java.util.List<String> parts) {
+        if (c instanceof javax.swing.JCheckBox b) {
+            parts.add(b.isSelected() ? "[x]" : "[ ]");
+        } else if (c instanceof javax.swing.JLabel l && !plain(l.getText()).isEmpty()) {
+            parts.add(plain(l.getText()));
+        } else if (c instanceof javax.swing.JButton b) {
+            if (!b.getText().isBlank()) {
+                parts.add(b.getText());
+            }
+        } else if (c instanceof java.awt.Container k) {
+            for (java.awt.Component child : k.getComponents()) {
+                collect(child, parts);
+            }
+        }
+    }
+
+    static String plain(String html) {
+        return html == null ? "" : html.replaceAll("(?i)<br>", " ").replaceAll("<[^>]+>", "").replace("&lt;", "<")
+                .replace("&gt;", ">").replace("&amp;", "&").replaceAll("\\s+", " ").strip();
+    }
 }
