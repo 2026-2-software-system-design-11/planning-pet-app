@@ -178,3 +178,93 @@ final class TrendChart extends JComponent {
                 top = md(b.from());
                 int dow = b.from().getDayOfWeek().getValue();
                 bottom = "(" + WEEK.charAt(dow - 1) + ")";
+                bottomInk = dow == 6 ? Theme.SATURDAY : dow == 7 ? Theme.SUNDAY : Theme.INK;
+            }
+            boolean later = !counted(b);
+            g.setFont(Theme.font(12));
+            fm = g.getFontMetrics();
+            g.setColor(later ? Theme.INK_DIM : Theme.INK);
+            g.drawString(top, cx - fm.stringWidth(top) / 2, y1 + 4 + fm.getAscent() + 2);
+            g.setColor(later ? fade(bottomInk) : bottomInk);
+            g.drawString(bottom, cx - fm.stringWidth(bottom) / 2, y1 + 4 + fm.getAscent() * 2 + 5);
+        }
+
+        if (empty()) {
+            g.setFont(Theme.font(14));
+            fm = g.getFontMetrics();
+            String s = "아직 셀 일정이 없어요";
+            g.setColor(Theme.INK_SUB);
+            g.drawString(s, (x0 + x1 - fm.stringWidth(s)) / 2, (y0 + y1) / 2 + fm.getAscent() / 2);
+            g.dispose();
+            return;
+        }
+
+        // 막대: 끝낸 수. 가장 큰 막대가 높이의 3분의 2쯤 오게 한다(완료율 선과 겹치지 않게).
+        int most = buckets.stream().mapToInt(b -> b.rate().done()).max().orElse(0);
+        double unit = (y1 - y0) * 0.66 / Math.max(1, most);
+        double bw = Math.min(col * 0.52, 44);
+        for (int i = 0; i < buckets.size(); i++) {
+            Stats.Bucket b = buckets.get(i);
+            if (!counted(b) || b.rate().total() == 0) {
+                continue;
+            }
+            int cx = (int) (x0 + col * (i + 0.5));
+            int done = b.rate().done();
+            double bh = done * unit;
+            boolean mark = holdsToday(b);
+            if (bh > 0) {
+                Path2D bar = topRounded(cx - bw / 2, y1 - bh, bw, bh, Math.min(8, bh));
+                g.setPaint(mark ? new GradientPaint(0, (float) (y1 - bh), Theme.MINT_TOP, 0, y1, Theme.MINT_DEEP)
+                        : new GradientPaint(0, (float) (y1 - bh), BAR_TOP, 0, y1, BAR_BOTTOM));
+                g.fill(bar);
+            }
+            if (done == 0) {
+                continue;
+            }
+            g.setFont(Theme.bold(14));
+            fm = g.getFontMetrics();
+            String s = String.valueOf(done);
+            boolean inside = bh >= fm.getAscent() + 10;
+            g.setColor(inside && mark ? Color.WHITE : Theme.INK);
+            int ty = inside ? (int) (countMiddle(bh, y1, yOf(b.rate().percent(), y0, y1)) + fm.getAscent() / 2.0 - 1)
+                    : (int) (y1 - bh - 5);
+            g.drawString(s, cx - fm.stringWidth(s) / 2, ty);
+        }
+
+        // 선: 완료율. 셀 일정이 있는 칸만 잇는다.
+        List<double[]> pts = new ArrayList<>();
+        List<Integer> idx = new ArrayList<>();
+        for (int i = 0; i < buckets.size(); i++) {
+            Stats.Bucket b = buckets.get(i);
+            if (counted(b) && b.rate().total() > 0) {
+                pts.add(new double[] {x0 + col * (i + 0.5), yOf(b.rate().percent(), y0, y1)});
+                idx.add(i);
+            }
+        }
+        if (hover >= 0 && idx.contains(hover)) {
+            double[] p = pts.get(idx.indexOf(hover));
+            g.setColor(Theme.MINT_LINE);
+            g.setStroke(new BasicStroke(1.2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1f, new float[] {3, 3}, 0));
+            g.drawLine((int) p[0], (int) p[1] + 7, (int) p[0], y1);
+        }
+        g.setColor(LINE);
+        g.setStroke(new BasicStroke(2.6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        for (int i = 1; i < pts.size(); i++) {
+            g.draw(new java.awt.geom.Line2D.Double(pts.get(i - 1)[0], pts.get(i - 1)[1], pts.get(i)[0], pts.get(i)[1]));
+        }
+        g.setFont(Theme.bold(12));
+        fm = g.getFontMetrics();
+        for (int k = 0; k < pts.size(); k++) {
+            double[] p = pts.get(k);
+            int i = idx.get(k);
+            boolean on = i == hover;
+            double rr = on ? 6.5 : 5;
+            if (on) {
+                g.setColor(new Color(0x22, 0xBE, 0x8E, 50));
+                g.fill(new Ellipse2D.Double(p[0] - 11, p[1] - 11, 22, 22));
+            }
+            g.setColor(Color.WHITE);
+            g.fill(new Ellipse2D.Double(p[0] - rr, p[1] - rr, rr * 2, rr * 2));
+            g.setColor(LINE);
+            g.setStroke(new BasicStroke(on ? 3f : 2.4f));
+            g.draw(new Ellipse2D.Double(p[0] - rr, p[1] - rr, rr * 2, rr * 2));
