@@ -142,6 +142,50 @@ public final class App {
         views.forEach(Runnable::run);
     }
 
+    /** 사이드바 위의 로고(05 창 구조의 앱 이름). */
+    private JPanel logo() {
+        JPanel p = new JPanel(new BorderLayout(0, 2));
+        javax.swing.JComponent face = new javax.swing.JComponent() {
+            @Override
+            protected void paintComponent(Graphics graphics) {
+                java.awt.image.BufferedImage im = Images.LOGO;
+                if (im != null) {
+                    Graphics2D g = (Graphics2D) graphics.create();
+                    g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                    Images.fit(g, im, 0, 0, getWidth(), getHeight());
+                    g.dispose();
+                }
+            }
+        };
+        face.setPreferredSize(new Dimension(0, 64));
+        JLabel name = new JLabel("플래닝펫", SwingConstants.CENTER);
+        name.setFont(Theme.heavy(22));
+        JLabel en = new JLabel("Planning Pet", SwingConstants.CENTER);
+        en.setFont(Theme.font(11));
+        en.setForeground(Theme.INK_SUB);
+        JPanel words = new JPanel(new BorderLayout());
+        words.add(name, BorderLayout.NORTH);
+        words.add(en, BorderLayout.SOUTH);
+        p.add(face, BorderLayout.NORTH);
+        p.add(words, BorderLayout.CENTER);
+        return p;
+    }
+
+    /** 본문 위 줄: 왼쪽은 화면 머리, 오른쪽은 모든 화면에 같은 연속 접속, 보유 포인트, 출석(05 창 구조). */
+    private JPanel topRow() {
+        JPanel row = new JPanel(new BorderLayout(Theme.GAP, 0));
+        row.add(heads, BorderLayout.CENTER);
+        attend.putClientProperty(RoundButtonUI.PRIMARY, Boolean.TRUE);
+        attend.setFont(Theme.bold(13));
+        attend.setBorder(BorderFactory.createEmptyBorder(7, 14, 9, 14));
+        Card streakCard = StatCard.of(Icons.Kind.FLAME, streak, attend);
+        Card pointCard = StatCard.of(Icons.Kind.COIN, points, null);
+        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        right.add(streakCard);
+        right.add(pointCard);
+        rights.add(right, COMMON);
+        row.add(rights, BorderLayout.EAST);
+        return row;
     }
 
     private String current = "";
@@ -153,9 +197,20 @@ public final class App {
 
     /** 내비게이션 버튼과 화면을 함께 넣는다. 화면 위에 제목과 부제를 둔다(D-33). screen이 null이면 비활성 버튼(통계, D-05)이다. */
     public void addScreen(String name, String subtitle, JComponent screen) {
+        addScreen(name, subtitle, screen, null);
+    }
+
+    /** right가 있으면 화면 머리 오른쪽에 공통 카드(연속 접속, 출석, 보유 포인트) 대신 그것을 둔다(D-47). */
+    public void addScreen(String name, String subtitle, JComponent screen, JComponent right) {
+        Icons.Kind kind = ICONS.getOrDefault(name, Icons.Kind.PAW);
         JToggleButton b = new JToggleButton(name);
         b.putClientProperty(RoundButtonUI.NAV, Boolean.TRUE);
-        b.setFont(Theme.bold(20));
+        b.setFont(Theme.bold(17));
+        b.setHorizontalAlignment(SwingConstants.LEFT);
+        b.setIcon(Icons.icon(kind, 22, Theme.ICON));
+        b.setDisabledIcon(Icons.icon(kind, 22, Theme.INK_DIM));
+        b.setIconTextGap(10);
+        b.setBorder(BorderFactory.createEmptyBorder(11, 12, 13, 8));
         navGroup.add(b);
         nav.add(b);
         if (screen == null) {
@@ -163,17 +218,29 @@ public final class App {
             b.setToolTipText("다음 버전에서 열려요");
             return;
         }
-        JPanel page = new JPanel(new BorderLayout());
+        JLabel icon = new JLabel(Icons.icon(kind, 40, Theme.ICON));
         JLabel title = new JLabel(name);
-        title.setFont(Theme.bold(36));
-        JLabel sub = new JLabel(subtitle);
-        sub.setFont(Theme.font(19));
-        sub.setForeground(Theme.INK_DIM);
-        JPanel head = Ui.flow(title, sub);
-        head.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
-        page.add(head, BorderLayout.NORTH);
-        page.add(screen, BorderLayout.CENTER);
-        center.add(page, name);
+        title.setFont(Theme.heavy(26));
+        JLabel sub = new JLabel(subtitle, Icons.icon(Icons.Kind.PAW, 13, Theme.ICON), SwingConstants.LEFT);
+        sub.setHorizontalTextPosition(SwingConstants.LEFT);
+        sub.setIconTextGap(6);
+        sub.setFont(Theme.font(13));
+        sub.setForeground(Theme.INK_SUB);
+        JPanel words = new JPanel(new BorderLayout(0, 2));
+        words.add(title, BorderLayout.NORTH);
+        words.add(sub, BorderLayout.SOUTH);
+        JPanel head = new JPanel(new BorderLayout(10, 0));
+        head.setBorder(BorderFactory.createEmptyBorder(6, 4, 0, 0));
+        head.add(icon, BorderLayout.WEST);
+        head.add(words, BorderLayout.CENTER);
+        heads.add(head, name);
+        if (right != null) {
+            JPanel r = new JPanel(new BorderLayout());
+            r.add(right, BorderLayout.EAST);
+            rights.add(r, name);
+            ownRight.add(name);
+        }
+        center.add(screen, name);
         b.addActionListener(e -> show(name));
         if (navGroup.getButtonCount() == 1) {
             b.setSelected(true);
