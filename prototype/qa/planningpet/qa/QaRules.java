@@ -56,6 +56,8 @@ final class QaRules {
             }
         }
         r.places(screens);
+        r.clipped(screens);
+        r.reacts();
         r.write(new File(args[0]));
         System.out.println("규칙 어긋남 " + r.found.size() + "개");
         System.exit(0);
