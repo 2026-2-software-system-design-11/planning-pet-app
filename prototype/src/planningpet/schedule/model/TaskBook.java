@@ -113,6 +113,21 @@ public final class TaskBook {
         }
     }
 
+    /**
+     * 시각 고치기 창의 시각 빼기(D-72). thisAndAfter면 같은 반복의 같거나 뒤 날짜 사본의 시각도 뺀다. 기간 할 일은 계획한 날에서
+     * 빠져 오늘(첫날이 뒤면 첫날, 마감이 지났으면 마감)부터 보이도록 날짜를 옮긴다. startDay와 마감은 그대로다.
+     */
+    public void clearTime(Task task, boolean thisAndAfter) {
+        if (thisAndAfter && task.seriesId != null) {
+            tasks.stream().filter(t -> task.seriesId.equals(t.seriesId) && !t.date.isBefore(task.date)).forEach(t -> t.start = null);
+        }
+        task.start = null;
+        if (task.period()) {
+            LocalDate from = today().isBefore(task.startDay) ? task.startDay : today();
+            task.date = from.isAfter(task.dueDate) ? task.dueDate : from;
+        }
+    }
+
     /** 지운 일정 가운데 보상을 받았던 것. 친밀도(D-49)와 통계 포인트(D-55)가 지워도 줄지 않게 센다(D-19). */
     public final List<Task> deletedRewarded = new ArrayList<>();
 

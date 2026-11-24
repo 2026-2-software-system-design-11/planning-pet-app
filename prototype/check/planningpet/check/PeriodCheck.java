@@ -163,6 +163,37 @@ final class PeriodCheck {
         s.book.update(c19, new TaskDraft(Task.Kind.TASK, "운동 30분", c19.date, null, 30, ""), true);
         eq("D-64 할 일 반복도 범위를 묻는다", "운동 운동 운동 운동 30분 운동 30분 운동 30분 운동 30분",
                 made.stream().map(t -> t.title).collect(Collectors.joining(" ")));
+        App rc = Main.create(at("11-16T09:00"));
+        List<Task> runs = rc.store.book.add(new TaskDraft(Task.Kind.TASK, "운동", d("11-16"), LocalTime.of(7, 0), 30, "")
+                .withRepeat(Repeat.DAILY, d("11-22")));
+        String[] asked = {""};
+        int[] answer = {0};
+        rc.schedule.chooser = new planningpet.schedule.controller.TaskController.Chooser() {
+            @Override
+            public int choose(String title, String message, String[] options) {
+                return choose(title, message, options, options.length - 1);
+            }
+
+            @Override
+            public int choose(String title, String message, String[] options, int initial) {
+                asked[0] = message + " " + String.join(", ", options) + " 처음 " + options[initial];
+                return answer[0];
+            }
+        };
+        TimeEditor.clear(rc, runs.get(2));
+        String one = runs.stream().map(t -> String.valueOf(t.start)).collect(Collectors.joining(" "));
+        answer[0] = 1;
+        TimeEditor.clear(rc, runs.get(3));
+        eq("D-72 반복 사본의 시각 빼기", "'운동'은 반복 일정이에요. 어디까지 시각을 뺄까요? 이 일정만, 이후 반복 모두, 취소 처음 이 일정만"
+                + " / 07:00 07:00 null 07:00 07:00 07:00 07:00 / 07:00 07:00 null null null null null", asked[0] + " / " + one + " / "
+                + runs.stream().map(t -> String.valueOf(t.start)).collect(Collectors.joining(" ")));
+        App pc = Main.create(at("11-18T09:00"));
+        Task pp = period(pc.store, "P", "11-16", "11-22", 30);
+        pc.store.book.setTime(pp, LocalTime.of(14, 0), 30, d("11-20"), false);
+        TimeEditor.clear(pc, pp);
+        eq("D-72 기간 할 일의 시각 빼기", "null 2026-11-18 2026-11-16 2026-11-22 / x x period period period period due",
+                pp.start + " " + pp.date + " " + pp.startDay + " " + pp.dueDate + " / "
+                + groups(pc.store, pp, "11-16", "11-17", "11-18", "11-19", "11-20", "11-21", "11-22"));
         App a = Main.create(MockData.empty());
         Task q = period(a.store, "Q", "11-16", "11-22", 30);
         TaskForm f = new TaskForm(q, q.date, a.store.now);

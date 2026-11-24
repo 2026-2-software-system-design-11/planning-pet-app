@@ -153,9 +153,20 @@ public final class TaskController {
         return true;
     }
 
-    /** 시각 빼기. */
-    public void clearTime(Task t) {
-        app.control.change(() -> t.start = null);
+    /** 시각 빼기(D-72). 반복 사본이면 범위를 묻고 처음 골라 둔 버튼은 "이 일정만"이다. 취소하면 false. */
+    public boolean clearTime(Task t) {
+        int scope = 0;
+        if (t.seriesId != null) {
+            int answer = chooser.choose("시각 빼기", "'" + t.title + "'" + Rules.josa(t.title, "은", "는")
+                    + " 반복 일정이에요. 어디까지 시각을 뺄까요?", new String[] {"이 일정만", "이후 반복 모두", "취소"}, 0);
+            scope = answer == 0 || answer == 1 ? answer : -1;
+        }
+        if (scope < 0) {
+            return false;
+        }
+        boolean all = scope == 1;
+        app.control.change(() -> app.store.book.clearTime(t, all));
+        return true;
     }
 
     /** 자동 배치 결과 창의 적용(UC-11). */
