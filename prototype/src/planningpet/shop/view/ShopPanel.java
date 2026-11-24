@@ -268,3 +268,93 @@ public final class ShopPanel extends Card {
         head.add(close, BorderLayout.EAST);
         c.add(head, BorderLayout.NORTH);
         c.add(previewRoom, BorderLayout.CENTER);
+        previewName.setFont(Theme.bold(14));
+        previewPrice.setFont(Theme.heavy(14));
+        previewPrice.setIconTextGap(4);
+        JPanel line = new JPanel(new BorderLayout());
+        line.add(previewName, BorderLayout.WEST);
+        line.add(previewPrice, BorderLayout.EAST);
+        for (JButton b : new JButton[] {cancel, action}) {
+            b.setFont(Theme.bold(13));
+            b.setBorder(BorderFactory.createEmptyBorder(8, 8, 10, 8));
+        }
+        action.putClientProperty(RoundButtonUI.PRIMARY, Boolean.TRUE);
+        action.setIcon(Icons.icon(Icons.Kind.CART, 16, java.awt.Color.WHITE));
+        action.setIconTextGap(5);
+        cancel.addActionListener(e -> {
+            selected = null;
+            app.redraw();
+        });
+        action.addActionListener(e -> act());
+        JPanel buttons = new JPanel(new GridLayout(1, 2, 8, 0));
+        buttons.add(cancel);
+        buttons.add(action);
+        lack.setFont(Theme.bold(12));
+        lack.setForeground(Theme.SUNDAY);
+        lack.setHorizontalAlignment(SwingConstants.CENTER);
+        JPanel bottom = new JPanel(new BorderLayout(0, 6));
+        bottom.add(line, BorderLayout.NORTH);
+        bottom.add(buttons, BorderLayout.CENTER);
+        bottom.add(lack, BorderLayout.SOUTH);
+        c.add(bottom, BorderLayout.SOUTH);
+        c.setPreferredSize(new Dimension(206, 0));
+        return c;
+    }
+
+    /** 미리보기의 동작 버튼: 사기(UC-15) 또는 놓기와 치우기(UC-16). */
+    private void act() {
+        if (selected == null) {
+            return;
+        }
+        if (app.store.owned.contains(selected)) {
+            app.pet.toggle(selected);
+        } else {
+            buy(app, selected, thanks);
+        }
+    }
+
+    /** 사기(UC-15). 사면 펫이 "{아이템} 고마워!"를 한 번 말한다(D-56). 샀으면 true. */
+    public static boolean buy(App app, String item, Consumer<String> thanks) {
+        return app.shop.buy(item, () -> thanks.accept(item + " 고마워!"));
+    }
+
+    /** 고른다. 이미 고른 카드를 다시 누르면 고르기를 푼다. */
+    public void select(String item) {
+        selected = item == null || item.equals(selected) ? null : item;
+        if (selected != null) {
+            previewToggle.setSelected(true);
+        }
+        app.redraw();
+    }
+
+    public void refresh() {
+        refill();
+        refreshPreview();
+    }
+
+    /** 카드 줄을 지금 분류, 검색, 쪽으로 다시 채운다. */
+    private void refill() {
+        Store s = app.store;
+        for (int i = 0; i < tabs.length; i++) {
+            tabs[i].setSelected(TABS.get(i).equals(category));
+        }
+        List<Shop.Item> list = Shop.find(category, search.getText(), ownedMode.isSelected(), s.owned);
+        int per = perPage();
+        if (first >= list.size()) {
+            first = Math.max(0, (list.size() - 1) / per * per);
+        }
+        cards.removeAll();
+        cards.setLayout(new GridLayout(1, per, 10, 0));
+        for (Shop.Item item : list.subList(first, Math.min(list.size(), first + per))) {
+            ShopCard card = new ShopCard(item, s.owned.contains(item.name()), s.placed.contains(item.name()));
+            card.setSelected(item.name().equals(selected));
+            card.addActionListener(e -> select(item.name()));
+            cards.add(card);
+        }
+        if (list.isEmpty()) {
+            JLabel empty = new JLabel(ownedMode.isSelected() && s.owned.isEmpty()
+                    ? "아직 가진 아이템이 없어요. 상점에서 사면 바로 방에 놓여요." : "맞는 아이템이 없어요.", SwingConstants.CENTER);
+            empty.setFont(Theme.font(13));
+            empty.setForeground(Theme.INK_SUB);
+            cards.setLayout(new BorderLayout());
+            cards.add(empty);
