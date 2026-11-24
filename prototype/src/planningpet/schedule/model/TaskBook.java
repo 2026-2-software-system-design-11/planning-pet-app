@@ -254,13 +254,30 @@ public final class TaskBook {
         return t.start + "~" + String.format("%02d:%02d", end / 60, end % 60);
     }
 
-    /** 06의 7번. 일정관리 오른쪽 목록: 그 주에 보이는 시각 없는 할 일을 한 번씩, 줄의 날짜 순, 같은 날은 넣은 순. */
-    public List<Task> untimedOfWeek(LocalDate monday) {
+    /** 일정관리 오른쪽 목록의 한 줄: 일정과 줄 앞에 붙일 날짜. */
+    public record WeekRow(Task task, LocalDate day) {
+    }
+
+    /**
+     * 06의 7번. 일정관리 오른쪽 목록: 그 주에 보이는 시각 없는 할 일을 그 주에서 보이는 첫날에 한 줄씩. 끝내지 않은 기간 할 일은
+     * 마감 날이 그 주에 있고 첫날과 다르면 마감 날에 한 줄을 더한다(D-93). 줄의 날짜 순, 같은 날은 넣은 순.
+     */
+    public List<WeekRow> untimedOfWeek(LocalDate monday) {
         LocalDate now = today();
-        return tasks.stream()
-                .filter(t -> t.kind == Task.Kind.TASK && !t.onTimetable(now) && rowDay(t, monday, now) != null)
-                .sorted(Comparator.comparing((Task t) -> rowDay(t, monday, now)).thenComparingLong(t -> t.seq))
-                .toList();
+        List<WeekRow> rows = new ArrayList<>();
+        tasks.stream().filter(t -> t.kind == Task.Kind.TASK && !t.onTimetable(now)).forEach(t -> {
+            LocalDate first = rowDay(t, monday, now);
+            if (first == null) {
+                return;
+            }
+            rows.add(new WeekRow(t, first));
+            boolean dueInWeek = t.period() && !t.done && !t.dueDate.isBefore(monday) && t.dueDate.isBefore(monday.plusDays(7));
+            if (dueInWeek && !t.dueDate.equals(first) && t.shownOn(t.dueDate, now)) {
+                rows.add(new WeekRow(t, t.dueDate));
+            }
+        });
+        rows.sort(Comparator.comparing(WeekRow::day).thenComparingLong(r -> r.task().seq));
+        return rows;
     }
 
     /** 일정관리 목록 줄의 날짜: 그 주에서 보이는 첫날. 그 주에 보이지 않으면 null(D-65). */

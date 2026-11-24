@@ -58,16 +58,13 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
         tasks.forEach(t -> add(row(t, "", null, day)));
     }
 
-    /** 일정관리 오른쪽 목록: 줄의 날짜(그 주에서 보이는 첫날, D-65)를 붙인다. */
-    public void show(List<Task> tasks, java.time.LocalDate monday) {
+    /** 일정관리 오른쪽 목록: 줄의 날짜(그 주에서 보이는 첫날, 기간 할 일의 마감 날 줄은 마감 날, D-65, D-93)를 붙인다. */
+    public void show(List<TaskBook.WeekRow> rows) {
         removeAll();
-        if (tasks.isEmpty()) {
+        if (rows.isEmpty()) {
             add(Ui.hint("이번 주에 시각 없는 할 일이 없어요."));
         }
-        tasks.forEach(t -> {
-            java.time.LocalDate day = TaskBook.rowDay(t, monday, control.today());
-            add(row(t, null, day, day));
-        });
+        rows.forEach(r -> add(row(r.task(), null, r.day(), r.day())));
         revalidate();
         repaint();
     }
