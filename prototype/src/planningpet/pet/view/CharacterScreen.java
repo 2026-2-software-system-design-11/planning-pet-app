@@ -46,6 +46,8 @@ public final class CharacterScreen extends JPanel {
     private final JPanel petTabs = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
     private final JPanel poses = new JPanel(new GridLayout(1, Poses.ALL.size(), 10, 0));
     public final JLabel name = new JLabel();
+    /** 이름 옆 작은 종류(D-81). */
+    public final JLabel kindTag = new JLabel();
     public final JButton rename = new JButton("이름 변경");
     public final JLabel level = new JLabel();
     public final JLabel bond = new JLabel();
@@ -199,8 +201,16 @@ public final class CharacterScreen extends JPanel {
         rename.setIconTextGap(6);
         rename.setBorder(BorderFactory.createEmptyBorder(6, 12, 8, 14));
         rename.addActionListener(e -> askRename());
+        kindTag.setFont(Theme.font(14));
+        kindTag.setForeground(Theme.INK_SUB);
+        JPanel nameRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        nameRow.add(name);
+        nameRow.add(javax.swing.Box.createHorizontalStrut(8));
+        nameRow.add(kindTag);
+        JPanel nameWrap = new JPanel(new java.awt.GridBagLayout());
+        nameWrap.add(nameRow);
         JPanel top = new JPanel(new BorderLayout());
-        top.add(name, BorderLayout.WEST);
+        top.add(nameWrap, BorderLayout.WEST);
         top.add(rename, BorderLayout.EAST);
         level.setFont(Theme.heavy(30));
         bond.setFont(Theme.bold(14));
@@ -502,8 +512,9 @@ public final class CharacterScreen extends JPanel {
             if (q == null) {
                 continue;
             }
-            Pill tab = new Pill(q.kindName(), null, 18).picture(Pet.face(q));
-            tab.setPreferredSize(new Dimension(200, 58));
+            // D-81: 지은 이름과 레벨, 종류는 이름 옆에 작게.
+            Pill tab = new Pill(q.name, null, 16).small(q.kindName()).picture(Pet.face(q)).second("Lv. " + Level.level(q.exp));
+            tab.setPreferredSize(new Dimension(Math.max(200, tab.getPreferredSize().width), 58));
             tab.setSelected(q == p);
             tab.addActionListener(e -> {
                 // D-61: 입혀 본 것이 있으면 묻고, 취소면 고른 펫과 탭을 그대로 둔다.
@@ -526,6 +537,7 @@ public final class CharacterScreen extends JPanel {
         poses.revalidate();
         int lv = Level.level(p.exp);
         name.setText(p.name);
+        kindTag.setText(p.kindName());
         level.setText("Lv. " + lv);
         bond.setText("친밀도 " + Bond.percent(s.book.rewardHistory(), p.kind) + "%");
         expText.setText(Level.expText(p.exp));
