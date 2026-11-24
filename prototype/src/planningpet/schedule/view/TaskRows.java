@@ -65,7 +65,7 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
             add(Ui.hint("이번 주에 시각 없는 할 일이 없어요."));
         }
         tasks.forEach(t -> {
-            java.time.LocalDate day = TaskBook.rowDay(t, monday);
+            java.time.LocalDate day = TaskBook.rowDay(t, monday, control.today());
             add(row(t, null, day, day));
         });
         revalidate();

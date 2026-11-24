@@ -268,6 +268,14 @@ final class PeriodCheck {
         s.book.add(Task.Kind.TASK, "과제", d("11-16"), null, 30, "", null);
         eq("D-65 브리핑의 기간 할 일", "오늘은 할 일이 없어. 어제 못 끝낸 일 1개는 달력에 남아 있어. 'F사 서류' 마감이 내일이야.",
                 new Talk(s).briefing());
+        Store m = at("11-18T09:00");
+        Task e = period(m, "E사 지원서", "11-16", "11-22", 120);
+        m.book.setTime(e, LocalTime.of(9, 0), 120, d("11-17"), false);
+        String day18 = new Talk(m).briefing();
+        m.now = d("11-19").atTime(9, 0);
+        eq("D-67 어제 하기로 한 일", "오늘은 할 일이 없어. 어제 하기로 한 'E사 지원서'를 못 했어. 마감은 22일이야. 아래 칸에 하나 적어 볼까?"
+                + " / 오늘은 할 일이 없어. 'E사 지원서' 마감이 사흘 뒤야.",
+                day18 + " / " + new Talk(m).briefing());
         App done = Main.create(at("11-18T09:00"));
         done.store.book.add(Task.Kind.TASK, "과제", d("11-18"), null, 30, "", null).get(0).done = true;
         Task laundry = done.store.book.add(Task.Kind.TASK, "빨래", d("11-18"), null, 30, "", null).get(0);
@@ -303,6 +311,14 @@ final class PeriodCheck {
         Store s = at("11-16T15:23");
         period(s, "S", "11-16", "11-25", 30);
         eq("T-AUTO-13 보이는 주 안에서만", "S 2026-11-23 09:00", placed(Planner.place(s, d("11-23"))));
+        App again = Main.create(at("11-18T10:00"));
+        Task m = period(again.store, "P", "11-16", "11-22", 30);
+        again.store.book.setTime(m, LocalTime.of(9, 0), 30, d("11-17"), false);
+        Planner.Placement mp = Planner.place(again.store, d("11-16"));
+        String mg = placed(mp);
+        AutoPlaceDialog.apply(again, mp);
+        eq("D-67 못 끝낸 계획도 다시 놓는다", "P 2026-11-18 10:00, 적용 뒤 2026-11-18 10:00 false", mg + ", 적용 뒤 " + m.date + " " + m.start
+                + " " + m.missed(again.store.today()));
     }
 
     static javax.swing.JCheckBox box(java.awt.Component c, Task t) {

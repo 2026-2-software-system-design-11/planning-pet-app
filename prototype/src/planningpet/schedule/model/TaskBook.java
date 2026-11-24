@@ -159,9 +159,12 @@ public final class TaskBook {
     }
 
     /** 시각 있는 일을 시각 순으로 먼저, 없는 일을 넣은 순으로(06의 6번과 26번의 순서). */
-    private static final Comparator<Task> ORDER = Comparator.comparing((Task t) -> !t.onTimetable())
-            .thenComparing(t -> t.onTimetable() ? t.start : LocalTime.MIN)
-            .thenComparingLong(t -> t.seq);
+    private Comparator<Task> order() {
+        LocalDate day = today();
+        return Comparator.comparing((Task t) -> !t.onTimetable(day))
+                .thenComparing(t -> t.onTimetable(day) ? t.start : LocalTime.MIN)
+                .thenComparingLong(t -> t.seq);
+    }
 
     /** 그날의 "오늘 할 일"(할 일과 고정 일정, D-35). 기간 안에 할 일 묶음은 세지 않는다(D-70). 성취도 막대와 남은 수가 센다. */
     public List<Task> checkables(LocalDate date) {
@@ -183,12 +186,13 @@ public final class TaskBook {
     }
 
     public DayPlan dayPlan(LocalDate date) {
+        LocalDate now = today();
         List<Task> timed = tasks.stream()
-                .filter(t -> t.onTimetable() && t.date.equals(date))
+                .filter(t -> t.onTimetable(now) && t.date.equals(date))
                 .sorted(Comparator.comparing((Task t) -> t.start).thenComparingLong(t -> t.seq))
                 .toList();
         List<Task> rest = tasks.stream()
-                .filter(t -> t.kind == Task.Kind.TASK && !t.onTimetable() && t.shownOn(date))
+                .filter(t -> t.kind == Task.Kind.TASK && !t.onTimetable(now) && t.shownOn(date, now))
                 .sorted(Comparator.comparingLong(t -> t.seq))
                 .toList();
         List<Task> due = rest.stream().filter(t -> t.period() && !t.done && t.dueDate.equals(date)).toList();
@@ -212,7 +216,7 @@ public final class TaskBook {
     public CellPreview cellPreview(LocalDate date) {
         List<Task> list = tasks.stream()
                 .filter(t -> t.kind == Task.Kind.TASK && t.countDay().equals(date))
-                .sorted(ORDER)
+                .sorted(order())
                 .toList();
         if (list.isEmpty()) {
             return null;
@@ -237,16 +241,17 @@ public final class TaskBook {
 
     /** 06의 7번. 일정관리 오른쪽 목록: 그 주에 보이는 시각 없는 할 일을 한 번씩, 줄의 날짜 순, 같은 날은 넣은 순. */
     public List<Task> untimedOfWeek(LocalDate monday) {
+        LocalDate now = today();
         return tasks.stream()
-                .filter(t -> t.kind == Task.Kind.TASK && !t.onTimetable() && rowDay(t, monday) != null)
-                .sorted(Comparator.comparing((Task t) -> rowDay(t, monday)).thenComparingLong(t -> t.seq))
+                .filter(t -> t.kind == Task.Kind.TASK && !t.onTimetable(now) && rowDay(t, monday, now) != null)
+                .sorted(Comparator.comparing((Task t) -> rowDay(t, monday, now)).thenComparingLong(t -> t.seq))
                 .toList();
     }
 
     /** 일정관리 목록 줄의 날짜: 그 주에서 보이는 첫날. 그 주에 보이지 않으면 null(D-65). */
-    public static LocalDate rowDay(Task t, LocalDate monday) {
+    public static LocalDate rowDay(Task t, LocalDate monday, LocalDate today) {
         for (int i = 0; i < 7; i++) {
-            if (t.shownOn(monday.plusDays(i))) {
+            if (t.shownOn(monday.plusDays(i), today)) {
                 return monday.plusDays(i);
             }
         }
@@ -254,7 +259,8 @@ public final class TaskBook {
     }
 
     public List<Task> timedOn(LocalDate date) {
-        return tasks.stream().filter(t -> t.onTimetable() && t.date.equals(date)).toList();
+        LocalDate now = today();
+        return tasks.stream().filter(t -> t.onTimetable(now) && t.date.equals(date)).toList();
     }
 
     public static LocalDate mondayOf(LocalDate date) {
