@@ -257,30 +257,72 @@ public final class PetScreen extends JPanel {
 
     private void refresh() {
         Store s = app.store;
+        PetState p = s.pet();
+        pointStat.set("보유 포인트", String.format("%,dP", s.points));
+        int joy = Shop.satisfaction(s.placed);
+        joyStat.set("방 꾸미기 만족도", joy + "%");
+        joyBar.set(joy / 100.0);
+        placedStat.set("배치 아이템", s.placed.size() + " / " + Shop.ITEMS.size());
+        chips.removeAll();
+        petTabs.removeAll();
+        ButtonGroup chipGroup = new ButtonGroup();
+        ButtonGroup tabGroup = new ButtonGroup();
+        for (String kind : new String[] {"CAT", "DOG"}) {
+            PetState q = s.pet(kind);
+            if (q == null) {
+                continue;
+            }
+            Pill chip = new Pill(q.kindName(), null, 13).picture(Pet.face(q)).second("Lv. " + Level.level(q.exp));
+            chip.setSelected(q == p);
+            chip.setToolTipText(q.name);
+            chip.addActionListener(e -> app.pet.select(kind));
+            chipGroup.add(chip);
+            chips.add(chip);
+            Pill tab = new Pill(q.kindName(), null, 14).picture(Pet.face(q));
+            tab.setSelected(q == p);
+            tab.addActionListener(e -> app.pet.select(kind));
+            tabGroup.add(tab);
+            petTabs.add(tab);
+        }
+        if (s.pets.size() < 2) {
+            chips.add(adopt);
+        }
+        left.setVisible(s.pets.size() > 1);
+        right.setVisible(s.pets.size() > 1);
+        chips.revalidate();
+        petTabs.revalidate();
+        name.setText(p.name);
+        level.setText("Lv. " + Level.level(p.exp));
+        expText.setText(Level.expText(p.exp));
+        expBar.set(Level.expRatio(p.exp));
+        slots.removeAll();
+        for (String slotName : Wardrobe.SLOTS) {
+            slots.add(slot(slotName, p.wear.get(slotName)));
+        }
+        slots.revalidate();
         long done = s.book.checkables(s.today()).stream().filter(t -> t.done).count();
+        stateText.setText("<html>오늘 끝낸 일 <b>" + done + "개</b><br>친밀도 <b>" + Bond.percent(s.book.rewardHistory(), p.kind)
+                + "%</b><br>함께한 날 <b>" + Bond.days(s.book.rewardHistory(), p.kind) + "일</b></html>");
+        infoText.setText("<html>" + p.kindName() + " <b>" + Ui.esc(p.name) + "</b><br>자세 " + p.pose + "</html>");
+        if (s.pets.size() > petCount) {
+            said = s.talk;
+        }
+        petCount = s.pets.size();
         if (said != null) {
             room.bubble = said;
             said = null;
-        } else if ("pet".equals(app.current()) && !wasVisible) {
-            room.bubble = done > 0 ? "오늘 " + done + "개 끝냈어." : "오늘은 아직 끝낸 일이 없어.";
         }
-        wasVisible = "pet".equals(app.current());
-        decoText.setText("가진 아이템 " + s.owned.size() + " / " + Shop.ITEMS.size());
-        decoBar.setValue(s.owned.size());
-        items.removeAll();
-        items.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 6, 4));
-        for (String item : Shop.ITEMS.keySet()) {
-            if (!s.owned.contains(item)) {
-                continue;
-            }
-            boolean placed = s.placed.contains(item);
-            JToggleButton b = new JToggleButton(placed ? item + " ✓" : item, placed);
-            b.addActionListener(e -> {
-                app.pet.toggle(item);
-            });
-            items.add(b);
-        }
-        items.revalidate();
         room.repaint();
+        doLayout();
+    }
+
+    /** 검사용: 머리 카드, 펫 칩, 방 말풍선, 상점 카드 줄을 한 줄로. */
+    public String summary() {
+        StringBuilder b = new StringBuilder();
+        b.append(pointStat.getText().replaceAll("<[^>]+>", "")).append(", ")
+                .append(joyStat.getText().replaceAll("<[^>]+>", "")).append(", ")
+                .append(placedStat.getText().replaceAll("<[^>]+>", "")).append(", ")
+                .append(room.bubble.isEmpty() ? "하트" : room.bubble).append(", ").append(shop.cardsText());
+        return b.toString();
     }
 }

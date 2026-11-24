@@ -1,5 +1,7 @@
 package planningpet.pet.view;
 
+import planningpet.app.view.App;
+
 import planningpet.app.controller.AppController;
 import planningpet.app.model.MockData;
 import planningpet.app.model.Store;
