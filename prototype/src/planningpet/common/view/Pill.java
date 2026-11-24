@@ -88,3 +88,38 @@ public class Pill extends JToggleButton {
         if (on) {
             g.setPaint(new java.awt.GradientPaint(0, 0, Theme.MINT_TOP, 0, h, Theme.MINT_DEEP));
         } else {
+            g.setColor(getModel().isRollover() ? Theme.MINT_PALE : Theme.CARD_TOP);
+        }
+        g.fillRoundRect(0, 0, w, h, r, r);
+        g.setColor(on ? Theme.MINT_DEEP : Theme.CARD_EDGE);
+        g.drawRoundRect(0, 0, w, h, r, r);
+        Color ink = on ? Color.WHITE : Theme.INK;
+        if (!isEnabled()) {
+            ink = Theme.INK_DIM;
+        }
+        FontMetrics fm = g.getFontMetrics(getFont());
+        int textW = fm.stringWidth(getText());
+        if (second != null) {
+            textW = Math.max(textW, g.getFontMetrics(Theme.bold(size - 1)).stringWidth(second));
+        }
+        int gap = mark() > 0 ? 8 : 0;
+        int x = (w - (mark() + gap + textW)) / 2;
+        if (picture != null) {
+            int ph = h - 8;
+            Images.fit(g, picture, x, 4, mark(), ph);
+        } else if (kind != null && showIcon) {
+            Icons.draw(g, kind, x, (h - size - 2) / 2, size + 2, on ? Color.WHITE : Theme.ICON);
+        }
+        int tx = x + mark() + gap;
+        g.setColor(ink);
+        g.setFont(getFont());
+        if (second == null) {
+            g.drawString(getText(), tx, (h + fm.getAscent() - fm.getDescent()) / 2);
+        } else {
+            g.drawString(getText(), tx, h / 2 - 2);
+            g.setFont(Theme.bold(size - 1));
+            g.drawString(second, tx, h / 2 + size + 1);
+        }
+        g.dispose();
+    }
+}
