@@ -462,6 +462,14 @@ final class PeriodCheck {
         Store s = at("11-16T15:23");
         period(s, "S", "11-16", "11-25", 30);
         eq("T-AUTO-13 보이는 주 안에서만", "S 2026-11-23 09:00", placed(Planner.place(s, d("11-23"))));
+        Store full = at("11-22T23:40");
+        full.book.add(Task.Kind.TASK, "E", d("11-22"), null, 30, "", null);
+        period(full, "P", "11-16", "11-22", 30);
+        period(full, "Q", "11-16", "11-29", 30);
+        eq("D-76 놓지 못한 일의 까닭", "P 마감 11/22(일) 마감까지 빈 시간이 모자라요 / Q 마감 11/29(일) 이번 주엔 자리가 없어요."
+                + " 마감 11/29(일)까지 시간이 있으니 다음 주에서 자동 배치하면 놓을 수 있어요 / E 날짜 11/22(일) 그날 빈 시간이 모자라요",
+                Planner.place(full, d("11-16")).unplaced().stream().map(t -> t.title + " " + Planner.dueText(t) + " "
+                        + Planner.reason(t, d("11-16"))).collect(Collectors.joining(" / ")));
         App again = Main.create(at("11-18T10:00"));
         Task m = period(again.store, "P", "11-16", "11-22", 30);
         again.store.book.setTime(m, LocalTime.of(9, 0), 30, d("11-17"), false);
