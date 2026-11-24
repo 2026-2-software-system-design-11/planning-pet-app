@@ -57,31 +57,46 @@ public final class RoomView extends JComponent {
 
     public RoomView(Store store, boolean preview) {
         this.store = store;
+        this.preview = preview;
+        setLayout(null);
+    }
+
+    /** 방 그림이 칸을 덮을 때의 그림 상자 {x0, y0, w, h}. */
+    private int[] frame() {
+        int cw = getWidth();
+        int ch = getHeight();
+        if (Images.ROOM == null) {
+            return new int[] {0, 0, cw, ch};
+        }
+        double scale = Math.max((double) cw / Images.ROOM.getWidth(), (double) ch / Images.ROOM.getHeight());
+        int w = (int) Math.ceil(Images.ROOM.getWidth() * scale);
+        int h = (int) Math.ceil(Images.ROOM.getHeight() * scale);
+        // 넘치는 높이는 위에서 더 많이 자른다(바닥 쪽에 펫과 아이템이 있다).
+        return new int[] {(cw - w) / 2, (int) ((ch - h) * 0.65), w, h};
     }
 
     @Override
     protected void paintComponent(Graphics graphics) {
         Graphics2D g = (Graphics2D) graphics.create();
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        int w = getWidth();
-        int h = getHeight();
-        g.clip(new RoundRectangle2D.Double(0, 0, w, h, Theme.IMAGE_RADIUS, Theme.IMAGE_RADIUS));
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+        int cw = getWidth();
+        int ch = getHeight();
+        g.clip(new RoundRectangle2D.Double(0, 0, cw, ch, Theme.IMAGE_RADIUS, Theme.IMAGE_RADIUS));
+        int[] f = frame();
         if (Images.ROOM != null) {
-            g.drawImage(Images.ROOM, 0, 0, w, h, null);
+            g.drawImage(Images.ROOM, f[0], f[1], f[2], f[3], null);
         }
+        g.translate(f[0], f[1]);
+        int w = f[2];
+        int h = f[3];
         BEHIND.forEach((name, slot) -> item(g, name, slot, w, h));
-        Pet.drawAt(g, store.pet(), (int) (w * 0.495), (int) (h * 0.93), (int) (Math.min(w * 0.43, h * 0.53)));
-        item(g, "화분", PLANT, w, h);
-        g.setFont(Theme.font(15));
-        int textW = g.getFontMetrics().stringWidth(bubble);
-        int bx = w / 2 - textW / 2 - 14;
-        int by = (int) (h * 0.30);
-        g.setColor(Theme.CARD_TOP);
-        g.fillRoundRect(bx, by, textW + 28, 34, Theme.BUBBLE_RADIUS, Theme.BUBBLE_RADIUS);
-        g.setColor(Theme.CARD_LINE);
-        g.drawRoundRect(bx, by, textW + 28, 34, Theme.BUBBLE_RADIUS, Theme.BUBBLE_RADIUS);
-        g.setColor(Theme.INK);
-        g.drawString(bubble, bx + 14, by + 23);
+        if (!preview) {
+            pets(g, w, h, ch - f[1]);
+        }
+        FRONT.forEach((name, slot) -> item(g, name, slot, w, h));
         g.dispose();
     }
 
