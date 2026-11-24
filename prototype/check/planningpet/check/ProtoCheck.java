@@ -269,7 +269,7 @@ public final class ProtoCheck {
         eq("D-56 방 말풍선 평소", "", room.room.bubble);
         eq("D-48 데려오기", "true false 2 DOG 바둑이", app.pet.adopt(true, " ") + " " + app.pet.adopt(true, "x") + " "
                 + s.pets.size() + " " + s.activeKind + " " + s.pet().name);
-        eq("D-56 데려온 직후 인사", "안녕, 나는 바둑이야. 잘 부탁해!", room.room.bubble);
+        eq("D-56 데려온 직후 인사", "안녕, 나는 바둑이야. 이제 경험치는 내가 받을게!", room.room.bubble);
         Task t = s.book.add(Task.Kind.TASK, "보고서", s.today(), null, 30, "", null).get(0);
         app.schedule.check(t);
         eq("D-48 경험치는 고른 펫", "10 " + catExp + " DOG", s.pet("DOG").exp + " " + s.pet("CAT").exp + " " + t.rewardPet);
@@ -304,12 +304,21 @@ public final class ProtoCheck {
         Task past = e.book.add(Task.Kind.TASK, "a", e.today().minusDays(1), null, 30, "", null).get(0);
         past.done = true;
         past.category = "운동";
-        e.book.add(Task.Kind.TASK, "b", e.today(), null, 30, "", null);
+        e.book.add(Task.Kind.TASK, "b", e.today().minusDays(1), null, 30, "", null);
+        e.book.add(Task.Kind.TASK, "b2", e.today(), null, 30, "", null);
         e.book.add(Task.Kind.TASK, "c", e.today().plusDays(1), null, 30, "", null);
         Stats.Period w = Stats.Period.week(e.today());
         eq("D-55 앞날은 세지 않는다", "1/2 50%", Stats.rate(e, w).done() + "/" + Stats.rate(e, w).total() + " " + Stats.rate(e, w).percent() + "%");
         eq("D-55 유형", "{운동=Rate[done=1, total=1], 기타=Rate[done=0, total=1]}", Stats.byCategory(e, w).toString());
         eq("D-55 주간 칸", "7", String.valueOf(Stats.trend(e, w).size()));
+        Store td = MockData.empty();
+        Task tdDone = td.book.add(Task.Kind.TASK, "끝냄", td.today(), null, 30, "", null).get(0);
+        tdDone.done = true;
+        Task tdLeft = td.book.add(Task.Kind.TASK, "남음", td.today(), null, 30, "", null).get(0);
+        Stats.Period tw = Stats.Period.week(td.today());
+        String before = Stats.rate(td, tw).done() + "/" + Stats.rate(td, tw).total() + " " + Stats.rate(td, tw).percent() + "%";
+        tdLeft.done = true;
+        eq("D-63 오늘은 끝낸 것만 센다", "1/1 100% 2/2", before + " " + Stats.rate(td, tw).done() + "/" + Stats.rate(td, tw).total());
         // 06 27~30번의 나머지 검사 줄.
         eq("T-SHOP-10 보유만 찾기", "쿠션", names(Shop.find("전체", "", true, java.util.Set.of("쿠션"))));
         java.util.List<Task> two = new java.util.ArrayList<>();
@@ -372,6 +381,15 @@ public final class ProtoCheck {
         eq("T-PET-4 자세", "자기", pa.store.pet().pose);
         pa.pet.select("DOG");
         eq("T-PET-5 없는 펫은 못 고른다", "CAT", pa.store.activeKind);
+        eq("05 캐릭터 창 7번 잠긴 장신구 툴팁 조사", "레벨 5가 되면 열려요 / 레벨 10이 되면 열려요 / 레벨 3이 되면 열려요",
+                planningpet.pet.view.CharacterScreen.lockedTip(5) + " / " + planningpet.pet.view.CharacterScreen.lockedTip(10) + " / "
+                + planningpet.pet.view.CharacterScreen.lockedTip(3));
+        App sw = Main.create(MockData.sample());
+        sw.pet.adopt(true, "");
+        sw.pet.select("CAT");
+        eq("T-PET-6 고르면 새 펫이 말한다", "이제 경험치는 내가 받을게! 오늘 할 일 3개 남았어.", sw.store.talk);
+        sw.pet.rename("CAT", "보리");
+        eq("T-PET-7 이름 바꾸면 새 이름으로 말한다", "이제 내 이름은 보리야.", sw.store.talk);
         App ca = Main.create(MockData.sample());
         ca.pet.adopt(true, "");
         planningpet.pet.view.PetScreen cr = find(ca.root, planningpet.pet.view.PetScreen.class);

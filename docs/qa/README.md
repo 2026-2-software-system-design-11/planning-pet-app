@@ -1,6 +1,6 @@
 # QA 정리
 
-[user-flows.md](../user-flows.md)의 흐름 32개를 프로토타입에서 돌린 결과다. 단계마다의 확인 결과는 `prototype/qa.sh`가 만드는 [prototype-flows.md](prototype-flows.md)에 있다. 흐름으로 확인하지 않는 것은 [manual-checklist.md](manual-checklist.md)에 있다.
+[user-flows.md](../user-flows.md)의 흐름 33개를 프로토타입에서 돌린 결과다. 단계마다의 확인 결과는 `prototype/qa.sh`가 만드는 [prototype-flows.md](prototype-flows.md)에 있다. 흐름으로 확인하지 않는 것은 [manual-checklist.md](manual-checklist.md)에 있다.
 
 ## 1. 결과
 
@@ -9,6 +9,7 @@
 | 1차 | 2026-11-16 | 32개 중 26개 모두 통과 | 345개 | 31개 |
 | 2차(아래 2절을 고친 뒤) | 2026-11-16 | 32개 모두 통과 | 357개 | 0개 |
 | 3차(사용성 점검 결과 D-40부터 D-45를 반영한 뒤, #85) | 2026-11-17 | 32개 모두 통과 | 364개 | 0개 |
+| 4차(전체 QA 결과 D-60부터 D-63과 결함 B1~B5를 반영하고 UF-1-4, 규칙 5와 6을 더한 뒤) | 2026-11-24 | 33개 모두 통과 | 392개 | 0개 |
 
 - 실행: `prototype/qa.sh`(JDK 21, 창을 띄우지 않음).
 - 이어지는 흐름은 앞 흐름의 단계를 다시 돈다. 보고서에서 "앞2"는 앞 흐름의 2단계라는 뜻이다.
