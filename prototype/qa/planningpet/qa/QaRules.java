@@ -7,7 +7,6 @@ import planningpet.common.view.Card;
 import planningpet.pet.view.PickDialog;
 import planningpet.schedule.model.*;
 import planningpet.schedule.view.*;
-import planningpet.shop.view.ShopDialog;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
@@ -63,7 +62,7 @@ final class QaRules {
     /** 앱 창 네 화면과 창 열 가지. 창은 버튼에 동작이 붙기 전의 내용 판이다. */
     private Map<String, JComponent> screens() {
         Map<String, JComponent> m = new LinkedHashMap<>();
-        for (String name : new String[] {"홈", "일정관리", "나의 방", "설정"}) {
+        for (String name : new String[] {"홈", "일정관리", "캐릭터", "나의 방", "통계", "설정"}) {
             App app = fresh();
             app.show(name);
             app.store.changed();
@@ -80,7 +79,6 @@ final class QaRules {
         m.put("시각 고치기 창", new TimeEditor(essay, app.store.now).panel);
         m.put("자동 배치 결과 창", AutoPlaceDialog.content(app.store, monday, Planner.place(app.store, monday), new JButton("취소"),
                 new JButton("적용")));
-        m.put("상점 창", ShopDialog.content(app.store, x -> { }, new JButton("닫기")));
         m.put("반려동물 고르기 창", new PickDialog().panel);
         for (JComponent c : m.values()) {
             if (c.getWidth() == 0) {

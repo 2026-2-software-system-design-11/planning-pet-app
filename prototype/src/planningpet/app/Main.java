@@ -8,6 +8,7 @@ import planningpet.home.view.MainScreen;
 import planningpet.pet.view.*;
 import planningpet.schedule.view.ScheduleScreen;
 import planningpet.settings.view.SettingsScreen;
+import planningpet.stats.view.StatsScreen;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
@@ -28,7 +29,8 @@ public final class Main {
                 System.exit(0);
             }
             App app = create(store);
-            JFrame frame = new JFrame("플래닝펫 프로토타입");
+            JFrame frame = new JFrame("플래닝펫 (Planning Pet)");
+            frame.setIconImage(appIcon());
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.setContentPane(app.root);
             frame.setMinimumSize(new java.awt.Dimension(1000, 680));
@@ -40,6 +42,15 @@ public final class Main {
         });
     }
 
+    /** 창 제목 줄의 발자국 아이콘(예시 2026-11-23의 제목 줄). */
+    private static java.awt.Image appIcon() {
+        java.awt.image.BufferedImage im = new java.awt.image.BufferedImage(64, 64, java.awt.image.BufferedImage.TYPE_INT_ARGB);
+        java.awt.Graphics2D g = im.createGraphics();
+        planningpet.common.view.Icons.draw(g, planningpet.common.view.Icons.Kind.PAW, 0, 0, 64, Theme.ICON);
+        g.dispose();
+        return im;
+    }
+
     /** 화면을 모두 붙인 앱. 창 없이 그릴 때도 이것을 쓴다. */
     public static App create(Store store) {
         App app = new App(store);
@@ -47,8 +58,11 @@ public final class Main {
         app.addScreen("홈", "오늘도 계획을 세우고, 조금씩 성장해요!", main);
         app.watcher = new DayWatcher(app, main);
         app.addScreen("일정관리", "내 일정을 한눈에 확인하고, 체계적으로 관리해요!", new ScheduleScreen(app));
-        app.addScreen("나의 방", "나만의 공간을 꾸미고, 반려동물과 함께 시간을 보내요!", new PetScreen(app));
-        app.addScreen("통계", "", null);
+        app.addScreen("캐릭터", "함께하는 펫을 돌보고, 나만의 모습으로 꾸며요!", new CharacterScreen(app));
+        PetScreen room = new PetScreen(app);
+        app.addScreen("나의 방", "나만의 공간을 꾸미고, 반려동물과 함께 시간을 보내요!", room, room.headRight());
+        StatsScreen stats = new StatsScreen(app);
+        app.addScreen("통계", "나의 계획 실천과 일정 완료 추이를 한눈에 확인해요!", stats, stats.headControls());
         app.addScreen("설정", "플래닝펫을 내게 맞게 바꿔요.", new SettingsScreen());
         app.watch(() -> Theme.clear(app.root));
         Theme.clear(app.root);
