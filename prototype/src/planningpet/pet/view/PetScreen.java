@@ -48,6 +48,10 @@ public final class PetScreen extends JPanel {
     /** 방 위 펫 칩(D-48). */
     private final JPanel chips = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
     public final CircleButton adopt = new CircleButton(Icons.Kind.PLUS, 40, "펫 데려오기", false);
+    /** 캐릭터 창 안(D-58). 창을 열 때마다 같은 것을 담는다. */
+    public final CharacterScreen character;
+    /** 캐릭터 창을 연다. 인자가 true면 꾸미기 탭으로 연다. QA는 창 대신 무엇을 열었는지 받는다. */
+    public java.util.function.Consumer<Boolean> characterOpener;
     private final CircleButton left = new CircleButton(Icons.Kind.LEFT, 40, "앞 펫", false);
     private final CircleButton right = new CircleButton(Icons.Kind.RIGHT, 40, "다음 펫", false);
     /** 펫 패널. */
@@ -68,6 +72,8 @@ public final class PetScreen extends JPanel {
         super(new BorderLayout(0, Theme.GAP));
         this.app = app;
         room = new RoomView(app.store);
+        character = new CharacterScreen(app);
+        characterOpener = dress -> CharacterDialog.open(app, character, dress);
         room.add(chips);
         room.add(left);
         room.add(right);
@@ -197,7 +203,7 @@ public final class PetScreen extends JPanel {
         more.setFont(Theme.bold(12));
         more.setIcon(Icons.icon(Icons.Kind.GAMEPAD, 16, Theme.ICON));
         more.setBorder(BorderFactory.createEmptyBorder(6, 10, 8, 10));
-        more.addActionListener(e -> app.show("캐릭터"));
+        more.addActionListener(e -> characterOpener.accept(true));
         JPanel lower = new JPanel(new BorderLayout(0, 8));
         lower.add(tabRow, BorderLayout.NORTH);
         lower.add(tabBody, BorderLayout.CENTER);
@@ -246,7 +252,7 @@ public final class PetScreen extends JPanel {
         b.setFocusPainted(false);
         b.setToolTipText(slotName + ": " + (worn == null ? "안 입었어요" : worn));
         b.setPreferredSize(new Dimension(56, 58));
-        b.addActionListener(e -> app.show("캐릭터"));
+        b.addActionListener(e -> characterOpener.accept(true));
         return b;
     }
 
@@ -275,7 +281,11 @@ public final class PetScreen extends JPanel {
             Pill chip = new Pill(q.kindName(), null, 13).picture(Pet.face(q)).second("Lv. " + Level.level(q.exp));
             chip.setSelected(q == p);
             chip.setToolTipText(q.name);
-            chip.addActionListener(e -> app.pet.select(kind));
+            chip.addActionListener(e -> {
+                // D-58: 펫 칩은 그 펫을 고르고 캐릭터 창을 연다.
+                app.pet.select(kind);
+                characterOpener.accept(false);
+            });
             chipGroup.add(chip);
             chips.add(chip);
             Pill tab = new Pill(q.kindName(), null, 14).picture(Pet.face(q));

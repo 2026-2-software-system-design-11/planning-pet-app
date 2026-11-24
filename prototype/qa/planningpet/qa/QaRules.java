@@ -4,6 +4,8 @@ import planningpet.app.*;
 import planningpet.app.model.*;
 import planningpet.app.view.App;
 import planningpet.common.view.Card;
+import planningpet.pet.view.CharacterDialog;
+import planningpet.pet.view.PetScreen;
 import planningpet.pet.view.PickDialog;
 import planningpet.schedule.model.*;
 import planningpet.schedule.view.*;
@@ -62,7 +64,7 @@ final class QaRules {
     /** 앱 창 네 화면과 창 열 가지. 창은 버튼에 동작이 붙기 전의 내용 판이다. */
     private Map<String, JComponent> screens() {
         Map<String, JComponent> m = new LinkedHashMap<>();
-        for (String name : new String[] {"홈", "일정관리", "캐릭터", "나의 방", "통계", "설정"}) {
+        for (String name : new String[] {"홈", "일정관리", "나의 방", "통계", "설정"}) {
             App app = fresh();
             app.show(name);
             app.store.changed();
@@ -80,6 +82,11 @@ final class QaRules {
         m.put("자동 배치 결과 창", AutoPlaceDialog.content(app.store, monday, Planner.place(app.store, monday), new JButton("취소"),
                 new JButton("적용")));
         m.put("반려동물 고르기 창", new PickDialog().panel);
+        PetScreen room = QaDrive.find(app.root, PetScreen.class);
+        room.character.opened(false);
+        JComponent character = CharacterDialog.content(room.character);
+        lay(character, new Dimension(880, 585));
+        m.put("캐릭터 창", character);
         for (JComponent c : m.values()) {
             if (c.getWidth() == 0) {
                 lay(c, c.getPreferredSize());

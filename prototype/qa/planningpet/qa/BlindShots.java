@@ -4,6 +4,8 @@ import planningpet.app.*;
 import planningpet.app.model.*;
 import planningpet.app.view.App;
 import planningpet.common.view.Theme;
+import planningpet.pet.view.CharacterDialog;
+import planningpet.pet.view.PetScreen;
 import planningpet.pet.view.PickDialog;
 import planningpet.common.model.Rules;
 import planningpet.schedule.model.*;
@@ -68,7 +70,7 @@ public final class BlindShots {
             App app = Main.create(MockData.sample());
             app.control.windowShown();
             int n = 1;
-            for (String screen : new String[] {"홈", "일정관리", "캐릭터", "나의 방", "통계", "설정"}) {
+            for (String screen : new String[] {"홈", "일정관리", "나의 방", "통계", "설정"}) {
                 app.show(screen);
                 shoot(app.root, new Dimension(1000, 680), null, images, key, n++, out, screen);
             }
@@ -82,6 +84,9 @@ public final class BlindShots {
             shoot(AutoPlaceDialog.content(app.store, monday, Planner.place(app.store, monday), new JButton("취소"),
                     new JButton("적용")), null, "자동 배치 결과", images, key, n++, out, "자동 배치 결과 창");
             shoot(new PickDialog().panel, null, "플래닝펫 시작", images, key, n++, out, "반려동물 고르기 창");
+            PetScreen room = QaDrive.find(app.root, PetScreen.class);
+            room.character.opened(false);
+            shoot(CharacterDialog.content(room.character), new Dimension(880, 585), "캐릭터", images, key, n++, out, "캐릭터 창");
             // TaskController.delete가 반복 일정에 띄우는 확인 창과 같은 글과 버튼이다.
             Task series = app.store.tasks.stream().filter(x -> x.seriesId != null).findFirst().orElseThrow();
             String[] options = {"이 일정만", "이후 반복 모두", "취소"};
