@@ -358,3 +358,9 @@ public final class PetCard extends JComponent {
         String count = d.done() + " / " + d.total();
         g.setFont(Theme.heavy(16));
         FontMetrics cf = g.getFontMetrics();
+        int cw = cf.stringWidth(count);
+        g.setColor(Theme.INK);
+        g.drawString(count, x + w - 12 - cw, my + 23);
+        Icons.draw(g, Icons.Kind.PAW, x + w - 12 - cw - 20, my + 9, 15, Theme.ICON);
+    }
+}
