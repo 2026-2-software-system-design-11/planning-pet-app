@@ -161,7 +161,4 @@ class QaDrive extends QaCore {
     void apply(Planner.Placement p) {
         AutoPlaceDialog.apply(app, p);
     }
-    boolean buy(String item) {
-        return planningpet.shop.view.ShopPanel.buy(app, item, pet::sayOnce);
-    }
 }

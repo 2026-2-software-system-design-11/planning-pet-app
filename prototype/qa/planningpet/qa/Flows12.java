@@ -122,8 +122,17 @@ final class Flows12 {
         q.step("3", "상점을 연다");
         q.eq("상점", "털실 공 살 수 있어요 켜짐 / 뼈다귀 살 수 있어요 켜짐 / 쿠션 보유 중 방에서 치우기 켜짐 / 화분 보유 중 방에서 치우기 켜짐 / 러그 보유 중 방에 놓기 켜짐 / 액자 살 수 있어요 켜짐"
                 + " / 걸이 화분 10P 모자라요 꺼짐 / 조명 30P 모자라요 꺼짐 / 책장 80P 모자라요 꺼짐 / 책상 130P 모자라요 꺼짐 / 소파 180P 모자라요 꺼짐 / 캣타워 230P 모자라요 꺼짐 / 우드 침대 280P 모자라요 꺼짐", q.shop());
-        q.step("4", "액자를 산다");
-        q.yes("샀음", q.buy("액자"));
+        q.step("4", "액자를 고르고 구매하기를 누른 뒤 확인 창에서 구매하기를 누른다");
+        String[] asked = {""};
+        q.pet.shop.ask = (title, message, yes) -> {
+            asked[0] = title + " / " + message + " / 취소, " + yes;
+            return true;
+        };
+        q.pet.shop.selected = null;
+        q.pet.shop.select("액자");
+        q.pet.shop.action.doClick();
+        q.eq("확인 창(D-85)", "아이템 사기 / 액자를 120P에 살까요? 남는 포인트 0P / 취소, 구매하기", asked[0]);
+        q.yes("샀음", q.app.store.owned.contains("액자"));
         q.eq("포인트", 0, q.app.store.points);
         q.eq("pet", "배치 아이템 3 / 13, 액자 고마워!, 쿠션 보유 중 ✓, 화분 보유 중 ✓, 러그 보유 중, 액자 보유 중 ✓", q.pet());
         q.step("5", "홈에서 알고리즘 과제 2번 체크를 푼다");

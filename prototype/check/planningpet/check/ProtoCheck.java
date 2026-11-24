@@ -463,6 +463,33 @@ public final class ProtoCheck {
         Shop svShop = new Shop(sv);
         eq("D-85 되팔기", "50 150 false false", svShop.sell("쿠션") + " " + sv.points + " " + sv.owned.contains("쿠션") + " " + sv.placed.contains("쿠션"));
         eq("T-SHOP-12 없는 것은 못 판다", "-1 150", svShop.sell("소파") + " " + sv.points);
+        App bq = Main.create(MockData.sample());
+        bq.store.points = 100;
+        planningpet.shop.view.ShopPanel buyPanel = find(bq.root, planningpet.pet.view.PetScreen.class).shop;
+        java.util.List<String> asks = new java.util.ArrayList<>();
+        boolean[] answer = {false};
+        buyPanel.ask = (title, message, yes) -> {
+            asks.add(title + " / " + message + " / " + yes);
+            return answer[0];
+        };
+        buyPanel.select("털실 공");
+        buyPanel.action.doClick();
+        String afterCancel = bq.store.owned.contains("털실 공") + " " + bq.store.points;
+        answer[0] = true;
+        buyPanel.action.doClick();
+        eq("D-85 구매하기는 확인 창을 거친다", "아이템 사기 / 털실 공을 40P에 살까요? 남는 포인트 60P / 구매하기, false 100, true 60",
+                asks.get(0) + ", " + afterCancel + ", " + bq.store.owned.contains("털실 공") + " " + bq.store.points);
+        String sellInShop = buyPanel.sell.isVisible() + "";
+        buyPanel.ownedMode.doClick();
+        buyPanel.select(null);
+        buyPanel.select("털실 공");
+        String sellText = buyPanel.sell.isVisible() + " " + buyPanel.sell.getText();
+        buyPanel.sell.doClick();
+        eq("D-85 되팔기는 보유한 아이템에서", "false / true 되팔기 +40P / false false 100", sellInShop + " / " + sellText + " / "
+                + bq.store.owned.contains("털실 공") + " " + bq.store.placed.contains("털실 공") + " " + bq.store.points);
+        buyPanel.shopMode.doClick();
+        buyPanel.select("우드 침대");
+        eq("D-85 모자라면 흐리고 모자란 포인트", "false 300P 모자라요", buyPanel.action.isEnabled() + " " + buyPanel.lack.getText());
         App one = Main.create(MockData.sample());
         planningpet.pet.view.PetScreen oneRoom = find(one.root, planningpet.pet.view.PetScreen.class);
         oneRoom.character.opened(false);

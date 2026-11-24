@@ -82,6 +82,14 @@ public final class ShopPanel extends Card {
     public final JButton action = new JButton("구매하기");
     /** 보유한 아이템에서 고른 가진 아이템을 산 값 그대로 되판다(D-85). "되팔기 +{값}P". */
     public final JButton sell = new JButton("되팔기");
+
+    /** 구매 확인 창(D-85). 사겠다고 하면 true. QA는 창 대신 답을 준다. */
+    public interface Ask {
+        boolean ok(String title, String message, String yes);
+    }
+
+    public Ask ask = (title, message, yes) -> javax.swing.JOptionPane.showOptionDialog(this, message, title,
+            javax.swing.JOptionPane.DEFAULT_OPTION, javax.swing.JOptionPane.QUESTION_MESSAGE, null, new String[] {"취소", yes}, yes) == 1;
     private String category = "전체";
     public String selected;
     private int first;
@@ -331,9 +339,15 @@ public final class ShopPanel extends Card {
         }
         if (app.store.owned.contains(selected)) {
             app.pet.toggle(selected);
-        } else {
+        } else if (ask.ok("아이템 사기", buyQuestion(selected, Shop.ITEMS.get(selected), app.store.points), "구매하기")) {
+            // D-85: 값과 남는 포인트를 확인한 뒤에만 산다.
             buy(app, selected, thanks);
         }
+    }
+
+    /** D-85 구매 확인 글: "{아이템}을 {값}P에 살까요? 남는 포인트 {남는}P". */
+    public static String buyQuestion(String item, int price, int points) {
+        return item + planningpet.common.model.Rules.josa(item, "을", "를") + " " + price + "P에 살까요? 남는 포인트 " + (points - price) + "P";
     }
 
     /** D-85: 고른 가진 아이템을 산 값 그대로 되판다. 방에 놓였으면 함께 빠진다. */
