@@ -25,6 +25,7 @@ final class Flows345 {
         flows.put("UF-5-1", () -> uf51(new Qa("UF-5-1")));
         flows.put("UF-5-2", () -> uf52(new Qa("UF-5-2")));
         flows.put("UF-5-3", Flows345::uf53);
+        flows.put("UF-5-4", FlowsPeriod::uf54);
     }
 
     /** 그날 시각 있는 일정을 "17:00 팀 회의, 18:00 편의점 알바"처럼. */

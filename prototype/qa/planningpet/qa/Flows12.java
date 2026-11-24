@@ -24,6 +24,7 @@ final class Flows12 {
         flows.put("UF-2-3", Flows12::uf23);
         flows.put("UF-2-4", Flows12::uf24);
         flows.put("UF-2-5", Flows12::uf25);
+        flows.put("UF-2-6", FlowsPeriod::uf26);
     }
 
     static void uf11() {
