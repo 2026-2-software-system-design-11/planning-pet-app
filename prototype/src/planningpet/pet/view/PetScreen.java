@@ -112,6 +112,96 @@ public final class PetScreen extends JPanel {
         app.watch(this::refresh);
     }
 
+    /** 화면 머리 오른쪽의 수치 카드 셋(D-47, D-52). */
+    public JComponent headRight() {
+        Card points = StatCard.of(Icons.Kind.COIN, pointStat, null);
+        JPanel joy = new JPanel(new BorderLayout(10, 0));
+        joy.add(joyStat, BorderLayout.WEST);
+        JPanel barWrap = new JPanel(new java.awt.GridBagLayout());
+        barWrap.add(joyBar);
+        joy.add(barWrap, BorderLayout.CENTER);
+        Card joyCard = new Card(new BorderLayout(), Theme.CARD_RADIUS);
+        joyCard.setBorder(BorderFactory.createEmptyBorder(8, 16, 12, 16));
+        joyCard.add(joy);
+        Card placed = StatCard.of(Icons.Kind.SOFA, placedStat, null);
+        JPanel row = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        row.add(points);
+        row.add(joyCard);
+        row.add(placed);
+        return row;
+    }
+
+    /** 오른쪽 펫 패널: 펫 탭, 초상과 이름과 레벨과 경험치, 상태와 꾸미기와 정보 탭(05 나의 방). */
+    private JComponent petPanel() {
+        Card c = new Card(new BorderLayout(0, 10), Theme.CARD_RADIUS);
+        c.setBorder(BorderFactory.createEmptyBorder(12, 12, 14, 12));
+        c.add(petTabs, BorderLayout.NORTH);
+        JComponent portrait = new JComponent() {
+            @Override
+            protected void paintComponent(Graphics graphics) {
+                Graphics2D g = (Graphics2D) graphics.create();
+                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                int size = Math.min(getWidth(), getHeight() - 4);
+                Pet.drawAt(g, app.store.pet(), getWidth() / 2, getHeight() - 4, size);
+                g.dispose();
+            }
+        };
+        portrait.setPreferredSize(new Dimension(104, 104));
+        name.setFont(Theme.bold(15));
+        name.setIcon(Icons.icon(Icons.Kind.PAW, 16, Theme.ICON));
+        name.setIconTextGap(6);
+        level.setFont(Theme.heavy(26));
+        expText.setFont(Theme.font(12));
+        expText.setForeground(Theme.INK_SUB);
+        JPanel info = new JPanel();
+        info.setLayout(new BoxLayout(info, BoxLayout.Y_AXIS));
+        for (JComponent part : new JComponent[] {name, level, expText}) {
+            part.setAlignmentX(Component.LEFT_ALIGNMENT);
+            info.add(part);
+        }
+        info.add(Box.createVerticalStrut(6));
+        expBar.setAlignmentX(Component.LEFT_ALIGNMENT);
+        expBar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 10));
+        info.add(expBar);
+        JPanel who = new JPanel(new BorderLayout(10, 0));
+        who.add(portrait, BorderLayout.WEST);
+        JPanel infoWrap = new JPanel(new java.awt.GridBagLayout());
+        java.awt.GridBagConstraints k = new java.awt.GridBagConstraints();
+        k.weightx = 1;
+        k.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        infoWrap.add(info, k);
+        who.add(infoWrap, BorderLayout.CENTER);
+        Card whoCard = new Card(new BorderLayout(), 14);
+        whoCard.setBorder(BorderFactory.createEmptyBorder(6, 8, 10, 12));
+        whoCard.add(who);
+        ButtonGroup tg = new ButtonGroup();
+        JPanel tabRow = new JPanel(new GridLayout(1, 3, 6, 0));
+        String[] names = {"상태", "꾸미기", "정보"};
+        for (int i = 0; i < infoTabs.length; i++) {
+            String n = names[i];
+            tg.add(infoTabs[i]);
+            tabRow.add(infoTabs[i]);
+            infoTabs[i].addActionListener(e -> tabCards.show(tabBody, n));
+        }
+        infoTabs[1].setSelected(true);
+        for (JLabel l : new JLabel[] {stateText, infoText}) {
+            l.setFont(Theme.font(13));
+            l.setVerticalAlignment(JLabel.TOP);
+        }
+        tabBody.add(stateText, "상태");
+        tabBody.add(slots, "꾸미기");
+        tabBody.add(infoText, "정보");
+        tabCards.show(tabBody, "꾸미기");
+        JButton more = new JButton("캐릭터에서 꾸미기");
+        more.setFont(Theme.bold(12));
+        more.setIcon(Icons.icon(Icons.Kind.GAMEPAD, 16, Theme.ICON));
+        more.setBorder(BorderFactory.createEmptyBorder(6, 10, 8, 10));
+        more.addActionListener(e -> app.show("캐릭터"));
+        JPanel lower = new JPanel(new BorderLayout(0, 8));
+        lower.add(tabRow, BorderLayout.NORTH);
+        lower.add(tabBody, BorderLayout.CENTER);
+        lower.add(more, BorderLayout.SOUTH);
     public void sayOnce(String line) {
         said = line;
     }
