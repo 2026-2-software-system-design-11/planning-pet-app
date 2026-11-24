@@ -251,6 +251,8 @@ public final class App {
     public void show(String name) {
         current = name;
         cards.show(center, name);
+        headCards.show(heads, name);
+        rightCards.show(rights, ownRight.contains(name) ? name : COMMON);
         for (var c : nav.getComponents()) {
             JToggleButton b = (JToggleButton) c;
             b.setSelected(b.getText().equals(name));
@@ -259,8 +261,8 @@ public final class App {
     }
 
     public void refresh() {
-        streak.setText("<html>연속 접속 <b>" + store.streak + "일</b></html>");
-        points.setText("<html>보유 <b>" + store.points + "P</b></html>");
+        streak.set("연속 접속", store.streak + "일");
+        points.set("보유", String.format("%,dP", store.points));
         boolean attended = store.today().equals(store.attendanceDay);
         attend.setText(attended ? "출석 완료" : "출석 +20P");
         attend.setEnabled(!attended);
