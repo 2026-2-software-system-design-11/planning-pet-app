@@ -48,9 +48,10 @@ public final class ProtoCheck {
         f.start.setValue("23:30");
         eq("T-VAL-7", null, msgs(f));
         f.minutes.setValue(40);
-        eq("T-VAL-8", "하루 안에 끝나야 해요", msgs(f));
+        f.start.setValue("03:30(다음 날)");
+        eq("T-VAL-8", "다음 날 04:00까지 끝나야 해요", msgs(f));
         f.title.setText("");
-        eq("T-VAL-14", "제목을 써 주세요 / 하루 안에 끝나야 해요", msgs(f));
+        eq("T-VAL-14", "제목을 써 주세요 / 다음 날 04:00까지 끝나야 해요", msgs(f));
         java.time.LocalDate nov16 = java.time.LocalDate.of(2026, 11, 16);
         Store p = MockData.empty();
         p.now = nov16.atTime(15, 23);
@@ -87,13 +88,13 @@ public final class ProtoCheck {
         Task late = at.apply("늦게", java.time.LocalTime.of(23, 30));
         eq("T-LIST-2", "23:30~24:00", TaskBook.timeText(late));
         java.time.LocalDateTime t1523 = nov16.atTime(15, 23);
-        eq("T-DEF-6~9", "15:25 09:00 09:00 23:55", Times.value(DefaultDates.start(nov16, t1523)) + " "
+        eq("T-DEF-6~9", "15:25 09:00 09:00 00:00(다음 날)", Times.value(DefaultDates.start(nov16, t1523)) + " "
                 + Times.value(DefaultDates.start(nov16, nov16.atTime(7, 0))) + " "
                 + Times.value(DefaultDates.start(nov16.plusDays(1), t1523))
                 + " " + Times.value(DefaultDates.start(nov16, nov16.atTime(23, 57))));
         TimeEditor longOne = new TimeEditor(late, t1523);
         longOne.minutes.setValue(40);
-        eq("시각 고치기 하루 넘김", "하루 안에 끝나야 해요", longOne.check());
+        eq("D-77 시각 고치기 자정 넘김", null, longOne.check());
         eq("시간 빼기는 할 일만", "true false", longOne.clear.isVisible() + " "
                 + new TimeEditor(d.book.dayPlan(nov16).timed().get(1), t1523).clear.isVisible());
         Store r = MockData.empty();
@@ -161,7 +162,7 @@ public final class ProtoCheck {
         eq("T-EDIT-7", "10:30 10:30 13:00 13:00 13:00 13:00 13:00", series(false));
         eq("T-EDIT-8", "대학수학 대학수학 대학수학 보강@12-01 대학수학 보강 대학수학 보강 대학수학 보강 대학수학 보강", series(true));
         eq("D-43 날짜 화살표는 하루씩", "2026-11-15", dayArrow());
-        eq("D-43 오류 글 다시 검사, 30분 안내", "하루 안에 끝나야 해요 / true false", recheck());
+        eq("D-43 오류 글 다시 검사, 30분 안내", "다음 날 04:00까지 끝나야 해요 / true false", recheck());
         eq("D-42 반복 끝 밖으로 옮겨 저장, 반복 표시", "true true 2026-12-29", moveLastCopy());
         eq("D-42 시각 창의 이후 반복 모두는 시각만", "11:00 보강 11:00", timeOnly());
         newRules();
@@ -232,7 +233,7 @@ public final class ProtoCheck {
         TaskForm f = new TaskForm(null, java.time.LocalDate.of(2026, 11, 16), java.time.LocalDateTime.of(2026, 11, 16, 9, 0));
         f.timed.setSelected(true);
         f.sync();
-        f.start.setValue("23:30");
+        f.start.setValue("03:30(다음 날)");
         f.minutes.setValue(40);
         f.showErrors(TaskCheck.check(f.draft(), f.editing()));
         f.title.setText("밤 공부");

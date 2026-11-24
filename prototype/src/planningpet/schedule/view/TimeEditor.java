@@ -21,7 +21,7 @@ import javax.swing.SwingUtilities;
 
 /** 시각 고치기 창(05, D-32). 메인 시각 칸 아래에 떠서 시작 시각과 걸리는 시간만 고친다. */
 public final class TimeEditor {
-    public final JSpinner start = new JSpinner(new SpinnerListModel(Ui.times()));
+    public final JSpinner start = new JSpinner(new SpinnerListModel(Times.values()));
     /** 다음 날 새벽 값이면 칸 옆에 실제 날과 시각 "(토 01:30)"(D-77). */
     public final JLabel realTime = new JLabel();
     public final JSpinner minutes;
@@ -66,12 +66,12 @@ public final class TimeEditor {
         panel.add(buttons, BorderLayout.SOUTH);
     }
 
-    /** 끝이 24:00을 넘으면 문장, 아니면 null. */
+    /** 끝이 다음 날 04:00을 넘으면 문장, 아니면 null(D-77). */
     public String check() {
         if ((int) minutes.getValue() % 5 != 0) {
             return "10분부터 720분까지, 5분 단위예요";
         }
-        return Times.minuteOf(start.getValue()) + (int) minutes.getValue() > 24 * 60 ? "하루 안에 끝나야 해요" : null;
+        return Times.minuteOf(start.getValue()) + (int) minutes.getValue() > Task.DAY_END ? TaskCheck.END_PROBLEM : null;
     }
 
     /** 저장 버튼과 같다. 통과하면 true, 아니면 창 아래 문장을 채우고 false. */

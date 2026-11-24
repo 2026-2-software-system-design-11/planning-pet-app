@@ -33,8 +33,9 @@ public final class TaskCheck {
         }
         Integer start = f.startMinute();
         int minutes = f.minutes();
-        if (start != null && start + minutes > 24 * 60) {
-            out.add(new String[] {"시작 시각", "하루 안에 끝나야 해요"});
+        // D-77: 자정을 넘는 것은 막지 않고 끝은 다음 날 04:00(28:00)까지다.
+        if (start != null && start + minutes > Task.DAY_END) {
+            out.add(new String[] {"시작 시각", END_PROBLEM});
         }
         if (minutes % 5 != 0) {
             out.add(new String[] {"걸리는 시간", "10분부터 720분까지, 5분 단위예요"});

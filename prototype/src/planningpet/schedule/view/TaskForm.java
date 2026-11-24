@@ -18,7 +18,7 @@ public final class TaskForm {
     public final JTextField title = new JTextField(22);
     public final JSpinner date = new JSpinner(new SpinnerDateModel());
     public final JCheckBox timed = new JCheckBox("정하기");
-    public final JSpinner start = new JSpinner(new SpinnerListModel(Ui.times()));
+    public final JSpinner start = new JSpinner(new SpinnerListModel(Times.values()));
     /** 다음 날 새벽 값이면 시작 칸 옆에 적는 실제 날과 시각 "(토 01:30)"(D-77). */
     public final JLabel realTime = new JLabel();
     public final JSpinner minutes = Ui.minutes(30);
@@ -209,8 +209,7 @@ public final class TaskForm {
         }
         minutesHint.setVisible(!editing && (int) minutes.getValue() == 30);
         Integer s = startTime();
-        int end = s == null ? 0 : s + (int) minutes.getValue();
-        endLabel.setText(s == null ? "" : String.format("%02d:%02d에 끝나요", end / 60, end % 60));
+        endLabel.setText(s == null ? "" : Times.endHint(s, (int) minutes.getValue()));
         realTime.setText(s == null ? "" : Times.real(day, s));
         syncing = false;
         if (checked) {
