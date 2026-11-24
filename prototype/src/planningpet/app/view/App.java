@@ -44,16 +44,59 @@ public final class App {
     /** 창 바탕(디자인 시스템 1절): 아쿠아 그라데이션, 왼쪽 아래에 구름과 덤불. */
     public final JPanel root = new JPanel(new BorderLayout(Theme.GAP, 0)) {
         @Override
-        protected void paintComponent(java.awt.Graphics g) {
-            super.paintComponent(g);
+        protected void paintComponent(Graphics graphics) {
+            Graphics2D g = (Graphics2D) graphics.create();
+            g.setPaint(new GradientPaint(0, 0, Theme.BG_TOP, 0, getHeight(), Theme.BG_BOTTOM));
+            g.fillRect(0, 0, getWidth(), getHeight());
+            g.dispose();
+        }
+
+        @Override
+        protected void paintChildren(Graphics graphics) {
+            super.paintChildren(graphics);
+            Graphics2D g = (Graphics2D) graphics.create();
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+            g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+            int side = navWrap.getX() + navWrap.getWidth();
+            g.clipRect(0, 0, side + 4, getHeight());
+            java.awt.image.BufferedImage sleeper = "통계".equals(current) ? planningpet.stats.view.StatsScreen.sleepingCat() : null;
+            if (sleeper != null) {
+                // 통계 예시: 사이드바 아래 구름 자리에 방석에서 자는 고양이.
+                int sw = (int) (side * 0.9);
+                int sh = sw * sleeper.getHeight() / sleeper.getWidth();
+                g.drawImage(sleeper, 4, getHeight() - sh - 6, sw, sh, null);
+            } else if (Images.CLOUD != null) {
+                int cw = (int) (side * 0.62);
+                int ch = cw * Images.CLOUD.getHeight() / Images.CLOUD.getWidth();
+                g.drawImage(Images.CLOUD, side - cw - 4, getHeight() - (int) (side * 1.05) - ch, cw, ch, null);
+            }
+            if (Images.MEADOW != null && sleeper == null) {
+                // 예시에서 잘라 낸 덤불은 왼쪽 아래가 창 모서리처럼 둥글다. 그 모서리가 창 밖으로 나가게 조금 내려 그린다.
+                int mw = (int) (side * 0.86);
+                int mh = mw * Images.MEADOW.getHeight() / Images.MEADOW.getWidth();
+                g.drawImage(Images.MEADOW, -mw / 14, getHeight() - mh + mh / 14, mw, mh, null);
+            }
+            g.dispose();
         }
     };
     private final CardLayout cards = new CardLayout();
     private final JPanel center = new JPanel(cards);
+    /** 화면마다 다른 머리(아이콘, 제목, 부제). 화면과 함께 바뀐다. */
+    private final CardLayout headCards = new CardLayout();
+    private final JPanel heads = new JPanel(headCards);
     private final JPanel nav = new JPanel(new GridLayout(0, 1, 0, 6));
+    private final Card navWrap = new Card(new BorderLayout(), 22).filled(Theme.SIDE);
+    /** 메뉴와 화면 머리의 아이콘(디자인 시스템 9절). */
+    private static final Map<String, Icons.Kind> ICONS = Map.of("홈", Icons.Kind.HOME, "일정관리", Icons.Kind.CALENDAR,
+            "캐릭터", Icons.Kind.GAMEPAD, "나의 방", Icons.Kind.ROOM, "통계", Icons.Kind.CHART, "설정", Icons.Kind.GEAR);
+    /** 화면 머리 오른쪽 카드(D-47). 화면과 함께 바뀐다. */
+    private final CardLayout rightCards = new CardLayout();
+    private final JPanel rights = new JPanel(rightCards);
+    private static final String COMMON = "공통";
+    private final java.util.Set<String> ownRight = new java.util.HashSet<>();
     private final ButtonGroup navGroup = new ButtonGroup();
-    public final JLabel streak = new JLabel();
-    public final JLabel points = new JLabel();
+    public final StatCard.Value streak = new StatCard.Value();
+    public final StatCard.Value points = new StatCard.Value();
     public final JButton attend = new JButton();
     /** 06의 23번. Main.create가 넣는다. */
     public DayWatcher watcher;
@@ -69,13 +112,20 @@ public final class App {
         this.shop = new ShopController(control, store);
         this.pet = new PetController(control, store);
         this.reward = new RewardController(control, store, game);
-        root.add(topBar(), BorderLayout.NORTH);
-        JPanel navWrap = new Card(new BorderLayout(), Theme.CARD_RADIUS).filled(Theme.SIDE);
-        navWrap.setBorder(BorderFactory.createEmptyBorder(12, 10, 12, 10));
-        navWrap.add(nav, BorderLayout.NORTH);
+        navWrap.setBorder(BorderFactory.createEmptyBorder(18, 8, 12, 8));
+        navWrap.add(logo(), BorderLayout.NORTH);
+        JPanel navTop = new JPanel(new BorderLayout());
+        navTop.setBorder(BorderFactory.createEmptyBorder(18, 0, 0, 0));
+        navTop.add(nav, BorderLayout.NORTH);
+        navWrap.add(navTop, BorderLayout.CENTER);
+        navWrap.setPreferredSize(new Dimension(140, 0));
         root.add(navWrap, BorderLayout.WEST);
-        root.setBorder(BorderFactory.createEmptyBorder(0, 12, 12, 12));
-        root.add(center, BorderLayout.CENTER);
+        root.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        Card main = new Card(new BorderLayout(0, 10), 24).filled(Theme.PANEL);
+        main.setBorder(BorderFactory.createEmptyBorder(10, 12, 14, 12));
+        main.add(topRow(), BorderLayout.NORTH);
+        main.add(center, BorderLayout.CENTER);
+        root.add(main, BorderLayout.CENTER);
         root.setPreferredSize(new Dimension(1000, 680));
         attend.addActionListener(e -> reward.attend());
         watch(this::refresh);
@@ -92,18 +142,6 @@ public final class App {
         views.forEach(Runnable::run);
     }
 
-    private JPanel topBar() {
-        JPanel bar = new JPanel(new BorderLayout());
-        bar.setBorder(BorderFactory.createEmptyBorder(6, 12, 6, 12));
-        JLabel name = new JLabel("플래닝펫");
-        name.setFont(Theme.bold(23));
-        bar.add(name, BorderLayout.WEST);
-        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 16, 0));
-        right.add(streak);
-        right.add(points);
-        right.add(attend);
-        bar.add(right, BorderLayout.EAST);
-        return bar;
     }
 
     private String current = "";
