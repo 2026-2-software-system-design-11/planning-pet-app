@@ -127,14 +127,39 @@ public final class CalendarPanel extends JPanel {
                 }
                 if (picked) {
                     g.setColor(Theme.MINT);
+                    g.setStroke(new BasicStroke(2f));
+                    g.drawRoundRect(2, 1, w - 5, h - 3, r, r);
+                }
+                g.setFont(today || picked ? Theme.bold(14) : Theme.font(14));
+                FontMetrics fm = g.getFontMetrics();
+                String n = String.valueOf(date.getDayOfMonth());
+                int numY = preview == null ? (h + fm.getAscent() - fm.getDescent()) / 2 : h / 2 - 1;
+                g.setColor(ink);
+                g.drawString(n, (w - fm.stringWidth(n)) / 2, numY);
+                if (preview != null) {
+                    g.setFont(Theme.font(11));
+                    FontMetrics pf = g.getFontMetrics();
+                    String p = PetCardArt.fit(preview.title(), pf, w - 6);
+                    g.setColor(preview.open() ? Theme.TASK_TEXT : Theme.INK_DIM);
+                    g.drawString(p, (w - pf.stringWidth(p)) / 2, numY + 3 + pf.getAscent());
                 }
                 g.dispose();
-                super.paintComponent(graphics);
             }
         };
-        int dow = date.getDayOfWeek().getValue() % 7;
-        label.setForeground(dow == 0 ? Theme.SUNDAY : dow == 6 ? Theme.SATURDAY : Theme.INK);
+        label.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
         label.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                over[0] = true;
+                label.repaint();
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                over[0] = false;
+                label.repaint();
+            }
+
             @Override
             public void mouseClicked(MouseEvent e) {
                 selected = date;
