@@ -7,11 +7,12 @@
   제목 | "자소서 초안                " | .
   유형 | ^기타^ | .
   날짜 | { "2026-11-14 (토)" | [▲▼] } | .
+  기간 | { [ ] 기간 안에 하기 } | .
   시작 시각 | { [ ] 정하기 | "<color:#AAAAAA>--:--</color>" | [<color:#AAAAAA>▲▼</color>] } | .
   걸리는 시간 | { "30" | [▲▼] | 분 } | .
   . | <size:11><color:#666666>안 바꾸면 30분으로 들어가요</color></size> | .
-  반복 | { [ ] <color:#AAAAAA>매주 반복, 끝</color> | "<color:#AAAAAA>2027-02-27</color>" | [<color:#AAAAAA>▲▼</color>] } | .
-  . | <size:11><color:#666666>반복은 고정 일정만 할 수 있어요</color></size> | .
+  반복 | { ^안 함^ | <color:#AAAAAA>월 화 수 목 금 토 일</color> } | .
+  . | { <color:#AAAAAA>끝</color> | "<color:#AAAAAA>2026-12-12</color>" | [<color:#AAAAAA>▲▼</color>] } | .
   메모 | {+ 1번 문항 먼저 쓰기
   지난번 초안 참고
   . } | .
