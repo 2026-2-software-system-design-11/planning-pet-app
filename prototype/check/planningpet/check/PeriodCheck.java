@@ -75,6 +75,13 @@ final class PeriodCheck {
         TaskBook.CellPreview c17 = app.store.book.cellPreview(d("11-17"));
         TaskBook.CellPreview c18 = app.store.book.cellPreview(d("11-18"));
         eq("D-69 지난 반복 사본은 진하지 않다", "운동 false 운동 true", c17.title() + " " + c17.open() + " " + c18.title() + " " + c18.open());
+        App fin = Main.create(at("11-18T09:00"));
+        fin.store.book.add(Task.Kind.TASK, "과제", d("11-16"), null, 30, "", null).get(0).done = true;
+        fin.store.book.add(Task.Kind.TASK, "빨래", d("11-16"), null, 30, "", null);
+        fin.show("일정관리");
+        fin.store.changed();
+        eq("D-78 끝낸 일에는 지난 날이 없다", "11/16 과제 30분 / 11/16 빨래 30분 지난 날",
+                rows(ProtoCheck.find(fin.root, ScheduleScreen.class).untimed));
         Store b = at("11-18T09:00");
         daily(b);
         b.book.add(Task.Kind.TASK, "과제", d("11-17"), null, 30, "", null);
