@@ -18,8 +18,10 @@ public final class Task {
     public String seriesId;          // 반복 사본끼리 같다(D-17, D-64)
     /** 반복 방식(D-64). 반복 사본이 아니면 null. */
     public Repeat repeat;
-    /** 기간 할 일의 마감(D-65). 기간 할 일이 아니면 null이고 date는 기간의 첫날이다. */
+    /** 기간 할 일의 마감(D-65). 기간 할 일이 아니면 null이다. */
     public LocalDate dueDate;
+    /** 기간 할 일의 첫날(D-66). 기간 할 일이 아니면 null이다. date는 계획한 날(시각을 정한 날)이나 보이기 시작하는 날이다. */
+    public LocalDate startDay;
     public boolean done;
     /** 끝낸 앱 날짜(D-66). 끝내지 않았으면 null이다. 기간 할 일은 이 날에 보이고 센다. */
     public LocalDate doneDay;

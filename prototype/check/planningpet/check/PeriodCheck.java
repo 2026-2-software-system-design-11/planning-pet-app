@@ -116,7 +116,14 @@ final class PeriodCheck {
                 copies(w.book.add(draft(Task.Kind.FIXED, "11-16", "18:00")
                         .withRepeat(Repeat.weekly(DayOfWeek.TUESDAY, DayOfWeek.THURSDAY), d("11-26")))));
         Task p = period(MockData.empty(), "P", "11-18", "11-22", 30);
-        eq("D-65 기간 할 일", "2026-11-18 2026-11-22 null", p.date + " " + p.dueDate + " " + p.seriesId);
+        eq("D-65 기간 할 일", "2026-11-18 2026-11-18 2026-11-22 null", p.date + " " + p.startDay + " " + p.dueDate + " " + p.seriesId);
+        Task timed = MockData.empty().book.add(new TaskDraft(Task.Kind.TASK, "T", d("11-18"), LocalTime.of(10, 0), 30, "")
+                .withDue(d("11-22"))).get(0);
+        TaskForm form = new TaskForm(null, d("11-18"), at("11-18T09:00").now);
+        form.timed.doClick();
+        form.period.doClick();
+        eq("D-68 기간 할 일은 시각 없이", "null false false 기간 할 일의 시각은 목록에서 정해요", timed.start + " " + form.timed.isSelected()
+                + " " + form.timed.isEnabled() + " " + form.timed.getToolTipText());
         Store del = MockData.empty();
         List<Task> made = daily(del);
         del.book.delete(made.get(3), true);

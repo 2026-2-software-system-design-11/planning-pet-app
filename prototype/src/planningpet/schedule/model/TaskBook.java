@@ -41,13 +41,16 @@ public final class TaskBook {
         List<LocalDate> days = d.repeat() == null ? List.of(d.date())
                 : d.repeat().dates(d.date(), d.repeatEnd(), Integer.MAX_VALUE - 1);
         for (LocalDate day : days) {
-            Task t = new Task(UUID.randomUUID().toString(), nextSeq.getAsLong(), d.kind(), d.title().strip(), day, d.start(),
-                    d.minutes());
+            boolean period = d.kind() == Task.Kind.TASK && d.repeat() == null && d.dueDate() != null;
+            // D-68: 기간 할 일의 시각은 목록과 자동 배치로만 정하므로 시각 없이 만든다.
+            Task t = new Task(UUID.randomUUID().toString(), nextSeq.getAsLong(), d.kind(), d.title().strip(), day,
+                    period ? null : d.start(), d.minutes());
             t.memo = d.memo();
             t.category = d.category();
             t.seriesId = series;
             t.repeat = d.repeat();
-            t.dueDate = d.kind() == Task.Kind.TASK && d.repeat() == null ? d.dueDate() : null;
+            t.dueDate = period ? d.dueDate() : null;
+            t.startDay = period ? day : null;
             tasks.add(t);
             made.add(t);
         }
@@ -56,7 +59,8 @@ public final class TaskBook {
 
     /**
      * 06의 4번. 제목, 유형, 날짜, 마감, 시작 시각, 걸리는 시간, 메모를 바꾼다. thisAndAfter면 같은 반복의 원래 날짜와 같거나 뒤인
-     * 사본에도 넣는다(D-42). 종류가 다르면 IllegalArgumentException.
+     * 사본에도 넣는다(D-42). 종류가 다르면 IllegalArgumentException. 기간 할 일이면 입력의 날짜는 기간 첫날이고, 시각을 정해 둔
+     * 자리(날짜와 시작 시각)는 그대로 둔다(D-68, D-93).
      */
     public void update(Task task, TaskDraft d, boolean thisAndAfter) {
         if (task.kind != d.kind()) {
@@ -65,9 +69,22 @@ public final class TaskBook {
         LocalDate originalDate = task.date;
         task.title = d.title().strip();
         task.category = d.category();
-        task.date = d.date();
-        task.dueDate = task.kind == Task.Kind.TASK && task.seriesId == null ? d.dueDate() : task.dueDate;
-        task.start = d.start();
+        boolean period = task.kind == Task.Kind.TASK && task.seriesId == null && d.dueDate() != null;
+        if (period) {
+            if (!(task.period() && task.timed())) {
+                task.date = d.date();
+                task.start = null;
+            }
+            task.startDay = d.date();
+            task.dueDate = d.dueDate();
+        } else {
+            task.date = d.date();
+            task.start = d.start();
+            if (task.seriesId == null) {
+                task.dueDate = null;
+                task.startDay = null;
+            }
+        }
         task.minutes = d.minutes();
         task.memo = d.memo();
         if (thisAndAfter) {
@@ -76,11 +93,11 @@ public final class TaskBook {
     }
 
     /**
-     * 06의 4번을 시각 고치기 창(D-32)에서 부를 때. 시작 시각과 걸리는 시간만 넣는다. 시각 없는 기간 할 일에 시각을 정하면 날짜를
-     * 창을 연 목록의 날(listDay)로 옮기고 마감은 둔다(D-65).
+     * 06의 4번을 시각 고치기 창(D-32)에서 부를 때. 시작 시각과 걸리는 시간만 넣는다. 기간 할 일에 시각을 정하면 날짜를 창을 연
+     * 목록의 날(listDay)로 옮기고 기간은 둔다(D-65, D-68).
      */
     public void setTime(Task task, LocalTime start, int minutes, LocalDate listDay, boolean thisAndAfter) {
-        if (task.dueDate != null && !task.timed() && start != null) {
+        if (task.period() && start != null) {
             task.date = listDay;
         }
         task.start = start;

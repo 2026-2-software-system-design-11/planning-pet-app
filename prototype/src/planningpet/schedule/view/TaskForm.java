@@ -94,12 +94,14 @@ public final class TaskForm {
         line("", errors.get("메모"));
         category.setSelectedItem(Categories.OTHER);
         title.setText(t == null ? "" : t.title);
-        Ui.setDate(date, t == null ? defaultDate : t.date);
-        Ui.setDate(due, t != null && t.dueDate != null ? t.dueDate : DefaultDates.due(t == null ? defaultDate : t.date));
+        // D-66: 기간 할 일의 날짜 칸은 기간 첫날이다(계획한 날이 아니다).
+        LocalDate first = t == null ? defaultDate : t.period() ? t.startDay : t.date;
+        Ui.setDate(date, first);
+        Ui.setDate(due, t != null && t.dueDate != null ? t.dueDate : DefaultDates.due(first));
         period.setSelected(t != null && t.dueDate != null);
         if (t != null) {
             fixed.setSelected(t.kind == Task.Kind.FIXED);
-            timed.setSelected(t.timed());
+            timed.setSelected(t.timed() && !t.period());
             start.setValue(t.timed() ? t.start.toString() : "09:00");
             minutes.setValue(t.minutes);
             memo.setText(t.memo);
@@ -160,7 +162,12 @@ public final class TaskForm {
         if (isFixed) {
             timed.setSelected(true);
         }
-        timed.setEnabled(!isFixed);
+        // D-68: 기간 할 일의 시각은 목록의 "시각 정하기"와 자동 배치로만 정한다.
+        if (period.isSelected()) {
+            timed.setSelected(false);
+        }
+        timed.setEnabled(!isFixed && !period.isSelected());
+        timed.setToolTipText(period.isSelected() ? "기간 할 일의 시각은 목록에서 정해요" : null);
         start.setEnabled(timed.isSelected());
         boolean repeating = repeat.getSelectedIndex() != 0;
         boolean periodAllowed = !isFixed && !copy && !repeating;
