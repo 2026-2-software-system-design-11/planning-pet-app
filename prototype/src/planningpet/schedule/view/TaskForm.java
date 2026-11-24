@@ -26,7 +26,13 @@ public final class TaskForm {
     public final JSpinner repeatEnd = new JSpinner(new SpinnerDateModel());
     /** 11번 기간 안에 하기와 마감(D-65). 마감 칸은 켤 때만 보인다. */
     public final JCheckBox period = new JCheckBox("기간 안에 하기");
-    public final JLabel dueLabel = new JLabel("마감");
+    public final JLabel dueLabel = new JLabel("마감일");
+    /** 날짜 칸 이름. 기간 안에 하기를 켜면 "시작일"이다(D-73). */
+    public JLabel dateLabel;
+    /** 반복을 골라 기간 안에 하기가 흐려지면 옆에 늘 보이는 까닭(D-73). */
+    public final JLabel periodHint = Ui.hint("반복 일정은 기간을 정할 수 없어요");
+    /** 반복 끝 날짜를 사용자가 고쳤는가. 고치기 전에는 시작 날짜를 따라간다(D-79). */
+    private boolean endTouched;
     public final JSpinner due = new JSpinner(new SpinnerDateModel());
     public final JTextArea memo = new JTextArea(3, 22);
     /** D-54 유형. */
@@ -75,8 +81,8 @@ public final class TaskForm {
         line("제목", title);
         line("", errors.get("제목"));
         line("유형", Ui.flow(category));
-        line("날짜", date);
-        line("기간", Ui.flow(period, dueLabel, due));
+        dateLabel = line("날짜", date);
+        line("기간", Ui.flow(period, periodHint, dueLabel, due));
         line("", errors.get("마감"));
         line("시작 시각", Ui.flow(timed, start));
         line("", errors.get("시작 시각"));
@@ -87,7 +93,7 @@ public final class TaskForm {
         repeatParts[0] = repeat;
         System.arraycopy(days, 0, repeatParts, 1, 7);
         line("반복", Ui.flow(repeatParts));
-        line("", Ui.flow(new JLabel("끝"), repeatEnd));
+        line("", Ui.flow(new JLabel("반복 끝나는 날"), repeatEnd));
         line("", errors.get("반복"));
         line("", repeatHint);
         line("메모", new JScrollPane(memo));
@@ -141,7 +147,12 @@ public final class TaskForm {
                 sync();
             }
         });
-        repeatEnd.addChangeListener(e -> sync());
+        repeatEnd.addChangeListener(e -> {
+            if (!syncing) {
+                endTouched = true;
+            }
+            sync();
+        });
         date.addChangeListener(e -> sync());
         sync();
     }
@@ -176,6 +187,8 @@ public final class TaskForm {
         }
         period.setEnabled(periodAllowed);
         period.setToolTipText(isFixed ? "기간은 할 일만 정할 수 있어요" : null);
+        periodHint.setVisible(repeating && !isFixed && !copy);
+        dateLabel.setText(period.isSelected() ? "시작일" : "날짜");
         dueLabel.setVisible(period.isSelected());
         due.setVisible(period.isSelected());
         repeat.setEnabled(!editing && !period.isSelected());
@@ -185,7 +198,8 @@ public final class TaskForm {
         repeatEnd.setEnabled(repeating && !editing);
         repeatHint.setVisible(period.isSelected());
         LocalDate day = Ui.dateOf(date);
-        if (!repeating && !editing) {
+        // D-79: 끝 날짜를 손대지 않았으면 반복을 고른 뒤에도 시작 날짜를 따라간다.
+        if (!editing && !endTouched) {
             Ui.setDate(repeatEnd, DefaultDates.repeatEnd(isFixed ? Task.Kind.FIXED : Task.Kind.TASK, day));
         }
         if (!period.isSelected()) {
@@ -194,7 +208,7 @@ public final class TaskForm {
         minutesHint.setVisible(!editing && (int) minutes.getValue() == 30);
         LocalTime s = startTime();
         int end = s == null ? 0 : s.getHour() * 60 + s.getMinute() + (int) minutes.getValue();
-        endLabel.setText(s == null ? "" : String.format("끝 %02d:%02d", end / 60, end % 60));
+        endLabel.setText(s == null ? "" : String.format("%02d:%02d에 끝나요", end / 60, end % 60));
         syncing = false;
         if (checked) {
             showErrors(problems());
@@ -266,14 +280,16 @@ public final class TaskForm {
         return timed.isSelected() ? LocalTime.parse((String) start.getValue()) : null;
     }
 
-    private void line(String label, JComponent field) {
+    private JLabel line(String label, JComponent field) {
         GridBagConstraints c = new GridBagConstraints();
         c.insets = new Insets(3, 8, 3, 8);
         c.gridy = row++;
         c.anchor = GridBagConstraints.WEST;
-        panel.add(new JLabel(label), c);
+        JLabel name = new JLabel(label);
+        panel.add(name, c);
         c.gridx = 1;
         c.fill = GridBagConstraints.HORIZONTAL;
         panel.add(field, c);
+        return name;
     }
 }

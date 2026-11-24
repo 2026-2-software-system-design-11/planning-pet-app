@@ -97,7 +97,7 @@ final class Flows345 {
         f.start.setValue("18:00");
         f.minutes.setValue(240);
         f.repeat.setSelectedItem("요일");
-        q.eq("끝 시각, 반복 칸", "끝 22:00 / 요일 [화] 끝 2027-03-02", f.endLabel.getText() + " / " + repeat(f));
+        q.eq("끝 시각, 반복 칸", "22:00에 끝나요 / 요일 [화] 끝 2027-03-02", f.endLabel.getText() + " / " + repeat(f));
         q.step("4", "끝 날짜를 2026-11-10으로 바꿔 저장한다");
         Ui.setDate(f.repeatEnd, QaDrive.d("2026-11-10"));
         q.eq("저장", "false 끝 날짜가 시작 날짜보다 앞이에요", q.save(f, null) + " " + f.errorText());

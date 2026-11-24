@@ -182,12 +182,12 @@ final class Flows8910 {
         q.app.show("홈");
         q.step("1", "논문 읽기 23:30 30분");
         TaskForm f = timed(q, "논문 읽기", "23:30", 30);
-        q.eq("끝", "끝 24:00", f.endLabel.getText());
+        q.eq("끝", "24:00에 끝나요", f.endLabel.getText());
         q.yes("저장", q.save(f, null));
         q.has("목록", "[ ] 논문 읽기 23:30~24:00 30분", q.rows());
         q.step("2", "논문 정리 23:30 40분으로 저장한다");
         TaskForm g = timed(q, "논문 정리", "23:30", 40);
-        q.eq("끝, 저장", "끝 24:10 false 하루 안에 끝나야 해요", g.endLabel.getText() + " " + q.save(g, null) + " " + g.errorText());
+        q.eq("끝, 저장", "24:10에 끝나요 false 하루 안에 끝나야 해요", g.endLabel.getText() + " " + q.save(g, null) + " " + g.errorText());
         q.step("3", "실험 정리 720분으로 저장한다");
         TaskForm h = q.form("2026-11-17");
         h.title.setText("실험 정리");

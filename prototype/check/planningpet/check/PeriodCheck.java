@@ -121,7 +121,27 @@ final class PeriodCheck {
                 msgs(TaskCheck.check(draft(Task.Kind.FIXED, "11-16", "10:00").withDue(d("11-22")), false)));
         eq("T-DEF-5", "2027-03-01", DefaultDates.repeatEnd(Task.Kind.FIXED, d("11-16")));
         eq("D-64 할 일 반복 끝 4주", "2026-12-14", DefaultDates.repeatEnd(Task.Kind.TASK, d("11-16")));
-        eq("D-65 마감 기본은 그 주 일요일", "2026-11-22 2026-11-22", DefaultDates.due(d("11-18")) + " " + DefaultDates.due(d("11-22")));
+        eq("D-65 마감 기본은 그 주 일요일", "2026-11-22 2026-11-29", DefaultDates.due(d("11-18")) + " " + DefaultDates.due(d("11-22")));
+        TaskForm follow = new TaskForm(null, d("11-16"), at("11-16T09:00").now);
+        follow.title.setText("운동");
+        follow.repeat.setSelectedIndex(1);
+        Ui.setDate(follow.date, d("12-01"));
+        String followed = Ui.dateOf(follow.repeatEnd).toString();
+        Ui.setDate(follow.repeatEnd, d("12-10"));
+        Ui.setDate(follow.date, d("12-20"));
+        eq("D-79 끝 날짜는 손대기 전까지 따라간다", "2026-12-29 2026-12-10 반복: 끝 날짜가 시작 날짜보다 앞이에요",
+                followed + " " + Ui.dateOf(follow.repeatEnd) + " " + msgs(follow.problems()));
+        TaskForm names = new TaskForm(null, d("11-16"), at("11-16T09:00").now);
+        names.period.doClick();
+        String on = names.dateLabel.getText() + " " + names.dueLabel.getText();
+        names.period.doClick();
+        names.repeat.setSelectedIndex(1);
+        names.timed.doClick();
+        names.start.setValue("10:00");
+        names.minutes.setValue(45);
+        eq("D-73 입력 창 칸 이름", "시작일 마감일 / 날짜 true 반복 일정은 기간을 정할 수 없어요 10:45에 끝나요", on + " / "
+                + names.dateLabel.getText() + " " + names.periodHint.isVisible() + " " + names.periodHint.getText() + " "
+                + names.endLabel.getText());
     }
 
     /** 사본들을 "날짜 시작 seq"로 잇고, 같은 반복인지와 반복 방식을 붙인다. */
