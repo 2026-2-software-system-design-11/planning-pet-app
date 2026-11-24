@@ -24,6 +24,7 @@ final class DayCheck {
 
     static void run() {
         nightDay();
+        overlaps();
     }
 
     /** 앱 하루의 분으로 시각을 준 할 일 하나를 넣는다. */
@@ -111,6 +112,94 @@ final class DayCheck {
         // 수정 창은 다음 날 시각을 그대로 보이고 저장해도 그대로다.
         TaskForm edit = TaskDialog.form(app, review, review.date);
         eq("D-77 수정 창", "01:30(다음 날) (토 01:30)", edit.start.getValue() + " " + edit.realTime.getText());
+    }
+
+    /** 물음을 적어 두고 answer번째 버튼을 고른다. */
+    static String[] ask(App app, int answer) {
+        String[] asked = {""};
+        app.schedule.chooser = new planningpet.schedule.controller.TaskController.Chooser() {
+            @Override
+            public int choose(String title, String message, String[] options) {
+                return choose(title, message, options, options.length - 1);
+            }
+
+            @Override
+            public int choose(String title, String message, String[] options, int initial) {
+                asked[0] += title + ": " + message + " " + String.join(", ", options) + " 처음 " + options[initial] + " | ";
+                return answer;
+            }
+        };
+        return asked;
+    }
+
+    static TaskForm form(App app, String title, String date, String start, int minutes) {
+        TaskForm f = TaskDialog.form(app, null, d(date));
+        f.title.setText(title);
+        if (start != null) {
+            f.timed.setSelected(true);
+            f.sync();
+            f.start.setValue(start);
+        }
+        f.minutes.setValue(minutes);
+        return f;
+    }
+
+    /** D-87: 겹치면 막지 않고 저장 전에 묻는다. */
+    private static void overlaps() {
+        App app = Main.create(at("11-16T09:00"));
+        Store s = app.store;
+        task(s, "자소서 초안", "11-16", hm(14, 0), 60);
+        String[] asked = ask(app, 1);
+        boolean cancelled = TaskDialog.trySave(app, form(app, "면접 준비", "11-16", "14:30", 60), null);
+        String q1 = asked[0];
+        int afterCancel = s.book.timedOn(d("11-16")).size();
+        asked = ask(app, 0);
+        boolean saved = TaskDialog.trySave(app, form(app, "면접 준비", "11-16", "14:30", 60), null);
+        eq("T-OVL-1", "시간이 겹쳐요: 14:00~15:00 '자소서 초안'과 30분 겹쳐요. 그래도 넣을까요? 넣기, 취소 처음 넣기 | "
+                + "false 1 true 2", q1 + cancelled + " " + afterCancel + " " + saved + " "
+                + s.book.timedOn(d("11-16")).size());
+
+        App b = Main.create(at("11-16T09:00"));
+        task(b.store, "자소서 초안", "11-16", hm(14, 0), 60);
+        String[] none = ask(b, 1);
+        boolean all = TaskDialog.trySave(b, form(b, "가", "11-16", "15:00", 30), null)
+                && TaskDialog.trySave(b, form(b, "나", "11-16", "13:00", 60), null)
+                && TaskDialog.trySave(b, form(b, "다", "11-16", null, 30), null);
+        eq("T-OVL-2", "true ", all + " " + none[0]);
+
+        App c = Main.create(at("11-16T09:00"));
+        c.store.book.add(TaskDraft.at(Task.Kind.FIXED, "실습", d("11-16"), hm(8, 0), 480));
+        task(c.store, "과제", "11-16", hm(8, 30), 30);
+        String[] q3 = ask(c, 1);
+        TaskDialog.trySave(c, form(c, "일지", "11-16", "08:00", 60), null);
+        eq("T-OVL-3", "08:00~16:00 '실습'과 60분 겹쳐요. 그래도 넣을까요?", q3[0].replaceAll("^시간이 겹쳐요: | 넣기, 취소.*$", ""));
+
+        App r = Main.create(at("11-16T09:00"));
+        Task hw = task(r.store, "과제", "11-17", hm(18, 30), 60);
+        Task report = task(r.store, "보고서", "11-16", hm(10, 0), 30);
+        String[] q4 = ask(r, 0);
+        TaskForm job = form(r, "알바", "11-16", "18:00", 240);
+        job.fixed.doClick();
+        job.repeat.setSelectedIndex(2);
+        for (int i = 0; i < 7; i++) {
+            job.days[i].setSelected(i == 1);
+        }
+        planningpet.common.view.Ui.setDate(job.repeatEnd, d("11-30"));
+        job.sync();
+        boolean jobSaved = TaskDialog.trySave(r, job, null);
+        String first = q4[0];
+        q4[0] = "";
+        TaskForm edit = TaskDialog.form(r, report, report.date);
+        edit.start.setValue("10:15");
+        boolean reportSaved = TaskDialog.trySave(r, edit, report);
+        String second = q4[0];
+        TimeEditor te = new TimeEditor(hw, r.store.now);
+        te.start.setValue("19:00");
+        boolean hwSaved = TimeEditor.save(r, hw, te);
+        eq("T-OVL-4", "true 18:30~19:30 '과제'와 60분 겹쳐요. 그래도 넣을까요? / true  / true "
+                + "18:00~22:00 '알바'와 60분 겹쳐요. 그래도 넣을까요?",
+                jobSaved + " " + first.replaceAll("^시간이 겹쳐요: | 넣기, 취소.*$", "") + " / " + reportSaved + " " + second
+                + " / " + hwSaved + " " + q4[0].replaceAll("^시간이 겹쳐요: | 넣기, 취소.*$", ""));
     }
 
     /** 시간표를 창 없이 그리고 블록 자리를 돌려준다. */
