@@ -68,10 +68,6 @@ public final class TaskCheck {
         if (to.isBefore(from)) {
             return "끝 날짜가 시작 날짜보다 앞이에요";
         }
-        // 옮기는 동안만: 일정 입력 창이 아직 예전 매주 반복 칸이라 예전 한도(D-17)를 지킨다. 입력 창을 바꾸는 PR에서 지운다.
-        if (java.time.temporal.ChronoUnit.WEEKS.between(from, to) >= 26) {
-            return "반복은 26번까지예요";
-        }
         int copies = how.dates(from, to, Repeat.MAX_COPIES).size();
         if (copies == 0) {
             return "끝 날짜 안에 반복하는 날이 없어요";

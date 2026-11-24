@@ -32,7 +32,7 @@ public final class AutoPlaceDialog {
         LocalDate from = start.toLocalDate();
         LocalTime fromTime = start.toLocalTime();
         LocalDate to = monday.plusDays(6);
-        JLabel head = new JLabel(day(from) + " " + fromTime + "부터 " + day(to) + "까지, 할 일마다 그 날짜 안의 빈 시간에 놓았어요");
+        JLabel head = new JLabel(day(from) + " " + fromTime + "부터 " + day(to) + "까지, 할 일마다 그 날짜(기간 할 일은 기간) 안의 빈 시간에 놓았어요");
         // D-43: 결과 표는 보기만 한다. 칸을 고치거나 열을 옮길 수 없다.
         DefaultTableModel model = new DefaultTableModel(new Object[] {"할 일", "날짜", "시각", "걸리는 시간"}, 0) {
             @Override
@@ -42,7 +42,7 @@ public final class AutoPlaceDialog {
         };
         for (Planner.Placed x : p.placed()) {
             LocalTime end = x.start().plusMinutes(x.task().minutes);
-            model.addRow(new Object[] {x.task().title, day(x.task().date), x.start() + " ~ " + (end.equals(LocalTime.MIDNIGHT) ? "24:00" : end), x.task().minutes + "분"});
+            model.addRow(new Object[] {x.task().title, day(x.day()), x.start() + " ~ " + (end.equals(LocalTime.MIDNIGHT) ? "24:00" : end), x.task().minutes + "분"});
         }
         for (Task t : p.unplaced()) {
             model.addRow(new Object[] {t.title, "놓지 못함", "그날 빈 시간이 모자라요", t.minutes + "분"});

@@ -61,7 +61,7 @@ public final class TaskController {
                     new String[] {"삭제", "취소"});
             scope = answer == 0 ? 0 : -1;
         } else {
-            int answer = chooser.choose("일정 삭제", "'" + t.title + "'" + Rules.josa(t.title, "은", "는") + " 매주 반복 일정이에요.",
+            int answer = chooser.choose("일정 삭제", "'" + t.title + "'" + Rules.josa(t.title, "은", "는") + " 반복 일정이에요.",
                     new String[] {"이 일정만", "이후 반복 모두", "취소"});
             scope = answer == 0 || answer == 1 ? answer : -1;
         }
@@ -82,7 +82,7 @@ public final class TaskController {
         if (t.seriesId == null) {
             return 0;
         }
-        int answer = chooser.choose("반복 일정 저장", "'" + t.title + "'" + Rules.josa(t.title, "은", "는") + " 매주 반복 일정이에요. 어디까지 바꿀까요?",
+        int answer = chooser.choose("반복 일정 저장", "'" + t.title + "'" + Rules.josa(t.title, "은", "는") + " 반복 일정이에요. 어디까지 바꿀까요?",
                 new String[] {"이 일정만", "이후 반복 모두", "취소"});
         return answer == 0 || answer == 1 ? answer : -1;
     }
@@ -97,9 +97,9 @@ public final class TaskController {
         opener.open(null, date);
     }
 
-    /** D-32. 메인 시각 칸을 누르면 그 아래에 시각 고치기 창을 연다. */
-    public void editTime(Task t, java.awt.Component anchor) {
-        TimeEditor.open(app, t, anchor);
+    /** D-32. 메인 시각 칸을 누르면 그 아래에 시각 고치기 창을 연다. day는 그 목록의 날이다(D-65). */
+    public void editTime(Task t, LocalDate day, java.awt.Component anchor) {
+        TimeEditor.open(app, t, day, anchor);
     }
 
     /** UC-03, UC-05. 검사를 통과한 입력 값을 저장한다. 반복 사본이면 범위를 묻고, 취소하면 false. */
@@ -108,22 +108,11 @@ public final class TaskController {
         if (scope < 0) {
             return false;
         }
-        String title = d.title().strip();
         app.control.change(() -> {
             if (editing == null) {
-                app.store.book.add(d.kind(), title, d.date(), d.start(), d.minutes(), d.memo(), d.repeatEnd())
-                        .forEach(t -> t.category = d.category());
+                app.store.book.add(d);
             } else {
-                LocalDate originalDate = editing.date;
-                editing.title = title;
-                editing.date = d.date();
-                editing.start = d.start();
-                editing.minutes = d.minutes();
-                editing.memo = d.memo();
-                editing.category = d.category();
-                if (scope == 1) {
-                    app.store.book.applyToSeries(editing, originalDate);
-                }
+                app.store.book.update(editing, d, scope == 1);
             }
         });
         return true;
@@ -139,19 +128,13 @@ public final class TaskController {
         return true;
     }
 
-    /** 시각 고치기 창의 저장(D-32, D-42). 반복 사본이면 범위를 묻고, 취소하면 false. */
-    public boolean saveTime(Task t, LocalTime start, int minutes) {
+    /** 시각 고치기 창의 저장(D-32, D-42). 반복 사본이면 범위를 묻고, 취소하면 false. day는 창을 연 목록의 날이다(D-65). */
+    public boolean saveTime(Task t, LocalTime start, int minutes, LocalDate day) {
         int scope = editScope(t);
         if (scope < 0) {
             return false;
         }
-        app.control.change(() -> {
-            t.start = start;
-            t.minutes = minutes;
-            if (scope == 1) {
-                app.store.book.applyToSeries(t, t.date, true);
-            }
-        });
+        app.control.change(() -> app.store.book.setTime(t, start, minutes, day, scope == 1));
         return true;
     }
 
@@ -162,6 +145,12 @@ public final class TaskController {
 
     /** 자동 배치 결과 창의 적용(UC-11). */
     public void applyPlacement(Planner.Placement p) {
-        app.control.change(() -> p.placed().forEach(x -> x.task().start = x.start()));
+        app.control.change(() -> p.placed().forEach(x -> {
+            x.task().start = x.start();
+            if (x.task().dueDate != null) {
+                // D-65: 기간 할 일은 놓은 날로 옮긴다. 마감은 그대로다.
+                x.task().date = x.day();
+            }
+        }));
     }
 }

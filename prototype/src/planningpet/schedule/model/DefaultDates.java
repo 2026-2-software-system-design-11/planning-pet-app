@@ -25,11 +25,6 @@ public final class DefaultDates {
     }
 
     /** 반복 끝 날짜(D-17, D-64): 고정 일정은 날짜에 15주, 할 일은 4주. */
-    /** 옮기는 동안만 쓰는 예전 꼴(고정 일정의 끝 날짜). 일정 입력 창을 새 반복 칸으로 바꾸면 지운다. */
-    public static LocalDate repeatEnd(LocalDate date) {
-        return repeatEnd(Task.Kind.FIXED, date);
-    }
-
     public static LocalDate repeatEnd(Task.Kind kind, LocalDate date) {
         return date.plusWeeks(kind == Task.Kind.FIXED ? 15 : 4);
     }

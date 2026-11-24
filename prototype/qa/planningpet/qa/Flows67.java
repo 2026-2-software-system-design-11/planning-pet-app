@@ -68,7 +68,7 @@ final class Flows67 {
         e.start.setValue("09:00");
         q.answer(0);
         q.yes("저장", TimeEditor.save(q.app, t, e));
-        q.eq("범위 창", "반복 일정 저장 / '병원 실습'은 매주 반복 일정이에요. 어디까지 바꿀까요? / 이 일정만, 이후 반복 모두, 취소",
+        q.eq("범위 창", "반복 일정 저장 / '병원 실습'은 반복 일정이에요. 어디까지 바꿀까요? / 이 일정만, 이후 반복 모두, 취소",
                 q.lastTitle + " / " + q.lastQuestion + " / " + q.lastOptions);
         q.eq("목록", "[ ] 고정 병원 실습 09:00~17:00 480분", q.rows());
         Task next = q.task("병원 실습", "2026-11-27");
@@ -161,9 +161,12 @@ final class Flows67 {
         Ui.setDate(f.date, LocalDate.parse(date));
         f.start.setValue(time);
         f.minutes.setValue(minutes);
-        f.repeat.doClick();
+        f.repeat.setSelectedItem("요일");
         if (end != null) {
             Ui.setDate(f.repeatEnd, LocalDate.parse(end));
+        } else {
+            // UF-7-2 2단계: 화가 골라진 채, 끝 2027-06-15 그대로.
+            q.eq("반복 칸", "요일 [화] 끝 2027-06-15", Flows345.repeat(f));
         }
         return q.save(f, null);
     }
@@ -174,7 +177,7 @@ final class Flows67 {
         q.app.show("일정관리");
         q.eq("오른쪽 목록", "이번 주에 시각 없는 할 일이 없어요.", q.schedRows());
         q.eq("자동 배치 버튼, 펫", "false 지금 자동 배치할 할 일은 없어.", q.sched.autoPlace.isEnabled() + " " + q.schedBubble());
-        q.step("2", "대학수학 화 09:00 75분을 매주 반복(끝 그대로)으로 넣는다");
+        q.step("2", "대학수학 화 09:00 75분을 요일 반복(화가 골라진 채, 끝 그대로)으로 넣는다");
         q.eq("기본 날짜", "2027-03-02", q.sched.defaultDate());
         q.yes("저장", fixed(q, "대학수학", "2027-03-02", "09:00", 75, null));
         q.eq("화요일 개수", 16, Flows345.count(q, "대학수학", DayOfWeek.TUESDAY));
