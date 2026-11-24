@@ -268,3 +268,81 @@ public final class StatsScreen extends JPanel {
         data.add(donut);
         data.add(rows);
         rateBody.add(data, "data");
+        rateBody.add(empty(), "empty");
+        c.add(rateBody, BorderLayout.CENTER);
+        return c;
+    }
+
+    private Card trendCard() {
+        Card c = card();
+        c.add(title(null, Icons.icon(Icons.Kind.CALENDAR, 30, Theme.ICON), "날짜별 일정 완료 추이", HELP_TREND, null),
+                BorderLayout.NORTH);
+        c.add(trend, BorderLayout.CENTER);
+        return c;
+    }
+
+    private Card kindCard() {
+        Card c = card();
+        c.add(title(StatsArt.Kind.PIE, null, "일정 유형별 달성률", HELP_KIND, paws()), BorderLayout.NORTH);
+        c.add(kinds, BorderLayout.CENTER);
+        return c;
+    }
+
+    private Card summaryCard() {
+        Card c = card();
+        c.add(title(StatsArt.Kind.SWAP, null, "주간과 월간 요약", HELP_SUM, paws()), BorderLayout.NORTH);
+        JPanel two = new JPanel(new GridLayout(1, 2, 14, 0));
+        two.add(weekBox);
+        two.add(monthBox);
+        c.add(two, BorderLayout.CENTER);
+        return c;
+    }
+
+    private static JLabel empty() {
+        JLabel l = new JLabel(StatsArt.NONE, SwingConstants.CENTER);
+        l.setFont(Theme.font(14));
+        l.setForeground(Theme.INK_SUB);
+        return l;
+    }
+
+    // 다시 그리기
+
+    private void refresh() {
+        LocalDate today = app.store.today();
+        weekButton.setSelected(!period.monthly());
+        monthButton.setSelected(period.monthly());
+        periodLabel.setText(periodText(period));
+        periodLabel.getAccessibleContext().setAccessibleName("기간 " + periodText(period));
+
+        Stats.Rate rate = Stats.rate(app.store, period);
+        donut.set(rate);
+        doneRow.value = rate.done() + "개";
+        leftRow.value = (rate.total() - rate.done()) + "개";
+        totalRow.value = rate.total() + "개";
+        rateCards.show(rateBody, rate.total() == 0 ? "empty" : "data");
+        trend.set(Stats.trend(app.store, period), today, period.monthly());
+        kinds.set(Stats.byCategory(app.store, period));
+
+        Stats.Period week = Stats.Period.week(today);
+        Stats.Period month = Stats.Period.month(today);
+        weekBox.set("이번 주", "(" + md(week.from()) + " ~ " + md(week.to()) + ")",
+                Stats.rate(app.store, week), Stats.points(app.store, week));
+        monthBox.set("이번 달", "(" + month.from().getYear() + "년 " + month.from().getMonthValue() + "월)",
+                Stats.rate(app.store, month), Stats.points(app.store, month));
+        revalidate();
+        repaint();
+        head.repaint();
+    }
+
+    /** 머리의 기간 글자. 월간 "2026년 11월", 주간 "11/16 ~ 11/22". */
+    static String periodText(Stats.Period p) {
+        return p.monthly() ? p.from().getYear() + "년 " + p.from().getMonthValue() + "월" : md(p.from()) + " ~ " + md(p.to());
+    }
+
+    static String md(LocalDate d) {
+        return d.getMonthValue() + "/" + d.getDayOfMonth();
+    }
+
+    // 작은 부품
+
+}
