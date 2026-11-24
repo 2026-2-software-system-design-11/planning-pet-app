@@ -15,7 +15,11 @@ public final class Task {
     public LocalTime start;          // 없으면 null
     public int minutes;
     public String memo = "";
-    public String seriesId;          // 매주 반복 사본끼리 같다
+    public String seriesId;          // 반복 사본끼리 같다(D-17, D-64)
+    /** 반복 방식(D-64). 반복 사본이 아니면 null. */
+    public Repeat repeat;
+    /** 기간 할 일의 마감(D-65). 기간 할 일이 아니면 null이고 date는 기간의 첫날이다. */
+    public LocalDate dueDate;
     public boolean done;
     public int rewardPoints;
     public int rewardExp;
@@ -37,6 +41,19 @@ public final class Task {
 
     public boolean timed() {
         return start != null;
+    }
+
+    /** 06 데이터 절의 세는 날: 끝내지 않은 기간 할 일은 마감, 그 밖은 날짜. */
+    public LocalDate countDay() {
+        return dueDate != null && !done ? dueDate : date;
+    }
+
+    /** 06 데이터 절의 보이는 날: 끝내지 않은 시각 없는 기간 할 일은 날짜부터 마감까지(마감이 앞이면 날짜에만), 그 밖은 날짜. */
+    public boolean shownOn(LocalDate day) {
+        if (dueDate == null || done || timed()) {
+            return date.equals(day);
+        }
+        return !day.isBefore(date) && !day.isAfter(dueDate.isBefore(date) ? date : dueDate);
     }
 
     public int startMinute() {

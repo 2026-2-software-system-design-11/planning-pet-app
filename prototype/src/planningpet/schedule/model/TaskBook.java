@@ -20,20 +20,74 @@ public final class TaskBook {
         this.nextSeq = nextSeq;
     }
 
-    /** 06의 3번. 반복 끝 날짜가 있으면 같은 요일마다 사본을 만든다. */
+    /** 06의 3번. 검사(2번)를 통과한 입력으로 일정을 만든다. 반복이면 반복하는 날마다 사본을 만든다(D-17, D-64). */
+    public List<Task> add(TaskDraft d) {
+        if (!TaskCheck.check(d, false).isEmpty()) {
+            throw new IllegalArgumentException("검사를 통과하지 않은 입력");
+        }
+        return make(d);
+    }
+
+    /** 목 데이터와 검사가 쓰는 줄임. 반복 끝 날짜가 있으면 날짜의 요일 하나로 반복한다. */
     public List<Task> add(Task.Kind kind, String title, LocalDate date, LocalTime start, int minutes,
                           String memo, LocalDate repeatEnd) {
+        TaskDraft d = new TaskDraft(kind, title, date, start, minutes, memo);
+        return make(repeatEnd == null ? d : d.withRepeat(Repeat.weekly(date.getDayOfWeek()), repeatEnd));
+    }
+
+    private List<Task> make(TaskDraft d) {
         List<Task> made = new ArrayList<>();
-        String series = repeatEnd == null ? null : UUID.randomUUID().toString();
-        LocalDate last = repeatEnd == null ? date : repeatEnd;
-        for (LocalDate d = date; !d.isAfter(last); d = d.plusWeeks(1)) {
-            Task t = new Task(UUID.randomUUID().toString(), nextSeq.getAsLong(), kind, title.strip(), d, start, minutes);
-            t.memo = memo;
+        String series = d.repeat() == null ? null : UUID.randomUUID().toString();
+        List<LocalDate> days = d.repeat() == null ? List.of(d.date())
+                : d.repeat().dates(d.date(), d.repeatEnd(), Integer.MAX_VALUE - 1);
+        for (LocalDate day : days) {
+            Task t = new Task(UUID.randomUUID().toString(), nextSeq.getAsLong(), d.kind(), d.title().strip(), day, d.start(),
+                    d.minutes());
+            t.memo = d.memo();
+            t.category = d.category();
             t.seriesId = series;
+            t.repeat = d.repeat();
+            t.dueDate = d.kind() == Task.Kind.TASK && d.repeat() == null ? d.dueDate() : null;
             tasks.add(t);
             made.add(t);
         }
         return made;
+    }
+
+    /**
+     * 06의 4번. 제목, 유형, 날짜, 마감, 시작 시각, 걸리는 시간, 메모를 바꾼다. thisAndAfter면 같은 반복의 원래 날짜와 같거나 뒤인
+     * 사본에도 넣는다(D-42). 종류가 다르면 IllegalArgumentException.
+     */
+    public void update(Task task, TaskDraft d, boolean thisAndAfter) {
+        if (task.kind != d.kind()) {
+            throw new IllegalArgumentException("종류는 바꿀 수 없다");
+        }
+        LocalDate originalDate = task.date;
+        task.title = d.title().strip();
+        task.category = d.category();
+        task.date = d.date();
+        task.dueDate = task.kind == Task.Kind.TASK && task.seriesId == null ? d.dueDate() : task.dueDate;
+        task.start = d.start();
+        task.minutes = d.minutes();
+        task.memo = d.memo();
+        if (thisAndAfter) {
+            applyToSeries(task, originalDate);
+        }
+    }
+
+    /**
+     * 06의 4번을 시각 고치기 창(D-32)에서 부를 때. 시작 시각과 걸리는 시간만 넣는다. 시각 없는 기간 할 일에 시각을 정하면 날짜를
+     * 창을 연 목록의 날(listDay)로 옮기고 마감은 둔다(D-65).
+     */
+    public void setTime(Task task, LocalTime start, int minutes, LocalDate listDay, boolean thisAndAfter) {
+        if (task.dueDate != null && !task.timed() && start != null) {
+            task.date = listDay;
+        }
+        task.start = start;
+        task.minutes = minutes;
+        if (thisAndAfter) {
+            applyToSeries(task, task.date, true);
+        }
     }
 
     /** 지운 일정 가운데 보상을 받았던 것. 친밀도(D-49)와 통계 포인트(D-55)가 지워도 줄지 않게 센다(D-19). */
