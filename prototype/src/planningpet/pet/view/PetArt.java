@@ -88,3 +88,52 @@ public final class PetArt {
             case "리본 핀": box = new double[] {-56, -58, 64}; break;
             case "안경": box = new double[] {0, -4, 136}; break;
             case "밀짚모자": box = new double[] {0, -84, 200}; break;
+            case "베레모": box = new double[] {14, -72, 160}; break;
+            case "왕관": box = new double[] {22, -80, 84}; break;
+            case "스카프": box = new double[] {4, 18, 150}; break;
+            case "조끼": box = new double[] {0, 0, 150}; break;
+            case "망토": box = new double[] {0, 0, 170}; break;
+            default: box = new double[] {0, 6, 150}; break;
+        }
+        double k = size * 0.84 / box[2];
+        // 화면에서 선 굵기가 아이콘 크기의 약 2.2%(최소 1.4px)가 되게 한다.
+        p.line = (float) (Math.max(1.4, size * 0.022) / k);
+        g.translate(cx, cy);
+        g.scale(k, k);
+        g.translate(-box[0], -box[1]);
+        if (name.endsWith("목걸이")) {
+            p.collarIcon();
+        } else if ("스카프".equals(name)) {
+            p.neckWear(0, 0, 0, 58);
+        } else if ("조끼".equals(name)) {
+            p.vestIcon();
+        } else if ("망토".equals(name)) {
+            p.capeBehind(0, -58, 42);
+            p.filled(PetPaintBase.ell(0, -60, 10, 10), PetPaintBase.GOLD);
+        } else {
+            p.headWear();
+        }
+        g.dispose();
+    }
+
+    /** 자세마다 그림이 실제로 차지하는 높이의 비율(상자 한 변 대비). 머리 위 하트와 말풍선 자리에 쓴다. */
+    public static double heightRatio(PetKind kind, PetPose pose) {
+        // 2026-11-24 PetExport로 그려 잰 값(바닥에서 귀나 머리 끝까지, 기본 목걸이, 모자 없음).
+        boolean cat = kind == PetKind.CAT;
+        switch (pose) {
+            case SLEEP:
+                return cat ? 0.51 : 0.50;
+            case STRETCH:
+                return cat ? 0.62 : 0.47;
+            case EAT:
+                return cat ? 0.83 : 0.73;
+            case SING:
+                return cat ? 0.92 : 0.86;
+            default:
+                return cat ? 0.88 : 0.77;
+        }
+    }
+    private static void hints(Graphics2D g) {
+        PetPaintBase.hints(g);
+    }
+}
