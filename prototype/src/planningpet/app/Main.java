@@ -58,7 +58,6 @@ public final class Main {
         app.addScreen("홈", "오늘도 계획을 세우고, 조금씩 성장해요!", main);
         app.watcher = new DayWatcher(app, main);
         app.addScreen("일정관리", "내 일정을 한눈에 확인하고, 체계적으로 관리해요!", new ScheduleScreen(app));
-        app.addScreen("캐릭터", "함께하는 펫을 돌보고, 나만의 모습으로 꾸며요!", new CharacterScreen(app));
         PetScreen room = new PetScreen(app);
         app.addScreen("나의 방", "나만의 공간을 꾸미고, 반려동물과 함께 시간을 보내요!", room, room.headRight());
         StatsScreen stats = new StatsScreen(app);

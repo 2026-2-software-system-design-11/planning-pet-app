@@ -72,6 +72,9 @@ public final class CharacterScreen extends JPanel {
         main.add(right(), BorderLayout.EAST);
         add(main);
         app.watch(this::refresh);
+        // 창(D-58)은 메인 창 밖이라 앱 틀의 투명 처리가 닿지 않는다. 다시 그린 부품도 투명하게 한다.
+        app.watch(() -> Theme.clear(this));
+        Theme.clear(this);
     }
 
     private JComponent left() {
@@ -416,6 +419,16 @@ public final class CharacterScreen extends JPanel {
         if (answer == 1) {
             app.pet.rename(p.kind, field.getText());
         }
+    }
+
+    /** 캐릭터 창을 열 때 부른다(D-58). 입혀 보던 장신구를 버리고 저장된 것에서 시작한다. dress면 꾸미기 탭을 연다. */
+    public void opened(boolean dress) {
+        draftKind = null;
+        if (dress && !tabs[1].isSelected()) {
+            tabs[1].doClick();
+        }
+        refresh();
+        Theme.clear(this);
     }
 
     public void refresh() {

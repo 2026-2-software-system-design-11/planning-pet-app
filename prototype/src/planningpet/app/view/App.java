@@ -88,7 +88,7 @@ public final class App {
     private final Card navWrap = new Card(new BorderLayout(), 22).filled(Theme.SIDE);
     /** 메뉴와 화면 머리의 아이콘(디자인 시스템 9절). */
     private static final Map<String, Icons.Kind> ICONS = Map.of("홈", Icons.Kind.HOME, "일정관리", Icons.Kind.CALENDAR,
-            "캐릭터", Icons.Kind.GAMEPAD, "나의 방", Icons.Kind.ROOM, "통계", Icons.Kind.CHART, "설정", Icons.Kind.GEAR);
+            "나의 방", Icons.Kind.ROOM, "통계", Icons.Kind.CHART, "설정", Icons.Kind.GEAR);
     /** 화면 머리 오른쪽 카드(D-47). 화면과 함께 바뀐다. */
     private final CardLayout rightCards = new CardLayout();
     private final JPanel rights = new JPanel(rightCards);

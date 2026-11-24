@@ -21,7 +21,7 @@ Windows는 `prototype\run.bat`이다.
 
 06의 패키지 규칙(D-46)대로 `src/planningpet/` 아래를 도메인별로 나누고, 도메인 안을 `model`, `view`, `controller`로 나눈다.
 
-- `schedule`(일정), `reward`(보상), `pet`(펫, 캐릭터와 나의 방 화면), `shop`(나의 방의 상점 칸), `stats`(통계), `home`(메인 화면), `settings`(설정), `app`(진입점, 창 틀, 앱 데이터 `Store`), `common`(앱 날짜와 글자 규칙, 디자인 시스템의 색과 부품)
+- `schedule`(일정), `reward`(보상), `pet`(펫, 나의 방 화면과 그 위에 뜨는 캐릭터 창), `shop`(나의 방의 상점 칸), `stats`(통계), `home`(메인 화면), `settings`(설정), `app`(진입점, 창 틀, 앱 데이터 `Store`), `common`(앱 날짜와 글자 규칙, 디자인 시스템의 색과 부품)
 - `model`은 Swing과 AWT를 쓰지 않는다. `view`는 model을 읽어 그리고, 바꿀 때는 controller를 부른다(다른 도메인의 것도 된다). controller는 바꾸는 일을 앱 controller의 `change`로 감싸고, `change`가 `Store.changed()`로 한 번 알린다
 - 화면 전환과 주 옮기기처럼 model을 바꾸지 않는 다시 그리기는 `App.redraw()`로 한다
 - `check.sh`가 D-46을 grep으로 검사한다. model의 Swing과 AWT, view의 알림과 펫 말, Model 메서드 호출, Model 필드 대입과 목록 바꾸기, 앱 controller 밖의 알림을 찾으면 실패한다. 잡는 형태는 `check.sh` 주석에 있고, 이름을 바꿔 부르거나 다른 클래스를 거치면 놓친다
@@ -51,7 +51,7 @@ Windows는 `prototype\run.bat`이다.
 | 일정 입력 창 | ![일정 입력](screenshots/3-form.png) |
 | 자동 배치 결과 창 | ![자동 배치](screenshots/4-autoplace.png) |
 | 나의 방(상점 칸 포함) | ![나의 방](screenshots/5-room.png) |
-| 캐릭터 | ![캐릭터](screenshots/6-character.png) |
+| 캐릭터 창(나의 방의 펫 칩으로 연다) | ![캐릭터 창](screenshots/6-character.png) |
 | 통계 | ![통계](screenshots/10-stats.png) |
 | 반려동물 고르기 창 | ![고르기](screenshots/7-pick.png) |
 | 설정 | ![설정](screenshots/8-settings.png) |

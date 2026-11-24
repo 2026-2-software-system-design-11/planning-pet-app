@@ -3,6 +3,8 @@ package planningpet.qa;
 import planningpet.app.Main;
 import planningpet.app.model.*;
 import planningpet.app.view.App;
+import planningpet.pet.view.CharacterDialog;
+import planningpet.pet.view.PetScreen;
 import planningpet.pet.view.PickDialog;
 import planningpet.schedule.model.*;
 import planningpet.schedule.view.*;
@@ -28,12 +30,16 @@ public final class Snap {
         dir.mkdirs();
         App app = Main.create(MockData.sample());
         app.control.windowShown();
-        String[][] screens = {{"홈", "1-main"}, {"일정관리", "2-schedule"}, {"나의 방", "5-room"}, {"캐릭터", "6-character"},
+        String[][] screens = {{"홈", "1-main"}, {"일정관리", "2-schedule"}, {"나의 방", "5-room"},
             {"통계", "10-stats"}, {"설정", "8-settings"}};
         for (String[] screen : screens) {
             app.show(screen[0]);
             save(app.root, new Dimension(1000, 680), new File(dir, screen[1] + ".png"));
         }
+        // 캐릭터 창(D-58)은 메인 창 1000x680 위에 뜨는 크기(폭 0.88배, 높이 0.86배)의 창 안이다.
+        PetScreen room = QaDrive.find(app.root, PetScreen.class);
+        room.character.opened(false);
+        save(CharacterDialog.content(room.character), new Dimension(880, 585), new File(dir, "6-character.png"));
         // 예시 그림과 같은 비율(16:9)로 넓게 그린 판. 강아지를 데려와 두 마리인 상태다(D-48).
         app.pet.adopt(true, "");
         app.pet.select("CAT");
@@ -45,11 +51,13 @@ public final class Snap {
         app.store.placed.remove("쿠션");
         app.store.changed();
         for (String[] screen : screens) {
-            if (screen[0].equals("나의 방") || screen[0].equals("캐릭터") || screen[0].equals("통계")) {
+            if (screen[0].equals("나의 방") || screen[0].equals("통계")) {
                 app.show(screen[0]);
                 save(app.root, new Dimension(1440, 810), new File(dir, screen[1] + "-wide.png"));
             }
         }
+        room.character.opened(false);
+        save(CharacterDialog.content(room.character), new Dimension(1267, 697), new File(dir, "6-character-wide.png"));
         LocalDate monday = TaskBook.mondayOf(app.store.today());
         save(TaskDialog.content(new TaskForm(null, app.store.today(), app.store.now), new JButton("취소"), new JButton("저장"), null), null, new File(dir, "3-form.png"));
         save(AutoPlaceDialog.content(app.store, monday, Planner.place(app.store, monday), new JButton("취소"),

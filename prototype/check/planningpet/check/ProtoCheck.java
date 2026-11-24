@@ -366,6 +366,34 @@ public final class ProtoCheck {
         eq("T-PET-4 자세", "자기", pa.store.pet().pose);
         pa.pet.select("DOG");
         eq("T-PET-5 없는 펫은 못 고른다", "CAT", pa.store.activeKind);
+        App ca = Main.create(MockData.sample());
+        ca.pet.adopt(true, "");
+        planningpet.pet.view.PetScreen cr = find(ca.root, planningpet.pet.view.PetScreen.class);
+        java.util.List<String> opened = new java.util.ArrayList<>();
+        cr.characterOpener = dress -> opened.add(ca.store.activeKind + (dress ? " 꾸미기 탭" : " 지금 탭"));
+        button(cr.room, "고양이").doClick();
+        button(cr, "캐릭터에서 꾸미기").doClick();
+        eq("D-58 펫 칩은 고르고 창을 연다, 캐릭터에서 꾸미기는 꾸미기 탭", "CAT 지금 탭, CAT 꾸미기 탭", String.join(", ", opened));
+        eq("D-58 메뉴에 캐릭터가 없다", "true", String.valueOf(button(ca.root, "캐릭터") == null));
+        cr.character.draft.clear();
+        cr.character.opened(false);
+        eq("D-58 다시 열면 입혀 보던 것을 버린다", ca.store.pet().wear.toString(), cr.character.draft.toString());
+    }
+
+    /** 글자가 text인 버튼(칩, 탭, 메뉴 포함). 없으면 null. */
+    static javax.swing.AbstractButton button(java.awt.Component c, String text) {
+        if (c instanceof javax.swing.AbstractButton b && text.equals(b.getText())) {
+            return b;
+        }
+        if (c instanceof java.awt.Container k) {
+            for (java.awt.Component child : k.getComponents()) {
+                javax.swing.AbstractButton b = button(child, text);
+                if (b != null) {
+                    return b;
+                }
+            }
+        }
+        return null;
     }
 
     static <T> T find(java.awt.Component c, Class<T> type) {
