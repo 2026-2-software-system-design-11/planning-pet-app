@@ -343,4 +343,47 @@ public final class ProtoCheck {
         }
         Stats.Period week = Stats.Period.week(pts.today());
         eq("T-STAT-5 주간 포인트", "70", String.valueOf(Stats.points(pts, week)));
+        pts.book.delete(pts.tasks.get(0), false);
+        eq("T-STAT-7 지워도 포인트는 그대로(D-19)", "70", String.valueOf(Stats.points(pts, week)));
+        Stats.Rate zero = Stats.rate(none, Stats.Period.week(none.today()));
+        eq("T-STAT-6 일정 없음", "0/0 0%", zero.done() + "/" + zero.total() + " " + zero.percent() + "%");
+        java.util.List<Task> kept = new java.util.ArrayList<>(two);
+        Store bs = MockData.empty();
+        Task bt = bs.book.add(Task.Kind.TASK, "b", bs.today(), null, 30, "", null).get(0);
+        bt.done = true;
+        bt.rewardExp = 10;
+        bt.rewardPet = "CAT";
+        bt.rewardDay = bs.today();
+        bs.book.delete(bt, false);
+        eq("T-BOND-3 지워도 친밀도는 그대로(D-19, D-49)", "1", String.valueOf(Bond.days(bs.book.rewardHistory(), "CAT")));
+        App pa = Main.create(MockData.sample());
+        pa.pet.rename("CAT", "  ");
+        String blank = pa.store.pet().name;
+        pa.pet.rename("CAT", "가나다라마바사아자차카");
+        eq("T-PET-3 이름", "나비 가나다라마바사아자차", blank + " " + pa.store.pet().name);
+        pa.pet.pose("CAT", "자기");
+        pa.pet.pose("CAT", "춤");
+        eq("T-PET-4 자세", "자기", pa.store.pet().pose);
+        pa.pet.select("DOG");
+        eq("T-PET-5 없는 펫은 못 고른다", "CAT", pa.store.activeKind);
+    }
+
+    static <T> T find(java.awt.Component c, Class<T> type) {
+        if (type.isInstance(c)) {
+            return type.cast(c);
+        }
+        if (c instanceof java.awt.Container k) {
+            for (java.awt.Component child : k.getComponents()) {
+                T t = find(child, type);
+                if (t != null) {
+                    return t;
+                }
+            }
+        }
+        return null;
+    }
+
+    private static String names(java.util.List<Shop.Item> items) {
+        return String.join(" ", items.stream().map(Shop.Item::name).toList());
+    }
 }
