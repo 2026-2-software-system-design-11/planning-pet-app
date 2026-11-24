@@ -6,7 +6,8 @@ import planningpet.app.model.*;
 import planningpet.app.view.App;
 import planningpet.common.model.Rules;
 import planningpet.common.view.Ui;
-import planningpet.pet.model.Talk;
+import planningpet.pet.model.*;
+import planningpet.stats.model.Stats;
 import planningpet.pet.view.PetView;
 import planningpet.reward.model.*;
 import planningpet.reward.view.WalkBar;
@@ -156,6 +157,7 @@ public final class ProtoCheck {
         eq("D-43 오류 글 다시 검사, 30분 안내", "하루 안에 끝나야 해요 / true false", recheck());
         eq("D-42 반복 끝 밖으로 옮겨 저장, 반복 표시", "true true 2026-12-29", moveLastCopy());
         eq("D-42 시각 창의 이후 반복 모두는 시각만", "11:00 보강 11:00", timeOnly());
+        newRules();
         System.out.println(failed == 0 ? "모두 통과" : failed + "개 실패");
         System.exit(failed == 0 ? 0 : 1);
     }
