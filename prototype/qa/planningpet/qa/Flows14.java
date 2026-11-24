@@ -88,3 +88,20 @@ final class Flows14 {
     }
 
     /** 툴팁이나 접근 이름이 name인 버튼, 또는 글이 text인 버튼. */
+    private static AbstractButton tip(Container root, String name, String text) {
+        for (AbstractButton b : QaRules.all(root, AbstractButton.class)) {
+            String an = b.getAccessibleContext().getAccessibleName();
+            if (name != null && (name.equals(b.getToolTipText()) || name.equals(an))) {
+                return b;
+            }
+            if (text != null && text.equals(b.getText())) {
+                return b;
+            }
+        }
+        throw new IllegalStateException("버튼을 찾지 못함: " + (name != null ? name : text));
+    }
+
+    private static AbstractButton text(Component root, String text) {
+        return tip((Container) root, null, text);
+    }
+}
