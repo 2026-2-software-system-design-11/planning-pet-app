@@ -178,3 +178,93 @@ public final class CharacterScreen extends JPanel {
         c.setBorder(BorderFactory.createEmptyBorder(12, 16, 14, 16));
         name.setFont(Theme.heavy(22));
         name.setIcon(Icons.icon(Icons.Kind.PAW, 24, Theme.ICON));
+        name.setIconTextGap(8);
+        rename.setFont(Theme.bold(13));
+        rename.setIcon(Icons.icon(Icons.Kind.PENCIL, 16, Theme.ICON));
+        rename.setIconTextGap(6);
+        rename.setBorder(BorderFactory.createEmptyBorder(6, 12, 8, 14));
+        rename.addActionListener(e -> askRename());
+        JPanel top = new JPanel(new BorderLayout());
+        top.add(name, BorderLayout.WEST);
+        top.add(rename, BorderLayout.EAST);
+        level.setFont(Theme.heavy(30));
+        bond.setFont(Theme.bold(14));
+        bond.setForeground(new Color(0xD8414E));
+        bond.setIcon(Icons.icon(Icons.Kind.HEART, 16, Theme.HEART));
+        bond.setHorizontalTextPosition(SwingConstants.LEFT);
+        bond.setIconTextGap(6);
+        bond.setToolTipText("경험치를 받은 날이 30일이면 100%예요. 쉬어도 줄지 않아요");
+        JPanel bondPill = new JPanel(new BorderLayout()) {
+            @Override
+            protected void paintComponent(Graphics graphics) {
+                Graphics2D g = (Graphics2D) graphics.create();
+                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g.setColor(new Color(0xFFECEE));
+                g.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, getHeight(), getHeight());
+                g.dispose();
+            }
+        };
+        bondPill.setBorder(BorderFactory.createEmptyBorder(4, 14, 6, 14));
+        bondPill.add(bond);
+        JPanel lv = new JPanel(new BorderLayout());
+        lv.add(level, BorderLayout.WEST);
+        JPanel pillWrap = new JPanel(new java.awt.GridBagLayout());
+        pillWrap.add(bondPill);
+        lv.add(pillWrap, BorderLayout.EAST);
+        expText.setFont(Theme.bold(13));
+        JPanel exp = new JPanel(new BorderLayout(12, 0));
+        exp.add(expText, BorderLayout.WEST);
+        JPanel barWrap = new JPanel(new java.awt.GridBagLayout());
+        java.awt.GridBagConstraints k = new java.awt.GridBagConstraints();
+        k.weightx = 1;
+        k.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        barWrap.add(expBar, k);
+        exp.add(barWrap, BorderLayout.CENTER);
+        JPanel head = new JPanel(new GridLayout(0, 1, 0, 2));
+        head.add(top);
+        head.add(lv);
+        head.add(exp);
+        Card growthCard = new Card(new BorderLayout(0, 4), 16);
+        growthCard.setBorder(BorderFactory.createEmptyBorder(8, 12, 8, 12));
+        JLabel gt = new JLabel("성장 단계");
+        gt.setFont(Theme.bold(15));
+        growthCard.add(gt, BorderLayout.NORTH);
+        growthCard.add(stages, BorderLayout.CENTER);
+        JPanel upper = new JPanel(new BorderLayout(0, 10));
+        upper.add(head, BorderLayout.NORTH);
+        upper.add(growthCard, BorderLayout.CENTER);
+        ButtonGroup tg = new ButtonGroup();
+        JPanel tabRow = new JPanel(new GridLayout(1, 3, 8, 0));
+        String[] names = {"상태", "꾸미기", "정보"};
+        for (int i = 0; i < tabs.length; i++) {
+            String n = names[i];
+            tg.add(tabs[i]);
+            tabRow.add(tabs[i]);
+            tabs[i].addActionListener(e -> {
+                tabCards.show(tabBody, n);
+                apply.setVisible("꾸미기".equals(n));
+            });
+        }
+        tabs[1].setSelected(true);
+        tabBody.add(text(stateText), "상태");
+        tabBody.add(dress(), "꾸미기");
+        tabBody.add(text(infoText), "정보");
+        tabCards.show(tabBody, "꾸미기");
+        apply.putClientProperty(RoundButtonUI.PRIMARY, Boolean.TRUE);
+        apply.setFont(Theme.bold(16));
+        apply.setIcon(Icons.icon(Icons.Kind.PAW, 20, Color.WHITE));
+        apply.setIconTextGap(8);
+        apply.setBorder(BorderFactory.createEmptyBorder(10, 60, 12, 60));
+        apply.addActionListener(e -> app.pet.applyWear(app.store.pet().kind, new LinkedHashMap<>(draft)));
+        JPanel applyRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        applyRow.add(apply);
+        JPanel lower = new JPanel(new BorderLayout(0, 10));
+        lower.add(tabRow, BorderLayout.NORTH);
+        lower.add(tabBody, BorderLayout.CENTER);
+        lower.add(applyRow, BorderLayout.SOUTH);
+        c.add(upper, BorderLayout.NORTH);
+        c.add(lower, BorderLayout.CENTER);
+        c.setPreferredSize(new Dimension(420, 0));
+        return c;
+    }
+
