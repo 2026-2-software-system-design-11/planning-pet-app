@@ -14,13 +14,6 @@ public record TaskDraft(Task.Kind kind, String title, String category, LocalDate
         this(kind, title, Categories.OTHER, date, null, start, minutes, memo, null, null);
     }
 
-    /** 옮기는 동안만 쓰는 예전 꼴(매주 반복, 그 날짜의 요일). 일정 입력 창을 새 반복 칸으로 바꾸면 지운다. */
-    public TaskDraft(Task.Kind kind, String title, LocalDate date, LocalTime start, int minutes, String memo,
-            LocalDate repeatEnd, String category) {
-        this(kind, title, category, date, null, start, minutes, memo,
-                repeatEnd == null ? null : Repeat.weekly(date.getDayOfWeek()), repeatEnd);
-    }
-
     public TaskDraft withDue(LocalDate due) {
         return new TaskDraft(kind, title, category, date, due, start, minutes, memo, repeat, repeatEnd);
     }

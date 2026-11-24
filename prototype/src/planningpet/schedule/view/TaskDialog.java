@@ -35,17 +35,28 @@ public final class TaskDialog {
         return root;
     }
 
-    public static void open(App app, Task editing, LocalDate defaultDate) {
+    /** 창의 칸. 반복 사본을 고치면 반복 칸이 그 반복의 방식과 마지막 날짜를 보인다(D-42). */
+    public static TaskForm form(App app, Task editing, LocalDate defaultDate) {
         TaskForm f = new TaskForm(editing, defaultDate, app.store.now);
         if (editing != null && editing.seriesId != null) {
-            f.showSeries(app.store.book.seriesEnd(editing));
+            f.showSeries(editing.repeat, app.store.book.seriesEnd(editing));
         }
+        return f;
+    }
+
+    /** 창 제목 줄. */
+    public static String title(Task editing) {
+        return editing == null ? "일정 추가" : "일정 수정";
+    }
+
+    public static void open(App app, Task editing, LocalDate defaultDate) {
+        TaskForm f = form(app, editing, defaultDate);
         JButton cancel = new JButton("취소");
         JButton saveButton = new JButton("저장");
         JButton delete = editing == null ? null : new JButton("삭제");
         JPanel root = content(f, cancel, saveButton, delete);
         JDialog d = new JDialog(SwingUtilities.getWindowAncestor(app.root),
-                editing == null ? "일정 추가" : "일정 수정", JDialog.ModalityType.APPLICATION_MODAL);
+                title(editing), JDialog.ModalityType.APPLICATION_MODAL);
         d.setContentPane(root);
         f.relayout = d::pack;
         cancel.addActionListener(e -> d.dispose());
@@ -76,7 +87,7 @@ public final class TaskDialog {
 
     /** 저장 버튼과 같다. 검사를 통과하면 저장하고 true, 아니면 칸 아래에 오류를 모두 보이고 false. */
     public static boolean trySave(App app, TaskForm f, Task editing) {
-        var problems = TaskCheck.check(f.draft(), f.editing());
+        var problems = f.problems();
         f.showErrors(problems);
         if (!problems.isEmpty()) {
             return false;

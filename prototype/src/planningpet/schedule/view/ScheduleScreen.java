@@ -138,7 +138,7 @@ public final class ScheduleScreen extends JPanel {
             }
             header.add(label);
         }
-        untimed.show(app.store.book.untimedOfWeek(monday), true);
+        untimed.show(app.store.book.untimedOfWeek(monday), monday);
         int n = Planner.targets(app.store, monday).size();
         autoPlace.setEnabled(n > 0);
         // 화면을 열거나 주를 옮기면 SCHEDULE_HINT. 보이는 중에 바뀌면 새 펫 말(완료, 취소, 상한, 레벨 업)이
