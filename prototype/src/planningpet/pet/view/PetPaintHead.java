@@ -178,3 +178,25 @@ abstract class PetPaintHead extends PetPaintWear {
             Path2D m = new Path2D.Double();
             m.moveTo(-13, 26);
             m.quadTo(0, 30, 13, 26);
+            m.quadTo(12, 26 + h * 1.3, 0, 26 + h * 1.3);
+            m.quadTo(-12, 26 + h * 1.3, -13, 26);
+            m.closePath();
+            filled(m, MOUTH);
+            shadeIn(m, ell(0, 26 + h * 1.2, 10, h * 0.5), TONGUE);
+            redraw(m);
+            stroke(new java.awt.geom.Line2D.Double(0, 20, 0, 27), w * 0.8f, ink);
+        } else {
+            stroke(new java.awt.geom.Line2D.Double(0, 20, 0, 25), w * 0.75f, ink);
+            stroke(new QuadCurve2D.Double(-14, 24, -7, 33, 0, 25), w * 0.75f, ink);
+            stroke(new QuadCurve2D.Double(0, 25, 7, 33, 14, 24), w * 0.75f, ink);
+        }
+        // 고양이 수염
+        if (cat) {
+            float ww = line * 0.42f;
+            for (int s : new int[] {-1, 1}) {
+                stroke(new java.awt.geom.Line2D.Double(s * 82, 10, s * 124, 2), ww, ink);
+                stroke(new java.awt.geom.Line2D.Double(s * 82, 22, s * 120, 26), ww, ink);
+            }
+        }
+    }
+}
