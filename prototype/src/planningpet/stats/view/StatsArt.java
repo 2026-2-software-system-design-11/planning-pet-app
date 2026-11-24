@@ -88,3 +88,93 @@ final class StatsArt {
         switch (kind) {
             case TARGET -> {
                 g.setStroke(new BasicStroke(2.2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                g.draw(new Arc2D.Double(2.5, 3.5, 18, 18, 60, 300, Arc2D.OPEN));
+                g.draw(new Ellipse2D.Double(7, 8, 9, 9));
+                g.fill(new Ellipse2D.Double(10, 11, 3, 3));
+                g.draw(path(11.5, 12.5, 19.5, 4.5));
+                g.draw(path(17, 2.5, 17, 7, 21.5, 7));
+            }
+            case PIE -> {
+                g.draw(new Arc2D.Double(3, 4, 17, 17, 90, 270, Arc2D.PIE));
+                g.fill(new Arc2D.Double(5, 2, 17, 17, 0, 90, Arc2D.PIE));
+            }
+            case SWAP -> {
+                g.setStroke(new BasicStroke(2.4f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                g.draw(path(3, 8, 20, 8));
+                g.draw(path(16, 4, 20, 8, 16, 12));
+                g.draw(path(21, 16, 4, 16));
+                g.draw(path(8, 12, 4, 16, 8, 20));
+            }
+            case BOOK -> {
+                Path2D left = new Path2D.Double();
+                left.moveTo(12, 6.5);
+                left.curveTo(9.5, 4.8, 6, 4.6, 2.5, 5.5);
+                left.lineTo(2.5, 18.5);
+                left.curveTo(6, 17.6, 9.5, 17.8, 12, 19.5);
+                left.closePath();
+                g.draw(left);
+                Path2D right = new Path2D.Double();
+                right.moveTo(12, 6.5);
+                right.curveTo(14.5, 4.8, 18, 4.6, 21.5, 5.5);
+                right.lineTo(21.5, 18.5);
+                right.curveTo(18, 17.6, 14.5, 17.8, 12, 19.5);
+                right.closePath();
+                g.draw(right);
+                g.setStroke(new BasicStroke(1.4f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                g.draw(path(5, 9, 9.5, 9.6));
+                g.draw(path(5, 12.5, 9.5, 13.1));
+                g.draw(path(14.5, 9.6, 19, 9));
+                g.draw(path(14.5, 13.1, 19, 12.5));
+            }
+            case DUMBBELL -> {
+                g.fill(new RoundRectangle2D.Double(1.5, 9, 3, 6, 1.5, 1.5));
+                g.fill(new RoundRectangle2D.Double(4.5, 6, 3.6, 12, 2, 2));
+                g.fill(new RoundRectangle2D.Double(19.5, 9, 3, 6, 1.5, 1.5));
+                g.fill(new RoundRectangle2D.Double(15.9, 6, 3.6, 12, 2, 2));
+                g.setStroke(new BasicStroke(2.6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                g.draw(path(8, 12, 16, 12));
+            }
+            case LAPTOP -> {
+                g.draw(new RoundRectangle2D.Double(4.5, 5, 15, 10.5, 2.5, 2.5));
+                g.draw(path(2, 18.5, 22, 18.5));
+                g.draw(path(4.5, 15.5, 2.5, 18.5));
+                g.draw(path(19.5, 15.5, 21.5, 18.5));
+            }
+            case CUP -> {
+                Path2D cup = new Path2D.Double();
+                cup.moveTo(4, 9);
+                cup.lineTo(16.5, 9);
+                cup.lineTo(16, 16);
+                cup.curveTo(15.8, 18.5, 14, 20, 11.5, 20);
+                cup.lineTo(9, 20);
+                cup.curveTo(6.5, 20, 4.7, 18.5, 4.5, 16);
+                cup.closePath();
+                g.draw(cup);
+                g.draw(new Arc2D.Double(13.5, 10, 7, 6, -90, 180, Arc2D.OPEN));
+                g.setStroke(new BasicStroke(1.6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                g.draw(path(8, 6.5, 8.6, 4.8, 8, 3));
+                g.draw(path(12, 6.5, 12.6, 4.8, 12, 3));
+            }
+            case TAG -> {
+                g.draw(path(3.5, 4.5, 11.5, 4.5, 20.5, 13.5, 13.5, 20.5, 3.5, 11.5, 3.5, 4.5));
+                g.fill(new Ellipse2D.Double(6.5, 7.5, 3, 3));
+            }
+            case HELP -> {
+                g.setStroke(new BasicStroke(1.9f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                g.draw(new Ellipse2D.Double(2.5, 2.5, 19, 19));
+                Path2D q = new Path2D.Double();
+                q.moveTo(9.2, 9.6);
+                q.curveTo(9.2, 7.6, 10.6, 6.6, 12.1, 6.6);
+                q.curveTo(13.8, 6.6, 15, 7.8, 15, 9.3);
+                q.curveTo(15, 11.6, 12.2, 11.7, 12.2, 14);
+                g.draw(q);
+                g.fill(new Ellipse2D.Double(10.9, 16, 2.6, 2.6));
+            }
+            case LEFT -> {
+                g.setStroke(new BasicStroke(2.8f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                g.draw(path(14.5, 5.5, 8, 12, 14.5, 18.5));
+            }
+            case RIGHT -> {
+                g.setStroke(new BasicStroke(2.8f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                g.draw(path(9.5, 5.5, 16, 12, 9.5, 18.5));
+            }
