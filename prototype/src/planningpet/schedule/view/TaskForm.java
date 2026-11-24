@@ -23,6 +23,8 @@ public final class TaskForm {
     public final JCheckBox repeat = new JCheckBox("매주 반복, 끝");
     public final JSpinner repeatEnd = new JSpinner(new SpinnerDateModel());
     public final JTextArea memo = new JTextArea(3, 22);
+    /** D-54 유형. */
+    public final javax.swing.JComboBox<String> category = new javax.swing.JComboBox<>(Categories.ALL.toArray(new String[0]));
     /** 칸 아래 빨간 오류 글(05). 칸 순서다. */
     public final java.util.Map<String, JLabel> errors = new java.util.LinkedHashMap<>();
     public final JLabel repeatHint = Ui.hint("반복은 고정 일정만 할 수 있어요");
@@ -55,6 +57,7 @@ public final class TaskForm {
         line("종류", Ui.flow(task, fixed));
         line("제목", title);
         line("", errors.get("제목"));
+        line("유형", Ui.flow(category));
         line("날짜", date);
         line("시작 시각", Ui.flow(timed, start));
         line("", errors.get("시작 시각"));
@@ -66,6 +69,7 @@ public final class TaskForm {
         line("", repeatHint);
         line("메모", new JScrollPane(memo));
         line("", errors.get("메모"));
+        category.setSelectedItem(Categories.OTHER);
         title.setText(t == null ? "" : t.title);
         Ui.setDate(date, t == null ? defaultDate : t.date);
         Ui.setDate(repeatEnd, DefaultDates.repeatEnd(t == null ? defaultDate : t.date));
@@ -75,6 +79,7 @@ public final class TaskForm {
             start.setValue(t.timed() ? t.start.toString() : "09:00");
             minutes.setValue(t.minutes);
             memo.setText(t.memo);
+            category.setSelectedItem(t.category);
             for (JComponent c : new JComponent[] {task, fixed, repeat, repeatEnd}) {
                 c.setEnabled(false);
             }
@@ -140,7 +145,8 @@ public final class TaskForm {
     /** 칸에 쓴 값. 반복이 꺼져 있으면 반복 끝은 null이다. */
     public TaskDraft draft() {
         return new TaskDraft(fixed.isSelected() ? Task.Kind.FIXED : Task.Kind.TASK, title.getText(), Ui.dateOf(date),
-                startTime(), (int) minutes.getValue(), memo.getText(), repeat.isSelected() ? Ui.dateOf(repeatEnd) : null);
+                startTime(), (int) minutes.getValue(), memo.getText(), repeat.isSelected() ? Ui.dateOf(repeatEnd) : null,
+                (String) category.getSelectedItem());
     }
 
     /** D-42: 반복 사본을 고칠 때 반복 칸을 켠 채(비활성) 그 반복의 마지막 날짜를 보인다. */

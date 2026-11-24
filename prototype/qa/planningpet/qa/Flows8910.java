@@ -211,7 +211,7 @@ final class Flows8910 {
         q.select("2026-11-20");
         q.yes("지움", q.delete(t, 0));
         q.eq("확인 창", "일정 삭제 / '논문 읽기'를 삭제할까요? / 삭제, 취소", q.lastTitle + " / " + q.lastQuestion + " / " + q.lastOptions);
-        q.eq("상태", "10P 경험치10 횟수1 있음 false", q.app.store.points + "P 경험치" + q.app.store.exp + " 횟수" + q.count()
+        q.eq("상태", "10P 경험치10 횟수1 있음 false", q.app.store.points + "P 경험치" + q.app.store.pet().exp + " 횟수" + q.count()
                 + " 있음 " + q.app.store.tasks.contains(t));
         q.end();
     }

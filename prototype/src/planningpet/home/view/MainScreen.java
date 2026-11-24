@@ -125,9 +125,9 @@ public final class MainScreen extends JPanel {
                 + WEEK.charAt(date.getDayOfWeek().getValue() - 1) + ") 할 일");
         rows.showPlan(app.store.book.dayPlan(date));
         calendar.refresh();
-        levelName.setText(app.store.petName + " Lv." + Level.level(app.store.exp));
+        levelName.setText(app.store.pet().name + " Lv." + Level.level(app.store.pet().exp));
         levelName.setFont(Theme.bold(15));
-        levelBar.setValue((int) (Level.expRatio(app.store.exp) * 1000));
-        levelText.setText(Level.expText(app.store.exp));
+        levelBar.setValue((int) (Level.expRatio(app.store.pet().exp) * 1000));
+        levelText.setText(Level.expText(app.store.pet().exp));
     }
 }

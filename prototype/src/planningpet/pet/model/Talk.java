@@ -21,7 +21,7 @@ public final class Talk {
     public String opening(LocalDate before) {
         LocalDate today = s.today();
         if (before == null) {
-            return "안녕, 나는 " + s.petName + Rules.iya(s.petName) + ". 일정관리에서 이번 학기 수업부터 넣어 볼까?";
+            return "안녕, 나는 " + s.pet().name + Rules.iya(s.pet().name) + ". 일정관리에서 이번 학기 수업부터 넣어 볼까?";
         }
         if (ChronoUnit.DAYS.between(before, today) >= 8) {
             int n = s.book.checkables(today).size();

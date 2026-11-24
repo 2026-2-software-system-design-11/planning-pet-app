@@ -66,8 +66,9 @@ public final class ProtoCheck {
         var cols = Planner.columns(java.util.List.of(a, b));
         eq("T-TT-5", "1/2 0/2", cols.get(a)[0] + "/" + cols.get(a)[1] + " " + cols.get(b)[0] + "/" + cols.get(b)[1]);
         Store first = MockData.empty();
-        first.petKind = "DOG";
-        first.petName = "바둑이";
+        first.pets.clear();
+        first.pets.add(new planningpet.pet.model.PetState("DOG", "바둑이"));
+        first.activeKind = "DOG";
         eq("T-BRF-6, FIRST_RUN", "안녕, 나는 바둑이야. 일정관리에서 이번 학기 수업부터 넣어 볼까? 1",
                 new AppController(first, new Talk(first)).windowShown() + " " + first.streak);
         Store d = MockData.empty();
@@ -98,9 +99,9 @@ public final class ProtoCheck {
         Game rg = new Game(r);
         Task x = r.book.add(Task.Kind.TASK, "과제", nov16, null, 30, "", null).get(0);
         RewardResult done1 = rg.complete(x);
-        eq("T-RWD-1", "REWARDED 10 10 1", done1.outcome() + " " + r.points + " " + r.exp + " " + r.rewardCount);
+        eq("T-RWD-1", "REWARDED 10 10 1", done1.outcome() + " " + r.points + " " + r.pet().exp + " " + r.rewardCount);
         rg.uncomplete(x);
-        eq("T-UNDO-1", "0 0 0 false", r.points + " " + r.exp + " " + r.rewardCount + " " + x.done);
+        eq("T-UNDO-1", "0 0 0 false", r.points + " " + r.pet().exp + " " + r.rewardCount + " " + x.done);
         r.rewardCount = 20;
         eq("T-RWD-5", "CAPPED 0", rg.complete(x).outcome() + " " + r.points);
         rg.uncomplete(x);
@@ -142,7 +143,7 @@ public final class ProtoCheck {
         Task hw = f2.book.add(Task.Kind.TASK, "과제", nov16, null, 30, "", null).get(0);
         f2.book.add(Task.Kind.TASK, "운동", nov16, null, 30, "", null);
         Game fg = new Game(f2);
-        eq("T-RWD-7", "REWARDED 10 10", fg.complete(cls).outcome() + " " + f2.points + " " + f2.exp);
+        eq("T-RWD-7", "REWARDED 10 10", fg.complete(cls).outcome() + " " + f2.points + " " + f2.pet().exp);
         fg.complete(hw);
         long doneCount = f2.book.checkables(nov16).stream().filter(z -> z.done).count();
         eq("T-PRG-3", "2/4", doneCount + "/" + f2.book.checkables(nov16).size());

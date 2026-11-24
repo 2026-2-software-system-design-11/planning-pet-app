@@ -1,6 +1,7 @@
 package planningpet.reward.model;
 
 import planningpet.app.model.Store;
+import planningpet.pet.model.PetState;
 import planningpet.schedule.model.Task;
 import java.time.LocalDate;
 
@@ -10,7 +11,7 @@ public final class Game {
     private static final int DAILY_CAP = 20;
     public static final int TASK_POINTS = 10;
     public static final int TASK_EXP = 10;
-    private static final int ATTEND_POINTS = 20;
+    public static final int ATTEND_POINTS = 20;
 
     private final Store s;
 
@@ -20,7 +21,8 @@ public final class Game {
 
     public RewardResult complete(Task t) {
         LocalDate today = s.today();
-        int before = Level.level(s.exp);
+        PetState pet = s.pet();
+        int before = Level.level(pet.exp);
         if (!today.equals(s.rewardCountDay)) {
             s.rewardCountDay = today;
             s.rewardCount = 0;
@@ -32,15 +34,19 @@ public final class Game {
         t.rewardPoints = TASK_POINTS;
         t.rewardExp = TASK_EXP;
         t.rewardDay = today;
+        t.rewardPet = pet.kind;
         s.points += t.rewardPoints;
-        s.exp += t.rewardExp;
+        pet.exp += t.rewardExp;
         s.rewardCount++;
-        return new RewardResult(RewardResult.Outcome.REWARDED, before, Level.level(s.exp));
+        return new RewardResult(RewardResult.Outcome.REWARDED, before, Level.level(pet.exp));
     }
 
     public void uncomplete(Task t) {
         s.points -= t.rewardPoints;
-        s.exp -= t.rewardExp;
+        PetState pet = t.rewardPet != null ? s.pet(t.rewardPet) : t.rewardExp > 0 ? s.pet() : null;
+        if (pet != null) {
+            pet.exp -= t.rewardExp;
+        }
         if (s.today().equals(t.rewardDay) && s.today().equals(s.rewardCountDay)) {
             s.rewardCount--;
         }
@@ -48,6 +54,7 @@ public final class Game {
         t.rewardPoints = 0;
         t.rewardExp = 0;
         t.rewardDay = null;
+        t.rewardPet = null;
     }
 
     public boolean attend() {
@@ -56,6 +63,7 @@ public final class Game {
         }
         s.points += ATTEND_POINTS;
         s.attendanceDay = s.today();
+        s.attendDays.add(s.today());
         return true;
     }
 }

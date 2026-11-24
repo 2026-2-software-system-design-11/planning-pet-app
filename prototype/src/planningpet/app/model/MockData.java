@@ -27,14 +27,17 @@ public final class MockData {
     /** 반려동물 고르기 창의 미리보기. 그 동물만 정한 빈 데이터다. */
     public static Store look(String petKind) {
         Store s = empty();
-        s.petKind = petKind;
+        s.pets.clear();
+        s.pets.add(new planningpet.pet.model.PetState(petKind, planningpet.pet.model.PetState.defaultName(petKind)));
+        s.activeKind = petKind;
         return s;
     }
 
     public static Store sample() {
         Store s = empty();
         s.points = 100;
-        s.exp = 210;
+        s.pet().exp = 210;
+        s.attendDays.add(LocalDate.of(2026, 11, 13));
         s.streak = 4;
         s.lastOpenDay = LocalDate.of(2026, 11, 13);
         s.rewardCountDay = LocalDate.of(2026, 11, 14);
@@ -60,12 +63,16 @@ public final class MockData {
         task(s, 14, "운동", null, 30);
         task(s, 15, "은행 서류", null, 30);
         task(s, 18, "통계 레포트", null, 120);
+        // D-54 유형. 통계 예시처럼 학업, 운동, 프로젝트, 개인/취미가 섞이게 한다.
+        java.util.Map<String, String> kinds = java.util.Map.of("빨래", "개인/취미", "토익 스터디", "학업", "알고리즘 과제 2번", "학업",
+                "자소서 초안", "프로젝트", "토익 단어", "학업", "운동", "운동", "통계 레포트", "학업");
+        s.tasks.forEach(t -> t.category = kinds.getOrDefault(t.title, t.category));
         return s;
     }
 
     private static void weekly(Store s, String title, DayOfWeek day, int hour, int minute) {
         LocalDate first = TERM_START.with(TemporalAdjusters.nextOrSame(day));
-        s.book.add(Task.Kind.FIXED, title, first, LocalTime.of(hour, minute), 75, "", TERM_END);
+        s.book.add(Task.Kind.FIXED, title, first, LocalTime.of(hour, minute), 75, "", TERM_END).forEach(t -> t.category = "학업");
     }
 
     private static Task task(Store s, int day, String title, LocalTime start, int minutes) {
@@ -76,6 +83,7 @@ public final class MockData {
         t.done = true;
         t.rewardPoints = Game.TASK_POINTS;
         t.rewardExp = Game.TASK_EXP;
+        t.rewardPet = "CAT";
         t.rewardDay = LocalDate.of(2026, 11, rewardDay);
     }
 }
