@@ -97,10 +97,10 @@ final class Flows345 {
         f.start.setValue("18:00");
         f.minutes.setValue(240);
         f.repeat.setSelectedItem("요일");
-        q.eq("끝 시각, 반복 칸", "끝 22:00 / 요일 [화] 끝 2027-03-02", f.endLabel.getText() + " / " + repeat(f));
+        q.eq("끝 시각, 반복 칸", "22:00에 끝나요 / 요일 [화] 끝 2027-03-02", f.endLabel.getText() + " / " + repeat(f));
         q.step("4", "끝 날짜를 2026-11-10으로 바꿔 저장한다");
         Ui.setDate(f.repeatEnd, QaDrive.d("2026-11-10"));
-        q.eq("저장", "false 끝 날짜가 시작 날짜보다 앞이에요", q.save(f, null) + " " + f.errorText());
+        q.eq("저장", "false 반복 끝나는 날이 날짜보다 앞이에요", q.save(f, null) + " " + f.errorText());
         q.step("5", "끝 날짜를 2027-05-18로 바꾼다");
         Ui.setDate(f.repeatEnd, QaDrive.d("2027-05-18"));
         q.eq("오류 글(D-43, 화요일 27개는 120개 안)", "", f.errorText());
@@ -108,6 +108,7 @@ final class Flows345 {
         f.days[3].doClick();
         Ui.setDate(f.repeatEnd, QaDrive.d("2026-12-17"));
         q.yes("저장", q.save(f, null));
+        q.eq("펫(D-75)", "17일(화)부터 화, 목마다 넣었어요", q.app.store.talk);
         q.eq("화요일", "2026-11-17,2026-11-24,2026-12-01,2026-12-08,2026-12-15",
                 dates(q, "편의점 알바", java.time.DayOfWeek.TUESDAY));
         q.eq("목요일", "2026-11-19,2026-11-26,2026-12-03,2026-12-10,2026-12-17",
@@ -220,7 +221,7 @@ final class Flows345 {
         Planner.Placement p = q.place();
         q.eq("결과 창", "11월 17일 21:40부터 11월 22일까지, 할 일마다 그 날짜(기간 할 일은 기간) 안의 빈 시간에 놓았어요"
                 + " / 행정법 기출|11월 17일|21:40 ~ 22:40|60분 / 한국사 회독|11월 17일|22:40 ~ 23:40|60분"
-                + " / 오답 정리|놓지 못함|그날 빈 시간이 모자라요|30분", q.placement(p));
+                + " / 놓지 못한 일 / 오답 정리 날짜 11/17(화) 그날 빈 시간이 모자라요 / " + Flows8910.HINT, q.placement(p));
         q.step("3", "적용을 누른다");
         q.apply(p);
         q.app.show("홈");

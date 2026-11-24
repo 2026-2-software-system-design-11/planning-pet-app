@@ -51,6 +51,29 @@ public final class Planner {
                 .toList();
     }
 
+    /** 놓지 못한 일 아래 붙이는 다음 할 일(D-76). */
+    public static final String UNPLACED_HINT = "다른 일을 옮기거나, 걸리는 시간을 나누거나, 시각을 정해 보세요";
+
+    /**
+     * 놓지 못한 까닭(D-76). 마감이 보이는 주 뒤인 기간 할 일은 다음 주에 놓을 수 있다고 알린다. 기간 할 일은 마감까지, 그 밖은
+     * 그날의 빈 시간이 모자란 것이다.
+     */
+    public static String reason(Task t, LocalDate monday) {
+        if (t.period() && t.dueDate.isAfter(monday.plusDays(6))) {
+            return "이번 주엔 자리가 없어요. 마감 " + dayText(t.dueDate) + "까지 시간이 있으니 다음 주에서 자동 배치하면 놓을 수 있어요";
+        }
+        return t.period() ? "마감까지 빈 시간이 모자라요" : "그날 빈 시간이 모자라요";
+    }
+
+    /** 놓지 못한 일의 날짜: 기간 할 일은 "마감 11/22(일)", 그 밖은 그 일의 날짜 "날짜 11/17(화)"("마감"은 기간 할 일에만, D-71). */
+    public static String dueText(Task t) {
+        return t.period() ? "마감 " + dayText(t.dueDate) : "날짜 " + dayText(t.date);
+    }
+
+    private static String dayText(LocalDate d) {
+        return d.getMonthValue() + "/" + d.getDayOfMonth() + "(" + "월화수목금토일".charAt(d.getDayOfWeek().getValue() - 1) + ")";
+    }
+
     /** 지금을 5분 단위로 올린 시각(D-38). 이보다 앞에는 놓지 않는다. */
     public static LocalDateTime earliest(Store s) {
         LocalDateTime now = s.now.truncatedTo(ChronoUnit.MINUTES).plusMinutes(s.now.getSecond() > 0 ? 1 : 0);

@@ -106,6 +106,13 @@ public final class Talk {
         return n > 0 ? day + " 할 일은 " + n + "개야." : day + "은 할 일이 없어.";
     }
 
+    /** D-75. 요일 반복을 넣은 뒤 첫 사본의 날과 요일들: "17일(화)부터 화, 목마다 넣었어요". */
+    public String weeklyAdded(List<Task> made) {
+        Task first = made.get(0);
+        String day = "월화수목금토일".charAt(first.date.getDayOfWeek().getValue() - 1) + "";
+        return first.date.getDayOfMonth() + "일(" + day + ")부터 " + first.repeat + "마다 넣었어요";
+    }
+
     /** D-36. 완료 취소 때 빠진 보상을 말한다. */
     public String uncompleted(int points, int levelBefore, int levelAfter) {
         if (points == 0) {

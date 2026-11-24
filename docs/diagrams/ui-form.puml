@@ -12,7 +12,7 @@
   걸리는 시간 | { "30" | [▲▼] | 분 } | .
   . | <size:11><color:#666666>안 바꾸면 30분으로 들어가요</color></size> | .
   반복 | { ^안 함^ | <color:#AAAAAA>월 화 수 목 금 토 일</color> } | .
-  . | { <color:#AAAAAA>끝</color> | "<color:#AAAAAA>2026-12-12</color>" | [<color:#AAAAAA>▲▼</color>] } | .
+  . | { <color:#AAAAAA>반복 끝나는 날</color> | "<color:#AAAAAA>2026-12-12</color>" | [<color:#AAAAAA>▲▼</color>] } | .
   메모 | {+ 1번 문항 먼저 쓰기
   지난번 초안 참고
   . } | .

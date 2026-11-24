@@ -27,7 +27,8 @@ final class Flows8910 {
         flows.put("UF-10-3", Flows8910::uf103);
     }
 
-    static final String UNPLACED = "놓지 못함|그날 빈 시간이 모자라요";
+    /** D-76: 표 아래 "놓지 못한 일" 칸의 끝 줄. */
+    static final String HINT = "다른 일을 옮기거나, 걸리는 시간을 나누거나, 시각을 정해 보세요";
 
     static void uf81() {
         Qa q = new Qa("UF-8-1");
@@ -39,7 +40,8 @@ final class Flows8910 {
         q.step("2", "자동 배치를 누른다");
         q.eq("결과 창", "11월 20일 23:40부터 11월 22일까지, 할 일마다 그 날짜(기간 할 일은 기간) 안의 빈 시간에 놓았어요"
                 + " / 세법 요약|11월 20일|23:40 ~ 24:00|20분 / 재무회계|11월 21일|09:00 ~ 10:00|60분"
-                + " / 경영학|11월 21일|10:00 ~ 11:00|60분 / 원가회계|" + UNPLACED + "|30분", q.placement(q.place()));
+                + " / 경영학|11월 21일|10:00 ~ 11:00|60분 / 놓지 못한 일 / 원가회계 날짜 11/20(금) 그날 빈 시간이 모자라요 / " + HINT,
+                q.placement(q.place()));
         q.step("3", "23:55에 원가회계의 시각 정하기를 누른다");
         q.at("2026-11-20T23:55");
         Task t = q.task("원가회계");
@@ -51,7 +53,8 @@ final class Flows8910 {
         q.at("2026-11-21T01:00");
         q.eq("결과 창", "11월 21일 09:00부터 11월 22일까지, 할 일마다 그 날짜(기간 할 일은 기간) 안의 빈 시간에 놓았어요"
                 + " / 재무회계|11월 21일|09:00 ~ 10:00|60분 / 경영학|11월 21일|10:00 ~ 11:00|60분"
-                + " / 원가회계|" + UNPLACED + "|30분 / 세법 요약|" + UNPLACED + "|20분", q.placement(q.place()));
+                + " / 놓지 못한 일 / 원가회계 날짜 11/20(금) 그날 빈 시간이 모자라요 / 세법 요약 날짜 11/20(금) 그날 빈 시간이 모자라요 / "
+                + HINT, q.placement(q.place()));
         q.end();
     }
 
@@ -182,12 +185,12 @@ final class Flows8910 {
         q.app.show("홈");
         q.step("1", "논문 읽기 23:30 30분");
         TaskForm f = timed(q, "논문 읽기", "23:30", 30);
-        q.eq("끝", "끝 24:00", f.endLabel.getText());
+        q.eq("끝", "24:00에 끝나요", f.endLabel.getText());
         q.yes("저장", q.save(f, null));
         q.has("목록", "[ ] 논문 읽기 23:30~24:00 30분", q.rows());
         q.step("2", "논문 정리 23:30 40분으로 저장한다");
         TaskForm g = timed(q, "논문 정리", "23:30", 40);
-        q.eq("끝, 저장", "끝 24:10 false 하루 안에 끝나야 해요", g.endLabel.getText() + " " + q.save(g, null) + " " + g.errorText());
+        q.eq("끝, 저장", "24:10에 끝나요 false 하루 안에 끝나야 해요", g.endLabel.getText() + " " + q.save(g, null) + " " + g.errorText());
         q.step("3", "실험 정리 720분으로 저장한다");
         TaskForm h = q.form("2026-11-17");
         h.title.setText("실험 정리");

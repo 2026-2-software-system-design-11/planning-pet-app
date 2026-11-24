@@ -29,8 +29,8 @@ public final class DefaultDates {
         return date.plusWeeks(kind == Task.Kind.FIXED ? 15 : 4);
     }
 
-    /** 마감 기본값(D-65): 그 날짜가 든 주(월요일부터 일요일)의 일요일. */
+    /** 마감 기본값(D-65): 그 날짜가 든 주(월요일부터 일요일)의 일요일. 일요일이면 다음 주 일요일이다(D-73). */
     public static LocalDate due(LocalDate date) {
-        return date.with(java.time.temporal.TemporalAdjusters.nextOrSame(java.time.DayOfWeek.SUNDAY));
+        return date.with(java.time.temporal.TemporalAdjusters.next(java.time.DayOfWeek.SUNDAY));
     }
 }

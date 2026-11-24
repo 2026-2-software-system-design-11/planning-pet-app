@@ -120,7 +120,28 @@ final class Qa extends QaDrive {
             }
             out.add(String.join("|", cols));
         }
+        JPanel rest = findNamed(root, "놓지 못한 일");
+        if (rest != null) {
+            for (java.awt.Component c : rest.getComponents()) {
+                out.add(((JLabel) c).getText().replaceAll("<br>", " ").replaceAll("<[^>]+>", "").strip());
+            }
+        }
         return head.getText() + " / " + String.join(" / ", out);
+    }
+
+    private static JPanel findNamed(java.awt.Component c, String name) {
+        if (c instanceof JPanel p && name.equals(p.getName())) {
+            return p;
+        }
+        if (c instanceof java.awt.Container k) {
+            for (java.awt.Component child : k.getComponents()) {
+                JPanel found = findNamed(child, name);
+                if (found != null) {
+                    return found;
+                }
+            }
+        }
+        return null;
     }
 
     /** 나의 방 상점: 아이템마다 카드를 눌러 미리보기의 값과 버튼을 읽는다. "쿠션 보유 중 방에서 치우기 켜짐", "소파 180P 모자라요 꺼짐". */
