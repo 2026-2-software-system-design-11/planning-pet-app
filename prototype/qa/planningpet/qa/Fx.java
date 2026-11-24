@@ -19,14 +19,18 @@ final class Fx {
         Store s = new Store();
         s.now = LocalDateTime.parse(now);
         s.points = points;
-        s.exp = exp;
         s.streak = streak;
         s.lastOpenDay = lastOpen == null ? null : LocalDate.parse(lastOpen);
         s.attendanceDay = attendance == null ? null : LocalDate.parse(attendance);
         s.rewardCountDay = s.today();
         s.rewardCount = rewardsToday;
-        s.petKind = kind;
-        s.petName = name;
+        s.pets.clear();
+        s.pets.add(new planningpet.pet.model.PetState(kind, name));
+        s.activeKind = kind;
+        s.pet().exp = exp;
+        if (attendance != null) {
+            s.attendDays.add(s.attendanceDay);
+        }
         if (!owned.isEmpty()) {
             s.owned.addAll(List.of(owned.split(",")));
         }

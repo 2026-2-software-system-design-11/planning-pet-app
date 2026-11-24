@@ -39,6 +39,6 @@ final class QaRun {
     /** 위 막대와 보상 상태를 한 줄로: "110P 경험치220 횟수2 성취도2/4". */
     static String st(Qa q) {
         Store s = q.app.store;
-        return s.points + "P 경험치" + s.exp + " 횟수" + q.count() + " 성취도" + q.progress();
+        return s.points + "P 경험치" + s.pet().exp + " 횟수" + q.count() + " 성취도" + q.progress();
     }
 }
