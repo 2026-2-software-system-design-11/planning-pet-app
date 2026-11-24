@@ -260,11 +260,12 @@ public final class CharacterScreen extends JPanel {
                 apply.setVisible("꾸미기".equals(n));
             });
         }
-        tabs[1].setSelected(true);
+        tabs[0].setSelected(true);
         tabBody.add(text(stateText), "상태");
         tabBody.add(dress(), "꾸미기");
         tabBody.add(text(infoText), "정보");
-        tabCards.show(tabBody, "꾸미기");
+        tabCards.show(tabBody, "상태");
+        apply.setVisible(false);
         apply.putClientProperty(RoundButtonUI.PRIMARY, Boolean.TRUE);
         apply.setFont(Theme.bold(16));
         apply.setIcon(Icons.icon(Icons.Kind.PAW, 20, Color.WHITE));
@@ -462,14 +463,28 @@ public final class CharacterScreen extends JPanel {
         return false;
     }
 
-    /** 캐릭터 창을 열 때 부른다(D-58). 입혀 보던 장신구를 버리고 저장된 것에서 시작한다. dress면 꾸미기 탭을 연다. */
+    /**
+     * 캐릭터 창을 열 때 부른다(D-58). 입혀 보던 장신구를 버리고 저장된 것에서 시작한다.
+     * 늘 상태 탭으로 열고, dress(장신구 칸, "{이름} 꾸미기")면 꾸미기 탭으로 연다(D-93).
+     */
     public void opened(boolean dress) {
         draftKind = null;
-        if (dress && !tabs[1].isSelected()) {
-            tabs[1].doClick();
+        Pill tab = tabs[dress ? 1 : 0];
+        if (!tab.isSelected()) {
+            tab.doClick();
         }
         refresh();
         Theme.clear(this);
+    }
+
+    /** 지금 고른 탭 이름(상태, 꾸미기, 정보). 검사용. */
+    public String tab() {
+        for (Pill t : tabs) {
+            if (t.isSelected()) {
+                return t.getText();
+            }
+        }
+        return "";
     }
 
     public void refresh() {

@@ -50,7 +50,7 @@ public final class PetScreen extends JPanel {
     public final CircleButton adopt = new CircleButton(Icons.Kind.PLUS, 40, "펫 데려오기", false);
     /** 캐릭터 창 안(D-58). 창을 열 때마다 같은 것을 담는다. */
     public final CharacterScreen character;
-    /** 캐릭터 창을 연다. 인자가 true면 꾸미기 탭으로 연다. QA는 창 대신 무엇을 열었는지 받는다. */
+    /** 캐릭터 창을 연다. 인자가 true면 꾸미기 탭, false면 상태 탭으로 연다(D-93). QA는 창 대신 무엇을 열었는지 받는다. */
     public java.util.function.Consumer<Boolean> characterOpener;
     /** 펫 패널. */
     private final JPanel petTabs = new JPanel(new GridLayout(1, 0, 8, 0));
@@ -209,7 +209,7 @@ public final class PetScreen extends JPanel {
         return c;
     }
 
-    /** 장신구 칸 하나: 입은 장신구 그림, 없으면 칸 아이콘. 누르면 캐릭터 화면으로 간다. */
+    /** 장신구 칸 하나: 입은 장신구 그림, 없으면 칸 아이콘. 누르면 캐릭터 창을 꾸미기 탭으로 연다(D-93). */
     private JComponent slot(String slotName, String worn) {
         Icons.Kind kind = switch (slotName) {
             case Wardrobe.NECK -> Icons.Kind.COLLAR;
