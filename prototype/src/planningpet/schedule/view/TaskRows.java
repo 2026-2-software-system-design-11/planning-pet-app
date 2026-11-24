@@ -173,6 +173,12 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
                 g.fillRect(6, getHeight() - 1, getWidth() - 12, 1);
                 g.dispose();
             }
+
+            @Override
+            public Dimension getMaximumSize() {
+                // 일정관리 목록 줄은 둘째 줄이 한 줄인지 두 줄인지(SecondLine)에 따라 높이가 바뀐다.
+                return withDate ? new Dimension(Integer.MAX_VALUE, getPreferredSize().height) : super.getMaximumSize();
+            }
         };
         row.setOpaque(false);
         row.setBorder(withDate ? BorderFactory.createEmptyBorder(3, 6, 3, 4) : BorderFactory.createEmptyBorder(5, 6, 6, 4));
@@ -229,18 +235,15 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
             buttons.add(edit);
             buttons.add(delete);
             // D-44: 오늘보다 앞선 날짜는 둘째 줄 왼쪽에 "지난 날". 제목 줄에 붙이면 좁은 목록에서 제목이 잘린다.
-            JPanel second = new JPanel(new BorderLayout());
+            JLabel past = null;
             // D-69: 지난 반복 사본은 "지난 날" 없이 흐리게 보인다. D-78: 끝낸 일에는 붙이지 않는다.
             if (!t.done && t.countDay().isBefore(control.today()) && !t.pastCopy(control.today())) {
-                JLabel past = new JLabel("지난 날");
+                past = new JLabel("지난 날");
                 past.setForeground(PAST);
                 past.setFont(Theme.font(12));
                 past.setBorder(BorderFactory.createEmptyBorder(0, RoundCheck.SIZE + 10, 0, 0));
-                second.add(past, BorderLayout.WEST);
             }
-            second.add(buttons, BorderLayout.EAST);
-            row.add(second, BorderLayout.SOUTH);
-            row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 58));
+            row.add(SecondLine.of(past, buttons), BorderLayout.SOUTH);
         } else {
             JComponent[] right;
             if (time != null) {
