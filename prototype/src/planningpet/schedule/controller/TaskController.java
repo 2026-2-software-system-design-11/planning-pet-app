@@ -125,7 +125,11 @@ public final class TaskController {
         }
         app.control.change(() -> {
             if (editing == null) {
-                app.store.book.add(d);
+                java.util.List<Task> made = app.store.book.add(d);
+                if (d.repeat() != null && !d.repeat().daily()) {
+                    // D-75: 날짜 칸이 고른 요일이 아니어도 막지 않고 처음 들어간 날을 알린다.
+                    app.store.say(app.talk.weeklyAdded(made));
+                }
             } else {
                 app.store.book.update(editing, d, scope == 1);
             }

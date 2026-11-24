@@ -100,7 +100,7 @@ final class Flows345 {
         q.eq("끝 시각, 반복 칸", "22:00에 끝나요 / 요일 [화] 끝 2027-03-02", f.endLabel.getText() + " / " + repeat(f));
         q.step("4", "끝 날짜를 2026-11-10으로 바꿔 저장한다");
         Ui.setDate(f.repeatEnd, QaDrive.d("2026-11-10"));
-        q.eq("저장", "false 끝 날짜가 시작 날짜보다 앞이에요", q.save(f, null) + " " + f.errorText());
+        q.eq("저장", "false 반복 끝나는 날이 날짜보다 앞이에요", q.save(f, null) + " " + f.errorText());
         q.step("5", "끝 날짜를 2027-05-18로 바꾼다");
         Ui.setDate(f.repeatEnd, QaDrive.d("2027-05-18"));
         q.eq("오류 글(D-43, 화요일 27개는 120개 안)", "", f.errorText());
@@ -108,6 +108,7 @@ final class Flows345 {
         f.days[3].doClick();
         Ui.setDate(f.repeatEnd, QaDrive.d("2026-12-17"));
         q.yes("저장", q.save(f, null));
+        q.eq("펫(D-75)", "17일(화)부터 화, 목마다 넣었어요", q.app.store.talk);
         q.eq("화요일", "2026-11-17,2026-11-24,2026-12-01,2026-12-08,2026-12-15",
                 dates(q, "편의점 알바", java.time.DayOfWeek.TUESDAY));
         q.eq("목요일", "2026-11-19,2026-11-26,2026-12-03,2026-12-10,2026-12-17",

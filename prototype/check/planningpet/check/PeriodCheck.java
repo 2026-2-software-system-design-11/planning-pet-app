@@ -129,7 +129,7 @@ final class PeriodCheck {
         String followed = Ui.dateOf(follow.repeatEnd).toString();
         Ui.setDate(follow.repeatEnd, d("12-10"));
         Ui.setDate(follow.date, d("12-20"));
-        eq("D-79 끝 날짜는 손대기 전까지 따라간다", "2026-12-29 2026-12-10 반복: 끝 날짜가 시작 날짜보다 앞이에요",
+        eq("D-79 끝 날짜는 손대기 전까지 따라간다", "2026-12-29 2026-12-10 반복: 반복 끝나는 날이 날짜보다 앞이에요",
                 followed + " " + Ui.dateOf(follow.repeatEnd) + " " + msgs(follow.problems()));
         TaskForm names = new TaskForm(null, d("11-16"), at("11-16T09:00").now);
         names.period.doClick();
@@ -176,6 +176,17 @@ final class PeriodCheck {
         form.period.doClick();
         eq("D-68 기간 할 일은 시각 없이", "null false false 기간 할 일의 시각은 목록에서 정해요", timed.start + " " + form.timed.isSelected()
                 + " " + form.timed.isEnabled() + " " + form.timed.getToolTipText());
+        App wa = Main.create(at("11-16T09:00"));
+        TaskForm wf = new TaskForm(null, d("11-16"), wa.store.now);
+        wf.fixed.doClick();
+        wf.title.setText("편의점 알바");
+        wf.start.setValue("18:00");
+        wf.repeat.setSelectedIndex(2);
+        wf.days[0].doClick();
+        wf.days[1].doClick();
+        wf.days[3].doClick();
+        Ui.setDate(wf.repeatEnd, d("11-26"));
+        eq("D-75 요일 반복을 넣은 뒤", "true 17일(화)부터 화, 목마다 넣었어요", TaskDialog.trySave(wa, wf, null) + " " + wa.store.talk);
         Store del = MockData.empty();
         List<Task> made = daily(del);
         del.book.delete(made.get(3), true);

@@ -61,7 +61,7 @@ public final class TaskCheck {
             return "요일을 하나 이상 골라 주세요";
         }
         if (to.isBefore(from)) {
-            return "끝 날짜가 시작 날짜보다 앞이에요";
+            return "반복 끝나는 날이 날짜보다 앞이에요";
         }
         int copies = how.dates(from, to, Repeat.MAX_COPIES).size();
         if (copies == 0) {
