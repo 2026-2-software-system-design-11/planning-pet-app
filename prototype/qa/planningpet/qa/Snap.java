@@ -29,7 +29,7 @@ public final class Snap {
         dir.mkdirs();
         App app = Main.create(MockData.sample());
         app.control.windowShown();
-        for (String[] screen : new String[][] {{"홈", "1-main"}, {"일정관리", "2-schedule"}, {"pet", "5-pet"},
+        for (String[] screen : new String[][] {{"홈", "1-main"}, {"일정관리", "2-schedule"}, {"나의 방", "5-pet"},
                 {"설정", "8-settings"}}) {
             app.show(screen[0]);
             save(app.root, new Dimension(1000, 680), new File(dir, screen[1] + ".png"));

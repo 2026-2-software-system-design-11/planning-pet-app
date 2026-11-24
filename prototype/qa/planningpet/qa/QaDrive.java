@@ -7,7 +7,6 @@ import planningpet.pet.view.PetScreen;
 import planningpet.schedule.controller.TaskController;
 import planningpet.schedule.model.*;
 import planningpet.schedule.view.*;
-import planningpet.shop.view.ShopDialog;
 import java.awt.Component;
 import java.awt.Container;
 import java.time.LocalDate;
@@ -163,6 +162,6 @@ class QaDrive extends QaCore {
         AutoPlaceDialog.apply(app, p);
     }
     boolean buy(String item) {
-        return ShopDialog.buy(app, pet, item);
+        return planningpet.shop.view.ShopPanel.buy(app, item, pet::sayOnce);
     }
 }

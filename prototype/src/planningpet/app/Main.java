@@ -47,8 +47,7 @@ public final class Main {
         app.addScreen("홈", "오늘도 계획을 세우고, 조금씩 성장해요!", main);
         app.watcher = new DayWatcher(app, main);
         app.addScreen("일정관리", "내 일정을 한눈에 확인하고, 체계적으로 관리해요!", new ScheduleScreen(app));
-        app.addScreen("pet", ("DOG".equals(store.pet().kind) ? "강아지" : "고양이") + "와 함께 성장하고, 작은 성취를 모아 보세요!",
-                new PetScreen(app));
+        app.addScreen("나의 방", "나만의 공간을 꾸미고, 반려동물과 함께 시간을 보내요!", new PetScreen(app));
         app.addScreen("통계", "", null);
         app.addScreen("설정", "플래닝펫을 내게 맞게 바꿔요.", new SettingsScreen());
         app.watch(() -> Theme.clear(app.root));

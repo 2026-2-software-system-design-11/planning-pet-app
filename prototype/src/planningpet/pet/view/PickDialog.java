@@ -1,5 +1,7 @@
 package planningpet.pet.view;
 
+import planningpet.app.view.App;
+
 import planningpet.app.controller.AppController;
 import planningpet.app.model.MockData;
 import planningpet.app.model.Store;
@@ -50,6 +52,30 @@ public final class PickDialog {
     public void apply(Store s) {
         // 첫 실행 창은 앱 창보다 먼저 뜬다. 앱 controller를 이 데이터로 따로 만든다.
         new PetController(new AppController(s, new Talk(s)), s).choose(dog.isSelected(), name.getText());
+    }
+
+    /** D-48. 나의 방의 "+": 남은 종류 하나를 이름을 붙여 데려온다. 창 위 문구와 버튼만 다르고 이름 칸은 처음 고르기와 같다. */
+    public static void adopt(App app) {
+        boolean dog = app.store.pet("DOG") == null;
+        if (app.store.pet(dog ? "DOG" : "CAT") != null) {
+            return;
+        }
+        String kind = dog ? "강아지" : "고양이";
+        JTextField field = new JTextField(12);
+        Ui.limit(field, 10);
+        JPanel p = new JPanel(new BorderLayout(0, 8));
+        p.setBorder(BorderFactory.createEmptyBorder(10, 12, 6, 12));
+        p.add(new JLabel("<html><b>" + kind + "를 데려올까요?</b></html>"), BorderLayout.NORTH);
+        p.add(new PetView(MockData.look(dog ? "DOG" : "CAT"), 2), BorderLayout.CENTER);
+        JPanel bottom = new JPanel(new BorderLayout(0, 2));
+        bottom.add(Ui.flow(new JLabel("이름"), field), BorderLayout.NORTH);
+        bottom.add(Ui.hint("비워 두면 " + (dog ? "바둑이" : "나비") + "로 불러요"), BorderLayout.SOUTH);
+        p.add(bottom, BorderLayout.SOUTH);
+        int answer = javax.swing.JOptionPane.showOptionDialog(app.root, p, kind + " 데려오기", javax.swing.JOptionPane.DEFAULT_OPTION,
+                javax.swing.JOptionPane.PLAIN_MESSAGE, null, new String[] {"취소", "데려오기"}, "데려오기");
+        if (answer == 1) {
+            app.pet.adopt(dog, field.getText());
+        }
     }
 
     /** 고르면 true. 닫기 버튼으로 닫으면 false이고 앱은 아무것도 저장하지 않고 끝난다. */
