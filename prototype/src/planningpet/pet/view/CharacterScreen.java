@@ -268,3 +268,93 @@ public final class CharacterScreen extends JPanel {
         return c;
     }
 
+    private static JComponent text(JLabel l) {
+        l.setFont(Theme.font(14));
+        l.setVerticalAlignment(SwingConstants.TOP);
+        l.setBorder(BorderFactory.createEmptyBorder(6, 8, 0, 8));
+        return l;
+    }
+
+    /** 꾸미기 탭: 왼쪽 칸 목록, 오른쪽 그 칸의 장신구 카드. */
+    private JComponent dress() {
+        JPanel list = new JPanel(new GridLayout(0, 1, 0, 4));
+        ButtonGroup g = new ButtonGroup();
+        Icons.Kind[] icons = {Icons.Kind.COLLAR, Icons.Kind.BOW, Icons.Kind.HAT, Icons.Kind.SHIRT};
+        for (int i = 0; i < slotButtons.length; i++) {
+            String s = Wardrobe.SLOTS.get(i);
+            JToggleButton b = new JToggleButton(s, Icons.icon(icons[i], 18, Theme.ICON), i == 0);
+            b.putClientProperty(RoundButtonUI.NAV, Boolean.TRUE);
+            b.setFont(Theme.bold(13));
+            b.setHorizontalAlignment(SwingConstants.LEFT);
+            b.setIconTextGap(8);
+            b.setBorder(BorderFactory.createEmptyBorder(6, 10, 8, 10));
+            b.addActionListener(e -> {
+                slot = s;
+                refresh();
+            });
+            g.add(b);
+            slotButtons[i] = b;
+            list.add(b);
+        }
+        JPanel listWrap = new JPanel(new BorderLayout());
+        listWrap.add(list, BorderLayout.NORTH);
+        listWrap.setPreferredSize(new Dimension(112, 0));
+        wears.setPreferredSize(new Dimension(0, 116));
+        JPanel wearWrap = new JPanel(new BorderLayout());
+        wearWrap.add(wears, BorderLayout.NORTH);
+        JPanel p = new JPanel(new BorderLayout(10, 0));
+        p.add(listWrap, BorderLayout.WEST);
+        p.add(wearWrap, BorderLayout.CENTER);
+        return p;
+    }
+
+    /** 장신구 카드 하나. 열리지 않았으면 자물쇠와 "Lv.{레벨} 해금". 입혀 보는 중이면 체크 배지. */
+    private JComponent wearCard(Wardrobe.Wear w, int petLevel) {
+        boolean open = w.level() <= petLevel;
+        boolean on = w.name().equals(draft.get(w.slot()));
+        JButton b = new JButton(open ? w.name() : "Lv." + w.level() + " 해금") {
+            @Override
+            protected void paintComponent(Graphics graphics) {
+                Graphics2D g = (Graphics2D) graphics.create();
+                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                int x = 2;
+                int y = 8;
+                int cw = getWidth() - 5;
+                int ch = getHeight() - 12;
+                Card.shadow(g, x, y, cw, ch, 14);
+                g.setColor(!open ? new Color(0xEEF2F5) : on ? Theme.MINT_PALE : Theme.CARD_TOP);
+                g.fillRoundRect(x, y, cw, ch, 14, 14);
+                g.setColor(on ? Theme.MINT : Theme.CARD_EDGE);
+                g.setStroke(new java.awt.BasicStroke(on ? 2.2f : 1f));
+                g.drawRoundRect(x, y, cw, ch, 14, 14);
+                int pic = Math.min(cw - 20, ch - 34);
+                java.awt.image.BufferedImage im = Images.wear(w.name());
+                if (!open) {
+                    Icons.draw(g, Icons.Kind.LOCK, x + (cw - pic * 3 / 4) / 2, y + 8, pic * 3 / 4, Theme.INK_SUB);
+                } else if (im != null) {
+                    Images.fit(g, im, x + (cw - pic) / 2, y + 6, pic, pic);
+                } else {
+                    Icons.draw(g, slotIcon(w.slot()), x + (cw - pic * 3 / 4) / 2, y + 8, pic * 3 / 4, Theme.ICON);
+                }
+                g.setFont(Theme.bold(12));
+                g.setColor(open ? Theme.INK : Theme.INK_SUB);
+                String t = getText();
+                g.drawString(t, x + (cw - g.getFontMetrics().stringWidth(t)) / 2, y + ch - 10);
+                if (on) {
+                    g.setColor(Color.WHITE);
+                    g.fillOval(x + cw - 18, y - 8, 24, 24);
+                    Icons.draw(g, Icons.Kind.CHECK, x + cw - 16, y - 6, 20, Theme.MINT_DEEP);
+                }
+                g.dispose();
+            }
+        };
+        b.setContentAreaFilled(false);
+        b.setBorderPainted(false);
+        b.setFocusPainted(false);
+        b.setEnabled(open);
+        b.setToolTipText(open ? (on ? "누르면 벗겨 봐요" : "누르면 입혀 봐요") : "레벨 " + w.level() + "이 되면 열려요");
+        b.addActionListener(e -> {
+            if (on) {
+                draft.remove(w.slot());
