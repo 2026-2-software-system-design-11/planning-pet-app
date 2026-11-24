@@ -191,6 +191,7 @@ final class DayCheck {
 
     /** D-87: 겹치면 막지 않고 저장 전에 묻는다. */
     private static void overlaps() {
+        nightOverlaps();
         App app = Main.create(at("11-16T09:00"));
         Store s = app.store;
         task(s, "자소서 초안", "11-16", hm(14, 0), 60);
@@ -245,6 +246,18 @@ final class DayCheck {
                 + "18:00~22:00 '알바'와 60분 겹쳐요. 그래도 넣을까요?",
                 jobSaved + " " + first.replaceAll("^시간이 겹쳐요: | 넣기, 취소.*$", "") + " / " + reportSaved + " " + second
                 + " / " + hwSaved + " " + q4[0].replaceAll("^시간이 겹쳐요: | 넣기, 취소.*$", ""));
+    }
+
+    /** T-OVL-5(D-94): 앞날 밤의 다음 날 시각 일정과 다음 날 새벽 일정은 실제 시각으로 잰다. 다른 날 일이면 날을 붙인다. */
+    static void nightOverlaps() {
+        Store s = at("11-21T09:00");
+        task(s, "회의", "11-20", hm(23, 0), 120);
+        task(s, "복습", "11-20", null, 30).setStart(Task.DAY + 90);
+        // 토 00:30 알바 60분, 토 01:30 운동 30분, 금 23:30 정리 30분.
+        eq("T-OVL-5", "11/20(금) 23:00~01:00(다음 날) '회의'와 30분 겹쳐요. 그래도 넣을까요? / 11/20(금) 01:30~02:00(다음 날) '복습'과 30분"
+                + " 겹쳐요. 그래도 넣을까요? / 23:00~01:00(다음 날) '회의'와 30분 겹쳐요. 그래도 넣을까요?",
+                s.book.overlap(d("11-21"), 30, 60, null).question() + " / " + s.book.overlap(d("11-21"), 90, 30, null).question() + " / "
+                + s.book.overlap(d("11-20"), 23 * 60 + 30, 30, null).question());
     }
 
     /** D-87: 좁아진 블록은 마우스를 올리면 전체 제목과 시각을 보인다. */
