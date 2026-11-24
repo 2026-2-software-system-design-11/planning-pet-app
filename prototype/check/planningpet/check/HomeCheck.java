@@ -20,6 +20,7 @@ final class HomeCheck {
 
     static void run() {
         added();
+        doneGroup();
     }
 
     static LocalDate d(String monthDay) {
@@ -51,6 +52,31 @@ final class HomeCheck {
         boolean saved = TaskDialog.trySave(app, f, null);
         eq("T-TALK-23", "'통계 레포트' 넣었구나! 오늘 남은 일 2개야. / '은행 서류' 11/20에 넣었어. / true '은행 서류' 11/20에 넣었어.",
                 today + " / " + other + " / " + saved + " " + s.talk);
+    }
+
+    /** T-LIST-8. 끝낸 줄은 제자리에 머문 뒤 아래 "끝낸 일" 묶음으로 가고, 묶음은 접힌다(D-88). */
+    static void doneGroup() {
+        Store s = at("11-16T08:00");
+        s.book.add(Task.Kind.TASK, "A", d("11-16"), java.time.LocalTime.of(9, 0), 30, "", null);
+        Task b = s.book.add(Task.Kind.TASK, "B", d("11-16"), null, 30, "", null).get(0);
+        s.book.add(Task.Kind.TASK, "C", d("11-16"), null, 30, "", null);
+        App app = Main.create(s);
+        MainScreen main = ProtoCheck.find(app.root, MainScreen.class);
+        app.redraw();
+        PeriodCheck.box(main.rows, b).doClick();
+        String stay = rows(main.rows) + " " + main.rows.settling();
+        main.rows.settle();
+        String settled = rows(main.rows);
+        main.rows.doneHead.doClick();
+        String folded = rows(main.rows);
+        main.rows.doneHead.doClick();
+        PeriodCheck.box(main.rows, b).doClick();
+        String back = rows(main.rows) + " " + main.rows.settling();
+        eq("T-LIST-8", "[ ] A 09:00~09:30 30분 / 시각 없는 할 일 / [x] B 시각 정하기 30분 / [ ] C 시각 정하기 30분 true"
+                + " | [ ] A 09:00~09:30 30분 / 시각 없는 할 일 / [ ] C 시각 정하기 30분 / 끝낸 일 1개 / [x] B 시각 정하기 30분"
+                + " | [ ] A 09:00~09:30 30분 / 시각 없는 할 일 / [ ] C 시각 정하기 30분 / 끝낸 일 1개"
+                + " | [ ] A 09:00~09:30 30분 / 시각 없는 할 일 / [ ] B 시각 정하기 30분 / [ ] C 시각 정하기 30분 false",
+                stay + " | " + settled + " | " + folded + " | " + back);
     }
 
     /** 목록을 줄마다 "[x] 제목 시각 분"처럼 읽는다(QA의 rows와 같다). */

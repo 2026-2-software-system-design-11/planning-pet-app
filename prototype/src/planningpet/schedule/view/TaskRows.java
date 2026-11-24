@@ -71,10 +71,30 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
             none.setBorder(BorderFactory.createEmptyBorder(16, 6, 0, 0));
             add(none);
         }
+        // D-88: 끝낸 일은 체크한 자리에 잠깐 머문 뒤 맨 아래 "끝낸 일" 묶음으로 내려간다.
+        java.util.function.Predicate<Task> down = t -> t.done && !lingering.contains(t);
+        List<Task> done = new java.util.ArrayList<>();
         plan.dueToday().forEach(t -> add(row(t, "", null, plan.date())));
-        plan.timed().forEach(t -> add(row(t, TaskBook.timeText(t), null, plan.date())));
-        group("시각 없는 할 일", plan.untimed(), plan.date());
+        plan.timed().forEach(t -> {
+            if (down.test(t)) {
+                done.add(t);
+            } else {
+                add(row(t, TaskBook.timeText(t), null, plan.date()));
+            }
+        });
+        plan.untimed().stream().filter(down).forEach(done::add);
+        group("시각 없는 할 일", plan.untimed().stream().filter(down.negate()).toList(), plan.date());
         group("기간 안에 할 일", plan.period(), plan.date());
+        if (!done.isEmpty()) {
+            doneHead.setText("끝낸 일 " + done.size() + "개");
+            doneHead.setIcon(fold(doneFolded));
+            doneHead.setToolTipText(doneFolded ? "펼치기" : "접기");
+            doneHead.getAccessibleContext().setAccessibleName("끝낸 일 " + done.size() + "개 " + (doneFolded ? "펼치기" : "접기"));
+            add(doneHead);
+            if (!doneFolded) {
+                done.forEach(t -> add(row(t, t.onTimetable(control.today()) ? TaskBook.timeText(t) : "", null, plan.date())));
+            }
+        }
         revalidate();
         repaint();
     }
@@ -162,7 +182,20 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
         box.setSelected(t.done);
         box.putClientProperty(Task.class, t);
         box.getAccessibleContext().setAccessibleName((t.done ? "끝냄 취소: " : "끝냄: ") + t.title);
-        box.addActionListener(e -> control.check(t));
+        box.addActionListener(e -> {
+            if (!withDate) {
+                // D-88: 홈 목록에서 체크하면 제자리에 머물고, 마지막 체크에서 1.5초 뒤 묶음으로 내려간다. 풀면 바로 제자리다.
+                if (t.done) {
+                    lingering.remove(t);
+                } else {
+                    lingering.add(t);
+                    if (isShowing()) {
+                        settleTimer.restart();
+                    }
+                }
+            }
+            control.check(t);
+        });
         JPanel left = t.kind == Task.Kind.FIXED ? middle(box, fixedTag()) : middle(box);
         String date = withDate ? rowDay.getMonthValue() + "/" + rowDay.getDayOfMonth() + " " : "";
         String memoMark = t.memo.isBlank() ? "" : " <font size='2' color='#8A96A0'>메모</font>";

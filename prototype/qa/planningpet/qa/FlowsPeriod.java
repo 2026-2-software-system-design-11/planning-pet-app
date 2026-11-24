@@ -91,7 +91,7 @@ final class FlowsPeriod {
                 e.date + " " + e.start + " " + e.doneDay + " / " + q.rows());
         q.step("11", "달력 오늘을 누른다");
         q.main.calendar.today.doClick();
-        q.eq("목록", "[ ] B사 자소서 제출 22:30~23:00 30분 / 시각 없는 할 일 / [x] E사 지원서 ~11/22까지 시각 정하기 120분", q.rows());
+        q.eq("목록", "[ ] B사 자소서 제출 22:30~23:00 30분 / 끝낸 일 1개 / [x] E사 지원서 ~11/22까지 시각 정하기 120분", q.rows());
         q.eq("말풍선", "오늘 할 일 1개 남았어.", q.app.store.talk);
         q.eq("성취도", "1/2", q.progress());
         q.eq("달력 22, 17", "22, 17 B사 자소…(진함)", q.cell(22) + ", " + q.cell(17));
@@ -118,7 +118,7 @@ final class FlowsPeriod {
         q.step("3", "끝 날짜를 2026-11-24로 바꿔 저장한다");
         Ui.setDate(f.repeatEnd, QaDrive.d("2026-11-24"));
         q.yes("저장(T-VAL-11)", q.save(f, null));
-        q.eq("목록", "시각 없는 할 일 / [x] 잡코리아 공고 정리 시각 정하기 30분 / [ ] 채용 공고 확인 시각 정하기 30분", q.rows());
+        q.eq("목록", "시각 없는 할 일 / [ ] 채용 공고 확인 시각 정하기 30분 / 끝낸 일 1개 / [x] 잡코리아 공고 정리 시각 정하기 30분", q.rows());
         q.eq("성취도", "1/2", q.progress());
         q.eq("달력 18~24", "18 잡코리아…(진함), " + cells(19, "(진함)"), q.cell(18) + ", " + seven(q));
         q.eq("사본(T-ADD-5)", "7 1 DAILY", q.app.store.tasks.stream().filter(t -> t.title.equals("채용 공고 확인")).count() + " "

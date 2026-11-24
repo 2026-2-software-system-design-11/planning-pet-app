@@ -116,7 +116,7 @@ final class Flows8910 {
         q.step("1", "달력 13을 누른다");
         q.select("2026-11-13");
         q.eq("달력 13", "13 토익 RC(흐림)", q.cell(13));
-        q.eq("목록", "시각 없는 할 일 / [x] 토익 RC 시각 정하기 60분", q.rows());
+        q.eq("목록", "끝낸 일 1개 / [x] 토익 RC 시각 정하기 60분", q.rows());
         q.eq("말풍선", "11월 13일 할 일은 1개야.", q.app.store.talk);
         q.step("2", "pet에서 쿠션을 두 번 누른다");
         q.app.show("나의 방");
