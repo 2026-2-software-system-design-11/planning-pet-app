@@ -21,6 +21,7 @@ final class HomeCheck {
     static void run() {
         added();
         doneGroup();
+        periodStays();
         calendar();
         weekStart();
         examples();
@@ -55,6 +56,31 @@ final class HomeCheck {
         boolean saved = TaskDialog.trySave(app, f, null);
         eq("T-TALK-23", "'통계 레포트' 넣었구나! 오늘 남은 일 2개야. / '은행 서류' 11/20에 넣었어. / true '은행 서류' 11/20에 넣었어.",
                 today + " / " + other + " / " + saved + " " + s.talk);
+    }
+
+    /** T-LIST-10. 기간 할 일도 체크한 자리(시각 줄, "기간 안에 할 일")에 머문 뒤 "끝낸 일"로 간다(D-94). */
+    static void periodStays() {
+        Store s = at("11-18T08:00");
+        Task job = PeriodCheck.period(s, "지원서", "11-16", "11-22", 60);
+        s.book.setTime(job, java.time.LocalTime.of(9, 0), 60, d("11-18"), false);
+        Task report = PeriodCheck.period(s, "보고서", "11-16", "11-25", 30);
+        s.book.add(Task.Kind.TASK, "토익", d("11-18"), null, 30, "", null);
+        App app = Main.create(s);
+        MainScreen main = ProtoCheck.find(app.root, MainScreen.class);
+        app.redraw();
+        String before = rows(main.rows);
+        PeriodCheck.box(main.rows, job).doClick();
+        String first = rows(main.rows);
+        main.rows.settle();
+        PeriodCheck.box(main.rows, report).doClick();
+        String second = rows(main.rows);
+        main.rows.settle();
+        eq("T-LIST-10", "[ ] 지원서 09:00~10:00 60분 ~11/22까지 / 시각 없는 할 일 / [ ] 토익 시각 정하기 30분 / 기간 안에 할 일"
+                + " / [ ] 보고서 시각 정하기 30분 ~11/25까지 | [x] 지원서 09:00~10:00 60분 ~11/22까지 / 시각 없는 할 일 / [ ] 토익"
+                + " 시각 정하기 30분 / 기간 안에 할 일 / [ ] 보고서 시각 정하기 30분 ~11/25까지 | 시각 없는 할 일 / [ ] 토익 시각 정하기 30분"
+                + " / 기간 안에 할 일 / [x] 보고서 시각 정하기 30분 ~11/25까지 / 끝낸 일 1개 / [x] 지원서 시각 정하기 60분 ~11/22까지"
+                + " | 시각 없는 할 일 / [ ] 토익 시각 정하기 30분 / 끝낸 일 2개 / [x] 지원서 시각 정하기 60분 ~11/22까지 / [x] 보고서 시각 정하기"
+                + " 30분 ~11/25까지", before + " | " + first + " | " + second + " | " + rows(main.rows));
     }
 
     /** T-LIST-8. 끝낸 줄은 제자리에 머문 뒤 아래 "끝낸 일" 묶음으로 가고, 묶음은 접힌다(D-88). */

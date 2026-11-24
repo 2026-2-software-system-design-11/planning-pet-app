@@ -26,6 +26,9 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
     private boolean doneFolded;
     /** 머물던 줄을 내려보낸 뒤 목록을 다시 만든다. 메인이 넣는다. */
     public Runnable resort = () -> { };
+    /** D-94: 지난번에 그린 묶음(due, timed, untimed, period)과 그 날. 머무는 줄을 체크하기 전 자리에 두는 데 쓴다. */
+    private java.util.Map<String, List<Task>> shown = java.util.Map.of();
+    private java.time.LocalDate shownDay;
     /** "끝낸 일 {수}개" 묶음 제목. 묶음이 없으면 목록에 없다. */
     public final javax.swing.JButton doneHead = new javax.swing.JButton();
 
@@ -74,17 +77,18 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
         // D-88: 끝낸 일은 체크한 자리에 잠깐 머문 뒤 맨 아래 "끝낸 일" 묶음으로 내려간다.
         java.util.function.Predicate<Task> down = t -> t.done && !lingering.contains(t);
         List<Task> done = new java.util.ArrayList<>();
-        plan.dueToday().forEach(t -> add(row(t, "", null, plan.date())));
-        plan.timed().forEach(t -> {
-            if (down.test(t)) {
-                done.add(t);
-            } else {
-                add(row(t, TaskBook.timeText(t), null, plan.date()));
-            }
-        });
+        java.util.Map<String, List<Task>> groups = new java.util.LinkedHashMap<>();
+        groups.put("due", new java.util.ArrayList<>(plan.dueToday()));
+        groups.put("timed", new java.util.ArrayList<>(plan.timed().stream().filter(down.negate()).toList()));
+        groups.put("untimed", new java.util.ArrayList<>(plan.untimed().stream().filter(down.negate()).toList()));
+        groups.put("period", new java.util.ArrayList<>(plan.period()));
+        plan.timed().stream().filter(down).forEach(done::add);
         plan.untimed().stream().filter(down).forEach(done::add);
-        group("시각 없는 할 일", plan.untimed().stream().filter(down.negate()).toList(), plan.date());
-        group("기간 안에 할 일", plan.period(), plan.date());
+        stay(groups, plan.date());
+        groups.get("due").forEach(t -> add(row(t, "", null, plan.date())));
+        groups.get("timed").forEach(t -> add(row(t, TaskBook.timeText(t), null, plan.date())));
+        group("시각 없는 할 일", groups.get("untimed"), plan.date());
+        group("기간 안에 할 일", groups.get("period"), plan.date());
         if (!done.isEmpty()) {
             doneHead.setText("끝낸 일 " + done.size() + "개");
             doneHead.setIcon(fold(doneFolded));
@@ -97,6 +101,34 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
         }
         revalidate();
         repaint();
+    }
+
+    /**
+     * D-94: 머무는 줄은 체크하기 전에 그린 묶음과 순서 그대로 둔다. 끝낸 기간 할 일은 dayPlan에서 "시각 없는 할 일"로 옮겨 가므로
+     * 지난번 묶음으로 돌려놓는다. 그 날 목록에서 빠진 일(다른 날을 보며 끝낸 기간 할 일, D-66)은 그대로 빠진다.
+     */
+    private void stay(java.util.Map<String, List<Task>> groups, java.time.LocalDate day) {
+        if (day.equals(shownDay)) {
+            java.util.Set<Task> here = new java.util.HashSet<>();
+            groups.values().forEach(here::addAll);
+            shown.forEach((name, before) -> {
+                for (int i = 0; i < before.size(); i++) {
+                    Task t = before.get(i);
+                    if (!lingering.contains(t) || !here.contains(t)) {
+                        continue;
+                    }
+                    groups.values().forEach(l -> l.remove(t));
+                    List<Task> into = groups.get(name);
+                    int at = 0;
+                    for (int k = i - 1; k >= 0 && at == 0; k--) {
+                        at = into.indexOf(before.get(k)) + 1;
+                    }
+                    into.add(at, t);
+                }
+            });
+        }
+        shown = new java.util.HashMap<>(groups);
+        shownDay = day;
     }
 
     /** 묶음 제목 앞의 작은 삼각형. 펼쳤으면 아래, 접었으면 오른쪽을 가리킨다. */
