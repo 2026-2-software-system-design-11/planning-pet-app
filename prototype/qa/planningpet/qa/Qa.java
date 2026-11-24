@@ -109,7 +109,7 @@ final class Qa extends QaDrive {
 
     /** 자동 배치 결과 창의 위쪽 글과 표를 "제목|날짜|시각|분"으로 읽는다. */
     String placement(Planner.Placement p) {
-        JPanel root = AutoPlaceDialog.content(app.store, sched.monday(), p, new JButton("취소"), new JButton("적용"));
+        JPanel root = AutoPlaceDialog.content(app.store, sched.weekStart(), p, new JButton("취소"), new JButton("적용"));
         JLabel head = find(root, JLabel.class);
         JTable table = find(root, JTable.class);
         List<String> out = new ArrayList<>();

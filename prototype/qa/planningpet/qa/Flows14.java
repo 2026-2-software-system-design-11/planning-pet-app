@@ -20,10 +20,10 @@ final class Flows14 {
         q.step("1", "일정관리를 연다");
         q.app.show("일정관리");
         q.eq("오늘 버튼(이번 주)", "꺼짐 이번 주를 보고 있어요", onOff(q.sched.today) + " " + q.sched.today.getToolTipText());
-        q.sched.move(q.sched.monday().plusWeeks(1));
+        q.sched.move(q.sched.weekStart().plusWeeks(1));
         q.eq("오늘 버튼(다음 주)", "켜짐", onOff(q.sched.today));
         q.sched.today.doClick();
-        q.eq("오늘을 누른 뒤", "2026-11-09 꺼짐", q.sched.monday() + " " + onOff(q.sched.today));
+        q.eq("오늘을 누른 뒤", "2026-11-09 꺼짐", q.sched.weekStart() + " " + onOff(q.sched.today));
         q.step("2", "홈에서 달력 >를 누른다");
         q.app.show("홈");
         CalendarPanel cal = QaDrive.find(q.main, CalendarPanel.class);

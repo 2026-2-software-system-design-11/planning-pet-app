@@ -42,12 +42,12 @@ final class DayCheck {
         int opened = sched.topMinute();
         app.schedule.check(hw);
         int afterCheck = sched.topMinute();
-        sched.move(sched.monday().plusWeeks(1));
+        sched.move(sched.weekStart().plusWeeks(1));
         int nextWeek = sched.topMinute();
-        sched.move(sched.monday().minusWeeks(1));
+        sched.move(sched.weekStart().minusWeeks(1));
         int back = sched.topMinute();
         app.show("홈");
-        sched.move(sched.monday());
+        sched.move(sched.weekStart());
         app.show("일정관리");
         eq("T-TT-8 화면", "1150 1150 480 1150 1150", opened + " " + afterCheck + " " + nextWeek + " " + back + " " + sched.topMinute());
 

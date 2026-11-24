@@ -1,6 +1,5 @@
 package planningpet.schedule.model;
 
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -362,7 +361,4 @@ public final class TaskBook {
         return tasks.stream().filter(t -> t.onTimetable(now) && t.date.equals(date)).toList();
     }
 
-    public static LocalDate mondayOf(LocalDate date) {
-        return date.with(DayOfWeek.MONDAY);
-    }
 }

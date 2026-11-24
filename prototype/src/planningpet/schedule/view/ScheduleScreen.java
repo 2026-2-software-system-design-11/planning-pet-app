@@ -27,7 +27,8 @@ public final class ScheduleScreen extends JPanel {
     public final JButton autoPlace = new JButton("자동 배치");
     public final TaskRows untimed;
     public final JLabel bubble = Ui.bubble();
-    private LocalDate monday;
+    /** 보이는 주의 첫날(06 데이터 절의 한 주, D-91). */
+    private LocalDate start;
     /** D-60: 이번 주를 보고 있으면 흐리다. */
     public JButton today;
     private int lastTalk;
@@ -41,17 +42,17 @@ public final class ScheduleScreen extends JPanel {
         super(new BorderLayout(8, 8));
         this.app = app;
         setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 12));
-        monday = TaskBook.mondayOf(app.store.today());
+        start = thisWeekStart();
         table = new TimetablePanel(app.store, app.schedule);
         untimed = new TaskRows(app.schedule);
         JButton prev = new JButton("<");
         JButton next = new JButton(">");
         today = new JButton("오늘");
         JButton add = new JButton("일정 추가");
-        prev.addActionListener(e -> move(monday.minusWeeks(1)));
-        next.addActionListener(e -> move(monday.plusWeeks(1)));
-        today.addActionListener(e -> move(TaskBook.mondayOf(app.store.today())));
-        autoPlace.addActionListener(e -> AutoPlaceDialog.open(app, monday));
+        prev.addActionListener(e -> move(start.minusWeeks(1)));
+        next.addActionListener(e -> move(start.plusWeeks(1)));
+        today.addActionListener(e -> move(thisWeekStart()));
+        autoPlace.addActionListener(e -> AutoPlaceDialog.open(app, start));
         add.addActionListener(e -> app.schedule.add(defaultDate()));
         JPanel bar = new JPanel(new BorderLayout());
         bar.add(Ui.flow(prev, range, next, today), BorderLayout.WEST);
@@ -83,13 +84,19 @@ public final class ScheduleScreen extends JPanel {
         app.watch(this::refresh);
     }
 
-    /** 06의 14번: 보이는 주에 오늘이 있으면 오늘, 없으면 그 주 월요일. */
+    /** 06의 14번: 보이는 주에 오늘이 있으면 오늘, 없으면 그 주 첫날. */
     public LocalDate defaultDate() {
-        return DefaultDates.forSchedule(monday, app.store.today());
+        return DefaultDates.forSchedule(start, app.store.today());
     }
 
-    public LocalDate monday() {
-        return monday;
+    /** 보이는 주의 첫날. */
+    public LocalDate weekStart() {
+        return start;
+    }
+
+    /** 오늘이 든 주의 첫날(설정의 한 주 시작, D-91). */
+    private LocalDate thisWeekStart() {
+        return planningpet.common.model.Rules.weekStart(app.store.today(), app.store.weekStart);
     }
 
     /** 시간표 맨 위가 앱 하루의 분 minute이 되게 내린다. 끝을 넘지 않는다. */
@@ -129,34 +136,36 @@ public final class ScheduleScreen extends JPanel {
         return l;
     }
 
-    public void move(LocalDate newMonday) {
-        monday = newMonday;
+    public void move(LocalDate newStart) {
+        start = newStart;
         showHint = true;
         scrollPending = true;
         app.redraw();
     }
 
     private void refresh() {
-        table.monday = monday;
-        boolean thisWeek = monday.equals(TaskBook.mondayOf(app.store.today()));
+        // D-91: 한 주 시작을 바꾸면 보던 주의 첫날이 든 새 주로 바꾼다.
+        start = planningpet.common.model.Rules.weekStart(start, app.store.weekStart);
+        table.monday = start;
+        boolean thisWeek = start.equals(thisWeekStart());
         today.setEnabled(!thisWeek);
         today.setToolTipText(thisWeek ? "이번 주를 보고 있어요" : null);
-        LocalDate sunday = monday.plusDays(6);
-        range.setText("<html><b>" + monday.getMonthValue() + "월 " + monday.getDayOfMonth() + "일 ~ "
-                + sunday.getMonthValue() + "월 " + sunday.getDayOfMonth() + "일</b></html>");
+        LocalDate last = start.plusDays(6);
+        range.setText("<html><b>" + start.getMonthValue() + "월 " + start.getDayOfMonth() + "일 ~ "
+                + last.getMonthValue() + "월 " + last.getDayOfMonth() + "일</b></html>");
         header.removeAll();
         header.setBorder(BorderFactory.createEmptyBorder(0, TimetablePanel.GUTTER, 0, 0));
         for (int i = 0; i < 7; i++) {
-            LocalDate d = monday.plusDays(i);
-            JLabel label = new JLabel(WEEK.charAt(i) + " " + d.getDayOfMonth(), SwingConstants.CENTER);
+            LocalDate d = start.plusDays(i);
+            JLabel label = new JLabel(WEEK.charAt(d.getDayOfWeek().getValue() - 1) + " " + d.getDayOfMonth(), SwingConstants.CENTER);
             if (d.equals(app.store.today())) {
                 label.setOpaque(true);
                 label.setBackground(Theme.DAY_SELECTED);
             }
             header.add(label);
         }
-        untimed.show(app.store.book.untimedOfWeek(monday));
-        int n = Planner.targets(app.store, monday).size();
+        untimed.show(app.store.book.untimedOfWeek(start));
+        int n = Planner.targets(app.store, start).size();
         autoPlace.setEnabled(n > 0);
         // 화면을 열거나 주를 옮기면 SCHEDULE_HINT. 보이는 중에 바뀌면 새 펫 말(완료, 취소, 상한, 레벨 업)이
         // 있을 때 그 말, 없으면 SCHEDULE_HINT를 다시 정한다(D-39).
@@ -176,7 +185,7 @@ public final class ScheduleScreen extends JPanel {
             scrollTo(placed.stream().mapToInt(Task::startMinute).min().getAsInt() - 60);
             table.flash(placed);
         } else if (visible && (!wasVisible || scrollPending)) {
-            scrollTo(Planner.top(monday, app.store.now));
+            scrollTo(Planner.top(start, app.store.now));
         }
         if (visible) {
             scrollPending = false;
