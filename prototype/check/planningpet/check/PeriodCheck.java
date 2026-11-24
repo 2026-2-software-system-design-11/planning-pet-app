@@ -130,9 +130,20 @@ final class PeriodCheck {
         eq("D-64 매일 반복 지우기", "[2026-11-16, 2026-11-17, 2026-11-18]", del.tasks.stream().map(t -> t.date).toList());
     }
 
-    /** 그날 dayPlan에 그 일정이 있는가. */
+    /** 그날 dayPlan의 어느 묶음에든 그 일정이 있는가. */
     static boolean on(Store s, Task t, String date) {
-        return s.book.checkables(d(date)).contains(t);
+        return !group(s, t, date).equals("x");
+    }
+
+    /** 그날 dayPlan에서 그 일정이 든 묶음: due, timed, untimed, period, 없으면 x. */
+    static String group(Store s, Task t, String date) {
+        TaskBook.DayPlan p = s.book.dayPlan(d(date));
+        return p.dueToday().contains(t) ? "due" : p.timed().contains(t) ? "timed" : p.untimed().contains(t) ? "untimed"
+                : p.period().contains(t) ? "period" : "x";
+    }
+
+    static String groups(Store s, Task t, String... days) {
+        return java.util.Arrays.stream(days).map(day -> group(s, t, day)).collect(Collectors.joining(" "));
     }
 
     static void edit() {
@@ -166,13 +177,10 @@ final class PeriodCheck {
     }
 
     static void lists() {
-        Store s = MockData.empty();
+        Store s = at("11-16T09:00");
         Task p = period(s, "P", "11-16", "11-18", 30);
-        StringBuilder shown = new StringBuilder();
-        for (String day : new String[] {"11-15", "11-16", "11-17", "11-18", "11-19"}) {
-            shown.append(s.book.dayPlan(d(day)).untimed().contains(p)).append(" ");
-        }
-        eq("D-65 기간 동안 날마다", "false true true true false ~11/18까지", shown + TaskBook.dueText(p));
+        eq("D-65 기간 동안 날마다", "x period period due x ~11/18까지",
+                groups(s, p, "11-15", "11-16", "11-17", "11-18", "11-19") + " " + TaskBook.dueText(p));
         App app = Main.create(at("11-18T09:00"));
         period(app.store, "P", "11-12", "11-20", 30);
         period(app.store, "Q", "11-10", "11-17", 30);
@@ -180,11 +188,16 @@ final class PeriodCheck {
         app.store.changed();
         ScheduleScreen sched = ProtoCheck.find(app.root, ScheduleScreen.class);
         eq("D-65 기간 할 일은 한 줄", "11/16 P ~11/20까지 30분 / 11/16 Q ~11/17까지 30분 지난 날", rows(sched.untimed));
-        Store g = at("11-17T09:00");
+        App ga = Main.create(at("11-17T09:00"));
+        Store g = ga.store;
         g.book.add(Task.Kind.TASK, "끝냄", d("11-17"), null, 30, "", null).get(0).done = true;
         period(g, "P", "11-16", "11-22", 30);
         DailyProgress pr = DailyProgress.of(g.book, g.today());
-        eq("D-65 기간 할 일은 보이는 날마다 센다", "1/2", pr.done() + "/" + pr.total());
+        String card = ProtoCheck.find(ga.root, planningpet.home.view.PetCard.class).periodText();
+        g.now = d("11-22").atTime(9, 0);
+        DailyProgress last = DailyProgress.of(g.book, g.today());
+        eq("D-70 기간 안에 할 일은 세지 않는다", "1/1 기간 할 일 1개 (~11/22), 마감 날 0/1", pr.done() + "/" + pr.total() + " " + card
+                + ", 마감 날 " + last.done() + "/" + last.total());
     }
 
     static void rewards() {
@@ -231,7 +244,7 @@ final class PeriodCheck {
         period(s, "E사 지원서", "11-16", "11-22", 120);
         period(s, "F사 서류", "11-16", "11-18", 30);
         s.book.add(Task.Kind.TASK, "과제", d("11-16"), null, 30, "", null);
-        eq("D-65 브리핑의 기간 할 일", "오늘 할 일 2개 남았어. 어제 못 끝낸 일 1개는 달력에 남아 있어. 'F사 서류' 마감이 내일이야.",
+        eq("D-65 브리핑의 기간 할 일", "오늘은 할 일이 없어. 어제 못 끝낸 일 1개는 달력에 남아 있어. 'F사 서류' 마감이 내일이야.",
                 new Talk(s).briefing());
         Store c = MockData.empty();
         period(c, "E사 지원서", "11-16", "11-22", 120);

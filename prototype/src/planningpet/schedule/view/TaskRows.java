@@ -24,18 +24,23 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     }
 
-    /** 메인(D-31): 시각 있는 일정을 시각과 함께, 그 아래 "시각 없는 할 일"(D-41). */
+    /**
+     * 메인(D-31): 맨 위 "오늘 마감"인 기간 할 일, 시각 있는 일정을 시각과 함께, 그 아래 "시각 없는 할 일"(D-41), 맨 아래
+     * "기간 안에 할 일"(D-70).
+     */
     public void showPlan(TaskBook.DayPlan plan) {
         removeAll();
-        if (plan.timed().isEmpty() && plan.untimed().isEmpty()) {
+        if (plan.isEmpty()) {
             JLabel none = Ui.hint("아직 일정이 없어요. 작은 계획을 추가해 보세요.");
             none.setFont(Theme.font(13));
             none.setForeground(Theme.INK_SUB);
             none.setBorder(BorderFactory.createEmptyBorder(16, 6, 0, 0));
             add(none);
         }
+        plan.dueToday().forEach(t -> add(row(t, "", null, plan.date())));
         plan.timed().forEach(t -> add(row(t, TaskBook.timeText(t), null, plan.date())));
         group("시각 없는 할 일", plan.untimed(), plan.date());
+        group("기간 안에 할 일", plan.period(), plan.date());
         revalidate();
         repaint();
     }

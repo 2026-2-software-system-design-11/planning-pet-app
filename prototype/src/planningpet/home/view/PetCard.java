@@ -155,6 +155,11 @@ public final class PetCard extends JComponent {
         return "오늘 끝낸 일 " + p.done() + " / " + p.total();
     }
 
+    /** 막대 아래 "기간 할 일 1개 (~11/22)"(D-70). 오늘 기간 안에 할 일이 없으면 null. */
+    public String periodText() {
+        return store.book.periodNote();
+    }
+
     /** 칸 막대의 켜진 칸 수와 칸 수(이어진 막대면 칸 수 0). 검사용. */
     public String doneBarText() {
         return Math.round(doneBar.ratio() * 100) + "% " + doneBar.segments() + "칸";
@@ -170,7 +175,8 @@ public final class PetCard extends JComponent {
         DailyProgress d = DailyProgress.of(store.book, store.today());
         doneBar.set((int) d.done(), d.total());
         getAccessibleContext().setAccessibleDescription(nameText() + " " + levelText() + ", " + expText() + ", "
-                + doneText() + (bubbleText().isBlank() ? "" : ", " + bubbleText()));
+                + doneText() + (periodText() == null ? "" : ", " + periodText())
+                + (bubbleText().isBlank() ? "" : ", " + bubbleText()));
         revalidate();
         repaint();
     }

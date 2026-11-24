@@ -163,16 +163,23 @@ public final class TaskBook {
             .thenComparing(t -> t.onTimetable() ? t.start : LocalTime.MIN)
             .thenComparingLong(t -> t.seq);
 
-    /** 그날 보이는 일정(할 일과 고정 일정, D-35, D-65). 성취도 막대와 남은 수가 센다. */
+    /** 그날의 "오늘 할 일"(할 일과 고정 일정, D-35). 기간 안에 할 일 묶음은 세지 않는다(D-70). 성취도 막대와 남은 수가 센다. */
     public List<Task> checkables(LocalDate date) {
         DayPlan plan = dayPlan(date);
-        List<Task> all = new ArrayList<>(plan.timed());
+        List<Task> all = new ArrayList<>(plan.dueToday());
+        all.addAll(plan.timed());
         all.addAll(plan.untimed());
         return all;
     }
 
-    /** 06의 6번(D-31). 메인 목록의 하루 시간표: 시각 있는 할 일과 고정 일정, 그 아래 그날 보이는 시각 없는 할 일. */
-    public record DayPlan(LocalDate date, List<Task> timed, List<Task> untimed) {
+    /**
+     * 06의 6번(D-31, D-70). 메인 목록의 하루 시간표: 맨 위 "오늘 마감"인 시각 없는 기간 할 일, 시각 있는 할 일과 고정 일정, 그 아래
+     * 시각 없는 할 일, 맨 아래 "기간 안에 할 일"(그날이 기간 안이고 시각이 없는 끝내지 않은 기간 할 일).
+     */
+    public record DayPlan(LocalDate date, List<Task> dueToday, List<Task> timed, List<Task> untimed, List<Task> period) {
+        public boolean isEmpty() {
+            return dueToday.isEmpty() && timed.isEmpty() && untimed.isEmpty() && period.isEmpty();
+        }
     }
 
     public DayPlan dayPlan(LocalDate date) {
@@ -180,11 +187,22 @@ public final class TaskBook {
                 .filter(t -> t.onTimetable() && t.date.equals(date))
                 .sorted(Comparator.comparing((Task t) -> t.start).thenComparingLong(t -> t.seq))
                 .toList();
-        List<Task> untimed = tasks.stream()
+        List<Task> rest = tasks.stream()
                 .filter(t -> t.kind == Task.Kind.TASK && !t.onTimetable() && t.shownOn(date))
                 .sorted(Comparator.comparingLong(t -> t.seq))
                 .toList();
-        return new DayPlan(date, timed, untimed);
+        List<Task> due = rest.stream().filter(t -> t.period() && !t.done && t.dueDate.equals(date)).toList();
+        List<Task> period = rest.stream().filter(t -> t.period() && !t.done && t.dueDate.isAfter(date)).toList();
+        List<Task> untimed = rest.stream().filter(t -> !due.contains(t) && !period.contains(t)).toList();
+        return new DayPlan(date, due, timed, untimed, period);
+    }
+
+    /** 펫 카드 막대 아래 글(D-70): "기간 할 일 {수}개 (~{월}/{일})", 가장 가까운 마감. 오늘 기간 안에 할 일이 없으면 null. */
+    public String periodNote() {
+        List<Task> list = dayPlan(today()).period();
+        return list.stream().map(t -> t.dueDate).min(LocalDate::compareTo)
+                .map(d -> "기간 할 일 " + list.size() + "개 (~" + d.getMonthValue() + "/" + d.getDayOfMonth() + ")")
+                .orElse(null);
     }
 
     /** 06의 26번(D-33). 달력 칸의 첫 할 일 제목과 끝내지 않은 일이 있는지. 세는 날이 그날인 할 일이 없으면 null. */
