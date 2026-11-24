@@ -88,3 +88,6 @@ public final class ShopCard extends JToggleButton {
             g.fillOval(bx - 2, by - 2, b + 4, b + 4);
             Icons.draw(g, Icons.Kind.CHECK, bx, by, b, Theme.MINT_DEEP);
         }
+        g.dispose();
+    }
+}
