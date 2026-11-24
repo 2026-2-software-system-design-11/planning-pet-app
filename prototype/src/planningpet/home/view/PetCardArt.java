@@ -88,3 +88,87 @@ final class PetCardArt {
      * 그린 자리를 돌려주고, 글을 줄였으면 cut[0]을 true로 한다. 글이 없으면 그리지 않고 null이다.
      */
     static Rectangle bubble(Graphics2D g, String text, int x, int top, int w, int bottom, boolean[] cut) {
+        cut[0] = false;
+        if (text.isBlank()) {
+            return null;
+        }
+        g.setFont(Theme.bold(13));
+        FontMetrics fm = g.getFontMetrics();
+        int heart = 14;
+        int textW = w - 14 - heart - 6 - 12;
+        int lineH = fm.getHeight();
+        int room = Math.max(1, Math.min(BUBBLE_MAX_LINES, (bottom - top - 16) / lineH));
+        List<String> lines = wrap(text, fm, textW);
+        if (lines.size() > room) {
+            cut[0] = true;
+            List<String> shown = new ArrayList<>(lines.subList(0, room));
+            shown.set(room - 1, fit(shown.get(room - 1) + " " + String.join(" ", lines.subList(room, lines.size())), fm, textW));
+            lines = shown;
+        }
+        int bh = lines.size() * lineH + 16;
+        int by = top;
+        int bx = x;
+        Card.shadow(g, bx, by, w, bh, Theme.BUBBLE_RADIUS);
+        int tailY = by + Math.min(bh / 2, 20);
+        Path2D tail = new Path2D.Double();
+        tail.moveTo(bx + 2, tailY - 7);
+        tail.lineTo(bx - 9, tailY + 1);
+        tail.lineTo(bx + 2, tailY + 6);
+        tail.closePath();
+        g.setColor(Theme.CARD_TOP);
+        g.fillRoundRect(bx, by, w, bh, Theme.BUBBLE_RADIUS, Theme.BUBBLE_RADIUS);
+        g.fill(tail);
+        g.setColor(Theme.CARD_EDGE);
+        g.setStroke(new BasicStroke(1f));
+        g.drawRoundRect(bx, by, w - 1, bh - 1, Theme.BUBBLE_RADIUS, Theme.BUBBLE_RADIUS);
+        g.draw(new java.awt.geom.Line2D.Double(bx, tailY - 7, bx - 9, tailY + 1));
+        g.draw(new java.awt.geom.Line2D.Double(bx - 9, tailY + 1, bx, tailY + 6));
+        Icons.draw(g, Icons.Kind.HEART, bx + 12, by + 8 + (lineH - heart) / 2, heart, Theme.HEART);
+        g.setColor(Theme.INK);
+        for (int i = 0; i < lines.size(); i++) {
+            g.drawString(lines.get(i), bx + 12 + heart + 6, by + 8 + fm.getAscent() + i * lineH);
+        }
+        return new Rectangle(bx, by, w, bh);
+    }
+
+    /** max 폭에 들어가게 끝을 "…"로 줄인다. */
+    static String fit(String s, FontMetrics fm, int max) {
+        if (fm.stringWidth(s) <= max) {
+            return s;
+        }
+        String cut = s;
+        while (cut.length() > 1 && fm.stringWidth(cut.strip() + "…") > max) {
+            cut = cut.substring(0, cut.length() - 1);
+        }
+        return cut.strip() + "…";
+    }
+
+    /** 띄어쓰기 단위로 max 폭에서 줄을 바꾼다. 띄어쓰기 없이 긴 글은 글자 단위로 자른다. */
+    static List<String> wrap(String text, FontMetrics fm, int max) {
+        List<String> lines = new ArrayList<>();
+        StringBuilder line = new StringBuilder();
+        for (String word : text.split(" ")) {
+            while (fm.stringWidth(word) > max) {
+                int cut = word.length() - 1;
+                while (cut > 1 && fm.stringWidth(word.substring(0, cut)) > max) {
+                    cut--;
+                }
+                if (line.length() > 0) {
+                    lines.add(line.toString());
+                    line = new StringBuilder();
+                }
+                lines.add(word.substring(0, cut));
+                word = word.substring(cut);
+            }
+            String next = line.length() == 0 ? word : line + " " + word;
+            if (fm.stringWidth(next) > max && line.length() > 0) {
+                lines.add(line.toString());
+                line = new StringBuilder(word);
+            } else {
+                line = new StringBuilder(next);
+            }
+        }
+        lines.add(line.toString());
+        return lines;
+    }
+}
