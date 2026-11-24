@@ -202,16 +202,61 @@ public final class PetScreen extends JPanel {
         lower.add(tabRow, BorderLayout.NORTH);
         lower.add(tabBody, BorderLayout.CENTER);
         lower.add(more, BorderLayout.SOUTH);
+        JPanel body = new JPanel(new BorderLayout(0, 10));
+        body.add(whoCard, BorderLayout.NORTH);
+        body.add(lower, BorderLayout.CENTER);
+        c.add(body, BorderLayout.CENTER);
+        return c;
+    }
+
+    /** 장신구 칸 하나: 입은 장신구 그림, 없으면 칸 아이콘. 누르면 캐릭터 화면으로 간다. */
+    private JComponent slot(String slotName, String worn) {
+        Icons.Kind kind = switch (slotName) {
+            case Wardrobe.NECK -> Icons.Kind.COLLAR;
+            case Wardrobe.HAT -> Icons.Kind.HAT;
+            case Wardrobe.ACCESSORY -> Icons.Kind.BOW;
+            default -> Icons.Kind.SHIRT;
+        };
+        JButton b = new JButton() {
+            @Override
+            protected void paintComponent(Graphics graphics) {
+                Graphics2D g = (Graphics2D) graphics.create();
+                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                int s = Math.min(getWidth(), getHeight()) - 4;
+                int x = (getWidth() - s) / 2;
+                Card.shadow(g, x, 1, s, s, 14);
+                g.setColor(worn != null ? Theme.MINT_PALE : Theme.CARD_TOP);
+                g.fillRoundRect(x, 1, s, s, 14, 14);
+                g.setColor(worn != null ? Theme.MINT : Theme.CARD_EDGE);
+                g.setStroke(new java.awt.BasicStroke(worn != null ? 2f : 1f));
+                g.drawRoundRect(x, 1, s, s, 14, 14);
+                java.awt.image.BufferedImage im = worn == null ? null : Images.wear(worn);
+                int p = s * 3 / 5;
+                if (im != null) {
+                    Images.fit(g, im, x + (s - p) / 2, 1 + (s - p) / 2, p, p);
+                } else {
+                    Icons.draw(g, kind, x + (s - p) / 2, 1 + (s - p) / 2, p, worn != null ? Theme.ICON : Theme.MINT_LINE);
+                }
+                g.dispose();
+            }
+        };
+        b.setContentAreaFilled(false);
+        b.setBorderPainted(false);
+        b.setFocusPainted(false);
+        b.setToolTipText(slotName + ": " + (worn == null ? "안 입었어요" : worn));
+        b.setPreferredSize(new Dimension(56, 58));
+        b.addActionListener(e -> app.show("캐릭터"));
+        return b;
+    }
+
+    /** 아이템을 사거나 펫을 데려온 직후처럼 한 번만 글을 말할 때(D-56). */
     public void sayOnce(String line) {
         said = line;
     }
 
     private void refresh() {
         Store s = app.store;
-        name.setText(s.pet().name + " Lv." + Level.level(s.pet().exp));
-        name.setFont(Theme.font(23));
-        expBar.setValue((int) (Level.expRatio(s.pet().exp) * 1000));
-        expText.setText(Level.expText(s.pet().exp));
         long done = s.book.checkables(s.today()).stream().filter(t -> t.done).count();
         if (said != null) {
             room.bubble = said;
