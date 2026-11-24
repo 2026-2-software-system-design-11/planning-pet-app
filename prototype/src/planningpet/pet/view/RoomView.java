@@ -15,6 +15,7 @@ import javax.swing.JComponent;
 /**
  * 나의 방의 방(D-13, D-52). 아이템마다 자리가 정해져 있다. 자리와 그림은 디자인 시스템 6절을 따른다.
  * 펫은 함께 키우는 펫 모두를 그리고(D-48), 고른 펫 머리 위에 하트 말풍선을 둔다(D-56).
+ * 펫을 누르면 그 펫 머리 위 말풍선에 하트와 한마디가 한 번 뜬다(D-80, 06의 16번 PETTED).
  * 펫 칩과 화살표처럼 방 위에 얹는 부품은 이 부품의 자식으로 넣고 layout이 자리를 잡는다.
  */
 public final class RoomView extends JComponent {
@@ -50,6 +51,8 @@ public final class RoomView extends JComponent {
     public String previewItem;
     /** 아이템을 사거나 펫을 데려온 직후 한 번만 하는 말(D-56). 비면 하트 말풍선이다. */
     public String bubble = "";
+    /** 말풍선을 띄울 펫의 종류. null이면 고른 펫이다. 방에서 누른 펫이 반응할 때 그 펫이다(D-80). */
+    public String bubbleKind;
 
     public RoomView(Store store) {
         this(store, false);
@@ -59,6 +62,65 @@ public final class RoomView extends JComponent {
         this.store = store;
         this.preview = preview;
         setLayout(null);
+        if (!preview) {
+            java.awt.event.MouseAdapter m = new java.awt.event.MouseAdapter() {
+                @Override
+                public void mouseClicked(java.awt.event.MouseEvent e) {
+                    String kind = petAt(e.getX(), e.getY());
+                    if (kind != null) {
+                        pat(kind);
+                    }
+                }
+
+                @Override
+                public void mouseMoved(java.awt.event.MouseEvent e) {
+                    setCursor(java.awt.Cursor.getPredefinedCursor(petAt(e.getX(), e.getY()) != null
+                            ? java.awt.Cursor.HAND_CURSOR : java.awt.Cursor.DEFAULT_CURSOR));
+                }
+            };
+            addMouseListener(m);
+            addMouseMotionListener(m);
+        }
+    }
+
+    /** D-80: 그 펫이 하트와 한마디로 반응한다. 저장하지 않고 고른 펫도 바꾸지 않는다. 다음 데이터 변경 때 하트로 돌아간다. */
+    public void pat(String kind) {
+        PetState p = store.pet(kind);
+        if (p == null) {
+            return;
+        }
+        bubble = p.pat();
+        bubbleKind = kind;
+        repaint();
+    }
+
+    /** (x, y)에 그린 펫의 종류. 없으면 null. 펫 그림 상자(발 아래부터 그린 높이까지)로 잰다. */
+    public String petAt(int x, int y) {
+        int[] f = frame();
+        int n = store.pets.size();
+        for (int i = 0; i < n; i++) {
+            PetState p = petOf(i, n);
+            int[] at = spot(i, n, f[2], f[3], getHeight() - f[1]);
+            int drawn = Pet.drawnHeight(p, at[2]);
+            java.awt.Rectangle box = new java.awt.Rectangle(f[0] + at[0] - at[2] * 2 / 5, f[1] + at[1] - drawn, at[2] * 4 / 5, drawn);
+            if (box.contains(x, y)) {
+                return p.kind;
+            }
+        }
+        return null;
+    }
+
+    private PetState petOf(int i, int n) {
+        return n > 1 ? store.pet(i == 0 ? "CAT" : "DOG") : store.pets.get(0);
+    }
+
+    /** i번째 펫의 {가운데 x, 바닥 y, 상자 한 변}(방 그림 좌표). */
+    private int[] spot(int i, int n, int w, int h, int visibleH) {
+        // 디자이너 제안(README 3절): 바닥 y 0.82, 상자 한 변 min(칸 폭 0.165, 칸 높이 0.62), 두 마리면 x 0.42와 0.58.
+        int ground = Math.min((int) (h * 0.82), visibleH - 8);
+        int size = (int) Math.min(getWidth() * 0.165, getHeight() * 0.62);
+        int px = (int) (w * (n > 1 ? (i == 0 ? 0.42 : 0.58) : 0.50));
+        return new int[] {px, ground, size};
     }
 
     /** 방 그림이 칸을 덮을 때의 그림 상자 {x0, y0, w, h}. */
@@ -100,23 +162,26 @@ public final class RoomView extends JComponent {
         g.dispose();
     }
 
-    /** 펫 한 마리면 가운데, 두 마리면 고양이 왼쪽, 강아지 오른쪽이다. 고른 펫 위에 말풍선을 둔다. */
+    /** 펫 한 마리면 가운데, 두 마리면 고양이 왼쪽, 강아지 오른쪽이다. 고른 펫 위에 말풍선을 둔다(누른 펫이 반응 중이면 그 펫 위). */
     private void pets(Graphics2D g, int w, int h, int visibleH) {
         int n = store.pets.size();
-        // 디자이너 제안(README 3절): 바닥 y 0.82, 상자 한 변 min(칸 폭 0.165, 칸 높이 0.62), 두 마리면 x 0.42와 0.58.
-        int ground = Math.min((int) (h * 0.82), visibleH - 8);
-        int size = (int) Math.min(getWidth() * 0.165, getHeight() * 0.62);
+        PetState talker = bubbleKind != null && !bubble.isEmpty() && store.pet(bubbleKind) != null ? store.pet(bubbleKind) : store.pet();
         for (int i = 0; i < n; i++) {
-            PetState p = n > 1 ? store.pet(i == 0 ? "CAT" : "DOG") : store.pets.get(0);
-            int px = (int) (w * (n > 1 ? (i == 0 ? 0.42 : 0.58) : 0.50));
+            PetState p = petOf(i, n);
+            int[] at = spot(i, n, w, h, visibleH);
+            int px = at[0];
+            int ground = at[1];
+            int size = at[2];
             g.setColor(new java.awt.Color(0x9A, 0x6A, 0x45, 40));
             g.fillOval(px - size * 3 / 10, ground - size / 22, size * 3 / 5, size / 11);
             Pet.drawAt(g, p, px, ground, size);
+            int top = ground - Pet.drawnHeight(p, size) * 9 / 10;
             if (p == store.pet()) {
-                int top = ground - Pet.drawnHeight(p, size) * 9 / 10;
                 Icons.draw(g, Icons.Kind.HEART, px - size * 11 / 20, top + size / 14, size / 6, Theme.HEART);
                 Icons.draw(g, Icons.Kind.HEART, px - size * 7 / 16, top - size / 20, size / 9, Theme.HEART);
                 Icons.draw(g, Icons.Kind.SPARK, px + size * 3 / 10, top - size / 30, size / 5, Theme.SPARK);
+            }
+            if (p == talker) {
                 bubble(g, px + size / 5, top - 4, w);
             }
         }

@@ -35,7 +35,8 @@ Main --> Time : 시각 칸 누르기
 Sched --> Form : 일정 추가, 두 번 누르기
 Sched --> Place : 자동 배치
 Room --> Adopt : "+"
-Room --> Char : 펫 칩, 장신구 칸,\n캐릭터에서 꾸미기
+Main --> Char : 펫 카드
+Room --> Char : 장신구 칸,\n{이름} 꾸미기
 Char --> Rename : 이름 변경
 Win --> Tray : 창 닫기
 Tray --> Win : 메뉴의 열기, 알림 누르기

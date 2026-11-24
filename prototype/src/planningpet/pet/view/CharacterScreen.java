@@ -66,6 +66,9 @@ public final class CharacterScreen extends JPanel {
     public final Map<String, String> draft = new LinkedHashMap<>();
     private String draftKind;
     private String slot = Wardrobe.NECK;
+    /** 큰 펫 양옆 화살표. 고른 펫을 바꾼다(D-80). 펫이 하나면 흐리다. */
+    public final CircleButton prevPet = new CircleButton(Icons.Kind.LEFT, 40, "앞 펫", false);
+    public final CircleButton nextPet = new CircleButton(Icons.Kind.RIGHT, 40, "다음 펫", false);
 
     public CharacterScreen(App app) {
         super(new BorderLayout());
@@ -97,7 +100,7 @@ public final class CharacterScreen extends JPanel {
         return col;
     }
 
-    /** 방 그림 위 큰 펫. 입혀 보는 장신구(draft)로 그린다. 양옆 화살표는 자세를 바꾼다. */
+    /** 방 그림 위 큰 펫. 입혀 보는 장신구(draft)로 그린다. 양옆 화살표는 펫을 바꾼다(D-80). 자세는 아래 자세 칸에서 고른다. */
     private JComponent big() {
         JComponent v = new JComponent() {
             @Override
@@ -131,10 +134,10 @@ public final class CharacterScreen extends JPanel {
             }
         };
         v.setLayout(null);
-        CircleButton prev = new CircleButton(Icons.Kind.LEFT, 40, "앞 자세", false);
-        CircleButton next = new CircleButton(Icons.Kind.RIGHT, 40, "다음 자세", false);
-        prev.addActionListener(e -> stepPose(-1));
-        next.addActionListener(e -> stepPose(1));
+        CircleButton prev = prevPet;
+        CircleButton next = nextPet;
+        prev.addActionListener(e -> stepPet(-1));
+        next.addActionListener(e -> stepPet(1));
         v.add(prev);
         v.add(next);
         v.addComponentListener(new java.awt.event.ComponentAdapter() {
@@ -147,10 +150,11 @@ public final class CharacterScreen extends JPanel {
         return v;
     }
 
-    private void stepPose(int delta) {
-        PetState p = app.store.pet();
-        int i = Poses.ALL.indexOf(p.pose);
-        app.pet.pose(p.kind, Poses.ALL.get(Math.floorMod(i + delta, Poses.ALL.size())));
+    /** D-80: 앞이나 다음 펫을 고른다. 입혀 본 장신구가 있으면 먼저 묻는다(D-61). */
+    private void stepPet(int delta) {
+        if (app.store.pets.size() > 1 && confirmLeave()) {
+            app.pet.step(delta);
+        }
     }
 
     /** 성장 단계(D-50): 같은 그림의 세 크기, 지금 단계에 연민트 바탕. */
@@ -256,11 +260,12 @@ public final class CharacterScreen extends JPanel {
                 apply.setVisible("꾸미기".equals(n));
             });
         }
-        tabs[1].setSelected(true);
+        tabs[0].setSelected(true);
         tabBody.add(text(stateText), "상태");
         tabBody.add(dress(), "꾸미기");
         tabBody.add(text(infoText), "정보");
-        tabCards.show(tabBody, "꾸미기");
+        tabCards.show(tabBody, "상태");
+        apply.setVisible(false);
         apply.putClientProperty(RoundButtonUI.PRIMARY, Boolean.TRUE);
         apply.setFont(Theme.bold(16));
         apply.setIcon(Icons.icon(Icons.Kind.PAW, 20, Color.WHITE));
@@ -458,14 +463,28 @@ public final class CharacterScreen extends JPanel {
         return false;
     }
 
-    /** 캐릭터 창을 열 때 부른다(D-58). 입혀 보던 장신구를 버리고 저장된 것에서 시작한다. dress면 꾸미기 탭을 연다. */
+    /**
+     * 캐릭터 창을 열 때 부른다(D-58). 입혀 보던 장신구를 버리고 저장된 것에서 시작한다.
+     * 늘 상태 탭으로 열고, dress(장신구 칸, "{이름} 꾸미기")면 꾸미기 탭으로 연다(D-93).
+     */
     public void opened(boolean dress) {
         draftKind = null;
-        if (dress && !tabs[1].isSelected()) {
-            tabs[1].doClick();
+        Pill tab = tabs[dress ? 1 : 0];
+        if (!tab.isSelected()) {
+            tab.doClick();
         }
         refresh();
         Theme.clear(this);
+    }
+
+    /** 지금 고른 탭 이름(상태, 꾸미기, 정보). 검사용. */
+    public String tab() {
+        for (Pill t : tabs) {
+            if (t.isSelected()) {
+                return t.getText();
+            }
+        }
+        return "";
     }
 
     public void refresh() {
@@ -498,6 +517,8 @@ public final class CharacterScreen extends JPanel {
             petTabs.add(tab);
         }
         petTabs.revalidate();
+        prevPet.setEnabled(s.pets.size() > 1);
+        nextPet.setEnabled(s.pets.size() > 1);
         poses.removeAll();
         for (String pose : Poses.ALL) {
             poses.add(poseCard(p, pose));

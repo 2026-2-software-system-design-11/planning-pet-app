@@ -278,7 +278,7 @@ public final class ProtoCheck {
         app.schedule.check(t);
         eq("D-48 취소는 받은 펫에서", "0 " + catExp, s.pet("DOG").exp + " " + s.pet("CAT").exp);
         app.pet.step(1);
-        eq("D-56 화살표", "DOG", s.activeKind);
+        eq("D-80 캐릭터 창 화살표", "DOG", s.activeKind);
         java.util.List<Task> days = new java.util.ArrayList<>();
         for (int i = 0; i < 40; i++) {
             Task d = new Task("b" + i, 900 + i, Task.Kind.TASK, "b", s.today().minusDays(i), null, 30);
@@ -395,13 +395,31 @@ public final class ProtoCheck {
         ca.pet.adopt(true, "");
         planningpet.pet.view.PetScreen cr = find(ca.root, planningpet.pet.view.PetScreen.class);
         java.util.List<String> opened = new java.util.ArrayList<>();
-        cr.characterOpener = dress -> opened.add(ca.store.activeKind + (dress ? " 꾸미기 탭" : " 지금 탭"));
-        button(cr.room, "고양이").doClick();
-        button(cr, "캐릭터에서 꾸미기").doClick();
-        eq("D-58 펫 칩은 고르고 창을 연다, 캐릭터에서 꾸미기는 꾸미기 탭", "CAT 지금 탭, CAT 꾸미기 탭", String.join(", ", opened));
+        cr.characterOpener = dress -> opened.add(ca.store.activeKind + (dress ? " 꾸미기 탭" : " 상태 탭"));
+        tipButton(cr.room, "나비").doClick();
+        eq("D-80 펫 칩은 고르기만 한다", "CAT ", ca.store.activeKind + " " + String.join(", ", opened));
+        button(cr, "나비 꾸미기").doClick();
+        eq("D-83 {이름} 꾸미기는 꾸미기 탭", "CAT 꾸미기 탭", String.join(", ", opened));
         opened.clear();
         find(ca.root, planningpet.home.view.MainScreen.class).pet.click();
-        eq("D-59 홈 펫 카드를 누르면 캐릭터 창(지금 탭)", "CAT 지금 탭", String.join(", ", opened));
+        eq("D-80 홈 펫 카드를 누르면 캐릭터 창(상태 탭)", "CAT 상태 탭", String.join(", ", opened));
+        eq("D-80 방 화살표는 없다", "true true", (tipButton(cr.room, "앞 펫") == null) + " " + (tipButton(cr.room, "다음 펫") == null));
+        String talkBefore = ca.store.talk;
+        cr.room.pat("DOG");
+        String patted = cr.room.bubble + " " + cr.room.bubbleKind + " " + ca.store.activeKind + " " + talkBefore.equals(ca.store.talk);
+        Task patTask = ca.store.book.add(Task.Kind.TASK, "반응 뒤", ca.store.today(), null, 30, "", null).get(0);
+        ca.schedule.check(patTask);
+        eq("D-80 방의 펫을 누르면 반응한다", "멍멍, 좋아! DOG CAT true / ", patted + " / " + cr.room.bubble);
+        cr.character.opened(true);
+        cr.character.opened(false);
+        eq("D-93 캐릭터 창은 늘 상태 탭으로 열린다", "상태", cr.character.tab());
+        cr.character.nextPet.doClick();
+        eq("D-80 캐릭터 창 화살표는 펫을 바꾼다", "DOG " + ca.store.pet("CAT").pose, ca.store.activeKind + " " + ca.store.pet("CAT").pose);
+        App one = Main.create(MockData.sample());
+        planningpet.pet.view.PetScreen oneRoom = find(one.root, planningpet.pet.view.PetScreen.class);
+        oneRoom.character.opened(false);
+        eq("D-80 펫이 하나면 캐릭터 창 화살표가 흐리다", "false false", oneRoom.character.prevPet.isEnabled() + " "
+                + oneRoom.character.nextPet.isEnabled());
         eq("D-58 메뉴에 캐릭터가 없다", "true", String.valueOf(button(ca.root, "캐릭터") == null));
         cr.character.draft.clear();
         cr.character.opened(false);
@@ -416,6 +434,22 @@ public final class ProtoCheck {
         if (c instanceof java.awt.Container k) {
             for (java.awt.Component child : k.getComponents()) {
                 javax.swing.AbstractButton b = button(child, text);
+                if (b != null) {
+                    return b;
+                }
+            }
+        }
+        return null;
+    }
+
+    /** 툴팁이 tip인 버튼. 없으면 null. */
+    static javax.swing.AbstractButton tipButton(java.awt.Component c, String tip) {
+        if (c instanceof javax.swing.AbstractButton b && tip.equals(b.getToolTipText())) {
+            return b;
+        }
+        if (c instanceof java.awt.Container k) {
+            for (java.awt.Component child : k.getComponents()) {
+                javax.swing.AbstractButton b = tipButton(child, tip);
                 if (b != null) {
                     return b;
                 }

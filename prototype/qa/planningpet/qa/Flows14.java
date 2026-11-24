@@ -41,16 +41,25 @@ final class Flows14 {
         String hello = "안녕, 나는 바둑이야. 이제 경험치는 내가 받을게!";
         q.eq("고른 펫, 방 말풍선, 홈 말풍선", "DOG 바둑이 / " + hello + " / " + hello,
                 q.app.store.activeKind + " " + q.app.store.pet().name + " / " + q.pet.room.bubble + " / " + q.app.store.talk);
-        q.step("4", "방 왼쪽 화살표로 고양이를 고르고 홈으로 간다");
-        tip(q.pet, "앞 펫").doClick();
+        q.step("4", "방 왼쪽 위의 나비 칩을 누르고 홈으로 간다");
+        java.util.List<String> opened = new java.util.ArrayList<>();
+        q.pet.characterOpener = dress -> opened.add(dress ? "꾸미기" : "상태");
+        chip(q, "CAT").doClick();
+        q.eq("칩은 창을 열지 않는다(D-80)", "", String.join(", ", opened));
         q.app.show("홈");
         q.eq("홈 펫 카드", "나비 Lv. 3 / 이제 경험치는 내가 받을게! 오늘 할 일 3개 남았어.",
                 q.main.pet.nameText() + " " + q.main.pet.levelText() + " / " + q.main.pet.bubbleText());
         q.eq("방 말풍선은 하트", "", q.pet.room.bubble);
+        q.step("4-1", "나의 방에서 강아지를 누른다");
+        q.app.show("나의 방");
+        q.pet.room.pat("DOG");
+        q.eq("강아지 반응, 고른 펫 그대로", "멍멍, 좋아! / DOG / CAT", q.pet.room.bubble + " / " + q.pet.room.bubbleKind + " / "
+                + q.app.store.activeKind);
         q.step("5", "캐릭터 창에서 리본 목걸이를 입혀 보고 닫다가 취소한다");
         String[] asked = {""};
         q.pet.characterOpener = dress -> q.pet.character.opened(dress);
-        tip(q.pet, null, "캐릭터에서 꾸미기").doClick();
+        tip(q.pet, null, "나비 꾸미기").doClick();
+        q.eq("꾸미기 탭으로 열림(D-83)", "꾸미기", q.pet.character.tab());
         text(q.pet.character, "리본 목걸이").doClick();
         q.pet.character.ask = (title, message, options) -> {
             asked[0] = title + " / " + message + " / " + String.join(", ", options);
@@ -63,7 +72,7 @@ final class Flows14 {
         q.eq("닫기에 버리기", "true 기본 목걸이 기본 목걸이", q.pet.character.confirmLeave() + " "
                 + q.pet.character.draft.get(Wardrobe.NECK) + " " + q.app.store.pet().wear.get(Wardrobe.NECK));
         q.step("7", "다시 열어 리본 목걸이를 입혀 보고 닫다가 적용한다");
-        tip(q.pet, null, "캐릭터에서 꾸미기").doClick();
+        tip(q.pet, null, "나비 꾸미기").doClick();
         text(q.pet.character, "리본 목걸이").doClick();
         q.pet.character.ask = (title, message, options) -> 0;
         q.eq("닫기에 적용", "true 리본 목걸이", q.pet.character.confirmLeave() + " " + q.app.store.pet().wear.get(Wardrobe.NECK));
@@ -76,6 +85,18 @@ final class Flows14 {
         q.eq("이번 주 달성률", "2 / 9 22%", r.done() + " / " + r.total() + " " + r.percent() + "%");
         q.yes("이번 주 월요일", TaskBook.mondayOf(q.app.store.today()).toString().equals("2026-11-09"));
         q.end();
+    }
+
+    /** 나의 방 왼쪽 위의 그 펫 칩(툴팁이나 글에 이름이 있다). */
+    private static AbstractButton chip(Qa q, String kind) {
+        planningpet.pet.view.PetScreen pet = q.pet;
+        String name = q.app.store.pet(kind).name;
+        for (AbstractButton b : QaRules.all(pet.room, AbstractButton.class)) {
+            if (name.equals(b.getToolTipText()) || name.equals(b.getText())) {
+                return b;
+            }
+        }
+        throw new IllegalStateException("펫 칩을 찾지 못함: " + kind);
     }
 
     private static String onOff(AbstractButton b) {
