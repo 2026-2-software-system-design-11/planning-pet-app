@@ -202,6 +202,7 @@ final class Flows8910 {
         q.step("2", "논문 정리 23:30 40분으로 저장한다");
         TaskForm g = timed(q, "논문 정리", "23:30", 40);
         q.eq("끝, 저장", "00:10(다음 날)에 끝나요 true ", g.endLabel.getText() + " " + q.save(g, null) + " " + g.errorText());
+        q.eq("겹침 물음(D-87)", "23:30~24:00 '논문 읽기'와 30분 겹쳐요. 그래도 넣을까요?", q.takeOverlaps());
         q.has("목록", "[ ] 논문 정리 23:30~00:10(다음 날) 40분", q.rows());
         q.step("3", "실험 정리 720분으로 저장한다");
         TaskForm h = q.form("2026-11-17");
