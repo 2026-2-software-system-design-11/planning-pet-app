@@ -358,3 +358,54 @@ public final class ShopPanel extends Card {
             empty.setForeground(Theme.INK_SUB);
             cards.setLayout(new BorderLayout());
             cards.add(empty);
+        }
+        for (int i = cards.getComponentCount(); i < per && !list.isEmpty(); i++) {
+            cards.add(new JPanel());
+        }
+        prev.setEnabled(first > 0);
+        next.setEnabled(first + per < list.size());
+        cards.revalidate();
+        cards.repaint();
+    }
+
+    private void refreshPreview() {
+        Store s = app.store;
+        previewCard.setVisible(previewToggle.isSelected());
+        previewRoom.previewItem = selected;
+        previewRoom.repaint();
+        Shop.Item item = selected == null ? null : Shop.CATALOG.get(selected);
+        boolean owned = item != null && s.owned.contains(item.name());
+        previewName.setText(item == null ? "아이템을 골라 보세요" : item.name());
+        previewName.setForeground(item == null ? Theme.INK_SUB : Theme.INK);
+        previewPrice.setText(item == null ? "" : owned ? "보유 중" : item.price() + "P");
+        previewPrice.setIcon(item == null || owned ? null : Icons.icon(Icons.Kind.COIN, 16, Theme.COIN));
+        int short_ = item == null || owned ? 0 : item.price() - s.points;
+        action.setText(item == null || !owned ? "구매하기" : s.placed.contains(item.name()) ? "방에서 치우기" : "방에 놓기");
+        action.setIcon(Icons.icon(owned ? Icons.Kind.ROOM : Icons.Kind.CART, 16, java.awt.Color.WHITE));
+        action.setEnabled(item != null && short_ <= 0);
+        cancel.setEnabled(item != null);
+        lack.setText(short_ > 0 ? short_ + "P 모자라요" : " ");
+    }
+
+    /** 검사용: 카드 줄의 글자를 이어 붙인다. */
+    public String cardsText() {
+        StringBuilder b = new StringBuilder();
+        for (Component c : cards.getComponents()) {
+            if (c instanceof ShopCard k) {
+                b.append(b.length() > 0 ? ", " : "").append(k.getText());
+            }
+        }
+        return b.toString();
+    }
+
+    @Override
+    public Insets getInsets() {
+        return super.getInsets();
+    }
+
+    static GridBagConstraints at(int y) {
+        GridBagConstraints k = new GridBagConstraints();
+        k.gridy = y;
+        return k;
+    }
+}
