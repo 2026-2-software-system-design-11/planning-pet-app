@@ -58,7 +58,7 @@ public final class Snap {
         }
         room.character.opened(false);
         save(CharacterDialog.content(room.character), CharacterDialog.size(1440, 810), new File(dir, "6-character-wide.png"));
-        LocalDate monday = TaskBook.mondayOf(app.store.today());
+        LocalDate monday = planningpet.common.model.Rules.weekStart(app.store.today(), app.store.weekStart);
         save(TaskDialog.content(new TaskForm(null, app.store.today(), app.store.now), new JButton("취소"), new JButton("저장"), null), null, new File(dir, "3-form.png"));
         save(AutoPlaceDialog.content(app.store, monday, Planner.place(app.store, monday), new JButton("취소"),
                 new JButton("적용")), null, new File(dir, "4-autoplace.png"));

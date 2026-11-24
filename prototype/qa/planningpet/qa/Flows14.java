@@ -83,7 +83,7 @@ final class Flows14 {
         q.app.show("통계");
         Stats.Rate r = Stats.rate(q.app.store, Stats.Period.week(q.app.store.today()));
         q.eq("이번 주 달성률", "2 / 9 22%", r.done() + " / " + r.total() + " " + r.percent() + "%");
-        q.yes("이번 주 월요일", TaskBook.mondayOf(q.app.store.today()).toString().equals("2026-11-09"));
+        q.yes("이번 주 월요일", planningpet.common.model.Rules.weekStart(q.app.store.today(), q.app.store.weekStart).toString().equals("2026-11-09"));
         q.end();
     }
 

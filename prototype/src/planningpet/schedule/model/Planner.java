@@ -27,12 +27,12 @@ public final class Planner {
      * 놓을 수 있는 날(06의 18번): 보이는 주의 날 가운데 오늘과 할 일의 날짜 중 늦은 날부터 끝 날까지. 끝 날은 기간 할 일이면
      * 마감(마감이 날짜보다 앞이면 날짜), 아니면 날짜다(D-25, D-65).
      */
-    public static List<LocalDate> days(Task t, LocalDate monday, LocalDate today) {
+    public static List<LocalDate> days(Task t, LocalDate weekStart, LocalDate today) {
         LocalDate from = t.date.isAfter(today) ? t.date : today;
         LocalDate end = t.dueDate != null && t.dueDate.isAfter(t.date) ? t.dueDate : t.date;
         List<LocalDate> out = new ArrayList<>();
         for (int i = 0; i < 7; i++) {
-            LocalDate d = monday.plusDays(i);
+            LocalDate d = weekStart.plusDays(i);
             if (!d.isBefore(from) && !d.isAfter(end)) {
                 out.add(d);
             }
@@ -41,10 +41,10 @@ public final class Planner {
     }
 
     /** 대상: 시작 시각 없는, 끝내지 않은 할 일 가운데 놓을 수 있는 날이 있는 것. 날짜, 긴 순, 넣은 순. */
-    public static List<Task> targets(Store s, LocalDate monday) {
+    public static List<Task> targets(Store s, LocalDate weekStart) {
         return s.tasks.stream()
                 .filter(t -> t.kind == Task.Kind.TASK && !t.onTimetable(s.today()) && !t.done
-                        && !days(t, monday, s.today()).isEmpty())
+                        && !days(t, weekStart, s.today()).isEmpty())
                 .sorted(Comparator.comparing((Task t) -> t.date)
                         .thenComparing(t -> -t.minutes)
                         .thenComparingLong(t -> t.seq))
@@ -58,8 +58,8 @@ public final class Planner {
      * 놓지 못한 까닭(D-76). 마감이 보이는 주 뒤인 기간 할 일은 다음 주에 놓을 수 있다고 알린다. 기간 할 일은 마감까지, 그 밖은
      * 그날의 빈 시간이 모자란 것이다.
      */
-    public static String reason(Task t, LocalDate monday) {
-        if (t.period() && t.dueDate.isAfter(monday.plusDays(6))) {
+    public static String reason(Task t, LocalDate weekStart) {
+        if (t.period() && t.dueDate.isAfter(weekStart.plusDays(6))) {
             return "이번 주엔 자리가 없어요. 마감 " + dayText(t.dueDate) + "까지 시간이 있으니 다음 주에서 자동 배치하면 놓을 수 있어요";
         }
         return t.period() ? "마감까지 빈 시간이 모자라요" : "그날 빈 시간이 모자라요";
@@ -80,13 +80,13 @@ public final class Planner {
         return now.plusMinutes((5 - now.getMinute() % 5) % 5);
     }
 
-    public static Placement place(Store s, LocalDate monday) {
+    public static Placement place(Store s, LocalDate weekStart) {
         LocalDateTime earliest = earliest(s);
         List<Placed> placed = new ArrayList<>();
         List<Task> unplaced = new ArrayList<>();
-        for (Task t : targets(s, monday)) {
+        for (Task t : targets(s, weekStart)) {
             Placed found = null;
-            for (LocalDate day : days(t, monday, s.today())) {
+            for (LocalDate day : days(t, weekStart, s.today())) {
                 found = slot(s, t, day, placed, earliest);
                 if (found != null) {
                     break;
@@ -120,12 +120,12 @@ public final class Planner {
     }
 
     /**
-     * 06의 19번 처음 보이는 자리(D-89): 보이는 주에 오늘이 있으면 지금의 앱 하루의 시각(다음 날 새벽이면 24시간을 더한다)에서
+     * 06의 19번 처음 보이는 자리(D-89): 보이는 주(첫날 monday부터 7일, D-91)에 오늘이 있으면 지금의 앱 하루의 시각(다음 날 새벽이면 24시간을 더한다)에서
      * 60분 앞(0 아래면 0), 없으면 08:00.
      */
     public static int top(LocalDate monday, LocalDateTime now) {
         LocalDate today = planningpet.common.model.Rules.appDay(now);
-        if (!TaskBook.mondayOf(today).equals(monday)) {
+        if (today.isBefore(monday) || today.isAfter(monday.plusDays(6))) {
             return 8 * 60;
         }
         int minute = (now.toLocalDate().equals(today) ? 0 : Task.DAY) + now.getHour() * 60 + now.getMinute();

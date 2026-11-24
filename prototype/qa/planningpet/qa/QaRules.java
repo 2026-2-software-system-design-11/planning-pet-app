@@ -76,7 +76,7 @@ final class QaRules {
         App app = fresh();
         LocalDate today = app.store.today();
         Task essay = app.store.book.dayPlan(today).timed().get(1);
-        LocalDate monday = TaskBook.mondayOf(today);
+        LocalDate monday = planningpet.common.model.Rules.weekStart(today, app.store.weekStart);
         m.put("일정 추가 창", TaskDialog.content(new TaskForm(null, today, app.store.now), new JButton("취소"), new JButton("저장"), null));
         m.put("일정 수정 창", TaskDialog.content(new TaskForm(essay, today, app.store.now), new JButton("취소"), new JButton("저장"),
                 new JButton("삭제")));

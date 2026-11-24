@@ -22,15 +22,15 @@ public final class AutoPlaceDialog {
     private AutoPlaceDialog() {
     }
 
-    public static JPanel content(Store s, LocalDate monday, Planner.Placement p, JButton cancel, JButton apply) {
+    public static JPanel content(Store s, LocalDate weekStart, Planner.Placement p, JButton cancel, JButton apply) {
         LocalDate today = s.today();
-        boolean thisWeek = TaskBook.mondayOf(today).equals(monday);
+        boolean thisWeek = planningpet.common.model.Rules.weekStart(today, s.weekStart).equals(weekStart);
         java.time.LocalDateTime soonest = Planner.earliest(s);
         java.time.LocalDateTime start = thisWeek && soonest.toLocalTime().isAfter(LocalTime.of(9, 0)) ? soonest
-                : (thisWeek ? soonest.toLocalDate() : monday).atTime(9, 0);
+                : (thisWeek ? soonest.toLocalDate() : weekStart).atTime(9, 0);
         LocalDate from = start.toLocalDate();
         LocalTime fromTime = start.toLocalTime();
-        LocalDate to = monday.plusDays(6);
+        LocalDate to = weekStart.plusDays(6);
         JLabel head = new JLabel(day(from) + " " + fromTime + "부터 " + day(to) + "까지, 할 일마다 그 날짜(기간 할 일은 기간) 안의 빈 시간에 놓았어요");
         // D-43: 결과 표는 보기만 한다. 칸을 고치거나 열을 옮길 수 없다.
         DefaultTableModel model = new DefaultTableModel(new Object[] {"할 일", "날짜", "시각", "걸리는 시간"}, 0) {
@@ -55,7 +55,7 @@ public final class AutoPlaceDialog {
         JPanel middle = new JPanel(new BorderLayout(0, 8));
         middle.add(scroll, BorderLayout.CENTER);
         if (!p.unplaced().isEmpty()) {
-            middle.add(unplaced(p, monday), BorderLayout.SOUTH);
+            middle.add(unplaced(p, weekStart), BorderLayout.SOUTH);
         }
         root.add(middle, BorderLayout.CENTER);
         JPanel buttons = new JPanel(new BorderLayout());
@@ -65,7 +65,7 @@ public final class AutoPlaceDialog {
     }
 
     /** D-76: 표 아래 "놓지 못한 일" 칸. 일마다 제목, 마감 날짜, 빨간 까닭이고 맨 아래에 다음 할 일을 적는다. */
-    public static JPanel unplaced(Planner.Placement p, LocalDate monday) {
+    public static JPanel unplaced(Planner.Placement p, LocalDate weekStart) {
         JPanel box = new JPanel();
         box.setLayout(new javax.swing.BoxLayout(box, javax.swing.BoxLayout.Y_AXIS));
         box.setName("놓지 못한 일");
@@ -74,7 +74,7 @@ public final class AutoPlaceDialog {
         box.add(title);
         for (Task t : p.unplaced()) {
             JLabel line = new JLabel("<html><div style='width:520px'><b>" + Ui.esc(t.title) + "</b> " + Planner.dueText(t)
-                    + "<br><font color='#E55C64'>" + Planner.reason(t, monday) + "</font></div></html>");
+                    + "<br><font color='#E55C64'>" + Planner.reason(t, weekStart) + "</font></div></html>");
             line.setBorder(javax.swing.BorderFactory.createEmptyBorder(4, 0, 0, 0));
             box.add(line);
         }
@@ -84,12 +84,12 @@ public final class AutoPlaceDialog {
         return box;
     }
 
-    public static void open(App app, LocalDate monday) {
-        Planner.Placement p = Planner.place(app.store, monday);
+    public static void open(App app, LocalDate weekStart) {
+        Planner.Placement p = Planner.place(app.store, weekStart);
         JButton cancel = new JButton("취소");
         JButton apply = new JButton("적용");
         JDialog d = new JDialog(SwingUtilities.getWindowAncestor(app.root), "자동 배치 결과", JDialog.ModalityType.APPLICATION_MODAL);
-        d.setContentPane(content(app.store, monday, p, cancel, apply));
+        d.setContentPane(content(app.store, weekStart, p, cancel, apply));
         cancel.addActionListener(e -> d.dispose());
         apply.addActionListener(e -> {
             apply(app, p);
