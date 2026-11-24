@@ -178,3 +178,93 @@ final class PetPaintBody extends PetPaintHead {
         shadeIn(body, ell(170, 304, 120, 14), furShade);
         redraw(body);
         if (has("조끼")) {
+            vest(body, 214, 270);
+        }
+        if (has("망토")) {
+            capeOnBack(body);
+        }
+        g.setTransform(base);
+        tail(true);
+        paw(150, 290, 0);
+        paw(104, 292, 0);
+        Shape clip0 = g.getClip();
+        g.clip(new java.awt.geom.Rectangle2D.Double(0, 0, 320, 300));
+        neckWear(116, 280, -6, 46);
+        g.setClip(clip0);
+        head(112, 232, -6, Face.SLEEP, true);
+        zzz();
+    }
+
+    // ---------- 기지개 ----------
+    void stretch() {
+        AffineTransform base = g.getTransform();
+        double sway = wave(t, 2.8, -2, 2, 0);
+        // 뒷다리
+        Path2D hind = new Path2D.Double();
+        hind.moveTo(236, 200);
+        hind.lineTo(242, 290);
+        tube(hind, 30, fur);
+        paw(244, 292, 0);
+        if (cat) {
+            // 엉덩이에서 위로 선 꼬리
+            AffineTransform old = g.getTransform();
+            push(256, 184, wave(t, 1.8, -6, 8, 0), 1, 1);
+            Path2D p = new Path2D.Double();
+            p.moveTo(0, 0);
+            p.curveTo(26, -20, 22, -70, 6, -96);
+            tube(p, 24, CAT_GREY);
+            g.setTransform(old);
+        } else {
+            AffineTransform old = g.getTransform();
+            push(258, 196, wave(t, 0.5, -14, 18, 0) - 10, 1, 1);
+            Path2D p = new Path2D.Double();
+            p.moveTo(0, 0);
+            p.quadTo(26, -10, 30, -44);
+            tube(p, 24, DOG_FUR);
+            filled(ell(30, -48, 14, 13), DOG_FUR);
+            g.setTransform(old);
+        }
+        push(184, 226, -24 + sway, 1, 1);
+        Shape body = new RoundRectangle2D.Double(-88, -42, 176, 84, 84, 84);
+        filled(body, fur);
+        if (cat) {
+            shadeIn(body, ell(46, -24, 48, 30), CAT_GREY);
+        }
+        shadeIn(body, ell(0, 44, 100, 16), furShade);
+        redraw(body);
+        if (has("조끼")) {
+            vest(body, -40, 40);
+        }
+        if (has("망토")) {
+            capeOnBack(body);
+        }
+        g.setTransform(base);
+        // 앞으로 뻗은 앞다리
+        Path2D front = new Path2D.Double();
+        front.moveTo(118, 262);
+        front.lineTo(60, 292);
+        tube(front, 26, fur);
+        paw(52, 291, 0);
+        paw(84, 292, 0);
+        neckWear(124, 258, -24, 44);
+        head(96, 222, -12 + sway, Face.STRETCH, true);
+    }
+
+    void bowl() {
+        Path2D b = new Path2D.Double();
+        b.moveTo(104, 270);
+        b.lineTo(216, 270);
+        b.quadTo(212, 304, 186, 306);
+        b.lineTo(134, 306);
+        b.quadTo(108, 304, 104, 270);
+        b.closePath();
+        filled(ell(160, 268, 58, 12), KIBBLE);
+        for (int i = 0; i < 7; i++) {
+            g.setColor(i % 2 == 0 ? KIBBLE.darker() : new Color(0xE9A35A));
+            g.fill(ell(122 + i * 12, 264 + (i % 3) * 2, 6, 4));
+        }
+        filled(b, BOWL);
+        g.setColor(new Color(255, 255, 255, 150));
+        g.fill(new RoundRectangle2D.Double(116, 278, 26, 6, 6, 6));
+        stroke(new java.awt.geom.Line2D.Double(104, 270, 216, 270), line, ink);
+    }
