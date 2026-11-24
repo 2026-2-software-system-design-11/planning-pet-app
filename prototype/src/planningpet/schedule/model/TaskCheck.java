@@ -45,15 +45,37 @@ public final class TaskCheck {
             out.add(new String[] {"메모", "메모는 1000자까지예요"});
         }
         // D-42: 수정할 때 반복 칸은 보이기만 하므로 검사하지 않는다(사본을 반복 끝 밖으로 옮겨도 된다).
-        if (f.repeatEnd() != null && !editing) {
-            LocalDate from = f.date();
-            LocalDate to = f.repeatEnd();
-            if (to.isBefore(from)) {
-                out.add(new String[] {"반복", "끝 날짜가 시작 날짜보다 앞이에요"});
-            } else if (ChronoUnit.WEEKS.between(from, to) >= 26) {
-                out.add(new String[] {"반복", "반복은 26번까지예요"});
+        if (f.repeat() != null && !editing) {
+            String problem = repeatProblem(f);
+            if (problem != null) {
+                out.add(new String[] {"반복", problem});
             }
         }
         return out;
+    }
+
+    /** 반복 칸의 문장(D-64, D-65). 맞으면 null. */
+    private static String repeatProblem(TaskDraft f) {
+        Repeat how = f.repeat();
+        LocalDate from = f.date();
+        LocalDate to = f.repeatEnd();
+        if (f.dueDate() != null) {
+            return "기간 안에 하는 할 일은 반복할 수 없어요";
+        }
+        if (!how.daily() && how.days().isEmpty()) {
+            return "요일을 하나 이상 골라 주세요";
+        }
+        if (to.isBefore(from)) {
+            return "끝 날짜가 시작 날짜보다 앞이에요";
+        }
+        // 옮기는 동안만: 일정 입력 창이 아직 예전 매주 반복 칸이라 예전 한도(D-17)를 지킨다. 입력 창을 바꾸는 PR에서 지운다.
+        if (java.time.temporal.ChronoUnit.WEEKS.between(from, to) >= 26) {
+            return "반복은 26번까지예요";
+        }
+        int copies = how.dates(from, to, Repeat.MAX_COPIES).size();
+        if (copies == 0) {
+            return "끝 날짜 안에 반복하는 날이 없어요";
+        }
+        return copies > Repeat.MAX_COPIES ? "반복이 너무 많아요. 끝 날짜를 앞당겨 주세요" : null;
     }
 }

@@ -54,8 +54,9 @@ public final class Stats {
     private static List<Task> counted(Store s, LocalDate from, LocalDate to) {
         LocalDate end = to.isAfter(s.today()) ? s.today() : to;
         // D-55: 앞날은 세지 않는다. D-63: 오늘의 일정은 끝낸 것만 센다(안 끝낸 일은 다음 날부터 센다).
-        return s.tasks.stream().filter(t -> !t.date.isBefore(from) && !t.date.isAfter(end))
-                .filter(t -> t.done || t.date.isBefore(s.today())).toList();
+        // D-65: 세는 날(06 데이터 절)로 센다. 끝내지 않은 기간 할 일은 마감 날의 일이다.
+        return s.tasks.stream().filter(t -> !t.countDay().isBefore(from) && !t.countDay().isAfter(end))
+                .filter(t -> t.done || t.countDay().isBefore(s.today())).toList();
     }
 
     private static Rate rate(List<Task> list) {
