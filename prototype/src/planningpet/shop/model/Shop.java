@@ -59,6 +59,18 @@ public final class Shop {
         return 0;
     }
 
+    /** 06의 20번, D-85. 가진 아이템을 산 값 그대로 되판다. 방에 놓였으면 함께 뺀다. 돌려준 포인트, 가지지 않았으면 -1. */
+    public int sell(String item) {
+        if (!s.owned.contains(item)) {
+            return -1;
+        }
+        int price = ITEMS.get(item);
+        s.points += price;
+        s.owned.remove(item);
+        s.placed.remove(item);
+        return price;
+    }
+
     /** D-52 방 꾸미기 만족도: 놓은 아이템 가격 합 / 모든 아이템 가격 합, 반올림한 백분율. */
     public static int satisfaction(Iterable<String> placed) {
         int sum = 0;

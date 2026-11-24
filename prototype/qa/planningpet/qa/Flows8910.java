@@ -113,6 +113,17 @@ final class Flows8910 {
         q.step("3", "상점을 연다");
         q.eq("상점", "털실 공 살 수 있어요 켜짐 / 뼈다귀 살 수 있어요 켜짐 / 쿠션 보유 중 방에서 치우기 켜짐 / 화분 살 수 있어요 켜짐 / 러그 살 수 있어요 켜짐 / 액자 살 수 있어요 켜짐"
                 + " / 걸이 화분 살 수 있어요 켜짐 / 조명 살 수 있어요 켜짐 / 책장 살 수 있어요 켜짐 / 책상 살 수 있어요 켜짐 / 소파 40P 모자라요 꺼짐 / 캣타워 90P 모자라요 꺼짐 / 우드 침대 140P 모자라요 꺼짐", q.shop());
+        q.step("4", "보유한 아이템에서 쿠션을 고르고 되팔기를 누른다");
+        int before = q.app.store.points;
+        q.pet.shop.ownedMode.doClick();
+        q.pet.shop.selected = null;
+        q.pet.shop.select("쿠션");
+        q.eq("되팔기 버튼(D-85)", "되팔기 +50P 켜짐", q.pet.shop.sell.getText() + (q.pet.shop.sell.isVisible() ? " 켜짐" : " 숨음"));
+        q.pet.shop.sell.doClick();
+        q.eq("되판 뒤", "+50P, 보유 false, 방 false, 아직 가진 아이템이 없어요. 상점에서 사면 바로 방에 놓여요.",
+                "+" + (q.app.store.points - before) + "P, 보유 " + q.app.store.owned.contains("쿠션") + ", 방 "
+                + q.app.store.placed.contains("쿠션") + ", " + text(q.pet.shop.cards).strip());
+        q.pet.shop.shopMode.doClick();
         q.end();
     }
 

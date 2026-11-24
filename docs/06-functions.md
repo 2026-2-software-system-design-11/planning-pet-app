@@ -463,16 +463,17 @@
 | T-TT-4 | A 09:00~11:00, B 09:30~10:00, C 10:00~10:30 | A 0/2, B 1/2, C 1/2 |
 | T-TT-5 | A 09:00~10:00(seq 1), B 09:00~10:30(seq 2) | B 0/2, A 1/2 |
 
-## 20. `BuyResult Shop.buy(ItemId item)`, `void Room.toggle(ItemId item)`, `int Shop.satisfaction(Set<ItemId> placed)`, `List<Item> Shop.find(String category, String query, boolean ownedOnly)`
+## 20. `BuyResult Shop.buy(ItemId item)`, `int Shop.sell(ItemId item)`, `void Room.toggle(ItemId item)`, `int Shop.satisfaction(Set<ItemId> placed)`, `List<Item> Shop.find(String category, String query, boolean ownedOnly)`
 
-아이템을 찾고, 사고, 방에 놓거나 치우고, 방 꾸미기 만족도를 구한다.
+아이템을 찾고, 사고, 되팔고, 방에 놓거나 치우고, 방 꾸미기 만족도를 구한다.
 
-- **쓰는 곳**: UC-14(머리 카드), UC-15, UC-16 (나의 방 상점 칸과 미리보기 칸)
-- **출력**: `buy`는 `BOUGHT`, `NOT_ENOUGH`(모자란 포인트와 함께), `ALREADY_OWNED` 중 하나. `satisfaction`은 0부터 100. `find`는 맞는 아이템을 가격 순으로
+- **쓰는 곳**: UC-14(머리 카드), UC-15, UC-16 (나의 방 상점 칸과 미리보기 칸, 되팔기는 보유한 아이템 탭)
+- **출력**: `buy`는 `BOUGHT`, `NOT_ENOUGH`(모자란 포인트와 함께), `ALREADY_OWNED` 중 하나. `sell`은 돌려준 포인트, 가지지 않은 아이템이면 -1. `satisfaction`은 0부터 100. `find`는 맞는 아이템을 가격 순으로
 - **오류**: `toggle`에 사지 않은 아이템이면 `IllegalStateException`
 - **하는 일**:
   - 아이템, 가격, 분류는 D-52의 열세 개이고(합 2210P) 상점 칸은 가격 순이다.
-  - `buy`는 보유 포인트가 가격 이상이면 가격을 빼고 `ownedItems`와 `placedItems`에 넣는다(D-28). 모자라면 미리보기 칸의 구매하기가 흐리고 그 아래에 "{모자란 포인트}P 모자라요"를 보인다(D-53).
+  - `buy`는 보유 포인트가 가격 이상이면 가격을 빼고 `ownedItems`와 `placedItems`에 넣는다(D-28). 모자라면 미리보기 칸의 구매하기가 흐리고 그 아래에 "{모자란 포인트}P 모자라요"를 보인다(D-53, D-85). 화면은 구매하기를 누르면 "{아이템}{을/를} {값}P에 살까요? 남는 포인트 {남는 포인트}P"를 물은 뒤에만 `buy`를 부른다(D-85, 05 구매 확인 창).
+  - `sell`은 가진 아이템이면 그 가격(D-52)만큼 포인트를 더하고 `ownedItems`와 `placedItems`에서 뺀다(D-85). 산 값 그대로라 사고 되팔아도 포인트가 늘지 않는다(D-19). 보유한 아이템 탭의 "되팔기 +{값}P"가 부른다.
   - `toggle`은 놓인 아이템이면 `placedItems`에서 빼고, 아니면 넣는다. 미리보기 칸의 "방에 놓기"와 "방에서 치우기"가 부른다.
   - `satisfaction`은 놓인 아이템 가격 합을 모든 아이템 가격 합(2210)으로 나눈 백분율을 반올림한다(D-52). 배치 아이템은 "{놓인 수} / 13"이다.
   - `find`는 분류가 "전체"이거나 같고, 앞뒤 공백을 지운 검색어가 비었거나 이름에 들어 있고, `ownedOnly`면 가진 아이템인 것만 돌려준다(D-53).
@@ -489,6 +490,8 @@
 | T-SHOP-8 (`D-52 만족도`) | 없음 | 놓인 것 없음, 소파만, 모두로 `satisfaction` | 0, 14, 100 |
 | T-SHOP-9 (`D-53 찾기`) | 없음 | 장난감과 빈 검색어, 전체와 "걸이"로 `find` | 털실 공, 뼈다귀. 걸이 화분 |
 | T-SHOP-10 (`T-SHOP-10 보유만 찾기`) | 쿠션만 보유 | 전체, 빈 검색어, `ownedOnly`로 `find` | 쿠션 |
+| T-SHOP-11 (`D-85 되팔기`) | 100P, 쿠션 보유하고 놓임 | `sell(쿠션)` | 50. 150P, 쿠션은 보유 목록과 방에 없음 |
+| T-SHOP-12 (`T-SHOP-12 없는 것은 못 판다`) | T-SHOP-11 뒤, 소파 없음 | `sell(소파)` | -1. 150P 그대로 |
 
 ## 21. `LoadResult DataStore.load()`, `void DataStore.save(AppData data)`
 
@@ -656,7 +659,7 @@
   - 펫 말: `adopt`는 16번 `ADOPTED`, `select`(와 `step`)는 `SELECTED`, `rename`은 `RENAMED`를 말한다(D-62).
   - `adopt`는 그 종류의 펫이 없을 때 경험치 0, 앉기 자세, 기본 목걸이인 펫을 만들어 `pets`에 넣고 `activeKind`로 한다. 이름은 D-27 규칙(앞뒤 공백을 지우고 10자까지, 비우면 나비, 바둑이)이다.
   - `select`는 그 종류의 펫이 있고 지금 고른 펫이 아니면 `activeKind`를 바꾼다. `step`은 `pets` 순서에서 앞(-1)이나 다음(+1) 펫을 고르고 끝에서 처음으로 돈다.
-  - `rename`은 D-27 규칙으로 이름을 바꾼다. 종류는 바꾸지 않는다(D-57).
+  - `rename`은 D-27 규칙으로 이름을 바꾼다. 종류는 바꾸지 않는다(D-57). 종류를 바꾸는 함수는 없다(D-92).
   - `pose`는 다섯 자세(D-50) 가운데 하나일 때만 바꾼다.
 
 | 검사 | 처음 상태 | 하는 것 | 결과 |

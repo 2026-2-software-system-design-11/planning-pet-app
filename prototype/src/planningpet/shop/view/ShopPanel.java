@@ -80,6 +80,16 @@ public final class ShopPanel extends Card {
     public final JButton cancel = new JButton("취소");
     /** 구매하기, 방에 놓기, 방에서 치우기 가운데 하나. */
     public final JButton action = new JButton("구매하기");
+    /** 보유한 아이템에서 고른 가진 아이템을 산 값 그대로 되판다(D-85). "되팔기 +{값}P". */
+    public final JButton sell = new JButton("되팔기");
+
+    /** 구매 확인 창(D-85). 사겠다고 하면 true. QA는 창 대신 답을 준다. */
+    public interface Ask {
+        boolean ok(String title, String message, String yes);
+    }
+
+    public Ask ask = (title, message, yes) -> javax.swing.JOptionPane.showOptionDialog(this, message, title,
+            javax.swing.JOptionPane.DEFAULT_OPTION, javax.swing.JOptionPane.QUESTION_MESSAGE, null, new String[] {"취소", yes}, yes) == 1;
     private String category = "전체";
     public String selected;
     private int first;
@@ -301,16 +311,22 @@ public final class ShopPanel extends Card {
             app.redraw();
         });
         action.addActionListener(e -> act());
+        sell.setFont(Theme.bold(12));
+        sell.setBorder(BorderFactory.createEmptyBorder(5, 8, 7, 8));
+        sell.addActionListener(e -> sellSelected());
         JPanel buttons = new JPanel(new GridLayout(1, 2, 8, 0));
         buttons.add(cancel);
         buttons.add(action);
         lack.setFont(Theme.bold(12));
         lack.setForeground(Theme.SUNDAY);
         lack.setHorizontalAlignment(SwingConstants.CENTER);
+        JPanel under = new JPanel(new BorderLayout());
+        under.add(lack, BorderLayout.NORTH);
+        under.add(sell, BorderLayout.SOUTH);
         JPanel bottom = new JPanel(new BorderLayout(0, 6));
         bottom.add(line, BorderLayout.NORTH);
         bottom.add(buttons, BorderLayout.CENTER);
-        bottom.add(lack, BorderLayout.SOUTH);
+        bottom.add(under, BorderLayout.SOUTH);
         c.add(bottom, BorderLayout.SOUTH);
         c.setPreferredSize(new Dimension(206, 0));
         return c;
@@ -323,9 +339,28 @@ public final class ShopPanel extends Card {
         }
         if (app.store.owned.contains(selected)) {
             app.pet.toggle(selected);
-        } else {
+        } else if (ask.ok("아이템 사기", buyQuestion(selected, Shop.ITEMS.get(selected), app.store.points), "구매하기")) {
+            // D-85: 값과 남는 포인트를 확인한 뒤에만 산다.
             buy(app, selected, thanks);
         }
+    }
+
+    /** D-85 구매 확인 글: "{아이템}을 {값}P에 살까요? 남는 포인트 {남는}P". */
+    public static String buyQuestion(String item, int price, int points) {
+        return item + planningpet.common.model.Rules.josa(item, "을", "를") + " " + price + "P에 살까요? 남는 포인트 " + (points - price) + "P";
+    }
+
+    /** D-85: 고른 가진 아이템을 산 값 그대로 되판다. 방에 놓였으면 함께 빠진다. */
+    private void sellSelected() {
+        String item = selected;
+        if (item == null || !app.store.owned.contains(item)) {
+            return;
+        }
+        selected = null;
+        if (!app.shop.sell(item)) {
+            selected = item;
+        }
+        app.redraw();
     }
 
     /** 사기(UC-15). 사면 펫이 "{아이템} 고마워!"를 한 번 말한다(D-56). 샀으면 true. */
@@ -400,6 +435,11 @@ public final class ShopPanel extends Card {
         action.setEnabled(item != null && short_ <= 0);
         cancel.setEnabled(item != null);
         lack.setText(short_ > 0 ? short_ + "P 모자라요" : " ");
+        // D-85: 되팔기는 보유한 아이템에서 고른 가진 아이템에만 보인다.
+        boolean canSell = owned && ownedMode.isSelected();
+        sell.setVisible(canSell);
+        sell.setText(canSell ? "되팔기 +" + item.price() + "P" : "되팔기");
+        lack.setVisible(!canSell);
     }
 
     /** 검사용: 카드 줄의 글자를 이어 붙인다. */
