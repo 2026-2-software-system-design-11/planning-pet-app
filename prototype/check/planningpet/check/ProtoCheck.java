@@ -278,7 +278,7 @@ public final class ProtoCheck {
         app.schedule.check(t);
         eq("D-48 취소는 받은 펫에서", "0 " + catExp, s.pet("DOG").exp + " " + s.pet("CAT").exp);
         app.pet.step(1);
-        eq("D-56 화살표", "DOG", s.activeKind);
+        eq("D-80 캐릭터 창 화살표", "DOG", s.activeKind);
         java.util.List<Task> days = new java.util.ArrayList<>();
         for (int i = 0; i < 40; i++) {
             Task d = new Task("b" + i, 900 + i, Task.Kind.TASK, "b", s.today().minusDays(i), null, 30);
@@ -408,6 +408,13 @@ public final class ProtoCheck {
         Task patTask = ca.store.book.add(Task.Kind.TASK, "반응 뒤", ca.store.today(), null, 30, "", null).get(0);
         ca.schedule.check(patTask);
         eq("D-80 방의 펫을 누르면 반응한다", "멍멍, 좋아! DOG CAT true / ", patted + " / " + cr.room.bubble);
+        cr.character.nextPet.doClick();
+        eq("D-80 캐릭터 창 화살표는 펫을 바꾼다", "DOG " + ca.store.pet("CAT").pose, ca.store.activeKind + " " + ca.store.pet("CAT").pose);
+        App one = Main.create(MockData.sample());
+        planningpet.pet.view.PetScreen oneRoom = find(one.root, planningpet.pet.view.PetScreen.class);
+        oneRoom.character.opened(false);
+        eq("D-80 펫이 하나면 캐릭터 창 화살표가 흐리다", "false false", oneRoom.character.prevPet.isEnabled() + " "
+                + oneRoom.character.nextPet.isEnabled());
         eq("D-58 메뉴에 캐릭터가 없다", "true", String.valueOf(button(ca.root, "캐릭터") == null));
         cr.character.draft.clear();
         cr.character.opened(false);

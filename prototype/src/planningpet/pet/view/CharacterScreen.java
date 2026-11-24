@@ -66,6 +66,9 @@ public final class CharacterScreen extends JPanel {
     public final Map<String, String> draft = new LinkedHashMap<>();
     private String draftKind;
     private String slot = Wardrobe.NECK;
+    /** 큰 펫 양옆 화살표. 고른 펫을 바꾼다(D-80). 펫이 하나면 흐리다. */
+    public final CircleButton prevPet = new CircleButton(Icons.Kind.LEFT, 40, "앞 펫", false);
+    public final CircleButton nextPet = new CircleButton(Icons.Kind.RIGHT, 40, "다음 펫", false);
 
     public CharacterScreen(App app) {
         super(new BorderLayout());
@@ -97,7 +100,7 @@ public final class CharacterScreen extends JPanel {
         return col;
     }
 
-    /** 방 그림 위 큰 펫. 입혀 보는 장신구(draft)로 그린다. 양옆 화살표는 자세를 바꾼다. */
+    /** 방 그림 위 큰 펫. 입혀 보는 장신구(draft)로 그린다. 양옆 화살표는 펫을 바꾼다(D-80). 자세는 아래 자세 칸에서 고른다. */
     private JComponent big() {
         JComponent v = new JComponent() {
             @Override
@@ -131,10 +134,10 @@ public final class CharacterScreen extends JPanel {
             }
         };
         v.setLayout(null);
-        CircleButton prev = new CircleButton(Icons.Kind.LEFT, 40, "앞 자세", false);
-        CircleButton next = new CircleButton(Icons.Kind.RIGHT, 40, "다음 자세", false);
-        prev.addActionListener(e -> stepPose(-1));
-        next.addActionListener(e -> stepPose(1));
+        CircleButton prev = prevPet;
+        CircleButton next = nextPet;
+        prev.addActionListener(e -> stepPet(-1));
+        next.addActionListener(e -> stepPet(1));
         v.add(prev);
         v.add(next);
         v.addComponentListener(new java.awt.event.ComponentAdapter() {
@@ -147,10 +150,11 @@ public final class CharacterScreen extends JPanel {
         return v;
     }
 
-    private void stepPose(int delta) {
-        PetState p = app.store.pet();
-        int i = Poses.ALL.indexOf(p.pose);
-        app.pet.pose(p.kind, Poses.ALL.get(Math.floorMod(i + delta, Poses.ALL.size())));
+    /** D-80: 앞이나 다음 펫을 고른다. 입혀 본 장신구가 있으면 먼저 묻는다(D-61). */
+    private void stepPet(int delta) {
+        if (app.store.pets.size() > 1 && confirmLeave()) {
+            app.pet.step(delta);
+        }
     }
 
     /** 성장 단계(D-50): 같은 그림의 세 크기, 지금 단계에 연민트 바탕. */
@@ -498,6 +502,8 @@ public final class CharacterScreen extends JPanel {
             petTabs.add(tab);
         }
         petTabs.revalidate();
+        prevPet.setEnabled(s.pets.size() > 1);
+        nextPet.setEnabled(s.pets.size() > 1);
         poses.removeAll();
         for (String pose : Poses.ALL) {
             poses.add(poseCard(p, pose));
