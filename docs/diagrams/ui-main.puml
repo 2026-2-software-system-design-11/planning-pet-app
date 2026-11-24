@@ -20,7 +20,7 @@
       {
         {
           {+
-            [고양이(앉기)] | { <b>나비</b> <size:16><b>Lv. 3</b></size>
+            [고양이(앉기)] | { <b>나비</b> <size:10>고양이</size> <size:16><b>Lv. 3</b></size>
 경험치 80 / 110 <color:#4DB4A0>━━━━━━━</color><color:#CCCCCC>━━</color>
 오늘 끝낸 일 <b>1 / 4</b> <color:#4DB4A0>━━</color><color:#CCCCCC>━━━━━━</color> }
             {+ 오늘 할 일 3개 남았어. '은행 서류' 마감이 내일이야. } | .
