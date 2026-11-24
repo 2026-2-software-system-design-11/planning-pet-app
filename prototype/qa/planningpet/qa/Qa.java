@@ -47,11 +47,17 @@ final class Qa extends QaDrive {
         return today.isEmpty() ? "비어 있음" : today.stream().filter(t -> t.done).count() + "/" + today.size();
     }
 
+    /** 홈 펫 카드의 이름, 레벨, 경험치(D-59): "나비 Lv. 3 경험치 80 / 110". */
     String level() {
-        return main.levelName.getText() + " " + main.levelText.getText();
+        return main.pet.nameText() + " " + main.pet.levelText() + " " + main.pet.expText();
     }
 
-    /** 메인 목록을 줄마다 "10:00~11:00 [x] 제목 60분"처럼 읽는다. */
+    /** 홈 펫 카드의 오늘 끝낸 일과 막대: "오늘 끝낸 일 1 / 4, 25% 4칸"(06의 13번). */
+    String petCard() {
+        return main.pet.doneText() + ", " + main.pet.doneBarText();
+    }
+
+    /** 메인 목록을 줄마다 화면 순서대로 "[x] 제목 10:00~11:00 60분"처럼 읽는다(D-59). 시각 알약 버튼의 글도 읽고, 글 없는 아이콘 버튼은 건너뛴다. */
     String rows() {
         return rows(main.rows);
     }
@@ -75,7 +81,11 @@ final class Qa extends QaDrive {
             parts.add(b.isSelected() ? "[x]" : "[ ]");
         } else if (c instanceof JLabel l && !plain(l.getText()).isEmpty()) {
             parts.add(plain(l.getText()));
-        } else if (c instanceof Container k && !(c instanceof JButton)) {
+        } else if (c instanceof JButton b) {
+            if (!b.getText().isBlank()) {
+                parts.add(b.getText());
+            }
+        } else if (c instanceof Container k) {
             for (Component child : k.getComponents()) {
                 collect(child, parts);
             }
