@@ -448,6 +448,16 @@ public final class ProtoCheck {
             }
         }
         eq("D-93 홈 펫 카드의 1단계 펫은 카드 칸의 3분의 2 넘게", "넘음 넘음 넘음 넘음 넘음 넘음 ", fills.toString());
+        planningpet.shop.view.ShopPanel shopPanel = cr.shop;
+        String menu0 = shopPanel.shopMode.isSelected() + " " + shopPanel.ownedMode.isSelected() + " " + shopPanel.previewToggle.isSelected();
+        shopPanel.ownedMode.doClick();
+        String menu1 = shopPanel.shopMode.isSelected() + " " + shopPanel.ownedMode.isSelected() + " " + shopPanel.previewToggle.isSelected();
+        shopPanel.previewToggle.doClick();
+        String menu2 = shopPanel.shopMode.isSelected() + " " + shopPanel.ownedMode.isSelected() + " " + shopPanel.previewToggle.isSelected();
+        eq("D-82 상점 탭은 하나만 눌리고 미리보기는 따로 켜고 끄는 스위치", "true false true / false true true / false true false / Switch",
+                menu0 + " / " + menu1 + " / " + menu2 + " / " + shopPanel.previewToggle.getClass().getSimpleName());
+        shopPanel.shopMode.doClick();
+        shopPanel.previewToggle.doClick();
         App one = Main.create(MockData.sample());
         planningpet.pet.view.PetScreen oneRoom = find(one.root, planningpet.pet.view.PetScreen.class);
         oneRoom.character.opened(false);

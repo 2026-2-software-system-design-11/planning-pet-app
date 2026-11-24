@@ -41,7 +41,8 @@ public final class ShopPanel extends Card {
     private final Consumer<String> thanks;
     public final JToggleButton shopMode = new JToggleButton("꾸미기 상점", true);
     public final JToggleButton ownedMode = new JToggleButton("보유한 아이템");
-    public final JToggleButton previewToggle = new JToggleButton("미리보기", true);
+    /** 미리보기 칸을 켜고 끈다. 위의 두 탭과 모양이 다른 스위치다(D-82). */
+    public final Switch previewToggle = new Switch("미리보기", Icons.Kind.EYE, true);
     public final JTextField search = new JTextField() {
         @Override
         protected void paintComponent(Graphics graphics) {
@@ -96,13 +97,13 @@ public final class ShopPanel extends Card {
         app.watch(this::refresh);
     }
 
-    /** 왼쪽 메뉴와 쇼핑백 그림. */
+    /** 왼쪽 메뉴: 하나만 눌리는 탭 둘(꾸미기 상점, 보유한 아이템)과 그 아래 미리보기 스위치(D-82), 쇼핑백 그림. */
     private JComponent menu() {
         ButtonGroup modes = new ButtonGroup();
         modes.add(shopMode);
         modes.add(ownedMode);
         JPanel col = new JPanel(new GridLayout(0, 1, 0, 8));
-        Object[][] rows = {{shopMode, Icons.Kind.CART}, {ownedMode, Icons.Kind.BOX}, {previewToggle, Icons.Kind.EYE}};
+        Object[][] rows = {{shopMode, Icons.Kind.CART}, {ownedMode, Icons.Kind.BOX}};
         for (Object[] r : rows) {
             JToggleButton b = (JToggleButton) r[0];
             Icons.Kind k = (Icons.Kind) r[1];
@@ -114,6 +115,7 @@ public final class ShopPanel extends Card {
             b.setIcon(Icons.icon(k, 20, b.isSelected() ? java.awt.Color.WHITE : Theme.ICON));
             col.add(b);
         }
+        col.add(previewToggle);
         shopMode.addActionListener(e -> {
             first = 0;
             app.redraw();
