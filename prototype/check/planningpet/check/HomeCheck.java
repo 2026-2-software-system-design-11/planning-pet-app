@@ -217,7 +217,7 @@ final class HomeCheck {
         StringBuilder fixed = new StringBuilder();
         s.tasks.stream().filter(t -> t.kind == Task.Kind.FIXED).forEach(t -> fixed.append(t.date.toString().substring(5)).append(" "));
         eq("T-EX-1", "9 true " + "11-16 11-18 11-17 11-19 / [ ] 고정 자료구조 09:00~10:15 75분 / [ ] 자소서 초안 메모 14:00~15:30 90분"
-                + " / 시각 없는 할 일 / [ ] 토익 단어 시각 정하기 30분 / 기간 안에 할 일 / [ ] E사 지원서 ~11/22까지 시각 정하기 120분"
+                + " / 시각 없는 할 일 / [ ] 토익 단어 시각 정하기 30분 / 기간 안에 할 일 / [ ] E사 지원서 시각 정하기 120분 ~11/22까지"
                 + " / 끝낸 일 1개 / [x] 알고리즘 과제 2번 10:00~11:00 60분 / 0P / 처음 만났네! 나는 콩이야. 예시 일정을 넣어 뒀어. / true",
                 s.tasks.size() + " " + s.tasks.stream().allMatch(t -> s.sampleIds.contains(t.id)) + " " + fixed + "/ " + rows(main.rows)
                 + " / " + s.points + "P / " + s.talk + " / " + main.sampleButton.isVisible());

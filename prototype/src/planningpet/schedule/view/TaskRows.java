@@ -205,15 +205,13 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
         JPanel left = t.kind == Task.Kind.FIXED ? middle(box, fixedTag()) : middle(box);
         String date = withDate ? rowDay.getMonthValue() + "/" + rowDay.getDayOfMonth() + " " : "";
         String memoMark = t.memo.isBlank() ? "" : " <font size='2' color='#8A96A0'>메모</font>";
-        String due = TaskBook.dueText(t);
-        String dueMark = due == null ? "" : " <font size='2' color='#8A96A0'>" + due + "</font>";
-        String note = missedNote(t);
-        String noteMark = note == null ? "" : " <font size='2' color='#8A96A0'>" + note + "</font>";
-        String tag = dueTag(t, listDay);
-        String tagMark = tag == null ? "" : " <font size='2' color='#C0392B'>" + tag + "</font>";
         boolean dim = withDate && t.pastCopy(control.today());
-        JLabel label = title(t, date, note, tag, dim, "<html>" + date + (t.done ? "<s>" + Ui.esc(t.title) + "</s>" : Ui.esc(t.title))
-                + dueMark + noteMark + tagMark + memoMark + "</html>");
+        JLabel label = title(t, date, dim, "<html>" + date + (t.done ? "<s>" + Ui.esc(t.title) + "</s>" : Ui.esc(t.title))
+                + memoMark + "</html>");
+        // D-94: 마감 글, 하려던 일, "오늘 마감"과 "마감", "지난 날"은 제목 아래 둘째 줄 왼쪽이다. 제목이 줄의 폭을 먼저 받는다.
+        // D-69: 지난 반복 사본은 "지난 날" 없이 흐리게 보인다. D-78: 끝낸 일에는 붙이지 않는다.
+        boolean past = withDate && !t.done && t.countDay().isBefore(control.today()) && !t.pastCopy(control.today());
+        JLabel marks = marks(TaskBook.dueText(t), missedNote(t), dueTag(t, listDay), past);
         label.setToolTipText(memoTip(t));
         row.setToolTipText(memoTip(t));
         JLabel minutes = new JLabel(t.minutes + "분", JLabel.RIGHT);
@@ -235,15 +233,7 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
             buttons.add(edit);
             buttons.add(delete);
             // D-44: 오늘보다 앞선 날짜는 둘째 줄 왼쪽에 "지난 날". 제목 줄에 붙이면 좁은 목록에서 제목이 잘린다.
-            JLabel past = null;
-            // D-69: 지난 반복 사본은 "지난 날" 없이 흐리게 보인다. D-78: 끝낸 일에는 붙이지 않는다.
-            if (!t.done && t.countDay().isBefore(control.today()) && !t.pastCopy(control.today())) {
-                past = new JLabel("지난 날");
-                past.setForeground(PAST);
-                past.setFont(Theme.font(12));
-                past.setBorder(BorderFactory.createEmptyBorder(0, RoundCheck.SIZE + 10, 0, 0));
-            }
-            row.add(SecondLine.of(past, buttons), BorderLayout.SOUTH);
+            row.add(SecondLine.of(marks, buttons), BorderLayout.SOUTH);
         } else {
             JComponent[] right;
             if (time != null) {
@@ -255,7 +245,10 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
                 right = new JComponent[] {minutes, edit, delete};
             }
             row.add(middle(right), BorderLayout.EAST);
-            row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
+            if (marks != null) {
+                row.add(marks, BorderLayout.SOUTH);
+            }
+            row.setMaximumSize(new Dimension(Integer.MAX_VALUE, marks == null ? 44 : 62));
         }
         MouseAdapter mouse = new MouseAdapter() {
             @Override
@@ -301,7 +294,7 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
      * 제목 칸. 글(getText)은 HTML(QA와 화면 읽기 프로그램이 읽는다)이고, 그림은 한 줄로 그려 칸 폭을 넘으면 "…"로 줄인다.
      * HTML 라벨은 좁으면 두 줄로 꺾여 줄 높이를 넘었다. 끝낸 일은 흐린 글에 취소선, 메모가 있으면 끝에 흐린 "메모".
      */
-    private static JLabel title(Task t, String date, String note, String tag, boolean dim, String html) {
+    private static JLabel title(Task t, String date, boolean dim, String html) {
         JLabel label = new JLabel(html) {
             @Override
             protected void paintComponent(java.awt.Graphics graphics) {
@@ -311,11 +304,7 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
                 java.awt.Font small = Theme.font(11);
                 java.awt.FontMetrics sm = g.getFontMetrics(small);
                 int memo = t.memo.isBlank() ? 0 : sm.stringWidth("메모") + 5;
-                String due = TaskBook.dueText(t);
-                int dueWidth = due == null ? 0 : sm.stringWidth(due) + 5;
-                int noteWidth = note == null ? 0 : sm.stringWidth(note) + 5;
-                int tagWidth = tag == null ? 0 : sm.stringWidth(tag) + 5;
-                String text = fit(date + t.title, fm, getWidth() - memo - dueWidth - noteWidth - tagWidth);
+                String text = fit(date + t.title, fm, getWidth() - memo);
                 int y = (getHeight() + fm.getAscent() - fm.getDescent()) / 2;
                 g.setFont(getFont());
                 g.setColor(t.done || dim ? Theme.INK_DIM : Theme.INK);
@@ -327,23 +316,6 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
                 }
                 g.setFont(small);
                 g.setColor(Theme.INK_DIM);
-                if (due != null) {
-                    // D-65: 마감이 있는 할 일은 제목 뒤에 흐린 "~11/22까지".
-                    g.drawString(due, tw + 5, y);
-                    tw += dueWidth;
-                }
-                if (note != null) {
-                    // D-67: 시각을 정한 날에 못 끝낸 기간 할 일은 "{일}일에 하려던 일".
-                    g.drawString(note, tw + 5, y);
-                    tw += noteWidth;
-                }
-                if (tag != null) {
-                    // D-70: 마감 날에는 빨간 "오늘 마감".
-                    g.setColor(PAST);
-                    g.drawString(tag, tw + 5, y);
-                    g.setColor(Theme.INK_DIM);
-                    tw += tagWidth;
-                }
                 if (memo > 0) {
                     g.drawString("메모", tw + 5, y);
                 }
@@ -356,8 +328,30 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
         return label;
     }
 
-    /** 빨간 "지난 날"과 "오늘 마감"의 색. */
-    private static final java.awt.Color PAST = new java.awt.Color(0xC0392B);
+    /**
+     * D-94: 제목 아래 둘째 줄 왼쪽의 표시. 흐린 마감 글("~11/22까지", D-65)과 하려던 일("17일에 하려던 일", D-67), 빨간 "오늘 마감"이나
+     * "마감"(D-70, D-93), 빨간 "지난 날"(D-44, 일정관리 목록) 순이다. 하나도 없으면 null.
+     */
+    private static JLabel marks(String due, String note, String tag, boolean past) {
+        StringBuilder html = new StringBuilder();
+        java.util.function.BiConsumer<String, String> part = (text, color) -> {
+            if (text != null) {
+                html.append(html.length() == 0 ? "" : " ").append("<font color='").append(color).append("'>").append(text)
+                        .append("</font>");
+            }
+        };
+        part.accept(due, "#8A96A0");
+        part.accept(note, "#8A96A0");
+        part.accept(tag, "#C0392B");
+        part.accept(past ? "지난 날" : null, "#C0392B");
+        if (html.length() == 0) {
+            return null;
+        }
+        JLabel label = new JLabel("<html>" + html + "</html>");
+        label.setFont(Theme.font(12));
+        label.setBorder(BorderFactory.createEmptyBorder(0, RoundCheck.SIZE + 10, 0, 0));
+        return label;
+    }
 
     /** D-67: 시각을 정한 날에 못 끝낸 기간 할 일이면 "{일}일에 하려던 일", 아니면 null. */
     private String missedNote(Task t) {

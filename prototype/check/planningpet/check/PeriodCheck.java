@@ -302,7 +302,7 @@ final class PeriodCheck {
         TimeEditor e = new TimeEditor(m, d("11-18"), miss.store.now);
         e.start.setValue("14:00");
         TimeEditor.save(miss, m, e);
-        eq("D-67 정한 날을 놓치면 다음 날부터", "x period period due / 기간 안에 할 일 / P ~11/22까지 17일에 하려던 일 30분"
+        eq("D-67 정한 날을 놓치면 다음 날부터", "x period period due / 기간 안에 할 일 / P 30분 ~11/22까지 17일에 하려던 일"
                 + " / 11-18 timed", before + " / " + row + " / " + m.date.toString().substring(5) + " " + group(miss.store, m, "11-18"));
         Store over = at("11-18T09:00");
         Task o = period(over, "P", "11-16", "11-22", 30);
@@ -323,11 +323,11 @@ final class PeriodCheck {
         app.show("일정관리");
         app.store.changed();
         ScheduleScreen sched = ProtoCheck.find(app.root, ScheduleScreen.class);
-        eq("D-65 기간 할 일은 한 줄", "11/16 P ~11/20까지 30분 / 11/17 Q ~11/17까지 30분 지난 날 / 11/20 P ~11/20까지 마감 30분",
+        eq("D-65 기간 할 일은 한 줄", "11/16 P 30분 ~11/20까지 / 11/17 Q 30분 ~11/17까지 지난 날 / 11/20 P 30분 ~11/20까지 마감",
                 rows(sched.untimed));
         app.store.now = d("11-20").atTime(9, 0);
         app.store.changed();
-        eq("D-93 마감 날이 오늘이면 오늘 마감", "11/16 P ~11/20까지 30분 / 11/17 Q ~11/17까지 30분 지난 날 / 11/20 P ~11/20까지 오늘 마감 30분",
+        eq("D-93 마감 날이 오늘이면 오늘 마감", "11/16 P 30분 ~11/20까지 / 11/17 Q 30분 ~11/17까지 지난 날 / 11/20 P 30분 ~11/20까지 오늘 마감",
                 rows(sched.untimed));
         App wk = Main.create(at("11-17T09:00"));
         period(wk.store, "P", "11-16", "11-20", 30);
