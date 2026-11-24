@@ -176,7 +176,7 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
 
             @Override
             public Dimension getMaximumSize() {
-                // 일정관리 목록 줄은 둘째 줄이 한 줄인지 두 줄인지(SecondLine)에 따라 높이가 바뀐다.
+                // 일정관리 목록 줄은 둘째 줄이 한 줄인지 두 줄인지(D-94)에 따라 높이가 바뀐다.
                 return withDate ? new Dimension(Integer.MAX_VALUE, getPreferredSize().height) : super.getMaximumSize();
             }
         };
@@ -206,7 +206,7 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
         String date = withDate ? rowDay.getMonthValue() + "/" + rowDay.getDayOfMonth() + " " : "";
         String memoMark = t.memo.isBlank() ? "" : " <font size='2' color='#8A96A0'>메모</font>";
         boolean dim = withDate && t.pastCopy(control.today());
-        JLabel label = title(t, date, dim, "<html>" + date + (t.done ? "<s>" + Ui.esc(t.title) + "</s>" : Ui.esc(t.title))
+        JLabel label = new TitleLabel(t, date, dim, "<html>" + date + (t.done ? "<s>" + Ui.esc(t.title) + "</s>" : Ui.esc(t.title))
                 + memoMark + "</html>");
         // D-94: 마감 글, 하려던 일, "오늘 마감"과 "마감", "지난 날"은 제목 아래 둘째 줄 왼쪽이다. 제목이 줄의 폭을 먼저 받는다.
         // D-69: 지난 반복 사본은 "지난 날" 없이 흐리게 보인다. D-78: 끝낸 일에는 붙이지 않는다.
@@ -233,6 +233,7 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
             buttons.add(edit);
             buttons.add(delete);
             // D-44: 오늘보다 앞선 날짜는 둘째 줄 왼쪽에 "지난 날". 제목 줄에 붙이면 좁은 목록에서 제목이 잘린다.
+            // D-94: 표시와 버튼이 한 줄에 안 들면 표시를 버튼 위 한 줄에 둔다.
             row.add(SecondLine.of(marks, buttons), BorderLayout.SOUTH);
         } else {
             JComponent[] right;
@@ -293,39 +294,57 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
     /**
      * 제목 칸. 글(getText)은 HTML(QA와 화면 읽기 프로그램이 읽는다)이고, 그림은 한 줄로 그려 칸 폭을 넘으면 "…"로 줄인다.
      * HTML 라벨은 좁으면 두 줄로 꺾여 줄 높이를 넘었다. 끝낸 일은 흐린 글에 취소선, 메모가 있으면 끝에 흐린 "메모".
+     * 일정관리 목록의 날짜는 줄이지 않고 제목이 그 뒤 남는 폭을 받는다(D-94).
      */
-    private static JLabel title(Task t, String date, boolean dim, String html) {
-        JLabel label = new JLabel(html) {
-            @Override
-            protected void paintComponent(java.awt.Graphics graphics) {
-                java.awt.Graphics2D g = (java.awt.Graphics2D) graphics.create();
-                g.setRenderingHint(java.awt.RenderingHints.KEY_TEXT_ANTIALIASING, java.awt.RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-                java.awt.FontMetrics fm = g.getFontMetrics(getFont());
-                java.awt.Font small = Theme.font(11);
-                java.awt.FontMetrics sm = g.getFontMetrics(small);
-                int memo = t.memo.isBlank() ? 0 : sm.stringWidth("메모") + 5;
-                String text = fit(date + t.title, fm, getWidth() - memo);
-                int y = (getHeight() + fm.getAscent() - fm.getDescent()) / 2;
-                g.setFont(getFont());
-                g.setColor(t.done || dim ? Theme.INK_DIM : Theme.INK);
-                g.drawString(text, 0, y);
-                int tw = fm.stringWidth(text);
-                if (t.done) {
-                    int dx = fm.stringWidth(date);
-                    g.fillRect(dx, y - fm.getAscent() / 3 - 1, tw - dx, 1);
-                }
+    public static final class TitleLabel extends JLabel {
+        private final Task t;
+        private final String date;
+        private final boolean dim;
+
+        TitleLabel(Task t, String date, boolean dim, String html) {
+            super(html);
+            this.t = t;
+            this.date = date;
+            this.dim = dim;
+            setFont(Theme.font(14));
+            setMinimumSize(new Dimension(0, 0));
+            setPreferredSize(new Dimension(40, 24));
+        }
+
+        private int memoWidth(java.awt.FontMetrics sm) {
+            return t.memo.isBlank() ? 0 : sm.stringWidth("메모") + 5;
+        }
+
+        /** 지금 폭에서 그리는 제목 글(날짜 뒤, "…"로 줄였으면 그 글). 검사가 읽는다(T-LIST-9). */
+        public String shown() {
+            java.awt.FontMetrics fm = getFontMetrics(getFont());
+            int max = getWidth() - fm.stringWidth(date) - memoWidth(getFontMetrics(Theme.font(11)));
+            return fit(t.title, fm, max);
+        }
+
+        @Override
+        protected void paintComponent(java.awt.Graphics graphics) {
+            java.awt.Graphics2D g = (java.awt.Graphics2D) graphics.create();
+            g.setRenderingHint(java.awt.RenderingHints.KEY_TEXT_ANTIALIASING, java.awt.RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            java.awt.FontMetrics fm = g.getFontMetrics(getFont());
+            java.awt.Font small = Theme.font(11);
+            String text = shown();
+            int y = (getHeight() + fm.getAscent() - fm.getDescent()) / 2;
+            g.setFont(getFont());
+            g.setColor(t.done || dim ? Theme.INK_DIM : Theme.INK);
+            int dx = fm.stringWidth(date);
+            g.drawString(date + text, 0, y);
+            int tw = dx + fm.stringWidth(text);
+            if (t.done) {
+                g.fillRect(dx, y - fm.getAscent() / 3 - 1, tw - dx, 1);
+            }
+            if (!t.memo.isBlank()) {
                 g.setFont(small);
                 g.setColor(Theme.INK_DIM);
-                if (memo > 0) {
-                    g.drawString("메모", tw + 5, y);
-                }
-                g.dispose();
+                g.drawString("메모", tw + 5, y);
             }
-        };
-        label.setFont(Theme.font(14));
-        label.setMinimumSize(new Dimension(0, 0));
-        label.setPreferredSize(new Dimension(40, 24));
-        return label;
+            g.dispose();
+        }
     }
 
     /**
