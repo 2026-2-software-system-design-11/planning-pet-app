@@ -235,10 +235,18 @@ final class Flows12 {
         q.step("5", "졸업 세미나의 15:00~16:40을 누른다");
         q.eq("시각 빼기 보임", false, new TimeEditor(q.task("졸업 세미나", "2026-11-16"), q.app.store.now).clear.isVisible());
         q.step("6", "B사 자소서 1번 시작을 22:30으로 바꿔 저장한다");
+        q.select("2026-11-16");
         Task b = q.task("B사 자소서 1번");
         TimeEditor late = new TimeEditor(b, q.app.store.now);
         late.start.setValue("22:30");
         q.eq("저장됨", true, TimeEditor.save(q.app, b, late));
+        q.has("목록", "[ ] B사 자소서 1번 22:30~00:30(다음 날) 120분", q.rows());
+        q.step("7", "다시 눌러 시작을 03:00(다음 날)으로 바꿔 저장한다");
+        TimeEditor later = new TimeEditor(b, q.app.store.now);
+        later.start.setValue("03:00(다음 날)");
+        q.eq("실제 날", "(화 03:00)", later.realTime.getText());
+        q.eq("저장됨", false, TimeEditor.save(q.app, b, later));
+        q.eq("창 아래", "다음 날 04:00까지 끝나야 해요", later.error.getText());
         q.end();
     }
 

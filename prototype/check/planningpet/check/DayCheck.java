@@ -43,6 +43,47 @@ final class DayCheck {
                 .map(TaskBook::timeText).collect(Collectors.joining(", "));
         eq("T-LIST-2", "09:00~09:30, 23:30~24:00, 23:30~01:00(다음 날), 01:30~02:00(다음 날)", texts);
 
+        eq("T-DEF-14", "01:30(다음 날) 09:00 03:55(다음 날)",
+                Times.value(DefaultDates.start(d("11-20"), java.time.LocalDateTime.parse("2026-11-21T01:28"))) + " "
+                + Times.value(DefaultDates.start(d("11-21"), java.time.LocalDateTime.parse("2026-11-21T01:28"))) + " "
+                + Times.value(DefaultDates.start(d("11-20"), java.time.LocalDateTime.parse("2026-11-21T03:58"))));
+        Store early = at("11-21T01:28");
+        App ea = Main.create(early);
+        TaskForm ef = TaskDialog.form(ea, null, early.today());
+        ef.timed.setSelected(true);
+        ef.sync();
+        eq("T-DEF-14 입력 창", "2026-11-20 01:30(다음 날) (토 01:30) 02:00(다음 날)에 끝나요",
+                planningpet.common.view.Ui.dateOf(ef.date) + " " + ef.start.getValue() + " " + ef.realTime.getText() + " "
+                + ef.endLabel.getText());
+
+        Store n = at("11-21T01:30");
+        App app = Main.create(n);
+        Task a = task(n, "A", "11-20", hm(23, 40), 30);
+        task(n, "B", "11-20", hm(8, 0), 60);
+        task(n, "C", "11-20", null, 30);
+        TaskForm f = TaskDialog.form(app, null, n.today());
+        f.title.setText("복습");
+        f.timed.setSelected(true);
+        f.sync();
+        boolean saved = TaskDialog.trySave(app, f, null);
+        Task review = n.tasks.stream().filter(t -> t.title.equals("복습")).findFirst().orElseThrow();
+        TaskBook.DayPlan plan = n.book.dayPlan(d("11-20"));
+        eq("T-LIST-7", "true 2026-11-20 01:30 true / B A 복습 / false / 0 / 4", saved + " " + review.date + " " + review.start
+                + " " + review.nextDay + " / " + plan.timed().stream().map(t -> t.title).collect(Collectors.joining(" "))
+                + " / " + n.book.dayPlan(d("11-21")).timed().contains(review) + " / "
+                + DailyProgress.of(n.book, n.today()).done() + " / " + DailyProgress.of(n.book, n.today()).total());
+
+        // 시간표: 복습은 11-20 칸 자정 아래, A는 23:40부터 자정 너머로 이어진다.
+        app.show("일정관리");
+        TimetablePanel table = ProtoCheck.find(app.root, TimetablePanel.class);
+        Map<Rectangle, Task> blocks = paint(table);
+        Rectangle rr = rect(blocks, review);
+        Rectangle ra = rect(blocks, a);
+        int hour = TimetablePanel.HOUR;
+        eq("D-77 시간표 자정 아래", "28 true true true", table.getPreferredSize().height / hour + " "
+                + (rr.y == (24 * 60 + 90) * hour / 60) + " " + (friday(rr) && friday(ra))
+                + " " + (ra.y + ra.height > 24 * hour));
+
         Store g = at("11-21T01:45");
         Task late = task(g, "복습", "11-20", hm(25, 30), 30);
         new Game(g).complete(late);
@@ -66,5 +107,29 @@ final class DayCheck {
         task(p, "E", "11-16", null, 30);
         eq("D-77 자동 배치는 24:00까지", "0 E", Planner.place(p, d("11-16")).placed().size() + " "
                 + Planner.place(p, d("11-16")).unplaced().get(0).title);
+
+        // 수정 창은 다음 날 시각을 그대로 보이고 저장해도 그대로다.
+        TaskForm edit = TaskDialog.form(app, review, review.date);
+        eq("D-77 수정 창", "01:30(다음 날) (토 01:30)", edit.start.getValue() + " " + edit.realTime.getText());
+    }
+
+    /** 시간표를 창 없이 그리고 블록 자리를 돌려준다. */
+    static Map<Rectangle, Task> paint(TimetablePanel table) {
+        table.setSize(TimetablePanel.GUTTER + 7 * 100, table.getPreferredSize().height);
+        BufferedImage img = new BufferedImage(table.getWidth(), table.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        java.awt.Graphics2D gr = img.createGraphics();
+        table.paint(gr);
+        gr.dispose();
+        return table.blockAreas();
+    }
+
+    /** 11-16 주의 금요일(11-20) 칸 안인가. */
+    static boolean friday(Rectangle r) {
+        int left = TimetablePanel.GUTTER + 4 * 100;
+        return r.x >= left && r.x < left + 100;
+    }
+
+    static Rectangle rect(Map<Rectangle, Task> blocks, Task t) {
+        return blocks.entrySet().stream().filter(e -> e.getValue() == t).map(Map.Entry::getKey).findFirst().orElse(new Rectangle());
     }
 }

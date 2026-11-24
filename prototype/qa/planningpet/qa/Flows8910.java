@@ -55,6 +55,17 @@ final class Flows8910 {
                 + " / 재무회계|11월 21일|09:00 ~ 10:00|60분 / 경영학|11월 21일|10:00 ~ 11:00|60분"
                 + " / 놓지 못한 일 / 세법 요약 날짜 11/20(금) 그날 빈 시간이 모자라요 / "
                 + HINT, q.placement(q.place()));
+        q.step("6", "01:30에 홈 일정 추가에서 복습, 시작 시각 정하기를 켜고 그대로 저장한다");
+        q.at("2026-11-21T01:30");
+        q.app.show("홈");
+        TaskForm f = q.form("2026-11-20");
+        f.title.setText("복습");
+        f.timed.doClick();
+        q.eq("입력 창", "2026-11-20 01:30(다음 날) (토 01:30) 02:00(다음 날)에 끝나요", Ui.dateOf(f.date) + " "
+                + f.start.getValue() + " " + f.realTime.getText() + " " + f.endLabel.getText());
+        q.yes("저장", q.save(f, null));
+        String rows = q.rows();
+        q.has("20일 목록 맨 아래 시각 줄", "[ ] 원가회계 23:55~00:25(다음 날) 30분 / [ ] 복습 01:30~02:00(다음 날) 30분", rows);
         q.end();
     }
 
@@ -191,6 +202,7 @@ final class Flows8910 {
         q.step("2", "논문 정리 23:30 40분으로 저장한다");
         TaskForm g = timed(q, "논문 정리", "23:30", 40);
         q.eq("끝, 저장", "00:10(다음 날)에 끝나요 true ", g.endLabel.getText() + " " + q.save(g, null) + " " + g.errorText());
+        q.has("목록", "[ ] 논문 정리 23:30~00:10(다음 날) 40분", q.rows());
         q.step("3", "실험 정리 720분으로 저장한다");
         TaskForm h = q.form("2026-11-17");
         h.title.setText("실험 정리");
