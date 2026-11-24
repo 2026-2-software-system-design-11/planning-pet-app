@@ -88,3 +88,93 @@ public final class StatsScreen extends JPanel {
 
     /** 지금 고른 기간. */
     public Stats.Period period() {
+        return period;
+    }
+
+    /** 주간(false)이나 월간(true)으로 바꾼다. 오늘이 든 기간이면 오늘을, 아니면 지금 기간의 첫날을 기준으로 잡는다. */
+    public void setMonthly(boolean monthly) {
+        if (monthly != period.monthly()) {
+            LocalDate base = period.contains(app.store.today()) ? app.store.today() : period.from();
+            period = monthly ? Stats.Period.month(base) : Stats.Period.week(base);
+        }
+        refresh();
+    }
+
+    /** 앞(-1)이나 뒤(+1) 기간으로 옮긴다. */
+    public void step(int delta) {
+        period = period.step(delta);
+        refresh();
+    }
+
+    /** 사이드바 아래에 그릴 자는 고양이(예시의 왼쪽 아래). 파일이 없으면 null이다. App이 통계 화면일 때 그린다. */
+    public static BufferedImage sleepingCat() {
+        return StatsArt.SLEEP_CAT;
+    }
+
+    private void place(JComponent c, int x, int y, double wx, double wy) {
+        GridBagConstraints k = new GridBagConstraints();
+        k.gridx = x;
+        k.gridy = y;
+        k.weightx = wx;
+        k.weighty = wy;
+        k.fill = GridBagConstraints.BOTH;
+        int g = Theme.GAP;
+        k.insets = new Insets(y == 0 ? 0 : g / 2, x == 0 ? 0 : g / 2, y == 0 ? g / 2 : 0, x == 0 ? g / 2 : 0);
+        c.setPreferredSize(new Dimension(100, 100));
+        c.setMinimumSize(new Dimension(100, 100));
+        add(c, k);
+    }
+
+    // 머리 오른쪽
+
+    private JComponent buildHead() {
+        JPanel row = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        BufferedImage cat = StatsArt.PEEK_CAT;
+        if (cat != null) {
+            JComponent peek = new JComponent() {
+                @Override
+                protected void paintComponent(Graphics graphics) {
+                    Graphics2D g = (Graphics2D) graphics.create();
+                    g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                    Images.fitBottom(g, cat, 0, 0, getWidth(), getHeight());
+                    g.dispose();
+                }
+            };
+            peek.setPreferredSize(new Dimension(64 * cat.getWidth() / Math.max(1, cat.getHeight()), 64));
+            row.add(peek);
+        }
+        ButtonGroup group = new ButtonGroup();
+        JPanel modes = new Pill(new FlowLayout(FlowLayout.CENTER, 2, 0));
+        for (JToggleButton b : new JToggleButton[] {weekButton, monthButton}) {
+            b.setFont(Theme.bold(15));
+            b.setIcon(Icons.icon(Icons.Kind.CALENDAR, 18, Theme.ICON));
+            b.setSelectedIcon(Icons.icon(Icons.Kind.CALENDAR, 18, Color.WHITE));
+            b.setIconTextGap(7);
+            b.setBorder(BorderFactory.createEmptyBorder(8, 16, 11, 18));
+            group.add(b);
+            modes.add(b);
+        }
+        weekButton.setToolTipText("월요일부터 일요일까지 한 주씩 봐요");
+        monthButton.setToolTipText("한 달씩 봐요");
+        weekButton.addActionListener(e -> setMonthly(false));
+        monthButton.addActionListener(e -> setMonthly(true));
+        row.add(modes);
+
+        JPanel nav = new Pill(new BorderLayout(2, 0));
+        arrow(prevButton, StatsArt.Kind.LEFT, "이전 기간");
+        arrow(nextButton, StatsArt.Kind.RIGHT, "다음 기간");
+        prevButton.addActionListener(e -> step(-1));
+        nextButton.addActionListener(e -> step(1));
+        periodLabel.setFont(Theme.heavy(17));
+        periodLabel.setForeground(Theme.INK);
+        FontMetrics fm = periodLabel.getFontMetrics(periodLabel.getFont());
+        periodLabel.setPreferredSize(new Dimension(Math.max(fm.stringWidth("2026년 12월"), fm.stringWidth("12/21 ~ 12/27")) + 20, 38));
+        nav.add(prevButton, BorderLayout.WEST);
+        nav.add(periodLabel, BorderLayout.CENTER);
+        nav.add(nextButton, BorderLayout.EAST);
+        row.add(nav);
+        return row;
+    }
+
+    private static void arrow(JButton b, StatsArt.Kind kind, String name) {
+        b.setIcon(StatsArt.icon(kind, 18, Theme.ICON));
