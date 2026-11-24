@@ -88,3 +88,93 @@ abstract class PetPaintHead extends PetPaintWear {
         faceParts(face);
         if (withAccessories) {
             headWear();
+        }
+        g.setTransform(old);
+    }
+
+    void ear(int side, double flick) {
+        AffineTransform old = g.getTransform();
+        push(side * 66, -52, side * flick, 1, 1);
+        Path2D p = new Path2D.Double();
+        p.moveTo(side * -40, 4);
+        p.curveTo(side * -30, -34, side * -6, -58, side * 4, -60);
+        p.curveTo(side * 16, -56, side * 26, -24, side * 30, 14);
+        p.closePath();
+        filled(p, CAT_GREY);
+        Path2D in = new Path2D.Double();
+        in.moveTo(side * -22, 0);
+        in.curveTo(side * -14, -26, side * -2, -42, side * 4, -42);
+        in.curveTo(side * 12, -36, side * 16, -14, side * 16, 8);
+        in.closePath();
+        g.setColor(CAT_EAR);
+        g.fill(in);
+        g.setTransform(old);
+    }
+
+    void dogEar(int side) {
+        AffineTransform old = g.getTransform();
+        double sw = wave(t, 2.4, -3, 3, side > 0 ? 0.5 : 0);
+        push(side * 74, -50, side * (6 + sw), 1, 1);
+        Path2D p = new Path2D.Double();
+        p.moveTo(side * -18, 2);
+        p.curveTo(side * 20, -14, side * 46, 26, side * 42, 76);
+        p.curveTo(side * 40, 104, side * 12, 112, side * -2, 96);
+        p.curveTo(side * -10, 86, side * -6, 70, side * -12, 56);
+        p.curveTo(side * -20, 38, side * -26, 18, side * -18, 2);
+        p.closePath();
+        filled(p, DOG_EAR);
+        shadeIn(p, ell(side * 4, 92, 26, 18), DOG_EAR_SHADE);
+        redraw(p);
+        g.setTransform(old);
+    }
+
+    void faceParts(Face face) {
+        float w = line * 0.85f;
+        // 눈
+        if (face == Face.SLEEP) {
+            stroke(new QuadCurve2D.Double(-54, -2, -40, 8, -26, -2), w, ink);
+            stroke(new QuadCurve2D.Double(26, -2, 40, 8, 54, -2), w, ink);
+        } else if (face == Face.STRETCH) {
+            // 꼭 감은 눈(> <)
+            Path2D l = new Path2D.Double();
+            l.moveTo(-54, -12);
+            l.lineTo(-30, -3);
+            l.lineTo(-54, 6);
+            Path2D r = new Path2D.Double();
+            r.moveTo(54, -12);
+            r.lineTo(30, -3);
+            r.lineTo(54, 6);
+            stroke(l, w, ink);
+            stroke(r, w, ink);
+        } else {
+            stroke(new QuadCurve2D.Double(-54, 2, -40, -14, -26, 2), w, ink);
+            stroke(new QuadCurve2D.Double(26, 2, 40, -14, 54, 2), w, ink);
+        }
+        // 볼
+        g.setColor(BLUSH);
+        g.fill(ell(-62, 24, 15, 8));
+        g.fill(ell(62, 24, 15, 8));
+        // 코
+        if (cat) {
+            Path2D n = new Path2D.Double();
+            n.moveTo(-7, 12);
+            n.quadTo(0, 9, 7, 12);
+            n.quadTo(2, 20, 0, 20);
+            n.quadTo(-2, 20, -7, 12);
+            n.closePath();
+            g.setColor(NOSE);
+            g.fill(n);
+        } else {
+            g.setColor(NOSE);
+            g.fill(ell(0, 14, 11, 8));
+            g.setColor(new Color(255, 255, 255, 170));
+            g.fill(ell(-4, 11, 3.5, 2));
+        }
+        // 입
+        boolean open = face == Face.SING || face == Face.STRETCH || (!cat && face != Face.SLEEP)
+                || (face == Face.EAT && Math.sin(t * Math.PI / 0.35) > 0);
+        if (open) {
+            double h = face == Face.SING ? wave(t, 0.5, 12, 18, 0) : face == Face.STRETCH ? 17 : 12;
+            Path2D m = new Path2D.Double();
+            m.moveTo(-13, 26);
+            m.quadTo(0, 30, 13, 26);
