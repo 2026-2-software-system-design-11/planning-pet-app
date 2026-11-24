@@ -436,7 +436,7 @@
 | 3 추가 | T-ADD-1: UF-7-3(1). T-ADD-2: UF-7-3(2). T-ADD-3: UF-3-1(6), UF-7-2(2). T-ADD-4: UF-3-1(7). T-ADD-5: UF-5-4(3). T-ADD-6: UF-3-1(6). T-ADD-7: UF-2-6(4). T-OVL-1: UF-2-4(2), UF-10-2(2). T-OVL-4: UF-3-1(6) | T-ADD-8 단위(흐름에서 기간 할 일에 시각을 넣는 경우가 없음). T-OVL-2, T-OVL-3 단위 |
 | 4 수정 | T-EDIT-1: UF-10-3(2). T-EDIT-2: UF-6-2(3). T-EDIT-3: UF-6-2(3). T-EDIT-4: UF-2-4(2). T-EDIT-6: UF-2-4(5), UF-6-2(2). T-EDIT-7: UF-6-2(4) | T-EDIT-5 단위(흐름에서는 같은 날 시각 없는 할 일이 하나뿐이라 순서를 볼 수 없음). T-EDIT-8 단위(흐름에서 반복 사본의 날짜와 제목을 함께 바꾸는 경우가 없음). T-EDIT-9, T-EDIT-10, T-EDIT-11, T-EDIT-12, T-EDIT-13, T-EDIT-14 단위 |
 | 5 삭제 | T-DEL-1: UF-10-3(3). T-DEL-2: UF-3-3(3). T-DEL-3: UF-3-3(2). T-DEL-4: UF-5-4(7) |  |
-| 6 하루 시간표 | T-LIST-1: UF-1-1(1). T-LIST-2: UF-2-4(6), UF-10-2(1), UF-10-2(2). T-LIST-3: UF-7-2(4). T-LIST-4: UF-2-6(5). T-LIST-7: UF-8-1(6) | T-LIST-5, T-LIST-6 단위(흐름에 정한 날을 놓치거나 오늘로 정하는 기간 할 일이 없음) |
+| 6 하루 시간표 | T-LIST-1: UF-1-1(1). T-LIST-2: UF-2-4(6), UF-10-2(1), UF-10-2(2). T-LIST-3: UF-7-2(4). T-LIST-4: UF-2-6(5). T-LIST-7: UF-8-1(6) | T-LIST-5, T-LIST-6, T-LIST-8 단위(흐름에 정한 날을 놓치거나 오늘로 정하는 기간 할 일이 없음) |
 | 7 시각 없는 목록 | T-WEEK-1: UF-1-2(1). T-WEEK-2: UF-2-6(7) | T-WEEK-3, T-WEEK-4, T-WEEK-5 단위 |
 | 8 완료 | T-RWD-1: UF-1-1(2). T-RWD-2: UF-2-2(2). T-RWD-3: UF-2-2(3). T-RWD-4: UF-4-1(2). T-RWD-5: UF-4-1(3). T-RWD-6: UF-4-2(4). T-RWD-7: UF-6-1(2). T-RWD-8: UF-7-3(4). T-RWD-9: UF-1-1(7), UF-4-1(2). T-RWD-11: UF-2-6(10). T-RWD-12: UF-2-6(10) | T-RWD-10 단위(흐름의 사람은 모두 펫이 하나) |
 | 9 완료 취소 | T-UNDO-1: UF-1-1(3). T-UNDO-2: UF-5-1(3). T-UNDO-3: UF-4-1(4). T-UNDO-4: UF-5-1(2). T-UNDO-5: UF-1-1(4), UF-5-2(1) | T-UNDO-6 단위(펫이 둘인 흐름이 없음). T-UNDO-7 단위 |
