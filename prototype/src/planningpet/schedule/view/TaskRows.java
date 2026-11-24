@@ -35,16 +35,22 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
             add(none);
         }
         plan.timed().forEach(t -> add(row(t, TaskBook.timeText(t), null, plan.date())));
-        if (!plan.untimed().isEmpty()) {
-            JLabel head = Ui.hint("시각 없는 할 일");
-            head.setFont(Theme.bold(12));
-            head.setForeground(Theme.INK_SUB);
-            head.setBorder(BorderFactory.createEmptyBorder(14, 6, 4, 0));
-            add(head);
-            plan.untimed().forEach(t -> add(row(t, "", null, plan.date())));
-        }
+        group("시각 없는 할 일", plan.untimed(), plan.date());
         revalidate();
         repaint();
+    }
+
+    /** 제목 아래에 묶음의 줄. 비면 제목도 없다. */
+    private void group(String name, List<Task> tasks, java.time.LocalDate day) {
+        if (tasks.isEmpty()) {
+            return;
+        }
+        JLabel head = Ui.hint(name);
+        head.setFont(Theme.bold(12));
+        head.setForeground(Theme.INK_SUB);
+        head.setBorder(BorderFactory.createEmptyBorder(14, 6, 4, 0));
+        add(head);
+        tasks.forEach(t -> add(row(t, "", null, day)));
     }
 
     /** 일정관리 오른쪽 목록: 줄의 날짜(그 주에서 보이는 첫날, D-65)를 붙인다. */
