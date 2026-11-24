@@ -17,6 +17,13 @@ public final class Pet {
         drawAt(g, p, p.pose, p.wear, x, ground, size);
     }
 
+    /** 움직이는 자리(홈 펫 카드): t초의 숨쉬기와 꼬리로 그린다(PetArt 머리 주석). */
+    public static void drawAt(Graphics2D g, PetState p, int x, int ground, int size, double t) {
+        int stage = Level.stage(Level.level(p.exp));
+        double box = size * PetArt.stageScale(stage);
+        PetArt.drawAt(g, art(p.kind), pose(p.pose), new java.util.HashSet<>(p.wear.values()), t, 99, x, ground, box);
+    }
+
     /** 캐릭터 화면의 미리보기처럼 자세와 장신구를 바꿔 그린다. 모습 단계(D-50)는 크기로 보인다. */
     public static void drawAt(Graphics2D g, PetState p, String pose, java.util.Map<String, String> wear, int x, int ground, int size) {
         int stage = Level.stage(Level.level(p.exp));
