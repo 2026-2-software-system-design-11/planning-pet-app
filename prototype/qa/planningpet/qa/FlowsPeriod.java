@@ -88,3 +88,84 @@ final class FlowsPeriod {
         q.step("11", "달력 오늘을 누른다");
         q.main.calendar.today.doClick();
         q.eq("목록", "[x] E사 지원서 ~11/22까지 09:00~11:00 120분 / [ ] B사 자소서 제출 22:30~23:00 30분", q.rows());
+        q.eq("말풍선", "오늘 할 일 1개 남았어.", q.app.store.talk);
+        q.eq("성취도", "1/2", q.progress());
+        q.eq("달력 22, 17", "22, 17 E사 지원…(진함)", q.cell(22) + ", " + q.cell(17));
+        q.end();
+    }
+
+    static void uf54() {
+        Qa q = new Qa("UF-5-4");
+        q.start(Personas.p5());
+        q.open();
+        q.step("1", "홈에서 목록 제목 줄의 일정 추가를 누른다");
+        q.has("연 창", "새 일정 2026-11-18", q.addFromList());
+        TaskForm f = q.form(q.main.calendar.selected().toString());
+        q.eq("날짜, 종류, 기간", "2026-11-18 할 일 기간 안에 하기 꺼짐(활성) 마감 없음",
+                Ui.dateOf(f.date) + (f.task.isSelected() ? " 할 일 " : " 고정 일정 ") + period(f));
+        q.eq("반복 칸(T-DEF-10)", "안 함 [] 끝 2026-12-16(흐림)", Flows345.repeat(f));
+        q.step("2", "채용 공고 확인을 쓰고 시각 없이 매일, 끝 2027-03-20으로 저장한다");
+        f.title.setText("채용 공고 확인");
+        f.repeat.setSelectedItem("매일");
+        Ui.setDate(f.repeatEnd, QaDrive.d("2027-03-20"));
+        q.eq("시작 시각 정하기, 기간", "false 기간 안에 하기 꺼짐(비활성) 마감 없음", f.timed.isSelected() + " " + period(f));
+        q.eq("저장, 반복 칸 아래(사본 123개)", "false 반복이 너무 많아요. 끝 날짜를 앞당겨 주세요 true", q.save(f, null) + " "
+                + f.errors.get("반복").getText() + " " + f.errors.get("반복").isVisible());
+        q.step("3", "끝 날짜를 2026-11-24로 바꿔 저장한다");
+        Ui.setDate(f.repeatEnd, QaDrive.d("2026-11-24"));
+        q.yes("저장(T-VAL-11)", q.save(f, null));
+        q.eq("목록", "시각 없는 할 일 / [x] 잡코리아 공고 정리 시각 정하기 30분 / [ ] 채용 공고 확인 시각 정하기 30분", q.rows());
+        q.eq("성취도", "1/2", q.progress());
+        q.eq("달력 18~24", "18 잡코리아…(진함), " + cells(19, "(진함)"), q.cell(18) + ", " + seven(q));
+        q.eq("사본(T-ADD-5)", "7 1 DAILY", q.app.store.tasks.stream().filter(t -> t.title.equals("채용 공고 확인")).count() + " "
+                + q.app.store.tasks.stream().filter(t -> t.title.equals("채용 공고 확인")).map(t -> t.seriesId).distinct().count()
+                + " " + q.task("채용 공고 확인", "2026-11-18").repeat);
+        q.step("4", "채용 공고 확인을 체크한다");
+        q.check(q.task("채용 공고 확인", "2026-11-18"));
+        q.eq("상태", "15P 경험치65 횟수2 성취도2/2", st(q));
+        q.eq("말풍선", "오늘 할 일을 다 끝냈어! 푹 쉬어.", q.app.store.talk);
+        q.eq("레벨", "초코 Lv. 2 경험치 15 / 80", q.level());
+        q.eq("달력 18~24(사본마다 체크가 따로)", "18 잡코리아…(흐림), " + cells(19, "(진함)"), q.cell(18) + ", " + seven(q));
+        q.step("5", "달력 19를 누른다");
+        q.select("2026-11-19");
+        q.eq("목록", "시각 없는 할 일 / [ ] 채용 공고 확인 시각 정하기 30분", q.rows());
+        q.eq("말풍선", "11월 19일 할 일은 1개야.", q.app.store.talk);
+        q.step("6", "채용 공고 확인을 두 번 눌러 수정 창을 연다");
+        Task c19 = q.task("채용 공고 확인", "2026-11-19");
+        String[] opened = {"안 열림"};
+        var real = q.app.schedule.opener;
+        q.app.schedule.opener = (t, date) -> opened[0] = (t == c19 ? "수정 " : "다른 일정 ") + date;
+        q.app.schedule.edit(c19);
+        q.app.schedule.opener = real;
+        q.eq("연 창", "수정 2026-11-19 일정 수정", opened[0] + " " + TaskDialog.title(c19));
+        TaskForm edit = TaskDialog.form(q.app, c19, c19.date);
+        q.eq("반복 칸, 기간(D-42)", "매일(비활성) [] 끝 2026-11-24(흐림) / 기간 안에 하기 꺼짐(비활성) 마감 없음",
+                Flows345.repeat(edit) + " / " + period(edit));
+        q.step("7", "삭제를 누르고 범위 창에서 이후 반복 모두를 누른다");
+        q.yes("지움", q.delete(c19, 1));
+        q.eq("범위 창", "'채용 공고 확인'은 반복 일정이에요. / 이 일정만, 이후 반복 모두, 취소", q.lastQuestion + " / " + q.lastOptions);
+        q.eq("남은 채용 공고 확인(T-DEL-4)", "2026-11-18 true", q.app.store.tasks.stream().filter(t -> t.title.equals("채용 공고 확인"))
+                .map(t -> t.date + " " + t.done).collect(java.util.stream.Collectors.joining(", ")));
+        q.eq("19일 목록", "아직 일정이 없어요. 작은 계획을 추가해 보세요.", q.rows());
+        q.eq("포인트, 경험치", "15P 65", q.app.store.points + "P " + q.app.store.pet().exp);
+        q.end();
+    }
+
+    /** 달력 19부터 24까지 칸. */
+    private static String seven(Qa q) {
+        StringBuilder b = new StringBuilder();
+        for (int day = 19; day <= 24; day++) {
+            b.append(day > 19 ? ", " : "").append(q.cell(day));
+        }
+        return b.toString();
+    }
+
+    /** from부터 24까지 "19 채용 공고…(진함)"를 쉼표로 잇는다. */
+    private static String cells(int from, String color) {
+        StringBuilder b = new StringBuilder();
+        for (int day = from; day <= 24; day++) {
+            b.append(day > from ? ", " : "").append(day).append(" 채용 공고…").append(color);
+        }
+        return b.toString();
+    }
+}
