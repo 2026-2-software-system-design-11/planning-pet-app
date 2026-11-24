@@ -28,6 +28,10 @@ public final class Game {
             s.rewardCount = 0;
         }
         t.done = true;
+        if (t.dueDate != null) {
+            // D-65: 기간 할 일은 끝낸 날의 일이 된다. 마감과 시작 시각은 그대로다.
+            t.date = today;
+        }
         if (s.rewardCount >= DAILY_CAP) {
             return new RewardResult(RewardResult.Outcome.CAPPED, before, before);
         }

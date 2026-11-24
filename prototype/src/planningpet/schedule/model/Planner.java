@@ -13,7 +13,8 @@ import java.util.Map;
 
 /** 자동 배치(06의 18번)와 시간표 열 나누기(06의 19번). */
 public final class Planner {
-    public record Placed(Task task, LocalTime start) {
+    /** 놓은 할 일과 놓은 날, 시작 시각. 기간 할 일은 적용하면 날짜가 day로 바뀐다(D-65). */
+    public record Placed(Task task, LocalDate day, LocalTime start) {
     }
 
     public record Placement(List<Placed> placed, List<Task> unplaced) {
@@ -22,9 +23,27 @@ public final class Planner {
     private Planner() {
     }
 
+    /**
+     * 놓을 수 있는 날(06의 18번): 보이는 주의 날 가운데 오늘과 할 일의 날짜 중 늦은 날부터 끝 날까지. 끝 날은 기간 할 일이면
+     * 마감(마감이 날짜보다 앞이면 날짜), 아니면 날짜다(D-25, D-65).
+     */
+    public static List<LocalDate> days(Task t, LocalDate monday, LocalDate today) {
+        LocalDate from = t.date.isAfter(today) ? t.date : today;
+        LocalDate end = t.dueDate != null && t.dueDate.isAfter(t.date) ? t.dueDate : t.date;
+        List<LocalDate> out = new ArrayList<>();
+        for (int i = 0; i < 7; i++) {
+            LocalDate d = monday.plusDays(i);
+            if (!d.isBefore(from) && !d.isAfter(end)) {
+                out.add(d);
+            }
+        }
+        return out;
+    }
+
+    /** 대상: 시작 시각 없는, 끝내지 않은 할 일 가운데 놓을 수 있는 날이 있는 것. 날짜, 긴 순, 넣은 순. */
     public static List<Task> targets(Store s, LocalDate monday) {
-        return s.book.untimedOfWeek(monday).stream()
-                .filter(t -> !t.done && !t.date.isBefore(s.today()))
+        return s.tasks.stream()
+                .filter(t -> t.kind == Task.Kind.TASK && !t.timed() && !t.done && !days(t, monday, s.today()).isEmpty())
                 .sorted(Comparator.comparing((Task t) -> t.date)
                         .thenComparing(t -> -t.minutes)
                         .thenComparingLong(t -> t.seq))
@@ -42,18 +61,11 @@ public final class Planner {
         List<Placed> placed = new ArrayList<>();
         List<Task> unplaced = new ArrayList<>();
         for (Task t : targets(s, monday)) {
-            List<int[]> busy = new ArrayList<>();
-            s.book.timedOn(t.date).forEach(x -> busy.add(new int[] {x.startMinute(), x.endMinute()}));
-            placed.stream().filter(p -> p.task().date.equals(t.date)).forEach(p -> {
-                int from = p.start().getHour() * 60 + p.start().getMinute();
-                busy.add(new int[] {from, from + p.task().minutes});
-            });
             Placed found = null;
-            for (int m = 9 * 60; m + t.minutes <= 24 * 60 && found == null; m += 5) {
-                int start = m;
-                boolean free = busy.stream().noneMatch(b -> start < b[1] && b[0] < start + t.minutes);
-                if (free && !t.date.atTime(m / 60, m % 60).isBefore(earliest)) {
-                    found = new Placed(t, LocalTime.of(m / 60, m % 60));
+            for (LocalDate day : days(t, monday, s.today())) {
+                found = slot(s, t, day, placed, earliest);
+                if (found != null) {
+                    break;
                 }
             }
             if (found == null) {
@@ -63,6 +75,24 @@ public final class Planner {
             }
         }
         return new Placement(placed, unplaced);
+    }
+
+    /** 그날 09:00부터 5분씩 늦추며 처음으로 비는 자리. 없으면 null. */
+    private static Placed slot(Store s, Task t, LocalDate day, List<Placed> placed, LocalDateTime earliest) {
+        List<int[]> busy = new ArrayList<>();
+        s.book.timedOn(day).forEach(x -> busy.add(new int[] {x.startMinute(), x.endMinute()}));
+        placed.stream().filter(p -> p.day().equals(day)).forEach(p -> {
+            int from = p.start().getHour() * 60 + p.start().getMinute();
+            busy.add(new int[] {from, from + p.task().minutes});
+        });
+        for (int m = 9 * 60; m + t.minutes <= 24 * 60; m += 5) {
+            int start = m;
+            boolean free = busy.stream().noneMatch(b -> start < b[1] && b[0] < start + t.minutes);
+            if (free && !day.atTime(m / 60, m % 60).isBefore(earliest)) {
+                return new Placed(t, day, LocalTime.of(m / 60, m % 60));
+            }
+        }
+        return null;
     }
 
     /** 일정마다 {열 번호, 무리의 열 수}. 겹침으로 이어진 일정끼리 한 무리다. */

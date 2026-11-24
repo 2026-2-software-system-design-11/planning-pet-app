@@ -24,8 +24,18 @@ public final class DefaultDates {
         return LocalTime.of(m / 60, m % 60);
     }
 
-    /** 반복 끝 날짜: 날짜에 15주. */
+    /** 반복 끝 날짜(D-17, D-64): 고정 일정은 날짜에 15주, 할 일은 4주. */
+    /** 옮기는 동안만 쓰는 예전 꼴(고정 일정의 끝 날짜). 일정 입력 창을 새 반복 칸으로 바꾸면 지운다. */
     public static LocalDate repeatEnd(LocalDate date) {
-        return date.plusWeeks(15);
+        return repeatEnd(Task.Kind.FIXED, date);
+    }
+
+    public static LocalDate repeatEnd(Task.Kind kind, LocalDate date) {
+        return date.plusWeeks(kind == Task.Kind.FIXED ? 15 : 4);
+    }
+
+    /** 마감 기본값(D-65): 그 날짜가 든 주(월요일부터 일요일)의 일요일. */
+    public static LocalDate due(LocalDate date) {
+        return date.with(java.time.temporal.TemporalAdjusters.nextOrSame(java.time.DayOfWeek.SUNDAY));
     }
 }
