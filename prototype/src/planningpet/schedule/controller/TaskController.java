@@ -42,9 +42,10 @@ public final class TaskController {
         app.control.change(() -> {
             if (t.done) {
                 int points = t.rewardPoints;
-                int before = Level.level(app.store.exp);
+                planningpet.pet.model.PetState pet = t.rewardPet == null ? app.store.pet() : app.store.pet(t.rewardPet);
+                int before = Level.level(pet.exp);
                 app.game.uncomplete(t);
-                app.store.say(app.talk.uncompleted(points, before, Level.level(app.store.exp)));
+                app.store.say(app.talk.uncompleted(points, before, Level.level(pet.exp)));
             } else {
                 RewardResult r = app.game.complete(t);
                 app.store.say(app.talk.completed(r, t));
@@ -110,7 +111,8 @@ public final class TaskController {
         String title = d.title().strip();
         app.control.change(() -> {
             if (editing == null) {
-                app.store.book.add(d.kind(), title, d.date(), d.start(), d.minutes(), d.memo(), d.repeatEnd());
+                app.store.book.add(d.kind(), title, d.date(), d.start(), d.minutes(), d.memo(), d.repeatEnd())
+                        .forEach(t -> t.category = d.category());
             } else {
                 LocalDate originalDate = editing.date;
                 editing.title = title;
@@ -118,6 +120,7 @@ public final class TaskController {
                 editing.start = d.start();
                 editing.minutes = d.minutes();
                 editing.memo = d.memo();
+                editing.category = d.category();
                 if (scope == 1) {
                     app.store.book.applyToSeries(editing, originalDate);
                 }

@@ -66,10 +66,10 @@ public final class PetScreen extends JPanel {
 
     private void refresh() {
         Store s = app.store;
-        name.setText(s.petName + " Lv." + Level.level(s.exp));
+        name.setText(s.pet().name + " Lv." + Level.level(s.pet().exp));
         name.setFont(Theme.font(23));
-        expBar.setValue((int) (Level.expRatio(s.exp) * 1000));
-        expText.setText(Level.expText(s.exp));
+        expBar.setValue((int) (Level.expRatio(s.pet().exp) * 1000));
+        expText.setText(Level.expText(s.pet().exp));
         long done = s.book.checkables(s.today()).stream().filter(t -> t.done).count();
         if (said != null) {
             room.bubble = said;

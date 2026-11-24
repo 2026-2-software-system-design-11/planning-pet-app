@@ -48,7 +48,7 @@ public final class WalkBar extends JComponent {
             g.setColor(Theme.MINT);
             g.drawOval(x - 5, y - 5, 10, 10);
         }
-        Pet.drawAt(g, store, catX, y - 6, 56);
+        Pet.drawAt(g, store.pet(), catX, y - 6, 56);
         drawBubble(g, catX, y - 6 - 56);
         g.dispose();
     }

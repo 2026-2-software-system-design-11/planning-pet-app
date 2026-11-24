@@ -45,7 +45,7 @@ public final class RoomView extends JComponent {
             g.drawImage(Images.ROOM, 0, 0, w, h, null);
         }
         BEHIND.forEach((name, slot) -> item(g, name, slot, w, h));
-        Pet.drawAt(g, store, (int) (w * 0.495), (int) (h * 0.93), (int) (Math.min(w * 0.43, h * 0.53)));
+        Pet.drawAt(g, store.pet(), (int) (w * 0.495), (int) (h * 0.93), (int) (Math.min(w * 0.43, h * 0.53)));
         item(g, "화분", PLANT, w, h);
         g.setFont(Theme.font(15));
         int textW = g.getFontMetrics().stringWidth(bubble);

@@ -20,6 +20,10 @@ public final class Task {
     public int rewardPoints;
     public int rewardExp;
     public LocalDate rewardDay;
+    /** 경험치를 받은 펫의 종류(D-48). 받지 않았으면 null. */
+    public String rewardPet;
+    /** D-54의 유형. */
+    public String category = Categories.OTHER;
 
     public Task(String id, long seq, Kind kind, String title, LocalDate date, LocalTime start, int minutes) {
         this.id = id;
