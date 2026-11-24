@@ -398,6 +398,8 @@ public final class ProtoCheck {
         cr.characterOpener = dress -> opened.add(ca.store.activeKind + (dress ? " 꾸미기 탭" : " 상태 탭"));
         tipButton(cr.room, "나비").doClick();
         eq("D-80 펫 칩은 고르기만 한다", "CAT ", ca.store.activeKind + " " + String.join(", ", opened));
+        button(cr, "나비 꾸미기").doClick();
+        eq("D-83 {이름} 꾸미기는 꾸미기 탭", "CAT 꾸미기 탭", String.join(", ", opened));
         opened.clear();
         find(ca.root, planningpet.home.view.MainScreen.class).pet.click();
         eq("D-80 홈 펫 카드를 누르면 캐릭터 창(상태 탭)", "CAT 상태 탭", String.join(", ", opened));

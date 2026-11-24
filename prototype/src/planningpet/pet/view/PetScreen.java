@@ -52,6 +52,8 @@ public final class PetScreen extends JPanel {
     public final CharacterScreen character;
     /** 캐릭터 창을 연다. 인자가 true면 꾸미기 탭, false면 상태 탭으로 연다(D-93). QA는 창 대신 무엇을 열었는지 받는다. */
     public java.util.function.Consumer<Boolean> characterOpener;
+    /** 펫 패널 맨 아래 "{이름} 꾸미기"(D-83). */
+    public final JButton dressButton = new JButton();
     /** 펫 패널. */
     private final JPanel petTabs = new JPanel(new GridLayout(1, 0, 8, 0));
     private final JLabel name = new JLabel();
@@ -193,10 +195,11 @@ public final class PetScreen extends JPanel {
         tabBody.add(slots, "꾸미기");
         tabBody.add(infoText, "정보");
         tabCards.show(tabBody, "꾸미기");
-        JButton more = new JButton("캐릭터에서 꾸미기");
+        JButton more = dressButton;
         more.setFont(Theme.bold(12));
         more.setIcon(Icons.icon(Icons.Kind.GAMEPAD, 16, Theme.ICON));
         more.setBorder(BorderFactory.createEmptyBorder(6, 10, 8, 10));
+        // D-83: 누르면 캐릭터 창이 꾸미기 탭으로 열린다.
         more.addActionListener(e -> characterOpener.accept(true));
         JPanel lower = new JPanel(new BorderLayout(0, 8));
         lower.add(tabRow, BorderLayout.NORTH);
@@ -291,6 +294,7 @@ public final class PetScreen extends JPanel {
         chips.revalidate();
         petTabs.revalidate();
         name.setText(p.name);
+        dressButton.setText(p.name + " 꾸미기");
         level.setText("Lv. " + Level.level(p.exp));
         expText.setText(Level.expText(p.exp));
         expBar.set(Level.expRatio(p.exp));

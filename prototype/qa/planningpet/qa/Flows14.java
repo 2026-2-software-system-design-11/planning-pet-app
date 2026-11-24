@@ -58,7 +58,8 @@ final class Flows14 {
         q.step("5", "캐릭터 창에서 리본 목걸이를 입혀 보고 닫다가 취소한다");
         String[] asked = {""};
         q.pet.characterOpener = dress -> q.pet.character.opened(dress);
-        tip(q.pet, null, "캐릭터에서 꾸미기").doClick();
+        tip(q.pet, null, "나비 꾸미기").doClick();
+        q.eq("꾸미기 탭으로 열림(D-83)", "꾸미기", q.pet.character.tab());
         text(q.pet.character, "리본 목걸이").doClick();
         q.pet.character.ask = (title, message, options) -> {
             asked[0] = title + " / " + message + " / " + String.join(", ", options);
@@ -71,7 +72,7 @@ final class Flows14 {
         q.eq("닫기에 버리기", "true 기본 목걸이 기본 목걸이", q.pet.character.confirmLeave() + " "
                 + q.pet.character.draft.get(Wardrobe.NECK) + " " + q.app.store.pet().wear.get(Wardrobe.NECK));
         q.step("7", "다시 열어 리본 목걸이를 입혀 보고 닫다가 적용한다");
-        tip(q.pet, null, "캐릭터에서 꾸미기").doClick();
+        tip(q.pet, null, "나비 꾸미기").doClick();
         text(q.pet.character, "리본 목걸이").doClick();
         q.pet.character.ask = (title, message, options) -> 0;
         q.eq("닫기에 적용", "true 리본 목걸이", q.pet.character.confirmLeave() + " " + q.app.store.pet().wear.get(Wardrobe.NECK));
