@@ -29,7 +29,7 @@ state "시각 고치기" as Time
 [*] --> Pick : 첫 실행
 [*] --> Main : 데이터 있음
 [*] --> Tray : 컴퓨터 켤 때 실행
-Pick --> Main : 시작하기
+Pick --> Main : 예시로 둘러보기,\n바로 시작
 Main --> Form : 일정 추가, 두 번 누르기
 Main --> Time : 시각 칸 누르기
 Sched --> Form : 일정 추가, 두 번 누르기
