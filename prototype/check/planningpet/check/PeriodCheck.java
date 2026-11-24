@@ -438,6 +438,10 @@ final class PeriodCheck {
         Task due = period(last, "E사 지원서", "11-16", "11-22", 120);
         eq("D-70 마감 날", "오늘 할 일 1개 남았어. 오늘이 E사 지원서 마감이야! true", new Talk(last).briefing() + " "
                 + last.book.dayPlan(d("11-22")).dueToday().contains(due));
+        Store timed = at("11-22T09:00");
+        Task set = period(timed, "E사 지원서", "11-16", "11-22", 120);
+        timed.book.setTime(set, LocalTime.of(14, 0), 120, d("11-22"), false);
+        eq("T-TALK-24", "오늘 할 일 1개 남았어. 오늘이 E사 지원서 마감이야!", new Talk(timed).briefing());
         Store c = MockData.empty();
         period(c, "E사 지원서", "11-16", "11-22", 120);
         TaskBook.CellPreview c22 = c.book.cellPreview(d("11-22"));

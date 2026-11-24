@@ -49,9 +49,10 @@ public final class Talk {
                 .ifPresent(t -> b.append(" 어제 하기로 한 '").append(Rules.shortTitle(t.title)).append("'")
                         .append(Rules.josa(t.title, "을", "를")).append(" 못 했어. 마감은 ").append(t.dueDate.getDayOfMonth())
                         .append("일이야."));
-        Task dueToday = s.book.dayPlan(today).dueToday().stream().findFirst().orElse(null);
+        // D-70, D-94: 마감 날까지 못 한 기간 할 일. 오늘로 시각을 정한 것도 말한다.
+        Task dueToday = s.tasks.stream().filter(t -> t.period() && !t.done && t.dueDate.equals(today))
+                .min(Comparator.comparingLong(t -> t.seq)).orElse(null);
         if (dueToday != null) {
-            // D-70: 마감 날까지 못 한 기간 할 일.
             b.append(" 오늘이 ").append(Rules.shortTitle(dueToday.title)).append(" 마감이야!");
         }
         // D-71: "마감"은 기간 할 일에만 쓰고 날짜와 남은 날 수를 붙인다.
