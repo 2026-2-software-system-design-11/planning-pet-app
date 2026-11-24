@@ -72,7 +72,7 @@ public final class TaskForm {
             days[i].setMargin(new Insets(1, 4, 1, 4));
             days[i].addActionListener(e -> sync());
         }
-        start.setValue(DefaultDates.start(defaultDate, now).toString());
+        start.setValue(Times.value(DefaultDates.start(defaultDate, now)));
         for (String k : new String[] {"제목", "마감", "시작 시각", "걸리는 시간", "메모", "반복"}) {
             JLabel l = new JLabel();
             l.setForeground(Theme.SUNDAY);

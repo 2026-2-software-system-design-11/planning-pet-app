@@ -87,9 +87,10 @@ public final class ProtoCheck {
         Task late = at.apply("늦게", java.time.LocalTime.of(23, 30));
         eq("T-LIST-2", "23:30~24:00", TaskBook.timeText(late));
         java.time.LocalDateTime t1523 = nov16.atTime(15, 23);
-        eq("T-DEF-6~9", "15:25 09:00 09:00 23:55", DefaultDates.start(nov16, t1523) + " "
-                + DefaultDates.start(nov16, nov16.atTime(7, 0)) + " " + DefaultDates.start(nov16.plusDays(1), t1523)
-                + " " + DefaultDates.start(nov16, nov16.atTime(23, 57)));
+        eq("T-DEF-6~9", "15:25 09:00 09:00 23:55", Times.value(DefaultDates.start(nov16, t1523)) + " "
+                + Times.value(DefaultDates.start(nov16, nov16.atTime(7, 0))) + " "
+                + Times.value(DefaultDates.start(nov16.plusDays(1), t1523))
+                + " " + Times.value(DefaultDates.start(nov16, nov16.atTime(23, 57))));
         TimeEditor longOne = new TimeEditor(late, t1523);
         longOne.minutes.setValue(40);
         eq("시각 고치기 하루 넘김", "하루 안에 끝나야 해요", longOne.check());

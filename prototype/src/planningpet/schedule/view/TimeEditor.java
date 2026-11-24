@@ -42,8 +42,12 @@ public final class TimeEditor {
         this.day = day;
         // D-67: 정한 날에 못 끝낸 기간 할 일은 시각 없는 할 일처럼 연다.
         boolean placed = t.onTimetable(planningpet.common.model.Rules.appDay(now));
-        LocalTime from = placed ? t.start : DefaultDates.start(day, now);
-        start.setValue(from.toString());
+        int from = placed ? t.startMinute() : DefaultDates.start(day, now);
+        start.setValue(Times.value(from));
+        // 시각 없는 기간 할 일은 창을 연 목록의 날로 옮겨지므로 그 날로 실제 날을 적는다.
+        java.time.LocalDate base = placed ? t.date : day;
+        realTime.setText(Times.real(base, from));
+        start.addChangeListener(x -> realTime.setText(Times.real(base, Times.minuteOf(start.getValue()))));
         minutes = Ui.minutes(t.minutes);
         error.setForeground(Theme.SUNDAY);
         error.setFont(Theme.font(12));
@@ -67,8 +71,7 @@ public final class TimeEditor {
         if ((int) minutes.getValue() % 5 != 0) {
             return "10분부터 720분까지, 5분 단위예요";
         }
-        LocalTime s = LocalTime.parse((String) start.getValue());
-        return s.getHour() * 60 + s.getMinute() + (int) minutes.getValue() > 24 * 60 ? "하루 안에 끝나야 해요" : null;
+        return Times.minuteOf(start.getValue()) + (int) minutes.getValue() > 24 * 60 ? "하루 안에 끝나야 해요" : null;
     }
 
     /** 저장 버튼과 같다. 통과하면 true, 아니면 창 아래 문장을 채우고 false. */
