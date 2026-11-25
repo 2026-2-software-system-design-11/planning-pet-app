@@ -132,6 +132,13 @@ public final class ProtoCheck {
         eq("D-98 칸 아래 글", "25 흐린 5분 단위로 맞췄어요(25분) / 25 빨간 " + Typed.MINUTES_BAD, typedField());
         eq("D-98 입력 창 걸리는 시간 칸 아래 글", "흐린 5분 단위로 맞췄어요(25분) / 없음 / 없음", typedForm());
         eq("D-98 시각 고치기 창 칸 아래 글", "720 흐린 최대 720분(12시간)까지 넣을 수 있어요 true true", timeEditorNotice());
+        eq("T-TYPE-5", "09:05 5분 단위로 맞췄어요(09:05) / 23:55 5분 단위로 맞췄어요(23:55) / 09:00 null", starts("09:03", "23:58", "09:00"));
+        eq("T-TYPE-6", "03:55(다음 날) 하루는 새벽 4시에 넘어가요. 03:55(다음 날)로 맞췄어요", starts("04:10(다음 날)"));
+        eq("T-TYPE-7", "14:00 null / 09:00 null / 14:30 null / 09:30 null", starts("14", "9", "1430", "930"));
+        eq("T-TYPE-8", "14:00 14:00 20:00 09:00 12:00 14:30 14:30 07:00 19:00 21:00 12:00 11:00 01:00(다음 날) 02:00(다음 날) 00:00(다음 날) 05:00",
+                starts("오후 2시", "2시", "8시", "9시", "12시", "오후 2시 반", "2시 30분", "아침 7시", "저녁 7시", "밤 9시", "낮 12시", "낮 11시",
+                        "새벽 1시", "밤 2시", "밤 12시", "새벽 5시").replace(" null", "").replace(" /", ""));
+        eq("T-TYPE-9", "null 14:00처럼 적어 주세요 / null 14:00처럼 적어 주세요 / null 14:00처럼 적어 주세요", starts("25:00", "09:75", "점심"));
         Store c = MockData.sample();
         java.time.LocalDate nov = java.time.LocalDate.of(2026, 11, 1);
         TaskBook.CellPreview c14 = c.book.cellPreview(nov.withDayOfMonth(14));
@@ -342,6 +349,11 @@ public final class ProtoCheck {
         int group = l.getParent().getComponent(0).getPreferredSize().width;
         return got + " " + (l.getPreferredSize().width <= group) + " "
                 + (l.getPreferredSize().height > l.getFontMetrics(l.getFont()).getHeight() * 1.5);
+    }
+
+    /** 시작 시각 칸에 쳐 넣은 글마다 읽은 값과 칸 아래 글(06의 32번). */
+    private static String starts(String... texts) {
+        return String.join(" / ", java.util.Arrays.stream(texts).map(Typed::start).map(r -> r.value() + " " + r.notice()).toList());
     }
 
     /** 칸에 글을 쳐 넣고 칸을 벗어난 것과 같다. 받지 않으면 이전 값이다. */
