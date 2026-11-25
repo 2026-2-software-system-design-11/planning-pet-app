@@ -58,6 +58,13 @@ final class ListCheck {
         click(title(sched.untimed, work), 2);
         click(title(sched.untimed, wash), 1);
         eq("T-EDIT-16", "창 과제 2026-11-18, 창 과제 2026-11-18", String.join(", ", opened));
+        App late = Main.create(at("11-18T09:00"));
+        Task job = PeriodCheck.period(late.store, "지원서", "11-12", "11-20", 30);
+        late.schedule.timeOpener = (t, day, anchor) -> late.schedule.saveTime(t, 14 * 60, 30, day);
+        late.show("일정관리");
+        late.store.changed();
+        click(title(ProtoCheck.find(late.root, ScheduleScreen.class).untimed, job), 1);
+        eq("T-EDIT-22", "2026-11-18 14:00 2026-11-20", job.date + " " + job.start + " " + job.dueDate);
     }
 
     /** 놓은 결과 글과 일의 날짜, 시각. */
