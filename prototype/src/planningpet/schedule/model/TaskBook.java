@@ -1,6 +1,5 @@
 package planningpet.schedule.model;
 
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -290,16 +289,16 @@ public final class TaskBook {
      * 06의 7번. 일정관리 오른쪽 목록: 그 주에 보이는 시각 없는 할 일을 그 주에서 보이는 첫날에 한 줄씩. 끝내지 않은 기간 할 일은
      * 마감 날이 그 주에 있고 첫날과 다르면 마감 날에 한 줄을 더한다(D-93). 줄의 날짜 순, 같은 날은 넣은 순.
      */
-    public List<WeekRow> untimedOfWeek(LocalDate monday) {
+    public List<WeekRow> untimedOfWeek(LocalDate weekStart) {
         LocalDate now = today();
         List<WeekRow> rows = new ArrayList<>();
         tasks.stream().filter(t -> t.kind == Task.Kind.TASK && !t.onTimetable(now)).forEach(t -> {
-            LocalDate first = rowDay(t, monday, now);
+            LocalDate first = rowDay(t, weekStart, now);
             if (first == null) {
                 return;
             }
             rows.add(new WeekRow(t, first));
-            boolean dueInWeek = t.period() && !t.done && !t.dueDate.isBefore(monday) && t.dueDate.isBefore(monday.plusDays(7));
+            boolean dueInWeek = t.period() && !t.done && !t.dueDate.isBefore(weekStart) && t.dueDate.isBefore(weekStart.plusDays(7));
             if (dueInWeek && !t.dueDate.equals(first) && t.shownOn(t.dueDate, now)) {
                 rows.add(new WeekRow(t, t.dueDate));
             }
@@ -309,10 +308,10 @@ public final class TaskBook {
     }
 
     /** 일정관리 목록 줄의 날짜: 그 주에서 보이는 첫날. 그 주에 보이지 않으면 null(D-65). */
-    public static LocalDate rowDay(Task t, LocalDate monday, LocalDate today) {
+    public static LocalDate rowDay(Task t, LocalDate weekStart, LocalDate today) {
         for (int i = 0; i < 7; i++) {
-            if (t.shownOn(monday.plusDays(i), today)) {
-                return monday.plusDays(i);
+            if (t.shownOn(weekStart.plusDays(i), today)) {
+                return weekStart.plusDays(i);
             }
         }
         return null;
@@ -362,7 +361,4 @@ public final class TaskBook {
         return tasks.stream().filter(t -> t.onTimetable(now) && t.date.equals(date)).toList();
     }
 
-    public static LocalDate mondayOf(LocalDate date) {
-        return date.with(DayOfWeek.MONDAY);
-    }
 }

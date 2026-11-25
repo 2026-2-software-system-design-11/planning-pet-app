@@ -56,7 +56,16 @@ public final class TaskForm {
     Runnable relayout = () -> { };
     private int row;
 
+    /** 마감 기본값이 쓰는 한 주의 시작 요일(D-91). */
+    private final java.time.DayOfWeek weekStart;
+
+    /** 한 주 시작이 월요일일 때. 앱의 창은 설정 값을 받는 아래 생성자를 쓴다. */
     public TaskForm(Task t, LocalDate defaultDate, java.time.LocalDateTime now) {
+        this(t, defaultDate, now, java.time.DayOfWeek.MONDAY);
+    }
+
+    public TaskForm(Task t, LocalDate defaultDate, java.time.LocalDateTime now, java.time.DayOfWeek weekStart) {
+        this.weekStart = weekStart;
         editing = t != null;
         copy = t != null && t.seriesId != null;
         Ui.limit(title, 100);
@@ -105,7 +114,7 @@ public final class TaskForm {
         // D-66: 기간 할 일의 날짜 칸은 기간 첫날이다(계획한 날이 아니다).
         LocalDate first = t == null ? defaultDate : t.period() ? t.startDay : t.date;
         Ui.setDate(date, first);
-        Ui.setDate(due, t != null && t.dueDate != null ? t.dueDate : DefaultDates.due(first));
+        Ui.setDate(due, t != null && t.dueDate != null ? t.dueDate : DefaultDates.due(first, weekStart));
         period.setSelected(t != null && t.dueDate != null);
         if (t != null) {
             fixed.setSelected(t.kind == Task.Kind.FIXED);
@@ -205,7 +214,7 @@ public final class TaskForm {
             Ui.setDate(repeatEnd, DefaultDates.repeatEnd(isFixed ? Task.Kind.FIXED : Task.Kind.TASK, day));
         }
         if (!period.isSelected()) {
-            Ui.setDate(due, DefaultDates.due(day));
+            Ui.setDate(due, DefaultDates.due(day, weekStart));
         }
         minutesHint.setVisible(!editing && (int) minutes.getValue() == 30);
         Integer s = startTime();

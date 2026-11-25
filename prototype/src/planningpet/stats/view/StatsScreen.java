@@ -45,7 +45,7 @@ public final class StatsScreen extends JPanel {
     private static final String HELP_RATE = "끝낸 수 / 셀 일정 수예요. 셀 일정은 고른 기간 안에서 오늘까지인 날의 할 일과 고정 일정이고, 앞날의 일정은 세지 않아요.";
     private static final String HELP_TREND = "주간이면 날마다, 월간이면 주마다 끝낸 수(막대)와 달성률(선)이에요. 오늘 뒤의 날은 세지 않아요.";
     private static final String HELP_KIND = "셀 일정이 있는 유형만 보여요. 유형마다 끝낸 수 / 셀 일정 수예요.";
-    private static final String HELP_SUM = "이번 주(월요일부터 일요일)와 이번 달의 달성률, 그 기간에 얻은 포인트(완료 보상과 출석)예요.";
+    private static final String HELP_SUM = "이번 주(설정의 한 주 시작 요일부터 7일)와 이번 달의 달성률, 그 기간에 얻은 포인트(완료 보상과 출석)예요.";
     /** 요약의 이번 달 머리 띠. 예시의 옅은 하늘색. */
     static final Color MONTH_BAND = new Color(0xE4EEFC);
 
@@ -71,7 +71,7 @@ public final class StatsScreen extends JPanel {
     public StatsScreen(App app) {
         super(new GridBagLayout());
         this.app = app;
-        this.period = Stats.Period.week(app.store.today());
+        this.period = Stats.Period.week(app.store.today(), app.store.weekStart);
         setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 12));
         head = buildHead();
         place(rateCard(), 0, 0, 0.44, 0.55);
@@ -95,7 +95,7 @@ public final class StatsScreen extends JPanel {
     public void setMonthly(boolean monthly) {
         if (monthly != period.monthly()) {
             LocalDate base = period.contains(app.store.today()) ? app.store.today() : period.from();
-            period = monthly ? Stats.Period.month(base) : Stats.Period.week(base);
+            period = monthly ? Stats.Period.month(base) : Stats.Period.week(base, app.store.weekStart);
         }
         refresh();
     }
@@ -154,7 +154,7 @@ public final class StatsScreen extends JPanel {
             group.add(b);
             modes.add(b);
         }
-        weekButton.setToolTipText("월요일부터 일요일까지 한 주씩 봐요");
+        weekButton.setToolTipText("한 주씩 봐요. 한 주는 설정의 한 주 시작 요일부터예요");
         monthButton.setToolTipText("한 달씩 봐요");
         weekButton.addActionListener(e -> setMonthly(false));
         monthButton.addActionListener(e -> setMonthly(true));
@@ -309,6 +309,10 @@ public final class StatsScreen extends JPanel {
 
     private void refresh() {
         LocalDate today = app.store.today();
+        if (!period.monthly() && period.from().getDayOfWeek() != app.store.weekStart) {
+            // D-91: 한 주 시작을 바꾸면 보던 주의 첫날이 든 새 주로 바꾼다.
+            period = Stats.Period.week(period.from(), app.store.weekStart);
+        }
         weekButton.setSelected(!period.monthly());
         monthButton.setSelected(period.monthly());
         periodLabel.setText(periodText(period));
@@ -323,7 +327,7 @@ public final class StatsScreen extends JPanel {
         trend.set(Stats.trend(app.store, period), today, period.monthly());
         kinds.set(Stats.byCategory(app.store, period));
 
-        Stats.Period week = Stats.Period.week(today);
+        Stats.Period week = Stats.Period.week(today, app.store.weekStart);
         Stats.Period month = Stats.Period.month(today);
         weekBox.set("이번 주", "(" + md(week.from()) + " ~ " + md(week.to()) + ")",
                 Stats.rate(app.store, week), Stats.points(app.store, week));

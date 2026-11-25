@@ -61,7 +61,7 @@ public final class BlindStates {
             BlindShots.shoot(TaskDialog.content(fixedForm, new JButton("취소"),
                     new JButton("저장"), new JButton("삭제")), null, "일정 수정", images, key, n++, out, "일정 입력 창(고정 일정 수정)");
             app.store.book.add(Task.Kind.TASK, "기말 프로젝트", today, null, 600, "", null);
-            LocalDate monday = TaskBook.mondayOf(today);
+            LocalDate monday = planningpet.common.model.Rules.weekStart(today, app.store.weekStart);
             BlindShots.shoot(AutoPlaceDialog.content(app.store, monday, Planner.place(app.store, monday), new JButton("취소"),
                     new JButton("적용")), null, "자동 배치 결과", images, key, n++, out, "자동 배치 결과 창(놓지 못한 할 일 있음)");
             BlindShots.shoot(menuOver(MockData.sample()), new Dimension(1000, 680), null, images, key, n++, out,

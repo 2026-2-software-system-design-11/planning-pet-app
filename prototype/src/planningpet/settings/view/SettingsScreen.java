@@ -17,6 +17,9 @@ public final class SettingsScreen extends JPanel {
     private int row;
     /** D-86. 켜면 홈 달력 칸의 수에 고정 일정도 센다. */
     public final JCheckBox calendarFixed = new JCheckBox("달력에 고정 일정 보이기");
+    /** D-91. 한 주 시작. 기본은 월요일. */
+    public final javax.swing.JRadioButton monday = new javax.swing.JRadioButton("월요일", true);
+    public final javax.swing.JRadioButton sunday = new javax.swing.JRadioButton("일요일");
 
     public SettingsScreen(App app) {
         super(new GridBagLayout());
@@ -33,12 +36,23 @@ public final class SettingsScreen extends JPanel {
         line(new JLabel("<html><b>달력</b></html>"), calendarFixed);
         line(new JLabel(), Ui.hint("켜면 수업 같은 고정 일정도 홈 달력 칸의 수에 들어가요"));
         calendarFixed.addActionListener(e -> app.settings.showFixedOnCalendar(calendarFixed.isSelected()));
+        javax.swing.ButtonGroup week = new javax.swing.ButtonGroup();
+        week.add(monday);
+        week.add(sunday);
+        line(new JLabel("<html><b>한 주 시작</b></html>"), Ui.flow(monday, sunday));
+        line(new JLabel(), Ui.hint("달력, 일정관리, 통계의 한 주가 이 요일부터 시작해요"));
+        monday.addActionListener(e -> app.settings.weekStart(java.time.DayOfWeek.MONDAY));
+        sunday.addActionListener(e -> app.settings.weekStart(java.time.DayOfWeek.SUNDAY));
         line(new JLabel("<html><b>버전</b></html>"), new JLabel("0.1 프로토타입"));
         GridBagConstraints filler = new GridBagConstraints();
         filler.gridy = row;
         filler.weighty = 1;
         add(new JLabel(), filler);
-        app.watch(() -> calendarFixed.setSelected(app.store.calendarFixed));
+        app.watch(() -> {
+            calendarFixed.setSelected(app.store.calendarFixed);
+            monday.setSelected(app.store.weekStart == java.time.DayOfWeek.MONDAY);
+            sunday.setSelected(app.store.weekStart == java.time.DayOfWeek.SUNDAY);
+        });
     }
 
     private void line(JComponent label, JComponent value) {

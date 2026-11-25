@@ -8,9 +8,9 @@ public final class DefaultDates {
     private DefaultDates() {
     }
 
-    /** 일정관리에서 추가할 때: 보이는 주에 오늘이 있으면 오늘, 없으면 그 주 월요일. */
-    public static LocalDate forSchedule(LocalDate shownMonday, LocalDate today) {
-        return TaskBook.mondayOf(today).equals(shownMonday) ? today : shownMonday;
+    /** 일정관리에서 추가할 때: 보이는 주(첫날부터 7일)에 오늘이 있으면 오늘, 없으면 그 주 첫날. */
+    public static LocalDate forSchedule(LocalDate shownStart, LocalDate today) {
+        return !today.isBefore(shownStart) && today.isBefore(shownStart.plusDays(7)) ? today : shownStart;
     }
 
     /** 시작 칸의 마지막 값(D-77): 다음 날 03:55. */
@@ -39,6 +39,14 @@ public final class DefaultDates {
 
     /** 마감 기본값(D-65): 그 날짜가 든 주(월요일부터 일요일)의 일요일. 일요일이면 다음 주 일요일이다(D-73). */
     public static LocalDate due(LocalDate date) {
-        return date.with(java.time.temporal.TemporalAdjusters.next(java.time.DayOfWeek.SUNDAY));
+        return due(date, java.time.DayOfWeek.MONDAY);
+    }
+
+    /**
+     * D-91. 그 날짜가 든 주(weekStart부터 7일)의 마지막 날. 날짜가 그 마지막 날이면 다음 주 마지막 날이다(D-73).
+     * 월요일 시작이면 일요일, 일요일 시작이면 토요일이다.
+     */
+    public static LocalDate due(LocalDate date, java.time.DayOfWeek weekStart) {
+        return date.with(java.time.temporal.TemporalAdjusters.next(weekStart.minus(1)));
     }
 }

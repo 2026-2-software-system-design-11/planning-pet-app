@@ -180,7 +180,7 @@ class QaDrive extends QaCore {
         return TaskDialog.trySave(app, f, editing);
     }
     Planner.Placement place() {
-        return Planner.place(app.store, sched.monday());
+        return Planner.place(app.store, sched.weekStart());
     }
 
     void apply(Planner.Placement p) {

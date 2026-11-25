@@ -35,6 +35,8 @@ public final class Store {
     public final Set<String> placed = new LinkedHashSet<>();
     /** 설정 "달력에 고정 일정 보이기"(D-86). 처음은 끔. */
     public boolean calendarFixed;
+    /** 설정 "한 주 시작"(D-91). 앱의 한 주는 이 요일부터 7일이다. 처음은 월요일. */
+    public java.time.DayOfWeek weekStart = java.time.DayOfWeek.MONDAY;
     public String talk = "";
     /** 펫이 새 말을 할 때마다 1씩 는다. 같은 문장을 다시 말해도 새 말로 알아본다. */
     public int talkSeq;
