@@ -223,6 +223,7 @@ final class Flows12 {
         q.eq("창", "20:10 30", e.start.getValue() + " " + e.minutes.getValue());
         q.step("2", "저장한다");
         q.yes("저장됨", TimeEditor.save(q.app, c, e));
+        q.eq("겹침 물음(D-87)", "19:00~21:00 'B사 자소서 1번'과 30분 겹쳐요. 그래도 넣을까요?", q.takeOverlaps());
         q.eq("목록", "[ ] 고정 졸업 세미나 15:00~16:40 100분 / [ ] B사 자소서 1번 19:00~21:00 120분"
                 + " / [ ] C사 서류 결과 확인 20:10~20:40 30분", q.rows());
         q.step("3", "20:10~20:40을 누르고 시각 빼기를 누른다");
@@ -235,10 +236,18 @@ final class Flows12 {
         q.step("5", "졸업 세미나의 15:00~16:40을 누른다");
         q.eq("시각 빼기 보임", false, new TimeEditor(q.task("졸업 세미나", "2026-11-16"), q.app.store.now).clear.isVisible());
         q.step("6", "B사 자소서 1번 시작을 22:30으로 바꿔 저장한다");
+        q.select("2026-11-16");
         Task b = q.task("B사 자소서 1번");
         TimeEditor late = new TimeEditor(b, q.app.store.now);
         late.start.setValue("22:30");
         q.eq("저장됨", true, TimeEditor.save(q.app, b, late));
+        q.has("목록", "[ ] B사 자소서 1번 22:30~00:30(다음 날) 120분", q.rows());
+        q.step("7", "다시 눌러 시작을 03:00(다음 날)으로 바꿔 저장한다");
+        TimeEditor later = new TimeEditor(b, q.app.store.now);
+        later.start.setValue("03:00(다음 날)");
+        q.eq("실제 날", "(화 03:00)", later.realTime.getText());
+        q.eq("저장됨", false, TimeEditor.save(q.app, b, later));
+        q.eq("창 아래", "다음 날 04:00까지 끝나야 해요", later.error.getText());
         q.end();
     }
 

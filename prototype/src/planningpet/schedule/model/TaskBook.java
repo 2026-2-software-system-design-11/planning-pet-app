@@ -306,6 +306,45 @@ public final class TaskBook {
         return null;
     }
 
+    /** 겹친 일정과 겹친 분(D-87). */
+    public record Overlap(Task other, int minutes) {
+        /** "14:00~15:00 '자소서 초안'과 30분 겹쳐요. 그래도 넣을까요?" */
+        public String question() {
+            return timeText(other) + " '" + other.title + "'" + planningpet.common.model.Rules.josa(other.title, "과", "와") + " "
+                    + minutes + "분 겹쳐요. 그래도 넣을까요?";
+        }
+    }
+
+    /**
+     * 06의 3번 겹침 묻기(D-87). 입력이 들어갈 날(반복이면 사본마다)의 시간표 일정(self는 빼고) 가운데 겹치는 것. 날이 가장 이른,
+     * 그 안에서 시작이 가장 이르고 넣은 순이 앞인 하나. 시작 시각이 없거나 기간 할 일이면 null.
+     */
+    public Overlap overlap(TaskDraft d, Task self) {
+        Integer start = d.startMinute();
+        boolean period = d.kind() == Task.Kind.TASK && d.repeat() == null && d.dueDate() != null;
+        if (start == null || period) {
+            return null;
+        }
+        List<LocalDate> days = d.repeat() == null || self != null ? List.of(d.date())
+                : d.repeat().dates(d.date(), d.repeatEnd(), Integer.MAX_VALUE - 1);
+        for (LocalDate day : days) {
+            Overlap o = overlap(day, start, d.minutes(), self);
+            if (o != null) {
+                return o;
+            }
+        }
+        return null;
+    }
+
+    /** 한 날의 겹침. 두 일정은 서로의 끝이 서로의 시작보다 늦을 때만 겹친다(18번과 같다). */
+    public Overlap overlap(LocalDate day, int start, int minutes, Task self) {
+        int end = start + minutes;
+        return timedOn(day).stream().filter(t -> t != self && t.startMinute() < end && start < t.endMinute())
+                .min(Comparator.comparingInt(Task::startMinute).thenComparingLong(t -> t.seq))
+                .map(t -> new Overlap(t, Math.min(end, t.endMinute()) - Math.max(start, t.startMinute())))
+                .orElse(null);
+    }
+
     public List<Task> timedOn(LocalDate date) {
         LocalDate now = today();
         return tasks.stream().filter(t -> t.onTimetable(now) && t.date.equals(date)).toList();

@@ -2,6 +2,7 @@ package planningpet.schedule.view;
 
 import planningpet.app.model.Store;
 import planningpet.common.view.Theme;
+import planningpet.common.view.Ui;
 import planningpet.schedule.controller.TaskController;
 import planningpet.schedule.model.*;
 import java.awt.Color;
@@ -26,6 +27,8 @@ public final class TimetablePanel extends JComponent {
     private final Store store;
     private final Map<Rectangle, Task> blocks = new LinkedHashMap<>();
     private final Map<Rectangle, Task> boxes = new LinkedHashMap<>();
+    /** 열을 나눴거나 제목이 잘린 블록(D-87). */
+    private final java.util.Set<Task> narrow = new java.util.HashSet<>();
     LocalDate monday;
     /** 자정 아래 "다음 날" 칸의 바탕(D-77). */
     private static final Color NIGHT = new Color(0x1B, 0x22, 0x38, 14);
@@ -91,11 +94,23 @@ public final class TimetablePanel extends JComponent {
         return hit;
     }
 
-    /** 메모가 있는 블록에 마우스를 올리면 메모를 보인다(D-33). */
+    /** 메모가 있는 블록에 마우스를 올리면 메모를 보인다(D-33). 좁은 블록은 전체 제목과 시각을 먼저 보인다(D-87). */
     @Override
     public String getToolTipText(MouseEvent e) {
         Task t = at(e);
-        return t == null ? null : TaskRows.memoTip(t);
+        return t == null ? null : tip(t);
+    }
+
+    /** 블록의 툴팁. 마지막으로 그린 모양을 따른다. */
+    public String tip(Task t) {
+        String memo = TaskRows.memoTip(t);
+        if (!narrow.contains(t)) {
+            return memo;
+        }
+        String head = "<b>" + Ui.esc(t.title) + "</b> " + TaskBook.timeText(t);
+        String body = t.memo.isBlank() ? "" : "<br>" + Ui.esc(t.memo.length() > 200 ? t.memo.substring(0, 200) + "…" : t.memo)
+                .replace("\n", "<br>");
+        return "<html><div style='width:280px'>" + head + body + "</div></html>";
     }
 
     @Override
@@ -128,6 +143,7 @@ public final class TimetablePanel extends JComponent {
         mid.dispose();
         blocks.clear();
         boxes.clear();
+        narrow.clear();
         for (int i = 0; i < 7; i++) {
             var tasks = store.book.timedOn(monday.plusDays(i));
             var columns = Planner.columns(tasks);
@@ -159,6 +175,9 @@ public final class TimetablePanel extends JComponent {
                     }
                     text.setColor(t.done ? Theme.INK_DIM : Theme.INK);
                     tx += 16;
+                }
+                if (c[1] > 1 || text.getFontMetrics().stringWidth(t.title) > r.x + r.width - tx - 2) {
+                    narrow.add(t);
                 }
                 text.drawString(t.title, tx, r.y + 14);
                 if (t.done) {

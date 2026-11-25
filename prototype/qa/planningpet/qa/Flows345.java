@@ -108,6 +108,7 @@ final class Flows345 {
         f.days[3].doClick();
         Ui.setDate(f.repeatEnd, QaDrive.d("2026-12-17"));
         q.yes("저장", q.save(f, null));
+        q.eq("겹침 물음(D-87)", "17:00~19:00 '팀 회의'와 60분 겹쳐요. 그래도 넣을까요?", q.takeOverlaps());
         q.eq("펫(D-75)", "17일(화)부터 화, 목마다 넣었어요", q.app.store.talk);
         q.eq("화요일", "2026-11-17,2026-11-24,2026-12-01,2026-12-08,2026-12-15",
                 dates(q, "편의점 알바", java.time.DayOfWeek.TUESDAY));

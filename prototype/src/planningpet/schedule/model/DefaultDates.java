@@ -2,7 +2,6 @@ package planningpet.schedule.model;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 
 /** 06의 14번. 일정 입력 창과 시각 고치기 창의 기본값. */
 public final class DefaultDates {

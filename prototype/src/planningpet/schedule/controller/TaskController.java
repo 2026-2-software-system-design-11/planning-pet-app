@@ -116,8 +116,16 @@ public final class TaskController {
         TimeEditor.open(app, t, day, anchor);
     }
 
+    /** D-87: 같은 날 다른 일정과 겹치면 막지 않고 묻는다. 겹치지 않거나 넣기를 고르면 true. */
+    private boolean overlapOk(TaskBook.Overlap o) {
+        return o == null || chooser.choose("시간이 겹쳐요", o.question(), new String[] {"넣기", "취소"}, 0) == 0;
+    }
+
     /** UC-03, UC-05. 검사를 통과한 입력 값을 저장한다. 반복 사본이면 범위를 묻고, 취소하면 false. */
     public boolean save(Task editing, TaskDraft d) {
+        if (!overlapOk(app.store.book.overlap(d, editing))) {
+            return false;
+        }
         int scope = editing == null ? 0 : editScope(editing);
         if (scope < 0) {
             return false;
@@ -148,6 +156,10 @@ public final class TaskController {
 
     /** 시각 고치기 창의 저장(D-32, D-42). 반복 사본이면 범위를 묻고, 취소하면 false. day는 창을 연 목록의 날이다(D-65). */
     public boolean saveTime(Task t, int start, int minutes, LocalDate day) {
+        // 기간 할 일에 시각을 정하면 창을 연 목록의 날로 옮겨지므로 그 날과 잰다(D-65).
+        if (!overlapOk(app.store.book.overlap(t.period() ? day : t.date, start, minutes, t))) {
+            return false;
+        }
         int scope = editScope(t);
         if (scope < 0) {
             return false;
