@@ -21,6 +21,7 @@ final class ListCheck {
     static void run() {
         rowClick();
         places();
+        drops();
     }
 
     /** D-99 놓을 자리(06의 4번 dropStart, dropRange)와 T-EDIT-21의 보이는 날. */
@@ -57,6 +58,48 @@ final class ListCheck {
         click(title(sched.untimed, work), 2);
         click(title(sched.untimed, wash), 1);
         eq("T-EDIT-16", "창 과제 2026-11-18, 창 과제 2026-11-18", String.join(", ", opened));
+    }
+
+    /** 놓은 결과 글과 일의 날짜, 시각. */
+    static String dropped(App app, Task t, String day, int minute) {
+        var r = app.schedule.drop(t, d(day), minute);
+        return r.text() + " " + t.date + " " + (t.start == null ? "시각 없음" : planningpet.schedule.model.TaskBook.timeText(t));
+    }
+
+    /** T-EDIT-17~20(D-99): 끌어 놓기의 30분 맞춤, 04:00 당김, 놓을 수 없는 날, 반복 사본과 되돌리기. */
+    static void drops() {
+        App app = Main.create(at("11-17T09:00"));
+        Task work = app.store.book.add(Task.Kind.TASK, "과제", d("11-17"), null, 30, "", null).get(0);
+        var r = app.schedule.drop(work, d("11-19"), 14 * 60 + 7);
+        String placed = r.text() + " " + work.date + " " + work.start;
+        r.undo().run();
+        eq("T-EDIT-17", "11/19 14:00~14:30에 놓았어요 2026-11-19 14:00 / 2026-11-17 null", placed + " / " + work.date + " " + work.start);
+        Task review = app.store.book.add(Task.Kind.TASK, "복습", d("11-17"), null, 60, "", null).get(0);
+        eq("T-EDIT-18", "다음 날 04:00까지 끝나야 해서 03:00(다음 날)에 놓았어요 2026-11-17 03:00~04:00(다음 날)",
+                dropped(app, review, "11-17", 27 * 60 + 40));
+        Task wash = app.store.book.add(Task.Kind.TASK, "빨래", d("11-17"), null, 30, "", null).get(0);
+        Task p = PeriodCheck.period(app.store, "P", "11-16", "11-20", 30);
+        Task q = PeriodCheck.period(app.store, "Q", "11-10", "11-16", 30);
+        app.store.now = java.time.LocalDateTime.parse("2026-11-18T09:00");
+        eq("T-EDIT-21", "지난 날에는 놓을 수 없어요 2026-11-10 시각 없음 / 11/19 10:00~10:30에 놓았어요 2026-11-19 10:00~10:30",
+                dropped(app, q, "11-17", 600) + " / " + dropped(app, q, "11-19", 600));
+        app.store.now = java.time.LocalDateTime.parse("2026-11-17T09:00");
+        eq("T-EDIT-19", "지난 날 지난 날 11/17~11/20만 돼요 null / 지난 날에는 놓을 수 없어요 2026-11-17 시각 없음"
+                + " / 11/17부터 11/20까지 놓을 수 있어요 2026-11-16 시각 없음 / 11/18 09:00~09:30에 놓았어요 2026-11-18 09:00~09:30",
+                app.schedule.blocked(wash, d("11-16")) + " " + app.schedule.blocked(p, d("11-16")) + " "
+                        + app.schedule.blocked(p, d("11-21")) + " " + app.schedule.blocked(p, d("11-18")) + " / "
+                        + dropped(app, wash, "11-16", 600) + " / " + dropped(app, p, "11-21", 600) + " / " + dropped(app, p, "11-18", 540));
+        App rep = Main.create(at("11-17T09:00"));
+        List<Task> runs = PeriodCheck.daily(rep.store);
+        rep.schedule.chooser = (title, message, options) -> 1;
+        Runnable undo = rep.schedule.drop(runs.get(2), d("11-18"), 7 * 60).undo();
+        String after = times(runs);
+        undo.run();
+        eq("T-EDIT-20", "- - 07:00 07:00 07:00 07:00 07:00 / - - - - - - -", after + " / " + times(runs));
+    }
+
+    private static String times(List<Task> runs) {
+        return String.join(" ", runs.stream().map(t -> t.start == null ? "-" : t.start.toString()).toList());
     }
 
     /** 누르기 한 번(count 1)이나 빨리 두 번 누른 두 번째(count 2)를 보낸다. 두 번은 1과 2가 이어서 온다. */

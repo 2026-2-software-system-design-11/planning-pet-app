@@ -195,6 +195,46 @@ public final class TaskController {
         return true;
     }
 
+    /** D-99: 끌어 놓은 결과. text는 놓은 자리 옆 글(물음에서 취소했으면 null), undo는 되돌리기(놓지 못했으면 null). */
+    public record Drop(String text, Runnable undo) {
+    }
+
+    /** D-99: 끄는 동안 그 날에 놓을 수 없으면 짧은 까닭("지난 날", "11/18~11/21만 돼요"), 놓을 수 있으면 null. */
+    public String blocked(Task t, LocalDate day) {
+        LocalDate[] range = app.store.book.dropRange(t);
+        if (day.isBefore(app.store.today())) {
+            return "지난 날";
+        }
+        return day.isBefore(range[0]) || range[1] != null && day.isAfter(range[1]) ? md(range[0]) + "~" + md(range[1]) + "만 돼요" : null;
+    }
+
+    /** D-99: 일정관리 목록의 줄을 시간표의 그 날, 앱 하루의 분 minute에 놓는다. 겹침(D-87)과 반복 범위(D-42)를 묻는다. */
+    public Drop drop(Task t, LocalDate day, int minute) {
+        String why = blocked(t, day);
+        if (why != null) {
+            LocalDate[] range = app.store.book.dropRange(t);
+            return new Drop(why.equals("지난 날") ? "지난 날에는 놓을 수 없어요"
+                    : md(range[0]) + "부터 " + md(range[1]) + "까지 놓을 수 있어요", null);
+        }
+        int start = TaskBook.dropStart(minute, t.minutes);
+        if (t.done || !overlapOk(app.store.book.overlap(day, start, t.minutes, t))) {
+            return new Drop(null, null);
+        }
+        int scope = editScope(t);
+        if (scope < 0) {
+            return new Drop(null, null);
+        }
+        Runnable before = app.store.book.keep(t, scope == 1);
+        app.control.change(() -> app.store.book.placeAt(t, day, start, scope == 1));
+        String text = Math.max(0, minute) / 30 * 30 > start ? "다음 날 04:00까지 끝나야 해서 " + Times.value(start) + "에 놓았어요"
+                : md(day) + " " + TaskBook.timeText(t) + "에 놓았어요";
+        return new Drop(text, () -> app.control.change(before));
+    }
+
+    private static String md(LocalDate d) {
+        return d.getMonthValue() + "/" + d.getDayOfMonth();
+    }
+
     /** 시각 빼기(D-72). 반복 사본이면 범위를 묻고 처음 골라 둔 버튼은 "이 일정만"이다. 취소하면 false. */
     public boolean clearTime(Task t) {
         int scope = 0;
