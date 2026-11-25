@@ -17,7 +17,7 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
 /**
- * 캐릭터 창(D-58). 메뉴가 아니라 나의 방의 펫 칩, 장신구 칸, "캐릭터에서 꾸미기"로 여는 모달 창이고
+ * 캐릭터 창(D-58). 메뉴가 아니라 홈 펫 카드, 나의 방 펫 패널의 장신구 칸, "{이름} 꾸미기"로 여는 모달 창이고(D-80, D-83)
  * 캐릭터 화면(CharacterScreen) 하나를 담는다. 운영체제 창 틀의 닫기나 Esc로 닫고, 입혀 본 장신구가 있으면 먼저 묻는다(D-61).
  */
 public final class CharacterDialog {

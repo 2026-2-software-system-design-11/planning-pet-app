@@ -96,17 +96,17 @@ final class PeriodCheck {
     static void validate() {
         TaskDraft task = draft(Task.Kind.TASK, "11-16", null);
         eq("T-VAL-11", "오류 없음", msgs(TaskCheck.check(task.withRepeat(Repeat.DAILY, d("12-13")), false)));
-        eq("T-VAL-13", "오류 없음 / 반복: 반복이 너무 많아요. 끝 날짜를 앞당겨 주세요",
+        eq("T-VAL-13", "오류 없음 / 반복: 반복이 너무 많아요. 반복 끝나는 날을 앞당겨 주세요",
                 msgs(TaskCheck.check(task.withRepeat(Repeat.DAILY, d("2027-03-15")), false)) + " / "
                 + msgs(TaskCheck.check(task.withRepeat(Repeat.DAILY, d("2027-03-16")), false)));
         eq("D-64 요일은 하나 이상", "반복: 요일을 하나 이상 골라 주세요",
                 msgs(TaskCheck.check(task.withRepeat(Repeat.weekly(List.of()), d("11-30")), false)));
         Repeat wed = Repeat.weekly(DayOfWeek.WEDNESDAY);
-        eq("D-64 반복하는 날 없음", "반복: 끝 날짜 안에 반복하는 날이 없어요 / 오류 없음",
+        eq("D-64 반복하는 날 없음", "반복: 반복 끝나는 날 안에 반복하는 날이 없어요 / 오류 없음",
                 msgs(TaskCheck.check(task.withRepeat(wed, d("11-17")), false)) + " / "
                 + msgs(TaskCheck.check(task.withRepeat(wed, d("11-18")), false)));
         TaskDraft p18 = draft(Task.Kind.TASK, "11-18", null);
-        eq("D-65 마감은 날짜와 같거나 뒤", "마감: 마감이 날짜보다 앞이에요 / 오류 없음 / 마감: 마감이 날짜보다 앞이에요",
+        eq("D-65 마감은 날짜와 같거나 뒤", "마감: 마감일이 시작일보다 앞이에요 / 오류 없음 / 마감: 마감일이 시작일보다 앞이에요",
                 msgs(TaskCheck.check(p18.withDue(d("11-17")), false)) + " / "
                 + msgs(TaskCheck.check(p18.withDue(d("11-18")), false)) + " / "
                 + msgs(TaskCheck.check(p18.withDue(d("11-17")), true)));
@@ -116,7 +116,7 @@ final class PeriodCheck {
         app.schedule.check(done);
         TaskForm f = new TaskForm(done, done.date, app.store.now);
         Ui.setDate(f.due, d("11-17"));
-        eq("D-66 끝낸 할 일도 마감 검사", "마감: 마감이 날짜보다 앞이에요", msgs(f.problems()));
+        eq("D-66 끝낸 할 일도 마감 검사", "마감: 마감일이 시작일보다 앞이에요", msgs(f.problems()));
         eq("D-65 기간 할 일은 반복하지 않는다", "반복: 기간 안에 하는 할 일은 반복할 수 없어요",
                 msgs(TaskCheck.check(task.withDue(d("11-22")).withRepeat(Repeat.DAILY, d("11-22")), false)));
         eq("D-65 기간은 할 일만", "마감: 기간은 할 일만 정할 수 있어요",
@@ -502,7 +502,15 @@ final class PeriodCheck {
         eq("D-76 놓지 못한 일의 까닭", "P 마감 11/22(일) 마감까지 빈 시간이 모자라요 / Q 마감 11/29(일) 이번 주엔 자리가 없어요."
                 + " 마감 11/29(일)까지 시간이 있으니 다음 주에서 자동 배치하면 놓을 수 있어요 / E 날짜 11/22(일) 그날 빈 시간이 모자라요",
                 Planner.place(full, d("11-16")).unplaced().stream().map(t -> t.title + " " + Planner.dueText(t) + " "
-                        + Planner.reason(t, d("11-16"))).collect(Collectors.joining(" / ")));
+                        + Planner.reason(full, t, d("11-16"))).collect(Collectors.joining(" / ")));
+        Store busy = at("11-22T23:40");
+        Task wide = period(busy, "Q", "11-16", "11-29", 720);
+        String open = Planner.reason(busy, wide, d("11-16"));
+        for (LocalDate day = d("11-23"); day.isBefore(d("11-30")); day = day.plusDays(1)) {
+            busy.book.add(Task.Kind.FIXED, "알바", day, LocalTime.of(9, 0), 720, "", null);
+        }
+        eq("T-AUTO-17", "true / 이번 주엔 자리가 없어요. 다음 주에도 자리가 없어요. 걸리는 시간을 나누거나 다른 일을 옮겨 보세요",
+                open.endsWith("다음 주에서 자동 배치하면 놓을 수 있어요") + " / " + Planner.reason(busy, wide, d("11-16")));
         App again = Main.create(at("11-18T10:00"));
         Task m = period(again.store, "P", "11-16", "11-22", 30);
         again.store.book.setTime(m, LocalTime.of(9, 0), 30, d("11-17"), false);

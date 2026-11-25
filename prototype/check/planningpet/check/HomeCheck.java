@@ -77,6 +77,40 @@ final class HomeCheck {
         return s;
     }
 
+    /** T-TALK-28. 한 주 시작이 일요일이면 입력 창 요일 단추와 반복 글도 일요일부터다(D-94). */
+    static void sundayRepeat() {
+        Store s = at("11-16T09:00");
+        s.weekStart = java.time.DayOfWeek.SUNDAY;
+        App app = Main.create(s);
+        TaskForm f = TaskDialog.form(app, null, d("11-16"));
+        java.util.List<String> order = new java.util.ArrayList<>();
+        for (java.awt.Component c : f.days[0].getParent().getComponents()) {
+            if (c instanceof javax.swing.JToggleButton b) {
+                order.add(b.getText());
+            }
+        }
+        f.title.setText("운동");
+        f.repeat.setSelectedIndex(2);
+        for (int i = 0; i < 7; i++) {
+            f.days[i].setSelected(i == 1 || i == 6);
+        }
+        planningpet.common.view.Ui.setDate(f.repeatEnd, d("11-30"));
+        f.sync();
+        TaskDialog.trySave(app, f, null);
+        eq("T-TALK-28", "일, 월, 화, 수, 목, 금, 토 / 17일(화)부터 일, 화마다 넣었어요", String.join(", ", order) + " / " + s.talk);
+        App end = Main.create(at("11-30T09:00"));
+        TaskForm t = TaskDialog.form(end, null, d("11-30"));
+        t.title.setText("운동");
+        t.repeat.setSelectedIndex(2);
+        for (int i = 0; i < 7; i++) {
+            t.days[i].setSelected(i == 1);
+        }
+        planningpet.common.view.Ui.setDate(t.repeatEnd, d("12-28"));
+        t.sync();
+        TaskDialog.trySave(end, t, null);
+        eq("T-TALK-29", "12월 1일(화)부터 화마다 넣었어요", end.store.talk);
+    }
+
     /** T-TALK-23. 홈에서 넣으면 펫이 이름과 오늘 남은 수를 말한다(D-90). */
     static void added() {
         Store s = at("11-16T09:00");
@@ -243,6 +277,7 @@ final class HomeCheck {
 
     /** T-DEF-15, T-AUTO-16, T-STAT-10과 화면. 한 주 시작(D-91)을 앱 전체가 따른다. */
     static void weekStart() {
+        sundayRepeat();
         java.time.DayOfWeek sun = java.time.DayOfWeek.SUNDAY;
         eq("T-DEF-15", "2026-11-21 2026-11-28 2026-11-28 2026-11-22",
                 planningpet.schedule.model.DefaultDates.due(d("11-18"), sun) + " " + planningpet.schedule.model.DefaultDates.due(d("11-21"), sun)

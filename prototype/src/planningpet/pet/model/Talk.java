@@ -125,7 +125,10 @@ public final class Talk {
     public String weeklyAdded(List<Task> made) {
         Task first = made.get(0);
         String day = "월화수목금토일".charAt(first.date.getDayOfWeek().getValue() - 1) + "";
-        return first.date.getDayOfMonth() + "일(" + day + ")부터 " + first.repeat + "마다 넣었어요";
+        // D-94: 첫 날이 오늘과 다른 달이면 달을 붙인다.
+        String month = first.date.getMonth() == s.today().getMonth() && first.date.getYear() == s.today().getYear() ? ""
+                : first.date.getMonthValue() + "월 ";
+        return month + first.date.getDayOfMonth() + "일(" + day + ")부터 " + first.repeat.text(s.weekStart) + "마다 넣었어요";
     }
 
     /** D-90. 홈에서 새 일정을 넣은 뒤: 오늘이면 이름과 오늘 남은 수, 다른 날이면 이름과 날짜. */

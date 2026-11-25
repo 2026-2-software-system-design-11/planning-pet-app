@@ -102,7 +102,10 @@ public final class TaskForm {
         line("", minutesHint);
         JComponent[] repeatParts = new JComponent[8];
         repeatParts[0] = repeat;
-        System.arraycopy(days, 0, repeatParts, 1, 7);
+        // D-94: 요일 단추는 한 주 시작 요일부터 놓는다. days[i]는 그대로 월요일부터다(DayOfWeek.of(i + 1)).
+        for (int k = 0; k < 7; k++) {
+            repeatParts[k + 1] = days[(weekStart.getValue() - 1 + k) % 7];
+        }
         line("반복", Ui.flow(repeatParts));
         line("", Ui.flow(new JLabel("반복 끝나는 날"), repeatEnd));
         line("", errors.get("반복"));

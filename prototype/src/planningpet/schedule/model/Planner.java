@@ -58,11 +58,20 @@ public final class Planner {
      * 놓지 못한 까닭(D-76). 마감이 보이는 주 뒤인 기간 할 일은 다음 주에 놓을 수 있다고 알린다. 기간 할 일은 마감까지, 그 밖은
      * 그날의 빈 시간이 모자란 것이다.
      */
-    public static String reason(Task t, LocalDate weekStart) {
+    public static String reason(Store s, Task t, LocalDate weekStart) {
         if (t.period() && t.dueDate.isAfter(weekStart.plusDays(6))) {
-            return "이번 주엔 자리가 없어요. 마감 " + dayText(t.dueDate) + "까지 시간이 있으니 다음 주에서 자동 배치하면 놓을 수 있어요";
+            // D-94: 다음 주에 실제로 놓을 자리가 있을 때만 다음 주 자동 배치를 권한다.
+            return nextWeekFits(s, t, weekStart.plusDays(7))
+                    ? "이번 주엔 자리가 없어요. 마감 " + dayText(t.dueDate) + "까지 시간이 있으니 다음 주에서 자동 배치하면 놓을 수 있어요"
+                    : "이번 주엔 자리가 없어요. 다음 주에도 자리가 없어요. 걸리는 시간을 나누거나 다른 일을 옮겨 보세요";
         }
         return t.period() ? "마감까지 빈 시간이 모자라요" : "그날 빈 시간이 모자라요";
+    }
+
+    /** 다음 주(next부터 7일)의 마감까지의 날에, 지금 있는 일정만 보고 18번 규칙으로 놓을 자리가 있는가(D-94). */
+    private static boolean nextWeekFits(Store s, Task t, LocalDate next) {
+        LocalDateTime earliest = earliest(s);
+        return days(t, next, s.today()).stream().anyMatch(day -> slot(s, t, day, List.of(), earliest) != null);
     }
 
     /** 놓지 못한 일의 날짜: 기간 할 일은 "마감 11/22(일)", 그 밖은 그 일의 날짜 "날짜 11/17(화)"("마감"은 기간 할 일에만, D-71). */

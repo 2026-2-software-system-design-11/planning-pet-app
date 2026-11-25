@@ -320,11 +320,14 @@ public final class TaskBook {
         return null;
     }
 
-    /** 겹친 일정과 겹친 분(D-87). */
-    public record Overlap(Task other, int minutes) {
-        /** "14:00~15:00 '자소서 초안'과 30분 겹쳐요. 그래도 넣을까요?" */
+    /** 겹친 일정과 겹친 분(D-87). sameDay가 아니면 그 일정은 앞날이나 다음 날의 일이다(D-94). */
+    public record Overlap(Task other, int minutes, boolean sameDay) {
+        /** "14:00~15:00 '자소서 초안'과 30분 겹쳐요. 그래도 넣을까요?" 다른 날 일이면 앞에 "11/20(금) "(D-94). */
         public String question() {
-            return timeText(other) + " '" + other.title + "'" + planningpet.common.model.Rules.josa(other.title, "과", "와") + " "
+            LocalDate d = other.date;
+            String day = sameDay ? "" : d.getMonthValue() + "/" + d.getDayOfMonth() + "(" + "월화수목금토일".charAt(d.getDayOfWeek().getValue() - 1)
+                    + ") ";
+            return day + timeText(other) + " '" + other.title + "'" + planningpet.common.model.Rules.josa(other.title, "과", "와") + " "
                     + minutes + "분 겹쳐요. 그래도 넣을까요?";
         }
     }
@@ -353,10 +356,22 @@ public final class TaskBook {
     /** 한 날의 겹침. 두 일정은 서로의 끝이 서로의 시작보다 늦을 때만 겹친다(18번과 같다). */
     public Overlap overlap(LocalDate day, int start, int minutes, Task self) {
         int end = start + minutes;
-        return timedOn(day).stream().filter(t -> t != self && t.startMinute() < end && start < t.endMinute())
-                .min(Comparator.comparingInt(Task::startMinute).thenComparingLong(t -> t.seq))
-                .map(t -> new Overlap(t, Math.min(end, t.endMinute()) - Math.max(start, t.startMinute())))
-                .orElse(null);
+        // D-94: 실제 시각으로 본다. 앞날 일정은 24시간을 빼고, 다음 날 일정은 더해 잰다.
+        Overlap best = null;
+        int bestStart = Integer.MAX_VALUE;
+        for (int shift = -1; shift <= 1; shift++) {
+            int off = shift * Task.DAY;
+            for (Task t : timedOn(day.plusDays(shift))) {
+                int s = t.startMinute() + off;
+                int e = t.endMinute() + off;
+                boolean earlier = s < bestStart || s == bestStart && t.seq < best.other().seq;
+                if (t != self && s < end && start < e && earlier) {
+                    best = new Overlap(t, Math.min(end, e) - Math.max(start, s), shift == 0);
+                    bestStart = s;
+                }
+            }
+        }
+        return best;
     }
 
     public List<Task> timedOn(LocalDate date) {

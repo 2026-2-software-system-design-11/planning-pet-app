@@ -45,11 +45,14 @@ public record Repeat(boolean daily, Set<DayOfWeek> days) {
     /** 06 데이터 표의 값: "DAILY" 또는 "월, 목"처럼 월요일부터. */
     @Override
     public String toString() {
-        if (daily) {
-            return "DAILY";
-        }
+        return daily ? "DAILY" : text(DayOfWeek.MONDAY);
+    }
+
+    /** 화면 글: 고른 요일을 한 주 시작 요일부터 "일, 화"처럼 잇는다(D-91, D-94). */
+    public String text(DayOfWeek weekStart) {
         List<String> names = new ArrayList<>();
-        for (DayOfWeek d : DayOfWeek.values()) {
+        for (int k = 0; k < 7; k++) {
+            DayOfWeek d = weekStart.plus(k);
             if (days.contains(d)) {
                 names.add(String.valueOf(NAMES.charAt(d.getValue() - 1)));
             }
