@@ -16,7 +16,15 @@ public final class TaskController {
     public TaskController(App app) {
         this.app = app;
         this.opener = (t, date) -> TaskDialog.open(app, t, date);
+        this.timeOpener = (t, day, anchor) -> TimeEditor.open(app, t, day, anchor);
     }
+
+    /** 시각 고치기 창을 연다(D-32). QA와 검사는 이것을 바꿔 끼운다. */
+    public interface TimeOpener {
+        void open(Task t, LocalDate day, java.awt.Component anchor);
+    }
+
+    public TimeOpener timeOpener;
 
     /** 삭제 확인 창. 고른 버튼의 번호를 돌려준다. QA는 이것을 바꿔 끼운다. */
     public interface Chooser {
@@ -112,13 +120,13 @@ public final class TaskController {
         opener.open(null, date);
     }
 
-    /** D-32. 메인 시각 칸을 누르면 그 아래에 시각 고치기 창을 연다. day는 그 목록의 날이다(D-65). */
+    /** D-32. 메인 시각 칸이나 일정관리 목록 줄(D-99)을 누르면 그 아래에 시각 고치기 창을 연다. day는 그 목록의 날이다(D-65). */
     public void editTime(Task t, LocalDate day, java.awt.Component anchor) {
         // D-94: 끝낸 일과 지난 날 목록의 기간 할 일은 목록에서 시각을 정하지 않는다(화면은 알약을 흐린다).
         if (t.done || t.period() && day.isBefore(app.store.today())) {
             return;
         }
-        TimeEditor.open(app, t, day, anchor);
+        timeOpener.open(t, day, anchor);
     }
 
     /** D-87: 같은 날 다른 일정과 겹치면 막지 않고 묻는다. 겹치지 않거나 넣기를 고르면 true. */

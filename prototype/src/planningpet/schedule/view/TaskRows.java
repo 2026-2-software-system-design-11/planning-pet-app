@@ -300,7 +300,12 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
 
             @Override
             public void mouseClicked(MouseEvent e) {
-                if (e.getClickCount() == 2) {
+                if (withDate) {
+                    // D-99: 일정관리 목록은 한 번 누르면 시각 고치기 창이다. 두 번 눌러도 창은 하나이고 수정 창은 연필로 연다.
+                    if (e.getClickCount() == 1 && javax.swing.SwingUtilities.isLeftMouseButton(e)) {
+                        control.editTime(t, listDay, label);
+                    }
+                } else if (e.getClickCount() == 2) {
                     control.edit(t);
                 }
             }
