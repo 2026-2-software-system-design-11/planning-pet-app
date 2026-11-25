@@ -8,7 +8,7 @@ cd "$(dirname "$0")"
 # view: 데이터 변경 알림과 펫 말을 보내지 않고, Model 메서드(일정 추가, 삭제, 반복에 넣기, 보상, 출석, 사기, 연속 접속)를 부르거나
 #       Model 필드에 대입하거나(=, +=, -=, ++, --) Model 목록을 바꾸지 않는다.
 # 알림(changed)은 앱 controller만 보낸다.
-fields="petKind|petName|points|exp|streak|attendanceDay|lastOpenDay|start|title|minutes|memo|done|date|rewardPoints|rewardExp|rewardDay|rewardCount|rewardCountDay|talk|talkSeq|now|seriesId|kind|seq|nextSeq|dueDate|startDay|doneDay|repeat|nextDay"
+fields="calendarFixed|petKind|petName|points|exp|streak|attendanceDay|lastOpenDay|start|title|minutes|memo|done|date|rewardPoints|rewardExp|rewardDay|rewardCount|rewardCountDay|talk|talkSeq|now|seriesId|kind|seq|nextSeq|dueDate|startDay|doneDay|repeat|nextDay"
 bad=$( (grep -rnE "javax\.swing|java\.awt" src/planningpet/*/model
         grep -rnE "\.(changed|say)\(|book\.(add|delete|applyToSeries|update|setTime)\(|game\.(complete|uncomplete|attend)\(|\.buy\([^,)]*\)|Visits\.|\.($fields) *([-+*/]?=[^=]|\+\+|--)|\.(placed|owned|tasks)\.(add|remove|clear|removeIf|addAll)\(" src/planningpet/*/view | grep -v "this\.[a-zA-Z]* = "
         grep -rn "\.changed()" src | grep -v "src/planningpet/app/controller/AppController.java") || true)

@@ -128,10 +128,11 @@ public final class ProtoCheck {
         TaskBook.CellPreview c14 = c.book.cellPreview(nov.withDayOfMonth(14));
         TaskBook.CellPreview c13 = c.book.cellPreview(nov.withDayOfMonth(13));
         TaskBook.CellPreview c15 = c.book.cellPreview(nov.withDayOfMonth(15));
-        eq("T-CAL-1", "알고리즘… true", c14.title() + " " + c14.open());
-        eq("T-CAL-2", null, c.book.cellPreview(nov.withDayOfMonth(16)));
-        eq("T-CAL-3", "토익 스터… false", c13.title() + " " + c13.open());
-        eq("T-CAL-4", "은행 서류 true", c15.title() + " " + c15.open());
+        eq("T-CAL-1", "4개 true []", c14.text() + " " + c14.open() + " " + c14.due());
+        TaskBook.CellPreview c16 = c.book.cellPreview(nov.withDayOfMonth(16), true);
+        eq("T-CAL-2", "null 2개 true", c.book.cellPreview(nov.withDayOfMonth(16)) + " " + c16.text() + " " + c16.open());
+        eq("T-CAL-3", "1개 false", c13.text() + " " + c13.open());
+        eq("T-CAL-4", "1개 true", c15.text() + " " + c15.open());
         Store w = MockData.sample();
         int before = w.listenerCount();
         new PetCard(w, () -> { });

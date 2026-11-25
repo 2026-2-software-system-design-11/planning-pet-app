@@ -10,6 +10,7 @@ import planningpet.pet.model.Talk;
 import planningpet.reward.controller.RewardController;
 import planningpet.reward.model.Game;
 import planningpet.schedule.controller.TaskController;
+import planningpet.settings.controller.SettingsController;
 import planningpet.shop.controller.ShopController;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
@@ -40,6 +41,7 @@ public final class App {
     public final HomeController home;
     public final ShopController shop;
     public final PetController pet;
+    public final SettingsController settings;
     private final RewardController reward;
     /** 창 바탕(디자인 시스템 1절): 아쿠아 그라데이션, 왼쪽 아래에 구름과 덤불. */
     public final JPanel root = new JPanel(new BorderLayout(Theme.GAP, 0)) {
@@ -111,6 +113,7 @@ public final class App {
         this.home = new HomeController(control, store, talk);
         this.shop = new ShopController(control, store);
         this.pet = new PetController(control, store);
+        this.settings = new SettingsController(control, store);
         this.reward = new RewardController(control, store, game);
         navWrap.setBorder(BorderFactory.createEmptyBorder(18, 8, 12, 8));
         navWrap.add(logo(), BorderLayout.NORTH);

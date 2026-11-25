@@ -21,6 +21,7 @@ final class HomeCheck {
     static void run() {
         added();
         doneGroup();
+        calendar();
     }
 
     static LocalDate d(String monthDay) {
@@ -109,5 +110,51 @@ final class HomeCheck {
     static String plain(String html) {
         return html == null ? "" : html.replaceAll("(?i)<br>", " ").replaceAll("<[^>]+>", "").replace("&lt;", "<")
                 .replace("&gt;", ">").replace("&amp;", "&").replaceAll("\\s+", " ").strip();
+    }
+
+    /** T-CAL-5의 빨간 점과 툴팁, T-CAL-7. 고정 일정은 설정을 켜야 달력 칸 수에 든다(D-86). */
+    static void calendar() {
+        Store s = at("11-18T09:00");
+        s.book.add(Task.Kind.FIXED, "수업", d("11-16"), java.time.LocalTime.of(10, 0), 75, "", null);
+        s.book.add(Task.Kind.FIXED, "수업", d("11-19"), java.time.LocalTime.of(10, 0), 75, "", null);
+        s.book.add(Task.Kind.TASK, "과제", d("11-19"), null, 30, "", null);
+        App app = Main.create(s);
+        app.redraw();
+        MainScreen main = ProtoCheck.find(app.root, MainScreen.class);
+        String off = cell(main, 16) + ", " + cell(main, 19);
+        planningpet.settings.view.SettingsScreen settings = ProtoCheck.find(app.root, planningpet.settings.view.SettingsScreen.class);
+        settings.calendarFixed.doClick();
+        eq("T-CAL-7", "16, 19 1개(진함) / 16 1개(흐림), 19 2개(진함) true", off + " / " + cell(main, 16) + ", " + cell(main, 19)
+                + " " + s.calendarFixed);
+        Store p = at("11-18T09:00");
+        p.book.add(new planningpet.schedule.model.TaskDraft(Task.Kind.TASK, "E사 지원서", d("11-16"), null, 120, "")
+                .withDue(d("11-22")));
+        App pa = Main.create(p);
+        pa.redraw();
+        MainScreen pm = ProtoCheck.find(pa.root, MainScreen.class);
+        eq("T-CAL-5 빨간 점", "22 1개 마감(진함) E사 지원서 마감", cell(pm, 22) + " " + tip(pm, 22));
+    }
+
+    /** 홈 달력 칸의 글. 끝내지 않은 일이 있으면 "(진함)", 모두 끝냈으면 "(흐림)"(QA의 cell과 같다). */
+    static String cell(MainScreen main, int day) {
+        javax.swing.JLabel l = label(main, day);
+        if (l == null) {
+            return "없음";
+        }
+        String t = l.getText();
+        return plain(t) + (t.contains("#28977F") ? "(진함)" : t.contains("#8A96A0") ? "(흐림)" : "");
+    }
+
+    static String tip(MainScreen main, int day) {
+        return label(main, day).getToolTipText();
+    }
+
+    private static javax.swing.JLabel label(MainScreen main, int day) {
+        for (java.awt.Component c : main.calendar.grid.getComponents()) {
+            if (c instanceof javax.swing.JLabel l && plain(l.getText()).matches(day + "( .*)?")) {
+                return l;
+            }
+        }
+        return null;
     }
 }

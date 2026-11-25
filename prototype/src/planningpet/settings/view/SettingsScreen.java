@@ -1,5 +1,6 @@
 package planningpet.settings.view;
 
+import planningpet.app.view.App;
 import planningpet.common.view.Ui;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -14,8 +15,10 @@ import javax.swing.JPanel;
 /** 설정(05 설정, UC-18). 프로토타입은 실행 JAR라 컴퓨터 켤 때 실행이 비활성이다(D-29). */
 public final class SettingsScreen extends JPanel {
     private int row;
+    /** D-86. 켜면 홈 달력 칸의 수에 고정 일정도 센다. */
+    public final JCheckBox calendarFixed = new JCheckBox("달력에 고정 일정 보이기");
 
-    public SettingsScreen() {
+    public SettingsScreen(App app) {
         super(new GridBagLayout());
         setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
         JCheckBox autostart = new JCheckBox("컴퓨터 켤 때 같이 실행");
@@ -27,11 +30,15 @@ public final class SettingsScreen extends JPanel {
         line(new JLabel("<html><b>데이터 위치</b></html>"), Ui.flow(
                 new JLabel("~/Library/Application Support/PlanningPet"), open));
         line(new JLabel(), Ui.hint("프로토타입은 아무것도 저장하지 않아요"));
+        line(new JLabel("<html><b>달력</b></html>"), calendarFixed);
+        line(new JLabel(), Ui.hint("켜면 수업 같은 고정 일정도 홈 달력 칸의 수에 들어가요"));
+        calendarFixed.addActionListener(e -> app.settings.showFixedOnCalendar(calendarFixed.isSelected()));
         line(new JLabel("<html><b>버전</b></html>"), new JLabel("0.1 프로토타입"));
         GridBagConstraints filler = new GridBagConstraints();
         filler.gridy = row;
         filler.weighty = 1;
         add(new JLabel(), filler);
+        app.watch(() -> calendarFixed.setSelected(app.store.calendarFixed));
     }
 
     private void line(JComponent label, JComponent value) {

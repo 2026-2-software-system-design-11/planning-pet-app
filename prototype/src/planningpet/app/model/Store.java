@@ -33,6 +33,8 @@ public final class Store {
     public String activeKind = "CAT";
     public final Set<String> owned = new LinkedHashSet<>();
     public final Set<String> placed = new LinkedHashSet<>();
+    /** 설정 "달력에 고정 일정 보이기"(D-86). 처음은 끔. */
+    public boolean calendarFixed;
     public String talk = "";
     /** 펫이 새 말을 할 때마다 1씩 는다. 같은 문장을 다시 말해도 새 말로 알아본다. */
     public int talkSeq;

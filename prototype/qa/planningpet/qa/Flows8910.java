@@ -115,7 +115,7 @@ final class Flows8910 {
         Qa q = new Qa("UF-9-3").after(Flows8910::uf91);
         q.step("1", "달력 13을 누른다");
         q.select("2026-11-13");
-        q.eq("달력 13", "13 토익 RC(흐림)", q.cell(13));
+        q.eq("달력 13", "13 1개(흐림)", q.cell(13));
         q.eq("목록", "끝낸 일 1개 / [x] 토익 RC 시각 정하기 60분", q.rows());
         q.eq("말풍선", "11월 13일 할 일은 1개야.", q.app.store.talk);
         q.step("2", "pet에서 쿠션을 두 번 누른다");
@@ -234,7 +234,7 @@ final class Flows8910 {
         f.start.setValue("20:00");
         f.minutes.setValue(120);
         q.yes("저장", q.save(f, t));
-        q.eq("17일 목록에 없음, 달력 20", "true 20 논문 읽기(흐림)", !q.rows().contains("논문 읽기") + " " + q.cell(20));
+        q.eq("17일 목록에 없음, 달력 20", "true 20 1개(흐림)", !q.rows().contains("논문 읽기") + " " + q.cell(20));
         q.eq("보상 그대로", "10P 횟수1 끝냄 true", q.app.store.points + "P 횟수" + q.count() + " 끝냄 " + t.done);
         q.step("3", "달력 20에서 논문 읽기를 삭제한다");
         q.select("2026-11-20");

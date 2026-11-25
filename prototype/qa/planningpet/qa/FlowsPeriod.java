@@ -44,7 +44,7 @@ final class FlowsPeriod {
                 + " / [ ] C사 서류 결과 확인 시각 정하기 30분 / 기간 안에 할 일 / [ ] E사 지원서 ~11/22까지 시각 정하기 120분", q.rows());
         q.eq("성취도, 막대 아래(D-70)", "0/3 기간 할 일 1개 (~11/22)", q.progress() + " "
                 + QaDrive.find(q.app.root, planningpet.home.view.PetCard.class).periodText());
-        q.eq("달력 16, 22", "16 B사 자소…(진함), 22 E사 지원…(진함)", q.cell(16) + ", " + q.cell(22));
+        q.eq("달력 16, 22", "16 2개(진함), 22 1개 마감(진함)", q.cell(16) + ", " + q.cell(22));
         Task e = q.task("E사 지원서");
         q.eq("E사 지원서(T-ADD-7)", "2026-11-16 2026-11-22 null", e.date + " " + e.dueDate + " " + e.seriesId);
         q.step("5", "달력 18을 누른다");
@@ -94,7 +94,7 @@ final class FlowsPeriod {
         q.eq("목록", "[ ] B사 자소서 제출 22:30~23:00 30분 / 끝낸 일 1개 / [x] E사 지원서 ~11/22까지 시각 정하기 120분", q.rows());
         q.eq("말풍선", "오늘 할 일 1개 남았어.", q.app.store.talk);
         q.eq("성취도", "1/2", q.progress());
-        q.eq("달력 22, 17", "22, 17 B사 자소…(진함)", q.cell(22) + ", " + q.cell(17));
+        q.eq("달력 22, 17", "22, 17 2개(진함)", q.cell(22) + ", " + q.cell(17));
         q.end();
     }
 
@@ -120,7 +120,7 @@ final class FlowsPeriod {
         q.yes("저장(T-VAL-11)", q.save(f, null));
         q.eq("목록", "시각 없는 할 일 / [ ] 채용 공고 확인 시각 정하기 30분 / 끝낸 일 1개 / [x] 잡코리아 공고 정리 시각 정하기 30분", q.rows());
         q.eq("성취도", "1/2", q.progress());
-        q.eq("달력 18~24", "18 잡코리아…(진함), " + cells(19, "(진함)"), q.cell(18) + ", " + seven(q));
+        q.eq("달력 18~24", "18 2개(진함), " + cells(19, "(진함)"), q.cell(18) + ", " + seven(q));
         q.eq("사본(T-ADD-5)", "7 1 DAILY", q.app.store.tasks.stream().filter(t -> t.title.equals("채용 공고 확인")).count() + " "
                 + q.app.store.tasks.stream().filter(t -> t.title.equals("채용 공고 확인")).map(t -> t.seriesId).distinct().count()
                 + " " + q.task("채용 공고 확인", "2026-11-18").repeat);
@@ -129,7 +129,7 @@ final class FlowsPeriod {
         q.eq("상태", "15P 경험치65 횟수2 성취도2/2", st(q));
         q.eq("말풍선", "오늘 할 일을 다 끝냈어! 푹 쉬어.", q.app.store.talk);
         q.eq("레벨", "초코 Lv. 2 경험치 15 / 80", q.level());
-        q.eq("달력 18~24(사본마다 체크가 따로)", "18 잡코리아…(흐림), " + cells(19, "(진함)"), q.cell(18) + ", " + seven(q));
+        q.eq("달력 18~24(사본마다 체크가 따로)", "18 2개(흐림), " + cells(19, "(진함)"), q.cell(18) + ", " + seven(q));
         q.step("5", "달력 19를 누른다");
         q.select("2026-11-19");
         q.eq("목록", "시각 없는 할 일 / [ ] 채용 공고 확인 시각 정하기 30분", q.rows());
@@ -168,7 +168,7 @@ final class FlowsPeriod {
     private static String cells(int from, String color) {
         StringBuilder b = new StringBuilder();
         for (int day = from; day <= 24; day++) {
-            b.append(day > from ? ", " : "").append(day).append(" 채용 공고…").append(color);
+            b.append(day > from ? ", " : "").append(day).append(" 1개").append(color);
         }
         return b.toString();
     }
