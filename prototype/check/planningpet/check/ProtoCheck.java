@@ -58,6 +58,12 @@ public final class ProtoCheck {
         eq("T-VAL-8", "다음 날 04:00까지 끝나야 해요", msgs(f));
         f.title.setText("");
         eq("T-VAL-14", "제목을 써 주세요 / 다음 날 04:00까지 끝나야 해요", msgs(f));
+        f.minutes.setValue(30);
+        eq("D-95 27분은 25분", "25 true 5분 단위로 맞췄어요(25분)",
+                typed(f.minutes, "27") + " " + f.minutesNote.label.isVisible() + " " + f.minutesNote.label.getText());
+        f.minutes.setValue(30);
+        eq("D-95 다시 바꾸면 숨음, 범위 밖은 이전 값", "false 30 false",
+                f.minutesNote.label.isVisible() + " " + typed(f.minutes, "730") + " " + f.minutesNote.label.isVisible());
         java.time.LocalDate nov16 = java.time.LocalDate.of(2026, 11, 16);
         Store p = MockData.empty();
         p.now = nov16.atTime(15, 23);
@@ -104,6 +110,8 @@ public final class ProtoCheck {
         longOne.start.setValue("03:30(다음 날)");
         eq("D-77 시각 고치기 04:00 넘김", "다음 날 04:00까지 끝나야 해요 (화 03:30)",
                 longOne.check() + " " + longOne.realTime.getText());
+        eq("D-95 시각 고치기 28분은 30분", "30 5분 단위로 맞췄어요(30분)",
+                typed(longOne.minutes, "28") + " " + longOne.minutesNote.label.getText());
         eq("시간 빼기는 할 일만", "true false", longOne.clear.isVisible() + " "
                 + new TimeEditor(d.book.dayPlan(nov16).timed().get(1), t1523).clear.isVisible());
         Store r = MockData.empty();
@@ -263,6 +271,18 @@ public final class ProtoCheck {
         Object kept = f.minutes.getValue();
         f.minutes.setValue(75);
         return kept + " " + msgs(f) + " " + f.minutes.getValue();
+    }
+
+    /** 칸에 글을 쳐 넣고 칸을 벗어난 것과 같다. 받지 않는 글이면 이전 값이 남는다. */
+    static Object typed(javax.swing.JSpinner s, String text) {
+        var field = ((javax.swing.JSpinner.DefaultEditor) s.getEditor()).getTextField();
+        field.setText(text);
+        try {
+            field.commitEdit();
+        } catch (java.text.ParseException ignored) {
+            field.setValue(s.getValue());
+        }
+        return s.getValue();
     }
 
     /** 검사 문장을 칸 순서대로 " / "로 잇는다. 통과면 null. */
