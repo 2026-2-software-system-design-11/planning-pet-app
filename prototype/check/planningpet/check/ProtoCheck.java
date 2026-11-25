@@ -270,7 +270,6 @@ public final class ProtoCheck {
         return kept + " " + msgs(f) + " " + f.minutes.getValue();
     }
 
-    /** 검사 문장을 칸 순서대로 " / "로 잇는다. 통과면 null. */
     /** D-97: 고르는 칸은 옆 제목 칸과 같은 테두리, 흰 바탕, 바탕 없는 꺾쇠다. 디자인 시스템을 걸어야 해서 맨 끝에 돈다. */
     private static void looks() {
         planningpet.common.view.Theme.install();
@@ -282,8 +281,23 @@ public final class ProtoCheck {
                     c.getUI().getClass().getSimpleName() + " " + (c.getBorder() == f.title.getBorder()) + " "
                     + Integer.toHexString(c.getBackground().getRGB()) + " " + arrow.isContentAreaFilled());
         }
+        // D-97: 통계 기타는 회색이 아닌 자기 색이고, 다른 유형과 색상각이 15도 넘게 다르다.
+        float[] other = hsb(planningpet.stats.view.StatsArt.look("기타").bottom());
+        StringBuilder near = new StringBuilder();
+        for (String k : java.util.List.of("학업", "운동", "프로젝트", "개인/취미")) {
+            double gap = Math.abs(hsb(planningpet.stats.view.StatsArt.look(k).bottom())[0] - other[0]) * 360;
+            if (Math.min(gap, 360 - gap) <= 15) {
+                near.append(k);
+            }
+        }
+        eq("D-97 기타 색", "회색 아님, 가까운 유형 없음", (other[1] > 0.3 ? "회색 아님" : "회색") + ", 가까운 유형 " + (near.length() == 0 ? "없음" : near));
     }
 
+    private static float[] hsb(java.awt.Color c) {
+        return java.awt.Color.RGBtoHSB(c.getRed(), c.getGreen(), c.getBlue(), null);
+    }
+
+    /** 검사 문장을 칸 순서대로 " / "로 잇는다. 통과면 null. */
     private static String msgs(TaskForm f) {
         var p = TaskCheck.check(f.draft(), f.editing());
         return p.isEmpty() ? null : String.join(" / ", p.stream().map(x -> x[1]).toList());

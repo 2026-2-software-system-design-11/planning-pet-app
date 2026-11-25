@@ -17,7 +17,7 @@ import java.util.Map;
  * 통계 화면만 쓰는 그림: 카드 제목 아이콘, 일정 유형(D-54) 아이콘과 막대 색, 장식 고양이.
  * 아이콘은 common/view/Icons와 같이 24 칸 격자에 굵기 2의 둥근 선으로 그린다(디자인 시스템 9절).
  */
-final class StatsArt {
+public final class StatsArt {
     /** 셀 일정이 없을 때 카드에 쓰는 말(D-55). */
     static final String NONE = "아직 셀 일정이 없어요";
 
@@ -28,8 +28,8 @@ final class StatsArt {
     /** 사이드바 아래에서 자는 고양이. 펫 도형의 자기 자세(D-50)로 방석 위에 그린다. */
     static final BufferedImage SLEEP_CAT = sleepCat();
 
-    /** 유형마다 아이콘, 아이콘 색, 막대의 위와 아래 색. 예시의 유형별 달성률을 따랐다. */
-    record Look(Kind icon, Color ink, Color top, Color bottom) {
+    /** 유형마다 아이콘, 아이콘 색, 막대의 왼쪽과 오른쪽 색. 예시의 유형별 달성률을 따랐다(예시에 없는 기타는 D-97). */
+    public record Look(Kind icon, Color ink, Color top, Color bottom) {
     }
 
     private static final Map<String, Look> LOOKS = Map.of(
@@ -37,12 +37,13 @@ final class StatsArt {
             "운동", new Look(Kind.DUMBBELL, new Color(0xE55C64), new Color(0x6CBBFF), new Color(0x3A8EF0)),
             "프로젝트", new Look(Kind.LAPTOP, new Color(0x8F55DD), new Color(0xC390FF), new Color(0x9B5DE5)),
             "개인/취미", new Look(Kind.CUP, new Color(0xEE9A1C), new Color(0xFFDA55), new Color(0xF6B921)));
-    private static final Look OTHER = new Look(Kind.TAG, new Color(0x6F8296), new Color(0xC3D0DB), new Color(0x93A6B7));
+    /** 기타는 연보라다. 회색은 흐림(끝냄, 못 누름)으로 읽혀 쓰지 않는다(D-97, 디자인 시스템 10절). */
+    private static final Look OTHER = new Look(Kind.TAG, new Color(0xA64DB8), new Color(0xE794F7), new Color(0xC760DB));
 
     private StatsArt() {
     }
 
-    static Look look(String category) {
+    public static Look look(String category) {
         return LOOKS.getOrDefault(category, OTHER);
     }
 
