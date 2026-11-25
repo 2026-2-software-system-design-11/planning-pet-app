@@ -11,10 +11,13 @@ public final class TypedField {
     public final JLabel notice = new JLabel();
     private final Runnable relayout;
     private Object about; // 글이 말하는 칸 값
+    /** 0보다 크면 글을 이 너비(px) 안에서 접는다(시각 고치기 창, D-98). */
+    public java.util.function.IntSupplier wrap = () -> 0;
 
     public TypedField(JSpinner spinner, Function<String, Typed.Read> reader, Runnable relayout) {
         this.relayout = relayout;
         notice.setFont(Theme.font(12));
+        notice.setVerticalAlignment(JLabel.TOP);
         notice.setVisible(false);
         DocumentFilter filter = new DocumentFilter() {
             @Override
@@ -68,7 +71,14 @@ public final class TypedField {
     /** 글을 보이거나(text가 null이면) 지운다. 글이 늘거나 줄면 창 크기를 다시 맞춘다. */
     private void show(String text, java.awt.Color color, Object value) {
         about = text == null ? null : value;
-        notice.setText(text == null ? "" : text);
+        int w = wrap.getAsInt();
+        notice.setText(text == null ? "" : w > 0 ? "<html>" + text + "</html>" : text);
+        notice.setPreferredSize(null);
+        if (text != null && w > 0) {
+            View v = (View) notice.getClientProperty(javax.swing.plaf.basic.BasicHTML.propertyKey);
+            v.setSize(w, 0);
+            notice.setPreferredSize(new java.awt.Dimension(w, (int) Math.ceil(v.getPreferredSpan(View.Y_AXIS))));
+        }
         notice.setForeground(color);
         notice.setVisible(text != null);
         relayout.run();

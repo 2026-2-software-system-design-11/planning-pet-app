@@ -131,6 +131,7 @@ public final class ProtoCheck {
                 .map(w -> String.valueOf(Typed.minutes(w).value())).toList()));
         eq("D-98 칸 아래 글", "25 흐린 5분 단위로 맞췄어요(25분) / 25 빨간 " + Typed.MINUTES_BAD, typedField());
         eq("D-98 입력 창 걸리는 시간 칸 아래 글", "흐린 5분 단위로 맞췄어요(25분) / 없음 / 없음", typedForm());
+        eq("D-98 시각 고치기 창 칸 아래 글", "720 흐린 최대 720분(12시간)까지 넣을 수 있어요 true true", timeEditorNotice());
         Store c = MockData.sample();
         java.time.LocalDate nov = java.time.LocalDate.of(2026, 11, 1);
         TaskBook.CellPreview c14 = c.book.cellPreview(nov.withDayOfMonth(14));
@@ -332,6 +333,17 @@ public final class ProtoCheck {
         return kept + " / " + typing + " / " + notice(f.minutesNotice);
     }
 
+    /** 시각 고치기 창의 글은 걸리는 시간 칸 묶음 너비 안에서 두 줄로 접힌다(D-98). */
+    private static String timeEditorNotice() {
+        Task t = MockData.sample().tasks.get(0);
+        TimeEditor e = new TimeEditor(t, java.time.LocalDateTime.of(2026, 11, 14, 15, 23));
+        javax.swing.JLabel l = e.minutesNotice;
+        String got = type(e.minutes, "730") + " " + notice(l);
+        int group = l.getParent().getComponent(0).getPreferredSize().width;
+        return got + " " + (l.getPreferredSize().width <= group) + " "
+                + (l.getPreferredSize().height > l.getFontMetrics(l.getFont()).getHeight() * 1.5);
+    }
+
     /** 칸에 글을 쳐 넣고 칸을 벗어난 것과 같다. 받지 않으면 이전 값이다. */
     static Object type(javax.swing.JSpinner s, String text) {
         var field = ((javax.swing.JSpinner.DefaultEditor) s.getEditor()).getTextField();
@@ -345,7 +357,8 @@ public final class ProtoCheck {
 
     /** 칸 아래 글. 안 보이면 "없음". */
     static String notice(javax.swing.JLabel l) {
-        return !l.isVisible() ? "없음" : (planningpet.common.view.Theme.SUNDAY.equals(l.getForeground()) ? "빨간 " : "흐린 ") + l.getText();
+        return !l.isVisible() ? "없음" : (planningpet.common.view.Theme.SUNDAY.equals(l.getForeground()) ? "빨간 " : "흐린 ")
+                + l.getText().replaceAll("<[^>]*>", "");
     }
 
     /** 검사 문장을 칸 순서대로 " / "로 잇는다. 통과면 null. */

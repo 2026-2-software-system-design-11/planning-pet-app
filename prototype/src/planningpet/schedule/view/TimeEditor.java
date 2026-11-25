@@ -24,6 +24,10 @@ public final class TimeEditor {
     /** 다음 날 새벽 값이면 칸 옆에 실제 날과 시각 "(토 01:30)"(D-77). */
     public final JLabel realTime = new JLabel();
     public final JSpinner minutes;
+    /** 걸리는 시간 칸 묶음 바로 아래 글(D-98). */
+    public final JLabel minutesNotice;
+    /** 칸 아래 글이 늘거나 줄면 창 크기를 다시 맞춘다. 창 없이 만들 때는 아무것도 하지 않는다. */
+    Runnable relayout = () -> { };
     public final JLabel error = new JLabel(" ");
     public final JButton clear = new JButton("시각 빼기");
     final JButton cancel = new JButton("취소");
@@ -48,6 +52,8 @@ public final class TimeEditor {
         realTime.setText(Times.real(base, from));
         start.addChangeListener(x -> realTime.setText(Times.real(base, Times.minuteOf(start.getValue()))));
         minutes = Ui.minutes(t.minutes);
+        TypedField typed = new TypedField(minutes, Typed::minutes, () -> relayout.run());
+        minutesNotice = typed.notice;
         error.setForeground(Theme.SUNDAY);
         error.setFont(Theme.font(12));
         panel.setBorder(BorderFactory.createEmptyBorder(12, 14, 12, 14));
@@ -55,7 +61,13 @@ public final class TimeEditor {
         JLabel name = new JLabel("<html><b>" + Ui.esc(t.title) + "</b></html>");
         JPanel fields = new JPanel(new BorderLayout(0, 4));
         fields.add(name, BorderLayout.NORTH);
-        fields.add(Ui.flow(new JLabel("시작 시각"), start, realTime, new JLabel("걸리는 시간"), minutes, new JLabel("분")), BorderLayout.CENTER);
+        // D-98: 칸 아래 글은 각 칸 묶음 바로 아래 그 너비 안에서 접힌다.
+        JPanel row = new JPanel(new BorderLayout(4, 0));
+        row.add(column(Ui.flow(new JLabel("시작 시각"), start, realTime), null), BorderLayout.WEST);
+        JPanel minutesRow = Ui.flow(new JLabel("걸리는 시간"), minutes, new JLabel("분"));
+        typed.wrap = () -> minutesRow.getPreferredSize().width;
+        row.add(column(minutesRow, minutesNotice), BorderLayout.CENTER);
+        fields.add(row, BorderLayout.CENTER);
         panel.add(fields, BorderLayout.NORTH);
         panel.add(error, BorderLayout.CENTER);
         clear.setVisible(placed && t.kind == Task.Kind.TASK);
@@ -63,6 +75,16 @@ public final class TimeEditor {
         buttons.add(Ui.flow(clear), BorderLayout.WEST);
         buttons.add(Ui.flow(cancel, save), BorderLayout.EAST);
         panel.add(buttons, BorderLayout.SOUTH);
+    }
+
+    /** 칸 묶음과 그 바로 아래 글. 묶음은 위에 붙는다. */
+    private static JPanel column(JComponent fields, JLabel notice) {
+        JPanel p = new JPanel(new BorderLayout(0, 2));
+        p.add(fields, BorderLayout.NORTH);
+        if (notice != null) {
+            p.add(notice, BorderLayout.CENTER);
+        }
+        return p;
     }
 
     /** 끝이 다음 날 04:00을 넘으면 문장, 아니면 null(D-77). */
@@ -98,6 +120,7 @@ public final class TimeEditor {
             // 창 투명을 못 쓰는 환경이면 모서리 밖이 바탕색으로 보인다.
         }
         d.setContentPane(e.panel);
+        e.relayout = d::pack;
         e.cancel.addActionListener(x -> d.dispose());
         e.clear.addActionListener(x -> {
             if (clear(app, t)) {
