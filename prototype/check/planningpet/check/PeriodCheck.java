@@ -138,11 +138,11 @@ final class PeriodCheck {
                 msgs(TaskCheck.check(TaskDraft.at(Task.Kind.TASK, "일", d("11-16"), 27 * 60 + 53, 27), false)));
         eq("T-VAL-21 730분", both + "걸리는 시간 720분이면 16:00이 맞아요 / " + span,
                 msgs(TaskCheck.check(TaskDraft.at(Task.Kind.TASK, "일", d("11-16"), 27 * 60 + 53, 730), false)));
-        // D-95: 칸 폭을 넘는 오류 글은 줄을 바꿔 창을 넓히지 않고, 글은 그대로 남는다.
+        // D-100: 칸 폭을 넘는 오류 글은 줄을 바꿔 창을 넓히지 않고, 글은 그대로 남는다.
         TaskForm wrap = new TaskForm(null, d("11-16"), at("11-16T09:00").now);
         int wide = wrap.panel.getPreferredSize().width;
         wrap.showErrors(late);
-        eq("D-95 오류 글 줄바꿈", "true " + late.get(0)[1] + " " + wide,
+        eq("D-100 오류 글 줄바꿈", "true " + late.get(0)[1] + " " + wide,
                 wrap.errors.get("시작 시각").getText().startsWith("<html>") + " " + wrap.errorText() + " "
                 + wrap.panel.getPreferredSize().width);
         eq("T-DEF-5", "2027-03-01", DefaultDates.repeatEnd(Task.Kind.FIXED, d("11-16")));

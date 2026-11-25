@@ -290,7 +290,7 @@ public final class TaskForm {
             l.putClientProperty("plain", "");
             l.setVisible(false);
         });
-        // 칸 폭(제목 칸)을 넘는 글은 그 폭에서 줄을 바꿔 잘리지 않게 한다(D-95).
+        // 칸 폭(제목 칸)을 넘는 글은 그 폭에서 줄을 바꿔 잘리지 않게 한다(D-100).
         int room = title.getPreferredSize().width;
         for (String[] p : problems) {
             JLabel l = errors.get(p[0]);

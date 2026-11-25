@@ -33,7 +33,7 @@ public final class TaskCheck {
         }
         Integer start = f.startMinute();
         int minutes = f.minutes();
-        // 화면 칸이 막아도 가져오기나 저장 파일처럼 다른 길로 들어온 값을 여기서 막는다(06의 2번, D-95).
+        // 화면 칸이 막아도 가져오기나 저장 파일처럼 다른 길로 들어온 값을 여기서 막는다(06의 2번, D-100).
         if (start == null && f.kind() == Task.Kind.FIXED) {
             out.add(new String[] {"시작 시각", "고정 일정은 시작 시각이 있어야 해요"});
         }
@@ -64,7 +64,7 @@ public final class TaskCheck {
     }
 
     /**
-     * 끝과 5분 단위를 함께 푸는 시각의 문장(D-95). 다음 날 04:00에 끝나는 가장 늦은 5분 단위 시각이다. 걸리는 시간이 틀렸으면
+     * 끝과 5분 단위를 함께 푸는 시각의 문장(D-100). 다음 날 04:00에 끝나는 가장 늦은 5분 단위 시각이다. 걸리는 시간이 틀렸으면
      * 가까운 맞는 값(10분부터 720분, 5분 단위)으로 셈하고 그 값을 밝힌다.
      */
     private static String bothFix(int minutes) {
