@@ -35,6 +35,8 @@ public final class TaskForm {
     public final JLabel periodHint = Ui.hint("반복 일정은 기간을 정할 수 없어요");
     /** 반복 끝 날짜를 사용자가 고쳤는가. 고치기 전에는 시작 날짜를 따라간다(D-79). */
     private boolean endTouched;
+    /** 마감을 손으로 고쳤다. 그 뒤로는 기간이 꺼져도 날짜를 따라 다시 채우지 않는다(06의 14번, #203). */
+    private boolean dueTouched;
     public final JSpinner due = new JSpinner(new SpinnerDateModel());
     public final JTextArea memo = new JTextArea(3, 22);
     /** D-54 유형. */
@@ -147,7 +149,12 @@ public final class TaskForm {
             sync();
         });
         period.addActionListener(e -> sync());
-        due.addChangeListener(e -> sync());
+        due.addChangeListener(e -> {
+            if (!syncing) {
+                dueTouched = true;
+            }
+            sync();
+        });
         start.addChangeListener(e -> sync());
         minutes.addChangeListener(e -> sync());
         title.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
@@ -221,7 +228,7 @@ public final class TaskForm {
         if (!editing && !endTouched) {
             Ui.setDate(repeatEnd, DefaultDates.repeatEnd(isFixed ? Task.Kind.FIXED : Task.Kind.TASK, day));
         }
-        if (!period.isSelected()) {
+        if (!period.isSelected() && !dueTouched) {
             Ui.setDate(due, DefaultDates.due(day, weekStart));
         }
         minutesHint.setVisible(!editing && (int) minutes.getValue() == 30);

@@ -143,6 +143,18 @@ final class PeriodCheck {
         Ui.setDate(follow.date, d("12-20"));
         eq("D-79 끝 날짜는 손대기 전까지 따라간다", "2026-12-29 2026-12-10 반복: 반복 끝나는 날이 날짜보다 앞이에요",
                 followed + " " + Ui.dateOf(follow.repeatEnd) + " " + msgs(follow.problems()));
+        TaskForm keep = new TaskForm(null, d("11-16"), at("11-16T09:00").now);
+        TaskForm plain = new TaskForm(null, d("11-16"), at("11-16T09:00").now);
+        for (TaskForm k : new TaskForm[] {keep, plain}) {
+            k.period.doClick();
+            if (k == keep) {
+                Ui.setDate(k.due, d("12-10"));
+            }
+            k.fixed.doClick();
+            k.task.doClick();
+            k.period.doClick();
+        }
+        eq("T-DEF-16", "2026-12-10 2026-11-22", Ui.dateOf(keep.due) + " " + Ui.dateOf(plain.due));
         TaskForm names = new TaskForm(null, d("11-16"), at("11-16T09:00").now);
         names.period.doClick();
         String on = names.dateLabel.getText() + " " + names.dueLabel.getText();
