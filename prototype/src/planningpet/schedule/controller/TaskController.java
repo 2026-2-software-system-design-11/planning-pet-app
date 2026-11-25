@@ -205,6 +205,30 @@ public final class TaskController {
         return out;
     }
 
+    /** 남은 예시 일정(D-74). 고친 예시도 든다. */
+    public java.util.List<Task> samples() {
+        return app.store.tasks.stream().filter(t -> app.store.sampleIds.contains(t.id)).toList();
+    }
+
+    /** 06의 31번. 확인 창을 거쳐 예시 일정을 모두 지운다. 지운 수를 돌려주고 없거나 취소하면 0. */
+    public int clearSamples() {
+        java.util.List<Task> list = samples();
+        if (list.isEmpty()) {
+            return 0;
+        }
+        int answer = chooser.choose("예시 지우기", "예시 일정 " + list.size() + "개를 지울까요? 새로 넣은 일정은 그대로 남아요.",
+                new String[] {"지우기", "취소"});
+        if (answer != 0) {
+            return 0;
+        }
+        app.control.change(() -> {
+            list.forEach(t -> app.store.book.delete(t, false));
+            app.store.sampleIds.clear();
+            app.store.say("예시를 지웠어. 수업부터 넣어 볼까?");
+        });
+        return list.size();
+    }
+
     /** 자동 배치 결과 창의 적용(UC-11). */
     public void applyPlacement(Planner.Placement p) {
         justPlaced = p.placed().stream().map(Planner.Placed::task).toList();

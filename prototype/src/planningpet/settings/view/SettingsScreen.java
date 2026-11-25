@@ -20,6 +20,9 @@ public final class SettingsScreen extends JPanel {
     /** D-91. 한 주 시작. 기본은 월요일. */
     public final javax.swing.JRadioButton monday = new javax.swing.JRadioButton("월요일", true);
     public final javax.swing.JRadioButton sunday = new javax.swing.JRadioButton("일요일");
+    /** D-74. 예시 일정을 한 번에 지운다. 예시가 없으면 흐리다. */
+    public final JButton clearSamples = new JButton("예시 지우기");
+    public final JLabel sampleCount = Ui.hint("");
 
     public SettingsScreen(App app) {
         super(new GridBagLayout());
@@ -43,6 +46,8 @@ public final class SettingsScreen extends JPanel {
         line(new JLabel(), Ui.hint("달력, 일정관리, 통계의 한 주가 이 요일부터 시작해요"));
         monday.addActionListener(e -> app.settings.weekStart(java.time.DayOfWeek.MONDAY));
         sunday.addActionListener(e -> app.settings.weekStart(java.time.DayOfWeek.SUNDAY));
+        clearSamples.addActionListener(e -> app.schedule.clearSamples());
+        line(new JLabel("<html><b>예시 일정</b></html>"), Ui.flow(clearSamples, sampleCount));
         line(new JLabel("<html><b>버전</b></html>"), new JLabel("0.1 프로토타입"));
         GridBagConstraints filler = new GridBagConstraints();
         filler.gridy = row;
@@ -52,6 +57,9 @@ public final class SettingsScreen extends JPanel {
             calendarFixed.setSelected(app.store.calendarFixed);
             monday.setSelected(app.store.weekStart == java.time.DayOfWeek.MONDAY);
             sunday.setSelected(app.store.weekStart == java.time.DayOfWeek.SUNDAY);
+            int samples = app.schedule.samples().size();
+            clearSamples.setEnabled(samples > 0);
+            sampleCount.setText(samples > 0 ? "예시 일정 " + samples + "개가 남아 있어요" : "예시 일정이 없어요");
         });
     }
 

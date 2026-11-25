@@ -143,13 +143,13 @@ final class Flows8910 {
 
     static Qa uf101(Qa q) {
         Store s = Personas.p10();
-        q.step("1", "강아지를 고르고 이름을 비운 채 시작하기");
+        q.step("1", "강아지를 고르고 이름을 비운 채 바로 시작");
         PickDialog pd = new PickDialog();
         pd.dog.setSelected(true);
         pd.apply(s);
         q.start(s);
         q.open();
-        q.eq("말풍선", "안녕, 나는 바둑이야. 일정관리에서 이번 학기 수업부터 넣어 볼까?", q.app.store.talk);
+        q.eq("말풍선", "처음 만났네! 나는 바둑이야. 수업부터 넣어 볼까?", q.app.store.talk);
         q.step("2", "pet을 연다");
         q.app.show("나의 방");
         q.yes("부제", text(q.app.root).contains("나만의 공간을 꾸미고, 반려동물과 함께 시간을 보내요!"));
