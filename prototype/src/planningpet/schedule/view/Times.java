@@ -4,12 +4,7 @@ import planningpet.schedule.model.Task;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.stream.IntStream;
-import javax.swing.JFormattedTextField;
-import javax.swing.JSpinner;
-import javax.swing.text.DefaultFormatter;
-import javax.swing.text.DefaultFormatterFactory;
 
 /** 시작 시각 칸(일정 입력 창 5번, 시각 고치기 창 1번)의 값. 앱 하루의 분(D-77)과 칸 글을 오간다. */
 public final class Times {
@@ -34,47 +29,6 @@ public final class Times {
         boolean next = text.endsWith(NEXT_DAY);
         LocalTime t = LocalTime.parse(next ? text.substring(0, text.length() - NEXT_DAY.length()) : text);
         return (next ? Task.DAY : 0) + t.getHour() * 60 + t.getMinute();
-    }
-
-    /** "09:03"이나 "01:33(다음 날)"처럼 시각 꼴인 글을 가까운 5분 값의 앱 하루 분으로(D-95). 끝은 03:55(다음 날)다. 시각 꼴이 아니면 null. */
-    public static Integer rounded(String text) {
-        try {
-            return Math.min(Math.round(minuteOf(text.strip()) / 5f) * 5, Task.DAY_END - 5);
-        } catch (RuntimeException e) {
-            return null;
-        }
-    }
-
-    /**
-     * 시작 시각 칸이 쳐 넣은 글을 읽는 법(D-95). 목록에 있는 글은 그대로, 목록에 없는 시각 꼴은 가까운 5분 값으로 맞춰 rounded에
-     * 알리고, "14"처럼 앞부분만 친 글은 그것으로 시작하는 첫 값이다. 그 밖에는 받지 않아 이전 값으로 돌아간다.
-     */
-    public static void roundTyped(JSpinner field, Consumer<String> rounded) {
-        List<String> list = values();
-        JFormattedTextField text = ((JSpinner.DefaultEditor) field.getEditor()).getTextField();
-        text.setFormatterFactory(new DefaultFormatterFactory(new DefaultFormatter() {
-            {
-                setOverwriteMode(false);
-            }
-
-            @Override
-            public Object stringToValue(String s) throws java.text.ParseException {
-                if (list.contains(s)) {
-                    return s;
-                }
-                Integer r = rounded(s);
-                if (r != null) {
-                    rounded.accept(value(r));
-                    return value(r);
-                }
-                for (String v : list) {
-                    if (!s.isEmpty() && v.startsWith(s)) {
-                        return v;
-                    }
-                }
-                throw new java.text.ParseException(s, 0);
-            }
-        }));
     }
 
     /** 다음 날 값이면 칸 옆에 적는 실제 날과 시각 "(토 01:30)"(D-77). 아니면 빈 글. */

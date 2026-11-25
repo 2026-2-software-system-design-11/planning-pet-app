@@ -25,8 +25,7 @@ public final class TimeEditor {
     public final JLabel realTime = new JLabel();
     public final JSpinner minutes;
     public final JLabel error = new JLabel(" ");
-    /** D-95: 시작 시각과 걸리는 시간을 5분 단위로 맞췄다는 글. */
-    public final RoundNote startNote;
+    /** D-95: 걸리는 시간을 5분 단위로 맞췄다는 글. */
     public final RoundNote minutesNote;
     /** 맞췄다는 글이 보이거나 숨으면 창 크기를 다시 맞춘다. 창 없이 만들 때는 아무것도 하지 않는다. */
     Runnable relayout = () -> { };
@@ -53,7 +52,6 @@ public final class TimeEditor {
         realTime.setText(Times.real(base, from));
         start.addChangeListener(x -> realTime.setText(Times.real(base, Times.minuteOf(start.getValue()))));
         minutes = Ui.minutes(t.minutes);
-        startNote = RoundNote.start(start, () -> relayout.run());
         minutesNote = RoundNote.minutes(minutes, () -> relayout.run());
         error.setForeground(Theme.SUNDAY);
         error.setFont(Theme.font(12));
@@ -63,7 +61,7 @@ public final class TimeEditor {
         JPanel fields = new JPanel(new BorderLayout(0, 4));
         fields.add(name, BorderLayout.NORTH);
         fields.add(Ui.flow(new JLabel("시작 시각"), start, realTime, new JLabel("걸리는 시간"), minutes, new JLabel("분")), BorderLayout.CENTER);
-        fields.add(Ui.flow(startNote.label, minutesNote.label), BorderLayout.SOUTH);
+        fields.add(Ui.flow(minutesNote.label), BorderLayout.SOUTH);
         panel.add(fields, BorderLayout.NORTH);
         panel.add(error, BorderLayout.CENTER);
         clear.setVisible(placed && t.kind == Task.Kind.TASK);
