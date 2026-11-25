@@ -121,6 +121,30 @@ final class PeriodCheck {
                 msgs(TaskCheck.check(task.withDue(d("11-22")).withRepeat(Repeat.DAILY, d("11-22")), false)));
         eq("D-65 기간은 할 일만", "마감: 기간은 할 일만 정할 수 있어요",
                 msgs(TaskCheck.check(draft(Task.Kind.FIXED, "11-16", "10:00").withDue(d("11-22")), false)));
+        eq("T-VAL-5", "시작 시각: 고정 일정은 시작 시각이 있어야 해요",
+                msgs(TaskCheck.check(draft(Task.Kind.FIXED, "11-16", null), false)));
+        eq("T-VAL-6", "시작 시각: 5분 단위로 정해 주세요",
+                msgs(TaskCheck.check(draft(Task.Kind.TASK, "11-16", "09:03"), false)));
+        StringBuilder spans = new StringBuilder();
+        for (int m : new int[] {0, 27, 730, 10, 75, 720}) {
+            spans.append(" / ").append(msgs(TaskCheck.check(TaskDraft.at(Task.Kind.TASK, "일", d("11-16"), null, m), false)));
+        }
+        String span = "걸리는 시간: 10분부터 720분까지, 5분 단위예요";
+        eq("T-VAL-9", " / " + span + " / " + span + " / " + span + " / 오류 없음 / 오류 없음 / 오류 없음", spans);
+        String both = "시작 시각: 다음 날 04:00까지 끝나야 해요. 5분 단위로 정해 주세요. ";
+        List<String[]> late = TaskCheck.check(TaskDraft.at(Task.Kind.TASK, "일", d("11-16"), 27 * 60 + 53, 10), false);
+        eq("T-VAL-21 10분", both + "03:50(다음 날)이면 둘 다 맞아요", msgs(late));
+        eq("T-VAL-21 27분", both + "걸리는 시간 25분이면 03:35(다음 날)이 맞아요 / " + span,
+                msgs(TaskCheck.check(TaskDraft.at(Task.Kind.TASK, "일", d("11-16"), 27 * 60 + 53, 27), false)));
+        eq("T-VAL-21 730분", both + "걸리는 시간 720분이면 16:00이 맞아요 / " + span,
+                msgs(TaskCheck.check(TaskDraft.at(Task.Kind.TASK, "일", d("11-16"), 27 * 60 + 53, 730), false)));
+        // D-95: 칸 폭을 넘는 오류 글은 줄을 바꿔 창을 넓히지 않고, 글은 그대로 남는다.
+        TaskForm wrap = new TaskForm(null, d("11-16"), at("11-16T09:00").now);
+        int wide = wrap.panel.getPreferredSize().width;
+        wrap.showErrors(late);
+        eq("D-95 오류 글 줄바꿈", "true " + late.get(0)[1] + " " + wide,
+                wrap.errors.get("시작 시각").getText().startsWith("<html>") + " " + wrap.errorText() + " "
+                + wrap.panel.getPreferredSize().width);
         eq("T-DEF-5", "2027-03-01", DefaultDates.repeatEnd(Task.Kind.FIXED, d("11-16")));
         eq("D-64 할 일 반복 끝 4주", "2026-12-14", DefaultDates.repeatEnd(Task.Kind.TASK, d("11-16")));
         eq("D-65 마감 기본은 그 주 일요일", "2026-11-22 2026-11-29", DefaultDates.due(d("11-18")) + " " + DefaultDates.due(d("11-22")));

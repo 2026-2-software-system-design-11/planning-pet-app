@@ -1,5 +1,6 @@
 package planningpet.schedule.model;
 
+import planningpet.common.model.Rules;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -10,7 +11,7 @@ public final class TaskCheck {
     }
 
     /**
-     * 06의 2번 검사 가운데 화면에서 걸릴 수 있는 것. 칸 순서(제목, 마감, 시작 시각, 걸리는 시간, 메모, 반복)로 {칸, 문장}을 모두
+     * 06의 2번 검사. 칸 순서(제목, 마감, 시작 시각, 걸리는 시간, 메모, 반복)로 {칸, 문장}을 모두
      * 담는다. 비어 있으면 통과. 끝낸 기간 할 일도 날짜(기간 첫날)가 그대로이므로 마감을 검사한다(D-66).
      */
     /** 끝이 다음 날 04:00을 넘을 때의 문장(D-77). */
@@ -32,11 +33,21 @@ public final class TaskCheck {
         }
         Integer start = f.startMinute();
         int minutes = f.minutes();
-        // D-77: 자정을 넘는 것은 막지 않고 끝은 다음 날 04:00(28:00)까지다.
-        if (start != null && start + minutes > Task.DAY_END) {
+        // 화면 칸이 막아도 가져오기나 저장 파일처럼 다른 길로 들어온 값을 여기서 막는다(06의 2번, D-95).
+        if (start == null && f.kind() == Task.Kind.FIXED) {
+            out.add(new String[] {"시작 시각", "고정 일정은 시작 시각이 있어야 해요"});
+        }
+        boolean offStep = start != null && start % 5 != 0;
+        boolean late = start != null && start + minutes > Task.DAY_END;
+        if (offStep && late) {
+            out.add(new String[] {"시작 시각", END_PROBLEM + ". 5분 단위로 정해 주세요. " + bothFix(minutes)});
+        } else if (offStep) {
+            out.add(new String[] {"시작 시각", "5분 단위로 정해 주세요"});
+        } else if (late) {
+            // D-77: 자정을 넘는 것은 막지 않고 끝은 다음 날 04:00(28:00)까지다.
             out.add(new String[] {"시작 시각", END_PROBLEM});
         }
-        if (minutes % 5 != 0) {
+        if (minutes < 10 || minutes > 720 || minutes % 5 != 0) {
             out.add(new String[] {"걸리는 시간", "10분부터 720분까지, 5분 단위예요"});
         }
         if (f.memo().length() > 1000) {
@@ -50,6 +61,21 @@ public final class TaskCheck {
             }
         }
         return out;
+    }
+
+    /**
+     * 끝과 5분 단위를 함께 푸는 시각의 문장(D-95). 다음 날 04:00에 끝나는 가장 늦은 5분 단위 시각이다. 걸리는 시간이 틀렸으면
+     * 가까운 맞는 값(10분부터 720분, 5분 단위)으로 셈하고 그 값을 밝힌다.
+     */
+    private static String bothFix(int minutes) {
+        int fixed = Math.max(10, Math.min(720, Math.round(minutes / 5f) * 5));
+        int at = (Task.DAY_END - fixed) / 5 * 5;
+        String time = Task.hhmm(at) + (at >= Task.DAY ? "(다음 날)" : "");
+        String sound = time.replace(")", "");
+        if (fixed == minutes) {
+            return time + Rules.josa(sound, "이면", "면") + " 둘 다 맞아요";
+        }
+        return "걸리는 시간 " + fixed + "분이면 " + time + Rules.josa(sound, "이", "가") + " 맞아요";
     }
 
     /** 반복 칸의 문장(D-64, D-65). 맞으면 null. */

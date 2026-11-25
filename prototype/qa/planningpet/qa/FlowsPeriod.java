@@ -35,7 +35,7 @@ final class FlowsPeriod {
                 Flows345.repeat(f) + " / " + f.repeatHint.isVisible() + " " + f.repeatHint.getText());
         q.step("3", "마감을 2026-11-15로 바꿔 저장한다");
         Ui.setDate(f.due, QaDrive.d("2026-11-15"));
-        q.eq("저장, 마감 칸 아래", "false 마감일이 시작일보다 앞이에요 true", q.save(f, null) + " " + f.errors.get("마감").getText()
+        q.eq("저장, 마감 칸 아래", "false 마감일이 시작일보다 앞이에요 true", q.save(f, null) + " " + f.error("마감")
                 + " " + f.errors.get("마감").isVisible());
         q.step("4", "마감을 2026-11-22로 바꿔 저장한다");
         Ui.setDate(f.due, QaDrive.d("2026-11-22"));
@@ -114,7 +114,7 @@ final class FlowsPeriod {
         Ui.setDate(f.repeatEnd, QaDrive.d("2027-03-20"));
         q.eq("시작 시각 정하기, 기간", "false 기간 안에 하기 꺼짐(비활성) 마감 없음", f.timed.isSelected() + " " + period(f));
         q.eq("저장, 반복 칸 아래(사본 123개)", "false 반복이 너무 많아요. 반복 끝나는 날을 앞당겨 주세요 true", q.save(f, null) + " "
-                + f.errors.get("반복").getText() + " " + f.errors.get("반복").isVisible());
+                + f.error("반복") + " " + f.errors.get("반복").isVisible());
         q.step("3", "끝 날짜를 2026-11-24로 바꿔 저장한다");
         Ui.setDate(f.repeatEnd, QaDrive.d("2026-11-24"));
         q.yes("저장(T-VAL-11)", q.save(f, null));

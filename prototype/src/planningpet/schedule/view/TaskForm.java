@@ -287,18 +287,30 @@ public final class TaskForm {
         checked = true;
         errors.values().forEach(l -> {
             l.setText("");
+            l.putClientProperty("plain", "");
             l.setVisible(false);
         });
+        // 칸 폭(제목 칸)을 넘는 글은 그 폭에서 줄을 바꿔 잘리지 않게 한다(D-95).
+        int room = title.getPreferredSize().width;
         for (String[] p : problems) {
-            errors.get(p[0]).setText(p[1]);
-            errors.get(p[0]).setVisible(true);
+            JLabel l = errors.get(p[0]);
+            boolean wide = l.getFontMetrics(l.getFont()).stringWidth(p[1]) > room;
+            l.setText(wide ? "<html><div style='width:" + room + "px'>" + Ui.esc(p[1]) + "</div></html>" : p[1]);
+            l.putClientProperty("plain", p[1]);
+            l.setVisible(true);
         }
         relayout.run();
     }
 
     /** 보이는 오류 글을 칸 순서대로 " / "로 잇는다. */
     public String errorText() {
-        return String.join(" / ", errors.values().stream().filter(JLabel::isVisible).map(JLabel::getText).toList());
+        return String.join(" / ", errors.keySet().stream().filter(k -> errors.get(k).isVisible()).map(this::error).toList());
+    }
+
+    /** 칸 아래 오류 글. 줄을 바꿔 그린 글도 원래 문장으로 돌려준다. 없으면 빈 글. */
+    public String error(String field) {
+        Object plain = errors.get(field).getClientProperty("plain");
+        return plain == null ? "" : (String) plain;
     }
 
     /** 시작 칸의 앱 하루의 분(D-77). 시각을 정하지 않았으면 null. */
