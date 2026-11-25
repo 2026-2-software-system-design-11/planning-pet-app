@@ -45,6 +45,7 @@ public final class ScheduleScreen extends JPanel {
         start = thisWeekStart();
         table = new TimetablePanel(app.store, app.schedule);
         untimed = new TaskRows(app.schedule);
+        untimed.dropOn = table;
         JButton prev = new JButton("<");
         JButton next = new JButton(">");
         today = new JButton("오늘");

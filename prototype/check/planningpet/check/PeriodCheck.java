@@ -813,7 +813,7 @@ final class PeriodCheck {
         }
     }
 
-    private static void layout(java.awt.Component c) {
+    static void layout(java.awt.Component c) {
         c.doLayout();
         if (c instanceof java.awt.Container k) {
             for (java.awt.Component child : k.getComponents()) {

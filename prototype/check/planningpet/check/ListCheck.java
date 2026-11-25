@@ -8,6 +8,7 @@ import planningpet.app.Main;
 import planningpet.app.view.App;
 import planningpet.schedule.model.Task;
 import planningpet.schedule.view.ScheduleScreen;
+import planningpet.schedule.view.DragCursors;
 import planningpet.schedule.view.TaskRows;
 import planningpet.schedule.view.TimetablePanel;
 import java.awt.event.MouseEvent;
@@ -24,6 +25,44 @@ final class ListCheck {
         places();
         drops();
         preview();
+        grab();
+    }
+
+    /** T-EDIT-24(D-99): 체크박스로는 끌리지 않고, 줄을 잡아 끌면 마우스 모양이 바뀌고 놓은 자리에 들어간다. */
+    static void grab() {
+        App app = Main.create(at("11-17T09:00"));
+        Task work = app.store.book.add(Task.Kind.TASK, "과제", d("11-17"), null, 30, "", null).get(0);
+        app.show("일정관리");
+        app.store.changed();
+        app.root.setSize(1000, 680);
+        PeriodCheck.layout(app.root);
+        ScheduleScreen sched = ProtoCheck.find(app.root, ScheduleScreen.class);
+        sched.scrollTo(13 * 60);
+        PeriodCheck.layout(app.root);
+        TimetablePanel table = ProtoCheck.find(app.root, TimetablePanel.class);
+        int w = (table.getWidth() - TimetablePanel.GUTTER) / 7;
+        java.awt.Point wed = new java.awt.Point(TimetablePanel.GUTTER + 2 * w + w / 2, (14 * 60 + 7) * TimetablePanel.HOUR / 60);
+        java.awt.Point mon = new java.awt.Point(TimetablePanel.GUTTER + w / 2, wed.y);
+        javax.swing.JCheckBox box = PeriodCheck.box(sched.untimed, work);
+        mouse(box, MouseEvent.MOUSE_PRESSED, new java.awt.Point(2, 2));
+        mouse(box, MouseEvent.MOUSE_DRAGGED, javax.swing.SwingUtilities.convertPoint(table, wed, box));
+        mouse(box, MouseEvent.MOUSE_EXITED, javax.swing.SwingUtilities.convertPoint(table, wed, box));
+        mouse(box, MouseEvent.MOUSE_RELEASED, javax.swing.SwingUtilities.convertPoint(table, wed, box));
+        String byBox = work.done + " " + work.date + " " + work.start;
+        TaskRows.TitleLabel title = title(sched.untimed, work);
+        String open = (title.getCursor() == DragCursors.OPEN) + "";
+        mouse(title, MouseEvent.MOUSE_PRESSED, new java.awt.Point(5, 5));
+        mouse(title, MouseEvent.MOUSE_DRAGGED, javax.swing.SwingUtilities.convertPoint(table, mon, title));
+        String no = (title.getCursor() == DragCursors.NO) + "";
+        mouse(title, MouseEvent.MOUSE_DRAGGED, javax.swing.SwingUtilities.convertPoint(table, wed, title));
+        String grab = (title.getCursor() == DragCursors.GRAB) + "";
+        mouse(title, MouseEvent.MOUSE_RELEASED, javax.swing.SwingUtilities.convertPoint(table, wed, title));
+        eq("T-EDIT-24", "false 2026-11-17 null / true true true / 2026-11-18 14:00 []",
+                byBox + " / " + open + " " + no + " " + grab + " / " + work.date + " " + work.start + " " + table.dimmed());
+    }
+
+    static void mouse(java.awt.Component c, int id, java.awt.Point p) {
+        c.dispatchEvent(new MouseEvent(c, id, 0, MouseEvent.BUTTON1_DOWN_MASK, p.x, p.y, 1, false, MouseEvent.BUTTON1));
     }
 
     /** T-EDIT-23(D-99): 끄는 동안 흐린 날과 따라오는 상자의 글. */
