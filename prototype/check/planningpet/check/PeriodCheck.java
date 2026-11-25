@@ -54,6 +54,7 @@ final class PeriodCheck {
         add();
         edit();
         lists();
+        narrow();
         rewards();
         talkAndCalendar();
         autoPlace();
@@ -302,7 +303,7 @@ final class PeriodCheck {
         TimeEditor e = new TimeEditor(m, d("11-18"), miss.store.now);
         e.start.setValue("14:00");
         TimeEditor.save(miss, m, e);
-        eq("D-67 정한 날을 놓치면 다음 날부터", "x period period due / 기간 안에 할 일 / P ~11/22까지 17일에 하려던 일 30분"
+        eq("D-67 정한 날을 놓치면 다음 날부터", "x period period due / 기간 안에 할 일 / P 30분 ~11/22까지 17일에 하려던 일"
                 + " / 11-18 timed", before + " / " + row + " / " + m.date.toString().substring(5) + " " + group(miss.store, m, "11-18"));
         Store over = at("11-18T09:00");
         Task o = period(over, "P", "11-16", "11-22", 30);
@@ -323,11 +324,11 @@ final class PeriodCheck {
         app.show("일정관리");
         app.store.changed();
         ScheduleScreen sched = ProtoCheck.find(app.root, ScheduleScreen.class);
-        eq("D-65 기간 할 일은 한 줄", "11/16 P ~11/20까지 30분 / 11/17 Q ~11/17까지 30분 지난 날 / 11/20 P ~11/20까지 마감 30분",
+        eq("D-65 기간 할 일은 한 줄", "11/16 P 30분 ~11/20까지 / 11/17 Q 30분 ~11/17까지 지난 날 / 11/20 P 30분 ~11/20까지 마감",
                 rows(sched.untimed));
         app.store.now = d("11-20").atTime(9, 0);
         app.store.changed();
-        eq("D-93 마감 날이 오늘이면 오늘 마감", "11/16 P ~11/20까지 30분 / 11/17 Q ~11/17까지 30분 지난 날 / 11/20 P ~11/20까지 오늘 마감 30분",
+        eq("D-93 마감 날이 오늘이면 오늘 마감", "11/16 P 30분 ~11/20까지 / 11/17 Q 30분 ~11/17까지 지난 날 / 11/20 P 30분 ~11/20까지 오늘 마감",
                 rows(sched.untimed));
         App wk = Main.create(at("11-17T09:00"));
         period(wk.store, "P", "11-16", "11-20", 30);
@@ -479,6 +480,57 @@ final class PeriodCheck {
         AutoPlaceDialog.apply(again, mp);
         eq("D-67 못 끝낸 계획도 다시 놓는다", "P 2026-11-18 10:00, 적용 뒤 2026-11-18 10:00 false", mg + ", 적용 뒤 " + m.date + " " + m.start
                 + " " + m.missed(again.store.today()));
+    }
+
+    /** T-LIST-9(D-94): 처음 창 크기 1000x680에서도 목록 줄의 제목이 "…" 앞 네 글자 넘게 보이고 표시는 둘째 줄이다. */
+    static void narrow() {
+        App app = Main.create(at("11-19T09:00"));
+        period(app.store, "졸업 작품 기획서", "11-12", "11-19", 60);
+        Task e = period(app.store, "E사 지원서", "11-16", "11-22", 120);
+        app.store.book.setTime(e, LocalTime.of(9, 0), 120, d("11-18"), false);
+        app.store.changed();
+        MainScreen home = ProtoCheck.find(app.root, MainScreen.class);
+        String homeTitles = titles(app.root, home.rows);
+        String homeRows = rows(home.rows);
+        app.show("일정관리");
+        app.store.changed();
+        ScheduleScreen sched = ProtoCheck.find(app.root, ScheduleScreen.class);
+        eq("D-94 처음 창 크기에서도 제목이 읽힌다", "졸업 작품 기획서, E사 지원서 / 졸업 작품 기획서 60분 ~11/19까지 오늘 마감"
+                + " / 기간 안에 할 일 / E사 지원서 120분 ~11/22까지 18일에 하려던 일 / 11/16 졸업 작품 기획서, 11/19 졸업 작품 기획서,"
+                + " 11/19 E사 지원서, 11/22 E사 지원서",
+                homeTitles + " / " + homeRows + " / " + titles(app.root, sched.untimed));
+    }
+
+    /** 메인 창을 1000x680으로 늘어놓고 목록의 제목 칸이 그리는 글을 잇는다. "…"로 줄인 글은 앞 네 글자 넘게 보여야 한다. */
+    static String titles(java.awt.Container root, java.awt.Container list) {
+        root.setSize(1000, 680);
+        layout(root);
+        layout(root);
+        List<String> out = new java.util.ArrayList<>();
+        collectTitles(list, out);
+        return String.join(", ", out);
+    }
+
+    private static void collectTitles(java.awt.Component c, List<String> out) {
+        if (c instanceof TaskRows.TitleLabel l) {
+            // 다 보이면 줄의 글(날짜와 제목), 줄였으면 "줄임(…)", 네 글자 이하만 보이면 "잘림(…)".
+            String shown = l.shown();
+            String text = l.getText().replaceAll("<[^>]+>", " ").replaceAll("\\s+", " ").replace(" 메모", "").strip();
+            out.add(!shown.endsWith("…") ? text : shown.length() - 1 > 4 ? "줄임(" + shown + ")" : "잘림(" + shown + ")");
+        } else if (c instanceof java.awt.Container k) {
+            for (java.awt.Component child : k.getComponents()) {
+                collectTitles(child, out);
+            }
+        }
+    }
+
+    private static void layout(java.awt.Component c) {
+        c.doLayout();
+        if (c instanceof java.awt.Container k) {
+            for (java.awt.Component child : k.getComponents()) {
+                layout(child);
+            }
+        }
     }
 
     static javax.swing.JCheckBox box(java.awt.Component c, Task t) {
