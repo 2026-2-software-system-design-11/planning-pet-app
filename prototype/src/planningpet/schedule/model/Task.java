@@ -97,8 +97,8 @@ public final class Task {
             return doneOn().equals(day);
         }
         if (period() && dueDate.isBefore(today)) {
-            // D-67 5번: 마감이 지나도 못 끝낸 기간 할 일은 보통 할 일처럼 마감 날에만 보인다.
-            return dueDate.equals(day);
+            // D-67 5번: 마감이 지나도 못 끝낸 기간 할 일은 보통 할 일처럼 마감 날에만 보인다. 마감 뒤 날에 끌어 놓았으면 그 날이다(D-99).
+            return (timed() && date.isAfter(dueDate) ? date : dueDate).equals(day);
         }
         if (missed(today)) {
             return day.isAfter(date) && !day.isAfter(dueDate);

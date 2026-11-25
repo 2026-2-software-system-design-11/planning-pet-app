@@ -20,6 +20,24 @@ final class ListCheck {
 
     static void run() {
         rowClick();
+        places();
+    }
+
+    /** D-99 놓을 자리(06의 4번 dropStart, dropRange)와 T-EDIT-21의 보이는 날. */
+    static void places() {
+        App app = Main.create(at("11-18T09:00"));
+        Task q = PeriodCheck.period(app.store, "Q", "11-10", "11-16", 30);
+        Task p = PeriodCheck.period(app.store, "P", "11-20", "11-22", 30);
+        var book = app.store.book;
+        String ranges = java.util.Arrays.toString(book.dropRange(q)) + " " + java.util.Arrays.toString(book.dropRange(p));
+        String starts = planningpet.schedule.model.TaskBook.dropStart(14 * 60 + 7, 30) + " "
+                + planningpet.schedule.model.TaskBook.dropStart(27 * 60 + 40, 60);
+        Runnable undo = book.keep(q, false);
+        book.placeAt(q, d("11-19"), 600, false);
+        String placed = q.date + " " + q.dueDate + " " + book.dayPlan(d("11-19")).timed().stream().map(t -> t.title).toList() + " " + q.shownOn(d("11-16"), d("11-18"));
+        undo.run();
+        eq("D-99 놓을 자리, T-EDIT-21", "[2026-11-18, null] [2026-11-20, 2026-11-22] 840 1620 2026-11-19 2026-11-16 [Q] false / 2026-11-10 null",
+                ranges + " " + starts + " " + placed + " / " + q.date + " " + q.start);
     }
 
     /** T-EDIT-16(D-99): 일정관리 목록 줄을 한 번 누르면 시각 고치기 창, 두 번 눌러도 창 하나, 끝낸 줄은 없다. */
