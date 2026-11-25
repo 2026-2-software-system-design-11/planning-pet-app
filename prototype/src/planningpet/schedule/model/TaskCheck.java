@@ -16,6 +16,10 @@ public final class TaskCheck {
     /** 끝이 다음 날 04:00을 넘을 때의 문장(D-77). */
     public static final String END_PROBLEM = "다음 날 04:00까지 끝나야 해요";
 
+    /** 걸리는 시간의 범위(D-38). */
+    public static final int MIN_MINUTES = 10;
+    public static final int MAX_MINUTES = 720;
+
     public static List<String[]> check(TaskDraft f, boolean editing) {
         List<String[]> out = new ArrayList<>();
         if (f.title().isBlank()) {
@@ -32,11 +36,16 @@ public final class TaskCheck {
         }
         Integer start = f.startMinute();
         int minutes = f.minutes();
-        // D-77: 자정을 넘는 것은 막지 않고 끝은 다음 날 04:00(28:00)까지다.
-        if (start != null && start + minutes > Task.DAY_END) {
+        // 칸마다 문장은 하나다. 화면 칸이 막아도 저장 파일처럼 다른 길로 들어온 값을 여기서 막는다(06의 2번, D-38).
+        if (start == null && f.kind() == Task.Kind.FIXED) {
+            out.add(new String[] {"시작 시각", "고정 일정은 시작 시각이 있어야 해요"});
+        } else if (start != null && start % 5 != 0) {
+            out.add(new String[] {"시작 시각", "5분 단위로 정해 주세요"});
+        } else if (start != null && start + minutes > Task.DAY_END) {
+            // D-77: 자정을 넘는 것은 막지 않고 끝은 다음 날 04:00(28:00)까지다.
             out.add(new String[] {"시작 시각", END_PROBLEM});
         }
-        if (minutes % 5 != 0) {
+        if (minutes < MIN_MINUTES || minutes > MAX_MINUTES || minutes % 5 != 0) {
             out.add(new String[] {"걸리는 시간", "10분부터 720분까지, 5분 단위예요"});
         }
         if (f.memo().length() > 1000) {
