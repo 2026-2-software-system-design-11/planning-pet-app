@@ -121,6 +121,16 @@ final class PeriodCheck {
                 msgs(TaskCheck.check(task.withDue(d("11-22")).withRepeat(Repeat.DAILY, d("11-22")), false)));
         eq("D-65 기간은 할 일만", "마감: 기간은 할 일만 정할 수 있어요",
                 msgs(TaskCheck.check(draft(Task.Kind.FIXED, "11-16", "10:00").withDue(d("11-22")), false)));
+        eq("T-VAL-5", "시작 시각: 고정 일정은 시작 시각이 있어야 해요",
+                msgs(TaskCheck.check(draft(Task.Kind.FIXED, "11-16", null), false)));
+        eq("T-VAL-6", "시작 시각: 5분 단위로 정해 주세요",
+                msgs(TaskCheck.check(draft(Task.Kind.TASK, "11-16", "09:03"), false)));
+        List<String> spans = new java.util.ArrayList<>();
+        for (int m : new int[] {0, 27, 730, 10, 75, 720}) {
+            spans.add(msgs(TaskCheck.check(TaskDraft.at(Task.Kind.TASK, "일", d("11-16"), null, m), false)));
+        }
+        eq("T-VAL-9", "걸리는 시간: 10분부터 720분까지, 5분 단위예요 / 걸리는 시간: 10분부터 720분까지, 5분 단위예요 / "
+                + "걸리는 시간: 10분부터 720분까지, 5분 단위예요 / 오류 없음 / 오류 없음 / 오류 없음", String.join(" / ", spans));
         eq("T-DEF-5", "2027-03-01", DefaultDates.repeatEnd(Task.Kind.FIXED, d("11-16")));
         eq("D-64 할 일 반복 끝 4주", "2026-12-14", DefaultDates.repeatEnd(Task.Kind.TASK, d("11-16")));
         eq("D-65 마감 기본은 그 주 일요일", "2026-11-22 2026-11-29", DefaultDates.due(d("11-18")) + " " + DefaultDates.due(d("11-22")));
