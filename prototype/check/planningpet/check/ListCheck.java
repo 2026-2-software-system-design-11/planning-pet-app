@@ -9,6 +9,7 @@ import planningpet.app.view.App;
 import planningpet.schedule.model.Task;
 import planningpet.schedule.view.ScheduleScreen;
 import planningpet.schedule.view.TaskRows;
+import planningpet.schedule.view.TimetablePanel;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +23,24 @@ final class ListCheck {
         rowClick();
         places();
         drops();
+        preview();
+    }
+
+    /** T-EDIT-23(D-99): 끄는 동안 흐린 날과 따라오는 상자의 글. */
+    static void preview() {
+        App app = Main.create(at("11-17T09:00"));
+        Task p = PeriodCheck.period(app.store, "P", "11-16", "11-20", 30);
+        app.show("일정관리");
+        app.store.changed();
+        TimetablePanel table = ProtoCheck.find(app.root, TimetablePanel.class);
+        table.setSize(TimetablePanel.GUTTER + 7 * 100, TimetablePanel.HOUR * TimetablePanel.HOURS);
+        table.drag(p);
+        boolean wed = table.dragTo(new java.awt.Point(TimetablePanel.GUTTER + 3 * 100 + 50, (14 * 60 + 7) * TimetablePanel.HOUR / 60));
+        String over = table.dragText();
+        boolean mon = table.dragTo(new java.awt.Point(TimetablePanel.GUTTER + 50, 600));
+        eq("T-EDIT-23", "[2026-11-16, 2026-11-21, 2026-11-22] false 14:00~14:30 true 지난 날",
+                table.dimmed() + " " + wed + " " + over + " " + mon + " " + table.dragText());
+        table.paint(new java.awt.image.BufferedImage(800, 400, java.awt.image.BufferedImage.TYPE_INT_ARGB).createGraphics());
     }
 
     /** D-99 놓을 자리(06의 4번 dropStart, dropRange)와 T-EDIT-21의 보이는 날. */
