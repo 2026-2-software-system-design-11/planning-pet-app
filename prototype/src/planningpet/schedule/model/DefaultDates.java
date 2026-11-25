@@ -14,14 +14,23 @@ public final class DefaultDates {
         return TaskBook.mondayOf(today).equals(shownMonday) ? today : shownMonday;
     }
 
-    /** 오늘이면 지금을 5분 단위로 올린 시각과 09:00 중 늦은 것(23:55까지), 다른 날이면 09:00. */
-    public static LocalTime start(LocalDate date, LocalDateTime now) {
-        if (!date.equals(now.toLocalDate())) {
-            return LocalTime.of(9, 0);
-        }
+    /** 시작 칸의 마지막 값(D-77): 다음 날 03:55. */
+    public static final int LAST_START = Task.DAY_END - 5;
+
+    /**
+     * 06의 14번 defaultStart. 앱 하루의 분(D-77)을 준다. 지금의 달력 날짜면 지금을 5분 단위로 올린 시각과 09:00 중 늦은 것,
+     * 앱의 오늘인데 지금이 다음 날 새벽(달력 날짜가 다름)이면 지금을 5분 단위로 올린 다음 날 시각, 다른 날이면 09:00. 다음 날 03:55까지다.
+     */
+    public static int start(LocalDate date, LocalDateTime now) {
         int m = now.getHour() * 60 + now.getMinute() + (now.getSecond() > 0 ? 1 : 0);
-        m = Math.min(Math.max((m + 4) / 5 * 5, 9 * 60), 23 * 60 + 55);
-        return LocalTime.of(m / 60, m % 60);
+        m = (m + 4) / 5 * 5;
+        if (date.equals(now.toLocalDate())) {
+            return Math.min(Math.max(m, 9 * 60), LAST_START);
+        }
+        if (date.equals(now.toLocalDate().minusDays(1)) && date.equals(planningpet.common.model.Rules.appDay(now))) {
+            return Math.min(Task.DAY + m, LAST_START);
+        }
+        return 9 * 60;
     }
 
     /** 반복 끝 날짜(D-17, D-64): 고정 일정은 날짜에 15주, 할 일은 4주. */

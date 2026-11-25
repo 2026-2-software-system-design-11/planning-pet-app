@@ -48,12 +48,12 @@ final class Flows8910 {
         TimeEditor e = new TimeEditor(t, q.app.store.now);
         q.eq("시작", "23:55", e.start.getValue());
         q.step("4", "그대로 저장한다");
-        q.eq("저장", "false 하루 안에 끝나야 해요", TimeEditor.save(q.app, t, e) + " " + e.error.getText());
+        q.eq("저장", "true 23:55~00:25(다음 날)", TimeEditor.save(q.app, t, e) + " " + planningpet.schedule.model.TaskBook.timeText(t));
         q.step("5", "11-21 01:00에 자동 배치를 누른다");
         q.at("2026-11-21T01:00");
         q.eq("결과 창", "11월 21일 09:00부터 11월 22일까지, 할 일마다 그 날짜(기간 할 일은 기간) 안의 빈 시간에 놓았어요"
                 + " / 재무회계|11월 21일|09:00 ~ 10:00|60분 / 경영학|11월 21일|10:00 ~ 11:00|60분"
-                + " / 놓지 못한 일 / 원가회계 날짜 11/20(금) 그날 빈 시간이 모자라요 / 세법 요약 날짜 11/20(금) 그날 빈 시간이 모자라요 / "
+                + " / 놓지 못한 일 / 세법 요약 날짜 11/20(금) 그날 빈 시간이 모자라요 / "
                 + HINT, q.placement(q.place()));
         q.end();
     }
@@ -190,7 +190,7 @@ final class Flows8910 {
         q.has("목록", "[ ] 논문 읽기 23:30~24:00 30분", q.rows());
         q.step("2", "논문 정리 23:30 40분으로 저장한다");
         TaskForm g = timed(q, "논문 정리", "23:30", 40);
-        q.eq("끝, 저장", "24:10에 끝나요 false 하루 안에 끝나야 해요", g.endLabel.getText() + " " + q.save(g, null) + " " + g.errorText());
+        q.eq("끝, 저장", "00:10(다음 날)에 끝나요 true ", g.endLabel.getText() + " " + q.save(g, null) + " " + g.errorText());
         q.step("3", "실험 정리 720분으로 저장한다");
         TaskForm h = q.form("2026-11-17");
         h.title.setText("실험 정리");
@@ -213,7 +213,7 @@ final class Flows8910 {
         Task t = q.task("논문 읽기");
         q.step("1", "논문 읽기를 체크한다");
         q.check(t);
-        q.eq("상태", "10P 경험치10 횟수1 성취도1/2", st(q));
+        q.eq("상태", "10P 경험치10 횟수1 성취도1/3", st(q));
         q.eq("말풍선", "잘했어! +10P", q.app.store.talk);
         q.step("2", "수정으로 11-20, 20:00, 120분으로 저장한다");
         TaskForm f = new TaskForm(t, t.date, q.app.store.now);

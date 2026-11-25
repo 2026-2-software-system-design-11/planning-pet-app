@@ -238,8 +238,7 @@ final class Flows12 {
         Task b = q.task("B사 자소서 1번");
         TimeEditor late = new TimeEditor(b, q.app.store.now);
         late.start.setValue("22:30");
-        q.eq("저장됨", false, TimeEditor.save(q.app, b, late));
-        q.eq("창 아래", "하루 안에 끝나야 해요", late.error.getText());
+        q.eq("저장됨", true, TimeEditor.save(q.app, b, late));
         q.end();
     }
 

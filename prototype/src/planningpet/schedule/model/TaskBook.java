@@ -51,6 +51,7 @@ public final class TaskBook {
             // D-68: 기간 할 일의 시각은 목록과 자동 배치로만 정하므로 시각 없이 만든다.
             Task t = new Task(UUID.randomUUID().toString(), nextSeq.getAsLong(), d.kind(), d.title().strip(), day,
                     period ? null : d.start(), d.minutes());
+            t.nextDay = !period && d.start() != null && d.nextDay();
             t.memo = d.memo();
             t.category = d.category();
             t.seriesId = series;
@@ -80,12 +81,14 @@ public final class TaskBook {
             if (!(task.period() && task.timed())) {
                 task.date = d.date();
                 task.start = null;
+                task.nextDay = false;
             }
             task.startDay = d.date();
             task.dueDate = d.dueDate();
         } else {
             task.date = d.date();
             task.start = d.start();
+            task.nextDay = d.start() != null && d.nextDay();
             if (task.seriesId == null) {
                 task.dueDate = null;
                 task.startDay = null;
@@ -103,10 +106,15 @@ public final class TaskBook {
      * 목록의 날(listDay)로 옮기고 기간은 둔다(D-65, D-68).
      */
     public void setTime(Task task, LocalTime start, int minutes, LocalDate listDay, boolean thisAndAfter) {
-        if (task.period() && start != null) {
+        setTime(task, start == null ? null : start.getHour() * 60 + start.getMinute(), minutes, listDay, thisAndAfter);
+    }
+
+    /** 앱 하루의 분(D-77)으로 시작을 넣는다. 24:00을 넘으면 다음 날 새벽 시각이다. */
+    public void setTime(Task task, Integer startMinute, int minutes, LocalDate listDay, boolean thisAndAfter) {
+        if (task.period() && startMinute != null) {
             task.date = listDay;
         }
-        task.start = start;
+        task.setStart(startMinute);
         task.minutes = minutes;
         if (thisAndAfter) {
             applyToSeries(task, task.date, true);
@@ -119,9 +127,9 @@ public final class TaskBook {
      */
     public void clearTime(Task task, boolean thisAndAfter) {
         if (thisAndAfter && task.seriesId != null) {
-            tasks.stream().filter(t -> task.seriesId.equals(t.seriesId) && !t.date.isBefore(task.date)).forEach(t -> t.start = null);
+            tasks.stream().filter(t -> task.seriesId.equals(t.seriesId) && !t.date.isBefore(task.date)).forEach(t -> t.setStart(null));
         }
-        task.start = null;
+        task.setStart(null);
         if (task.period()) {
             LocalDate from = today().isBefore(task.startDay) ? task.startDay : today();
             task.date = from.isAfter(task.dueDate) ? task.dueDate : from;
@@ -157,6 +165,7 @@ public final class TaskBook {
         for (Task t : tasks) {
             if (t != edited && edited.seriesId != null && edited.seriesId.equals(t.seriesId) && !t.date.isBefore(originalDate)) {
                 t.start = edited.start;
+                t.nextDay = edited.nextDay;
                 t.minutes = edited.minutes;
                 if (!timeOnly) {
                     t.title = edited.title;
@@ -177,7 +186,7 @@ public final class TaskBook {
     private Comparator<Task> order() {
         LocalDate day = today();
         return Comparator.comparing((Task t) -> !t.onTimetable(day))
-                .thenComparing(t -> t.onTimetable(day) ? t.start : LocalTime.MIN)
+                .thenComparingInt(t -> t.onTimetable(day) ? t.startMinute() : 0)
                 .thenComparingLong(t -> t.seq);
     }
 
@@ -204,7 +213,7 @@ public final class TaskBook {
         LocalDate now = today();
         List<Task> timed = tasks.stream()
                 .filter(t -> t.onTimetable(now) && t.date.equals(date))
-                .sorted(Comparator.comparing((Task t) -> t.start).thenComparingLong(t -> t.seq))
+                .sorted(Comparator.comparingInt(Task::startMinute).thenComparingLong(t -> t.seq))
                 .toList();
         List<Task> rest = tasks.stream()
                 .filter(t -> t.kind == Task.Kind.TASK && !t.onTimetable(now) && t.shownOn(date, now))
@@ -249,10 +258,16 @@ public final class TaskBook {
         return t.dueDate == null ? null : "~" + t.dueDate.getMonthValue() + "/" + t.dueDate.getDayOfMonth() + "까지";
     }
 
-    /** "10:00~11:00". 자정에 끝나면 "24:00". */
+    /**
+     * "10:00~11:00". 자정에 끝나면 "24:00", 자정을 넘으면 "23:30~01:00(다음 날)", 자정 넘어 시작하면 "01:30~02:00(다음 날)"(D-77).
+     */
     public static String timeText(Task t) {
+        int start = t.startMinute();
         int end = t.endMinute();
-        return t.start + "~" + String.format("%02d:%02d", end / 60, end % 60);
+        if (start >= Task.DAY) {
+            return Task.hhmm(start) + "~" + Task.hhmm(end) + "(다음 날)";
+        }
+        return Task.hhmm(start) + "~" + Task.endText(end);
     }
 
     /** 일정관리 오른쪽 목록의 한 줄: 일정과 줄 앞에 붙일 날짜. */

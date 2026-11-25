@@ -37,7 +37,9 @@ final class TimePill extends JButton {
     @Override
     public Dimension getPreferredSize() {
         FontMetrics fm = getFontMetrics(getFont());
-        int w = Math.max(fm.stringWidth("00:00~00:00"), fm.stringWidth("시각 정하기")) + 14 + 5 + 18;
+        // 폭은 줄마다 같다. 자정을 넘는 "23:30~01:00(다음 날)"(D-77)만 글에 맞춰 넓어진다.
+        int w = Math.max(Math.max(fm.stringWidth("00:00~00:00"), fm.stringWidth("시각 정하기")), fm.stringWidth(getText()))
+                + 14 + 5 + 18;
         return new Dimension(w, 28);
     }
 

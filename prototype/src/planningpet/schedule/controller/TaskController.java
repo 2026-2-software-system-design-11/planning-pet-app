@@ -6,7 +6,6 @@ import planningpet.reward.model.*;
 import planningpet.schedule.model.*;
 import planningpet.schedule.view.*;
 import java.time.LocalDate;
-import java.time.LocalTime;
 import javax.swing.JOptionPane;
 
 /** 일정 controller. 여러 화면이 같이 쓰는 사용자 동작(체크, 수정, 삭제, 추가, 저장)을 받아 Model을 바꾸고 알린다. */
@@ -148,7 +147,7 @@ public final class TaskController {
     }
 
     /** 시각 고치기 창의 저장(D-32, D-42). 반복 사본이면 범위를 묻고, 취소하면 false. day는 창을 연 목록의 날이다(D-65). */
-    public boolean saveTime(Task t, LocalTime start, int minutes, LocalDate day) {
+    public boolean saveTime(Task t, int start, int minutes, LocalDate day) {
         int scope = editScope(t);
         if (scope < 0) {
             return false;
@@ -176,7 +175,7 @@ public final class TaskController {
     /** 자동 배치 결과 창의 적용(UC-11). */
     public void applyPlacement(Planner.Placement p) {
         app.control.change(() -> p.placed().forEach(x -> {
-            x.task().start = x.start();
+            x.task().setStart(x.start().getHour() * 60 + x.start().getMinute());
             if (x.task().dueDate != null) {
                 // D-65: 기간 할 일은 놓은 날로 옮긴다. 마감은 그대로다.
                 x.task().date = x.day();

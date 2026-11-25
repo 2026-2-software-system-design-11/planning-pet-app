@@ -100,12 +100,12 @@ final class Flows67 {
         q.step("3", "국시 모의고사, 걸리는 시간 칸에 27을 쳐 넣고 칸을 벗어난다");
         f.title.setText("국시 모의고사");
         q.eq("걸리는 시간", 30, Flows8910.type(f.minutes, "27"));
-        q.step("4", "제목을 비우고 시작 시각 23:30, 40분으로 저장한다");
+        q.step("4", "제목을 비우고 시작 시각 03:30(다음 날), 40분으로 저장한다");
         f.title.setText("");
         f.timed.doClick();
-        f.start.setValue("23:30");
+        f.start.setValue("03:30(다음 날)");
         f.minutes.setValue(40);
-        q.eq("오류 두 개(칸 순서)", "false 제목을 써 주세요 / 하루 안에 끝나야 해요", q.save(f, null) + " " + f.errorText());
+        q.eq("오류 두 개(칸 순서)", "false 제목을 써 주세요 / 다음 날 04:00까지 끝나야 해요", q.save(f, null) + " " + f.errorText());
         q.eq("오류가 보이는 칸", "true true false", f.errors.get("제목").isVisible() + " " + f.errors.get("시작 시각").isVisible()
                 + " " + f.errors.get("걸리는 시간").isVisible());
         q.step("5", "국시 모의고사, 시작 시각 끄고 30분으로 저장한다");

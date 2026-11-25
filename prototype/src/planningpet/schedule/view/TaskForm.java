@@ -18,7 +18,9 @@ public final class TaskForm {
     public final JTextField title = new JTextField(22);
     public final JSpinner date = new JSpinner(new SpinnerDateModel());
     public final JCheckBox timed = new JCheckBox("정하기");
-    public final JSpinner start = new JSpinner(new SpinnerListModel(Ui.times()));
+    public final JSpinner start = new JSpinner(new SpinnerListModel(Times.values()));
+    /** 다음 날 새벽 값이면 시작 칸 옆에 적는 실제 날과 시각 "(토 01:30)"(D-77). */
+    public final JLabel realTime = new JLabel();
     public final JSpinner minutes = Ui.minutes(30);
     /** 7번 반복(D-64): 안 함, 매일, 요일. 요일이면 요일 단추 일곱(월부터 일)에서 하나 이상 고른다. */
     public final JComboBox<String> repeat = new JComboBox<>(new String[] {"안 함", "매일", "요일"});
@@ -70,7 +72,7 @@ public final class TaskForm {
             days[i].setMargin(new Insets(1, 4, 1, 4));
             days[i].addActionListener(e -> sync());
         }
-        start.setValue(DefaultDates.start(defaultDate, now).toString());
+        start.setValue(Times.value(DefaultDates.start(defaultDate, now)));
         for (String k : new String[] {"제목", "마감", "시작 시각", "걸리는 시간", "메모", "반복"}) {
             JLabel l = new JLabel();
             l.setForeground(Theme.SUNDAY);
@@ -84,7 +86,7 @@ public final class TaskForm {
         dateLabel = line("날짜", date);
         line("기간", Ui.flow(period, periodHint, dueLabel, due));
         line("", errors.get("마감"));
-        line("시작 시각", Ui.flow(timed, start));
+        line("시작 시각", Ui.flow(timed, start, realTime));
         line("", errors.get("시작 시각"));
         line("걸리는 시간 (분)", Ui.flow(minutes, endLabel));
         line("", errors.get("걸리는 시간"));
@@ -108,7 +110,7 @@ public final class TaskForm {
         if (t != null) {
             fixed.setSelected(t.kind == Task.Kind.FIXED);
             timed.setSelected(t.timed() && !t.period());
-            start.setValue(t.timed() ? t.start.toString() : "09:00");
+            start.setValue(t.timed() ? Times.value(t.startMinute()) : "09:00");
             minutes.setValue(t.minutes);
             memo.setText(t.memo);
             category.setSelectedItem(t.category);
@@ -206,9 +208,9 @@ public final class TaskForm {
             Ui.setDate(due, DefaultDates.due(day));
         }
         minutesHint.setVisible(!editing && (int) minutes.getValue() == 30);
-        LocalTime s = startTime();
-        int end = s == null ? 0 : s.getHour() * 60 + s.getMinute() + (int) minutes.getValue();
-        endLabel.setText(s == null ? "" : String.format("%02d:%02d에 끝나요", end / 60, end % 60));
+        Integer s = startTime();
+        endLabel.setText(s == null ? "" : Times.endHint(s, (int) minutes.getValue()));
+        realTime.setText(s == null ? "" : Times.real(day, s));
         syncing = false;
         if (checked) {
             showErrors(problems());
@@ -240,9 +242,11 @@ public final class TaskForm {
             }
             how = Repeat.weekly(picked);
         }
+        Integer s = startTime();
         return new TaskDraft(fixed.isSelected() ? Task.Kind.FIXED : Task.Kind.TASK, title.getText(),
                 (String) category.getSelectedItem(), Ui.dateOf(date), period.isSelected() ? Ui.dateOf(due) : null,
-                startTime(), (int) minutes.getValue(), memo.getText(), how, how == null ? null : Ui.dateOf(repeatEnd));
+                s == null ? null : LocalTime.of(s % Task.DAY / 60, s % 60), (int) minutes.getValue(), memo.getText(), how,
+                how == null ? null : Ui.dateOf(repeatEnd), s != null && s >= Task.DAY);
     }
 
     /** D-42: 반복 사본을 고칠 때 반복 칸을 그 반복의 방식인 채(비활성) 그 반복의 마지막 날짜와 함께 보인다. */
@@ -276,8 +280,9 @@ public final class TaskForm {
         return String.join(" / ", errors.values().stream().filter(JLabel::isVisible).map(JLabel::getText).toList());
     }
 
-    private LocalTime startTime() {
-        return timed.isSelected() ? LocalTime.parse((String) start.getValue()) : null;
+    /** 시작 칸의 앱 하루의 분(D-77). 시각을 정하지 않았으면 null. */
+    private Integer startTime() {
+        return timed.isSelected() ? Times.minuteOf(start.getValue()) : null;
     }
 
     private JLabel line(String label, JComponent field) {

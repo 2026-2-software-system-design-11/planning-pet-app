@@ -13,6 +13,8 @@ public final class Task {
     public String title;
     public LocalDate date;
     public LocalTime start;          // 없으면 null
+    /** 시작 시각이 date 다음 날 새벽(00:00~03:55)인가(D-77). 그래도 date의 일이고 그날 24:00 아래에 놓인다. */
+    public boolean nextDay;
     public int minutes;
     public String memo = "";
     public String seriesId;          // 반복 사본끼리 같다(D-17, D-64)
@@ -107,8 +109,34 @@ public final class Task {
         return !day.isBefore(date) && !day.isAfter(dueDate.isBefore(date) ? date : dueDate);
     }
 
+    /** 앱 하루의 시각(D-77): date 00:00부터 잰 분. nextDay면 24시간을 더한다. */
     public int startMinute() {
-        return start.getHour() * 60 + start.getMinute();
+        return (nextDay ? DAY : 0) + start.getHour() * 60 + start.getMinute();
+    }
+
+    /** 하루 칸의 분(24:00). */
+    public static final int DAY = 24 * 60;
+    /** 하루 칸의 끝(D-77): 다음 날 04:00, 곧 28:00. */
+    public static final int DAY_END = 28 * 60;
+
+    /** 분을 "HH:mm"으로. 24시간을 넘으면 다음 날 시각이다. */
+    public static String hhmm(int minute) {
+        int m = minute % DAY;
+        return String.format("%02d:%02d", m / 60, m % 60);
+    }
+
+    /** 끝 시각 글(D-77): 자정이면 "24:00", 넘으면 "01:00(다음 날)". */
+    public static String endText(int minute) {
+        if (minute == DAY) {
+            return "24:00";
+        }
+        return minute > DAY ? hhmm(minute) + "(다음 날)" : hhmm(minute);
+    }
+
+    /** 앱 하루의 분에서 시각과 다음 날 여부를 넣는다. null이면 시각을 뺀다. */
+    public void setStart(Integer minute) {
+        start = minute == null ? null : LocalTime.of(minute % DAY / 60, minute % 60);
+        nextDay = minute != null && minute >= DAY;
     }
 
     public int endMinute() {
