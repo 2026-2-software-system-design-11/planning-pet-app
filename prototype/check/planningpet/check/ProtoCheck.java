@@ -139,6 +139,8 @@ public final class ProtoCheck {
                 starts("오후 2시", "2시", "8시", "9시", "12시", "오후 2시 반", "2시 30분", "아침 7시", "저녁 7시", "밤 9시", "낮 12시", "낮 11시",
                         "새벽 1시", "밤 2시", "밤 12시", "새벽 5시").replace(" null", "").replace(" /", ""));
         eq("T-TYPE-9", "null 14:00처럼 적어 주세요 / null 14:00처럼 적어 주세요 / null 14:00처럼 적어 주세요", starts("25:00", "09:75", "점심"));
+        eq("D-98 시작 시각 칸 아래 글", "09:05 흐린 5분 단위로 맞췄어요(09:05) / 14:00 / 흐린 하루는 새벽 4시에 넘어가요. 03:55(다음 날)로 맞췄어요"
+                + " / 흐린 최대 720분(12시간)까지 넣을 수 있어요 true", startTyped());
         Store c = MockData.sample();
         java.time.LocalDate nov = java.time.LocalDate.of(2026, 11, 1);
         TaskBook.CellPreview c14 = c.book.cellPreview(nov.withDayOfMonth(14));
@@ -354,6 +356,21 @@ public final class ProtoCheck {
     /** 시작 시각 칸에 쳐 넣은 글마다 읽은 값과 칸 아래 글(06의 32번). */
     private static String starts(String... texts) {
         return String.join(" / ", java.util.Arrays.stream(texts).map(Typed::start).map(r -> r.value() + " " + r.notice()).toList());
+    }
+
+    /** 입력 창 시작 시각은 09:03을 맞추고 "14"를 14:00으로 채운다. 시각 고치기 창의 두 글은 각자 칸 묶음 아래에 함께 뜬다. */
+    private static String startTyped() {
+        TaskForm f = new TaskForm(null, java.time.LocalDate.of(2026, 11, 16), java.time.LocalDateTime.of(2026, 11, 16, 9, 0));
+        f.timed.setSelected(true);
+        f.sync();
+        String form = type(f.start, "09:03") + " " + notice(f.startNotice);
+        var field = ((javax.swing.JSpinner.DefaultEditor) f.start.getEditor()).getTextField();
+        field.setText("14");
+        TimeEditor e = new TimeEditor(MockData.sample().tasks.get(0), java.time.LocalDateTime.of(2026, 11, 14, 15, 23));
+        type(e.start, "04:10(다음 날)");
+        type(e.minutes, "730");
+        return form + " / " + field.getText() + " / " + notice(e.startNotice) + " / " + notice(e.minutesNotice) + " "
+                + (e.startNotice.getParent() != e.minutesNotice.getParent());
     }
 
     /** 칸에 글을 쳐 넣고 칸을 벗어난 것과 같다. 받지 않으면 이전 값이다. */

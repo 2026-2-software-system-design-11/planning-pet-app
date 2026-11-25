@@ -23,6 +23,8 @@ public final class TaskForm {
     public final JLabel realTime = new JLabel();
     public final JSpinner minutes = Ui.minutes(30);
     /** 걸리는 시간 칸에 쳐 넣은 값을 맞췄거나 받지 않았을 때 칸 아래 글(D-98). */
+    /** 시작 시각 칸에 쳐 넣은 값을 맞췄거나 받지 않았을 때 칸 아래 글(D-98). */
+    public final JLabel startNotice = new TypedField(start, Typed::start, () -> this.relayout.run()).notice;
     public final JLabel minutesNotice = new TypedField(minutes, Typed::minutes, () -> this.relayout.run()).notice;
     /** 7번 반복(D-64): 안 함, 매일, 요일. 요일이면 요일 단추 일곱(월부터 일)에서 하나 이상 고른다. */
     public final JComboBox<String> repeat = new JComboBox<>(new String[] {"안 함", "매일", "요일"});
@@ -127,6 +129,7 @@ public final class TaskForm {
         line("기간", Ui.flow(period, periodHint, dueLabel, due));
         line("", errors.get("마감"));
         line("시작 시각", Ui.flow(timed, start, realTime));
+        line("", startNotice);
         line("", errors.get("시작 시각"));
         line("걸리는 시간 (분)", Ui.flow(minutes, endLabel));
         line("", minutesNotice);

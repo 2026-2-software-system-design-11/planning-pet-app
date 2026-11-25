@@ -24,7 +24,8 @@ public final class TimeEditor {
     /** 다음 날 새벽 값이면 칸 옆에 실제 날과 시각 "(토 01:30)"(D-77). */
     public final JLabel realTime = new JLabel();
     public final JSpinner minutes;
-    /** 걸리는 시간 칸 묶음 바로 아래 글(D-98). */
+    /** 시작 시각 칸 묶음과 걸리는 시간 칸 묶음 바로 아래에 따로 붙는 글(D-98). */
+    public final JLabel startNotice;
     public final JLabel minutesNotice;
     /** 칸 아래 글이 늘거나 줄면 창 크기를 다시 맞춘다. 창 없이 만들 때는 아무것도 하지 않는다. */
     Runnable relayout = () -> { };
@@ -54,6 +55,8 @@ public final class TimeEditor {
         minutes = Ui.minutes(t.minutes);
         TypedField typed = new TypedField(minutes, Typed::minutes, () -> relayout.run());
         minutesNotice = typed.notice;
+        TypedField typedStart = new TypedField(start, Typed::start, () -> relayout.run());
+        startNotice = typedStart.notice;
         error.setForeground(Theme.SUNDAY);
         error.setFont(Theme.font(12));
         panel.setBorder(BorderFactory.createEmptyBorder(12, 14, 12, 14));
@@ -62,8 +65,10 @@ public final class TimeEditor {
         JPanel fields = new JPanel(new BorderLayout(0, 4));
         fields.add(name, BorderLayout.NORTH);
         // D-98: 칸 아래 글은 각 칸 묶음 바로 아래 그 너비 안에서 접힌다.
-        JPanel row = new JPanel(new BorderLayout(4, 0));
-        row.add(column(Ui.flow(new JLabel("시작 시각"), start, realTime), null), BorderLayout.WEST);
+        JPanel row = new JPanel(new BorderLayout(12, 0));
+        JPanel startRow = Ui.flow(new JLabel("시작 시각"), start, realTime);
+        typedStart.wrap = () -> startRow.getPreferredSize().width;
+        row.add(column(startRow, startNotice), BorderLayout.WEST);
         JPanel minutesRow = Ui.flow(new JLabel("걸리는 시간"), minutes, new JLabel("분"));
         typed.wrap = () -> minutesRow.getPreferredSize().width;
         row.add(column(minutesRow, minutesNotice), BorderLayout.CENTER);
@@ -81,9 +86,7 @@ public final class TimeEditor {
     private static JPanel column(JComponent fields, JLabel notice) {
         JPanel p = new JPanel(new BorderLayout(0, 2));
         p.add(fields, BorderLayout.NORTH);
-        if (notice != null) {
-            p.add(notice, BorderLayout.CENTER);
-        }
+        p.add(notice, BorderLayout.CENTER);
         return p;
     }
 

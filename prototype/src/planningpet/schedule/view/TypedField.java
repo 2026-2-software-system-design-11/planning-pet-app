@@ -22,7 +22,17 @@ public final class TypedField {
         DocumentFilter filter = new DocumentFilter() {
             @Override
             public void replace(FilterBypass fb, int off, int len, String text, AttributeSet a) throws BadLocationException {
-                super.replace(fb, off, len, text, a);
+                // 목록 칸은 쳐 넣는 동안 그 앞부분으로 시작하는 첫 값을 채워 보인다("14"는 "14:00", 지금 동작).
+                Document d = fb.getDocument();
+                String typed = text == null || text.isEmpty() || off + len != d.getLength() ? null : d.getText(0, off) + text;
+                Object match = !(spinner.getModel() instanceof SpinnerListModel list) || typed == null ? null
+                        : list.getList().stream().filter(x -> x.toString().startsWith(typed)).findFirst().orElse(null);
+                if (match != null) {
+                    fb.replace(0, d.getLength(), match.toString(), a);
+                    ((JSpinner.DefaultEditor) spinner.getEditor()).getTextField().select(off + text.length(), match.toString().length());
+                } else {
+                    super.replace(fb, off, len, text, a);
+                }
                 edited(fb.getDocument().getText(0, fb.getDocument().getLength()));
             }
 
