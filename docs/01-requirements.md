@@ -16,15 +16,15 @@
 | 앱 | 하는 일 | 플래닝펫과 다른 점 | 출처 |
 |---|---|---|---|
 | Google 캘린더 | 일정 기록과 알림. 할 일도 만들어 날짜와 시각을 정하고 완료로 표시한다 | 해낸 일에 대한 보상이 없다(도움말에 포인트, 경험치 같은 보상 설명이 없다) | [도움말: 할 일](https://support.google.com/calendar/answer/9901136?hl=ko&co=GENIE.Platform%3DDesktop) (날짜 표시 없음), [도움말: 알림](https://support.google.com/calendar/answer/37242?hl=ko) (날짜 표시 없음), [Google Play](https://play.google.com/store/apps/details?id=com.google.android.calendar) (앱 갱신 2026-11-19) |
-| Habitica | 습관, 일과, 할 일을 체크하면 골드와 경험치를 받는 RPG식 할 일 관리 | 직업, 장비, 펫, 파티 퀘스트처럼 게임 요소가 많아 익힐 것이 많다. 공식 FAQ도 아이템이 수천 개라 새 사용자에게 버거울 수 있다고 쓴다. 퀘스트는 파티에 들어야 하지만 혼자 하는 파티도 된다 | [공식 FAQ](https://habitica.com/static/faq) (페이지에 날짜 없음. FAQ 글을 담은 [저장소 파일](https://github.com/HabitRPG/habitica/blob/develop/website/common/locales/en/faq.json)의 마지막 수정 2026-06-25), [Google Play](https://play.google.com/store/apps/details?id=com.habitrpg.android.habitica) (앱 갱신 2026-11-04) |
-| Forest | 집중하는 동안 나무가 자라고 딴짓하면 시든다 | 할 일 목록과 달력이 없다. 시간을 정하는 기능(Time Guard)은 정한 시간대에 앱을 막는 것이다 | [공식 사이트 소개 글](https://forestapp.cc/llms-full.txt) (날짜 표시 없음), [Google Play](https://play.google.com/store/apps/details?id=cc.forestapp) (앱 갱신 2026-11-18) |
-| Finch | 자기관리 목표를 하면 펫이 에너지를 얻어 모험을 떠나고 자란다 | iOS와 Android 모바일 앱이다. 목표는 매일, 매주 같은 반복 주기로 정하고 하루 중 시간과 알림을 붙일 수 있다. 날짜와 시작 시각, 걸리는 시간을 넣어 시간표에 놓는 기능은 도움말에서 찾지 못했다 | [도움말: 목표 만들기](https://help.finchcare.com/hc/en-us/articles/37779940291213-Creating-and-Completing-Goals) (갱신 2026-10-08), [도움말: 새 사용자 안내](https://help.finchcare.com/hc/en-us/articles/42149821015693-New-User-Guide) (갱신 2026-11-21), [도움말: 앱 상태](https://help.finchcare.com/hc/en-us/articles/38284234302989-Finch-App-Status) (갱신 2026-11-19), [Google Play](https://play.google.com/store/apps/details?id=com.finch.finch) (앱 갱신 2026-11-25) |
+| Habitica | 습관, 일과, 할 일을 체크하면 골드와 경험치를 받는 RPG식 할 일 관리 | 게임 요소가 많다. 공식 FAQ는 할 일 말고도 직업(레벨 10에 고른다), 능력치, 체력, 장비, 펫, 파티 퀘스트를 설명한다. 퀘스트는 파티에 들어야 하지만 혼자 하는 파티도 된다 | [공식 FAQ](https://habitica.com/static/faq) (페이지에 날짜 없음. FAQ 글을 담은 [저장소 파일](https://github.com/HabitRPG/habitica/blob/develop/website/common/locales/en/faq.json)의 마지막 수정 2026-06-25), [Google Play](https://play.google.com/store/apps/details?id=com.habitrpg.android.habitica) (앱 갱신 2026-11-04) |
+| Forest | 집중하는 동안 나무가 자라고 딴짓하면 시든다 | 공식 소개 글의 기능 목록(집중 타이머, 앱 차단, 집중 통계, 함께 집중하기 등)에 할 일 목록과 달력이 없다. 시간을 정하는 기능(Time Guard)은 정한 시간대에 앱을 막는 것이다 | [공식 사이트 소개 글](https://forestapp.cc/llms-full.txt) (날짜 표시 없음), [Google Play](https://play.google.com/store/apps/details?id=cc.forestapp) (앱 갱신 2026-11-18) |
+| Finch | 자기관리 목표를 하면 펫이 에너지를 얻어 모험을 떠나고 자란다 | iOS와 Android 모바일 앱이다. 목표는 매일, 매주 같은 반복 주기로 정하고 하루 중 시간과 알림을 붙일 수 있다. 날짜와 시작 시각, 걸리는 시간을 넣어 시간표에 놓는 기능은 도움말에서 찾지 못했다 | [도움말: 목표 만들기](https://help.finchcare.com/hc/en-us/articles/37779940291213-Creating-and-Completing-Goals) (글 고침 2025-07-29), [도움말: 새 사용자 안내](https://help.finchcare.com/hc/en-us/articles/42149821015693-New-User-Guide) (글 고침 2025-12-22), [도움말: 앱 상태](https://help.finchcare.com/hc/en-us/articles/38284234302989-Finch-App-Status) (글 고침 2026-11-18, 본문의 "Last updated: November 18th"와 같다), [Google Play](https://play.google.com/store/apps/details?id=com.finch.finch) (앱 갱신 2026-11-25) |
 
 확인하지 못한 것:
 
 - Habitica 할 일의 마감에 시각까지 넣을 수 있는지. FAQ는 마감 날짜만 말한다.
 - Finch 목표의 "하루 중 시간"이 정확한 시각인지, 아침과 저녁 같은 때인지. 도움말에 설명이 없다.
-- Finch 도움말 페이지는 브라우저 확인 화면이 막아 도움말 사이트의 공개 API(Zendesk)로 글과 갱신일을 읽었다.
+- Finch 도움말 페이지의 화면. 브라우저 확인 화면이 막아 도움말 사이트의 공개 API(Zendesk)로 글을 읽었다. 출처 옆 날짜는 API의 `edited_at`(글 내용을 고친 때)이고, 페이지 화면에 보이는 날짜는 보지 못했다.
 
 플래닝펫만의 특징:
 
