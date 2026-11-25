@@ -45,9 +45,6 @@ public final class TaskForm {
     public final JLabel endLabel = new JLabel();
     /** D-43: 추가 창에서 걸리는 시간이 30일 때만 보인다. */
     public final JLabel minutesHint = Ui.hint("안 바꾸면 30분으로 들어가요");
-    /** D-95: 시작 시각과 걸리는 시간을 5분 단위로 맞췄다는 글. */
-    public final RoundNote startNote = RoundNote.start(start, () -> this.relayout.run());
-    public final RoundNote minutesNote = RoundNote.minutes(minutes, () -> this.relayout.run());
     private final boolean editing;
     /** 반복 사본을 고치는 중(기간 칸은 꺼진 채 비활성, D-65). */
     private final boolean copy;
@@ -100,10 +97,8 @@ public final class TaskForm {
         line("", errors.get("마감"));
         line("시작 시각", Ui.flow(timed, start, realTime));
         line("", errors.get("시작 시각"));
-        line("", startNote.label);
         line("걸리는 시간 (분)", Ui.flow(minutes, endLabel));
         line("", errors.get("걸리는 시간"));
-        line("", minutesNote.label);
         line("", minutesHint);
         JComponent[] repeatParts = new JComponent[8];
         repeatParts[0] = repeat;
