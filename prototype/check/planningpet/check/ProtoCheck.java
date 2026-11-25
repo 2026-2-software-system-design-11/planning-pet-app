@@ -122,7 +122,7 @@ public final class ProtoCheck {
         r.book.delete(x, false);
         eq("T-DEL-1", "10 1", r.points + " " + r.rewardCount);
         eq("숫자 조사", "을 를", Rules.josa("과제 1", "을", "를") + " " + Rules.josa("과제 2", "을", "를"));
-        eq("D-38 5분 단위", "30 null 75", fiveMinute());
+        eq("D-38 5분 단위, D-95 맞추기", "25 null 75", fiveMinute());
         Store c = MockData.sample();
         java.time.LocalDate nov = java.time.LocalDate.of(2026, 11, 1);
         TaskBook.CellPreview c14 = c.book.cellPreview(nov.withDayOfMonth(14));
@@ -259,11 +259,7 @@ public final class ProtoCheck {
     private static String fiveMinute() {
         TaskForm f = new TaskForm(null, java.time.LocalDate.of(2026, 11, 16), java.time.LocalDateTime.of(2026, 11, 16, 9, 0));
         f.title.setText("과제");
-        try {
-            f.minutes.setValue(27);
-        } catch (IllegalArgumentException ignored) {
-            // 받지 않는다.
-        }
+        f.minutes.setValue(27);
         Object kept = f.minutes.getValue();
         f.minutes.setValue(75);
         return kept + " " + msgs(f) + " " + f.minutes.getValue();
