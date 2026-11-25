@@ -123,6 +123,9 @@ public final class ProtoCheck {
         eq("T-DEL-1", "10 1", r.points + " " + r.rewardCount);
         eq("숫자 조사", "을 를", Rules.josa("과제 1", "을", "를") + " " + Rules.josa("과제 2", "을", "를"));
         eq("D-38 5분 단위", "30 null 75", fiveMinute());
+        eq("T-TYPE-1", "25 5분 단위로 맞췄어요(25분) / 75 null", typed("27") + " / " + typed("75"));
+        eq("T-TYPE-2", "720 최대 720분(12시간)까지 넣을 수 있어요 / 10 최소 10분부터 넣을 수 있어요", typed("730") + " / " + typed("5"));
+        eq("T-TYPE-3", "null 숫자(분)로 넣어 주세요(예: 30) / 30 null", typed("반시간") + " / " + typed("30분"));
         Store c = MockData.sample();
         java.time.LocalDate nov = java.time.LocalDate.of(2026, 11, 1);
         TaskBook.CellPreview c14 = c.book.cellPreview(nov.withDayOfMonth(14));
@@ -296,6 +299,12 @@ public final class ProtoCheck {
 
     private static float[] hsb(java.awt.Color c) {
         return java.awt.Color.RGBtoHSB(c.getRed(), c.getGreen(), c.getBlue(), null);
+    }
+
+    /** 걸리는 시간 칸에 쳐 넣은 글을 읽은 값과 칸 아래 글(06의 32번). */
+    private static String typed(String text) {
+        Typed.Read r = Typed.minutes(text);
+        return r.value() + " " + r.notice();
     }
 
     /** 검사 문장을 칸 순서대로 " / "로 잇는다. 통과면 null. */
