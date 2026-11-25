@@ -134,6 +134,13 @@ public final class Theme {
         UIManager.put("ToggleButton.font", new FontUIResource(bold(14)));
         UIManager.put("ButtonUI", RoundButtonUI.class.getName());
         UIManager.put("ToggleButtonUI", RoundButtonUI.class.getName());
+        // 고르는 칸(D-97): 옆 입력 칸과 같은 흰 바탕, 펼친 목록의 고른 줄은 MINT_PALE.
+        UIManager.put("ComboBoxUI", ComboUI.class.getName());
+        UIManager.put("ComboBox.background", new ColorUIResource(CARD_TOP));
+        UIManager.put("ComboBox.disabledBackground", new ColorUIResource(CARD_TOP));
+        UIManager.put("ComboBox.disabledForeground", new ColorUIResource(INK_DIM));
+        UIManager.put("ComboBox.selectionBackground", new ColorUIResource(MINT_PALE));
+        UIManager.put("ComboBox.selectionForeground", new ColorUIResource(INK));
         for (String k : List.of("Panel", "CheckBox", "RadioButton", "OptionPane")) {
             UIManager.put(k + ".background", new ColorUIResource(BG));
         }

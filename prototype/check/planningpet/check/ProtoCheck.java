@@ -179,6 +179,7 @@ public final class ProtoCheck {
         PeriodCheck.run();
         DayCheck.run();
         HomeCheck.run();
+        looks();
         System.out.println(failed == 0 ? "모두 통과" : failed + "개 실패");
         System.exit(failed == 0 ? 0 : 1);
     }
@@ -270,6 +271,19 @@ public final class ProtoCheck {
     }
 
     /** 검사 문장을 칸 순서대로 " / "로 잇는다. 통과면 null. */
+    /** D-97: 고르는 칸은 옆 제목 칸과 같은 테두리, 흰 바탕, 바탕 없는 꺾쇠다. 디자인 시스템을 걸어야 해서 맨 끝에 돈다. */
+    private static void looks() {
+        planningpet.common.view.Theme.install();
+        TaskForm f = new TaskForm(null, java.time.LocalDate.of(2026, 11, 16), java.time.LocalDateTime.of(2026, 11, 16, 9, 0));
+        for (javax.swing.JComboBox<String> c : java.util.List.of(f.category, f.repeat)) {
+            javax.swing.AbstractButton arrow = (javax.swing.AbstractButton) java.util.Arrays.stream(c.getComponents())
+                    .filter(k -> k instanceof javax.swing.AbstractButton).findFirst().orElseThrow();
+            eq("D-97 고르는 칸", "ComboUI true ffffffff false",
+                    c.getUI().getClass().getSimpleName() + " " + (c.getBorder() == f.title.getBorder()) + " "
+                    + Integer.toHexString(c.getBackground().getRGB()) + " " + arrow.isContentAreaFilled());
+        }
+    }
+
     private static String msgs(TaskForm f) {
         var p = TaskCheck.check(f.draft(), f.editing());
         return p.isEmpty() ? null : String.join(" / ", p.stream().map(x -> x[1]).toList());
