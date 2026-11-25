@@ -119,6 +119,19 @@ public final class Planner {
         return null;
     }
 
+    /**
+     * 06의 19번 처음 보이는 자리(D-89): 보이는 주에 오늘이 있으면 지금의 앱 하루의 시각(다음 날 새벽이면 24시간을 더한다)에서
+     * 60분 앞(0 아래면 0), 없으면 08:00.
+     */
+    public static int top(LocalDate monday, LocalDateTime now) {
+        LocalDate today = planningpet.common.model.Rules.appDay(now);
+        if (!TaskBook.mondayOf(today).equals(monday)) {
+            return 8 * 60;
+        }
+        int minute = (now.toLocalDate().equals(today) ? 0 : Task.DAY) + now.getHour() * 60 + now.getMinute();
+        return Math.max(0, minute - 60);
+    }
+
     /** 일정마다 {열 번호, 무리의 열 수}. 겹침으로 이어진 일정끼리 한 무리다. */
     public static Map<Task, int[]> columns(List<Task> dayTasks) {
         List<Task> sorted = dayTasks.stream()

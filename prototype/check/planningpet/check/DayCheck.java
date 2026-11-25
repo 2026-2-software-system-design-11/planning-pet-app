@@ -26,6 +26,50 @@ final class DayCheck {
         nightDay();
         overlaps();
         narrowTips();
+        scrolls();
+    }
+
+    /** D-89: 시간표가 처음 보이는 자리와 자동 배치 뒤. */
+    private static void scrolls() {
+        java.util.function.BiFunction<String, String, Integer> top = (monday, now) ->
+                Planner.top(d(monday), java.time.LocalDateTime.parse("2026-" + now));
+        eq("T-TT-8", "1150 1470 480 480", top.apply("11-16", "11-18T20:10") + " " + top.apply("11-16", "11-21T01:30") + " "
+                + top.apply("11-23", "11-18T20:10") + " " + top.apply("11-16", "11-16T00:30"));
+        App app = Main.create(at("11-18T20:10"));
+        Task hw = task(app.store, "과제", "11-18", hm(21, 0), 30);
+        ScheduleScreen sched = ProtoCheck.find(app.root, ScheduleScreen.class);
+        app.show("일정관리");
+        int opened = sched.topMinute();
+        app.schedule.check(hw);
+        int afterCheck = sched.topMinute();
+        sched.move(sched.monday().plusWeeks(1));
+        int nextWeek = sched.topMinute();
+        sched.move(sched.monday().minusWeeks(1));
+        int back = sched.topMinute();
+        app.show("홈");
+        sched.move(sched.monday());
+        app.show("일정관리");
+        eq("T-TT-8 화면", "1150 1150 480 1150 1150", opened + " " + afterCheck + " " + nextWeek + " " + back + " " + sched.topMinute());
+
+        App pa = Main.create(at("11-18T09:00"));
+        Task a = task(pa.store, "A", "11-18", null, 30);
+        Task b = task(pa.store, "B", "11-20", null, 60);
+        ScheduleScreen ps = ProtoCheck.find(pa.root, ScheduleScreen.class);
+        pa.show("일정관리");
+        ps.scrollTo(0);
+        TimetablePanel table = ProtoCheck.find(pa.root, TimetablePanel.class);
+        AutoPlaceDialog.apply(pa, Planner.place(pa.store, d("11-16")));
+        boolean lit = table.flashing().containsAll(List.of(a, b)) && table.flashing().size() == 2;
+        int afterApply = ps.topMinute();
+        pa.store.changed();
+        eq("T-TT-9", "11-18 09:00 11-20 09:00 480 true 2000", a.date.toString().substring(5) + " " + a.start + " "
+                + b.date.toString().substring(5) + " " + b.start + " " + afterApply + " " + lit + " " + TimetablePanel.FLASH_MILLIS);
+        javax.swing.Timer timer = table.flashTimer();
+        String timing = timer.getInitialDelay() + " " + timer.isRepeats();
+        for (java.awt.event.ActionListener l : timer.getActionListeners()) {
+            l.actionPerformed(null);
+        }
+        eq("T-TT-9 2초 뒤", "2000 false true", timing + " " + table.flashing().isEmpty());
     }
 
     /** 앱 하루의 분으로 시각을 준 할 일 하나를 넣는다. */

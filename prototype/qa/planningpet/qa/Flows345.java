@@ -167,7 +167,9 @@ final class Flows345 {
         q.eq("위 막대", "연속 접속 30일, 보유 600P, 출석 완료(비활성)", q.top());
         q.eq("성취도, 레벨", "19/22 보리 Lv. 3 경험치 100 / 110", q.progress() + " " + q.level());
         q.eq("펫 카드(할 일이 열 개를 넘으면 이어진 막대)", "오늘 끝낸 일 19 / 22, 86% 0칸", q.petCard());
-        q.has("목록", "시각 없는 할 일 / [x] 국어 문법 1 시각 정하기 30분", q.rows());
+        // D-88: 남은 일이 위에, 끝낸 19개는 아래 "끝낸 일" 묶음에 있다.
+        q.has("목록", "시각 없는 할 일 / [ ] 행정법 기출 시각 정하기 60분 / [ ] 한국사 회독 시각 정하기 60분 / [ ] 오답 정리 시각 정하기 30분"
+                + " / 끝낸 일 19개 / [x] 국어 문법 1 시각 정하기 30분", q.rows());
         q.step("2", "행정법 기출을 체크한다");
         q.check(q.task("행정법 기출"));
         q.eq("상태", "610P 경험치240 횟수20 성취도20/22", st(q));
@@ -218,13 +220,18 @@ final class Flows345 {
         q.step("1", "일정관리를 연다");
         q.app.show("일정관리");
         q.eq("펫", "이번 주 남은 날의 시각 없는 할 일이 3개 있어. 자동 배치를 눌러 볼래?", q.schedBubble());
+        q.eq("시간표 맨 위(D-89)", "20:40", Task.hhmm(q.sched.topMinute()));
         q.step("2", "자동 배치를 누른다");
         Planner.Placement p = q.place();
         q.eq("결과 창", "11월 17일 21:40부터 11월 22일까지, 할 일마다 그 날짜(기간 할 일은 기간) 안의 빈 시간에 놓았어요"
                 + " / 행정법 기출|11월 17일|21:40 ~ 22:40|60분 / 한국사 회독|11월 17일|22:40 ~ 23:40|60분"
                 + " / 놓지 못한 일 / 오답 정리 날짜 11/17(화) 그날 빈 시간이 모자라요 / " + Flows8910.HINT, q.placement(p));
         q.step("3", "적용을 누른다");
+        q.sched.scrollTo(8 * 60);
         q.apply(p);
+        q.eq("시간표(D-89)", "20:40 행정법 기출, 한국사 회독", Task.hhmm(q.sched.topMinute()) + " "
+                + QaDrive.find(q.app.root, planningpet.schedule.view.TimetablePanel.class).flashing().stream().sorted(java.util.Comparator.comparingInt(Task::startMinute))
+                        .map(t -> t.title).collect(java.util.stream.Collectors.joining(", ")));
         q.app.show("홈");
         q.has("목록 위쪽", "[ ] 행정법 기출 21:40~22:40 60분 / [ ] 한국사 회독 22:40~23:40 60분 / 시각 없는 할 일", q.rows());
         q.has("오답 정리는 그대로", "[ ] 오답 정리 시각 정하기 30분", q.rows());

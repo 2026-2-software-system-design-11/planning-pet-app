@@ -113,6 +113,16 @@ public final class Talk {
         return first.date.getDayOfMonth() + "일(" + day + ")부터 " + first.repeat + "마다 넣었어요";
     }
 
+    /** D-90. 홈에서 새 일정을 넣은 뒤: 오늘이면 이름과 오늘 남은 수, 다른 날이면 이름과 날짜. */
+    public String added(Task t) {
+        String title = "'" + Rules.shortTitle(t.title) + "'";
+        if (!t.date.equals(s.today())) {
+            return title + " " + t.date.getMonthValue() + "/" + t.date.getDayOfMonth() + "에 넣었어.";
+        }
+        long left = s.book.checkables(s.today()).stream().filter(x -> !x.done).count();
+        return title + " 넣었구나! 오늘 남은 일 " + left + "개야.";
+    }
+
     /** D-36. 완료 취소 때 빠진 보상을 말한다. */
     public String uncompleted(int points, int levelBefore, int levelAfter) {
         if (points == 0) {

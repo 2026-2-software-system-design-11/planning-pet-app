@@ -27,6 +27,11 @@ public final class TimetablePanel extends JComponent {
     private final Store store;
     private final Map<Rectangle, Task> blocks = new LinkedHashMap<>();
     private final Map<Rectangle, Task> boxes = new LinkedHashMap<>();
+    /** 자동 배치로 방금 놓여 진하게 그리는 블록(D-89). */
+    private final java.util.Set<Task> flashing = new java.util.HashSet<>();
+    /** 진하게 보이는 시간(D-89). */
+    public static final int FLASH_MILLIS = 2000;
+    private javax.swing.Timer flashTimer;
     /** 열을 나눴거나 제목이 잘린 블록(D-87). */
     private final java.util.Set<Task> narrow = new java.util.HashSet<>();
     LocalDate monday;
@@ -101,6 +106,32 @@ public final class TimetablePanel extends JComponent {
         return t == null ? null : tip(t);
     }
 
+    /** 놓인 블록을 2초 동안 진하게 그린다(D-89). */
+    public void flash(java.util.Collection<Task> placed) {
+        flashing.clear();
+        flashing.addAll(placed);
+        if (flashTimer != null) {
+            flashTimer.stop();
+        }
+        flashTimer = new javax.swing.Timer(FLASH_MILLIS, e -> {
+            flashing.clear();
+            repaint();
+        });
+        flashTimer.setRepeats(false);
+        flashTimer.start();
+        repaint();
+    }
+
+    /** 진하게 보이기를 끝내는 타이머. 아직 없으면 null. */
+    public javax.swing.Timer flashTimer() {
+        return flashTimer;
+    }
+
+    /** 지금 진하게 그리는 블록. */
+    public java.util.Set<Task> flashing() {
+        return java.util.Collections.unmodifiableSet(flashing);
+    }
+
     /** 블록의 툴팁. 마지막으로 그린 모양을 따른다. */
     public String tip(Task t) {
         String memo = TaskRows.memoTip(t);
@@ -153,10 +184,15 @@ public final class TimetablePanel extends JComponent {
                 Rectangle r = new Rectangle(GUTTER + i * day + c[0] * w + 1, t.startMinute() * HOUR / 60,
                         w - 2, Math.max(t.minutes * HOUR / 60, 16));
                 blocks.put(r, t);
-                g.setColor(t.done ? Theme.DAY : t.kind == Task.Kind.FIXED ? Theme.TRACK : Theme.MINT_SOFT);
+                boolean lit = flashing.contains(t);
+                g.setColor(lit ? Theme.MINT_SELECTED : t.done ? Theme.DAY : t.kind == Task.Kind.FIXED ? Theme.TRACK : Theme.MINT_SOFT);
                 g.fillRoundRect(r.x, r.y, r.width, r.height, 10, 10);
-                g.setColor(t.done ? Theme.CARD_LINE : t.kind == Task.Kind.FIXED ? Theme.CARD_LINE : Theme.MINT_LINE);
+                g.setColor(lit ? Theme.MINT_DEEP : t.done ? Theme.CARD_LINE : t.kind == Task.Kind.FIXED ? Theme.CARD_LINE : Theme.MINT_LINE);
+                if (lit) {
+                    g.setStroke(new java.awt.BasicStroke(2.5f));
+                }
                 g.drawRoundRect(r.x, r.y, r.width - 1, r.height - 1, 10, 10);
+                g.setStroke(new java.awt.BasicStroke(1f));
                 Graphics2D text = (Graphics2D) g.create();
                 text.clipRect(r.x, r.y, r.width, r.height);
                 text.setColor(t.done ? Theme.INK_DIM : Theme.INK);

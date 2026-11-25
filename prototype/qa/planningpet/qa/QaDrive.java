@@ -109,6 +109,10 @@ class QaDrive extends QaCore {
             return;
         }
         box.doClick();
+        if (list == main.rows) {
+            // D-88: 홈 목록의 끝낸 줄은 1.5초 머문 뒤 "끝낸 일" 묶음으로 내려간다. QA는 그 뒤의 목록을 읽는다.
+            main.rows.settle();
+        }
     }
 
     static javax.swing.JCheckBox boxOf(Component c, Task t) {
