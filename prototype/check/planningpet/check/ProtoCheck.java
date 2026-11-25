@@ -125,7 +125,10 @@ public final class ProtoCheck {
         eq("D-38 5분 단위", "30 null 75", fiveMinute());
         eq("T-TYPE-1", "25 5분 단위로 맞췄어요(25분) / 75 null", typed("27") + " / " + typed("75"));
         eq("T-TYPE-2", "720 최대 720분(12시간)까지 넣을 수 있어요 / 10 최소 10분부터 넣을 수 있어요", typed("730") + " / " + typed("5"));
-        eq("T-TYPE-3", "null 숫자(분)로 넣어 주세요(예: 30) / 30 null", typed("반시간") + " / " + typed("30분"));
+        eq("T-TYPE-3", "null 숫자(분)로 넣어 주세요(예: 30) / null 숫자(분)로 넣어 주세요(예: 30) / 30 null",
+                typed("반시간") + " / " + typed("30abc") + " / " + typed("30분"));
+        eq("T-TYPE-4", "60 90 90 90 150", String.join(" ", java.util.stream.Stream.of("1시간", "1시간 30분", "1시간 반", "1.5시간", "2시간 반")
+                .map(w -> String.valueOf(Typed.minutes(w).value())).toList()));
         Store c = MockData.sample();
         java.time.LocalDate nov = java.time.LocalDate.of(2026, 11, 1);
         TaskBook.CellPreview c14 = c.book.cellPreview(nov.withDayOfMonth(14));
