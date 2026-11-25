@@ -33,30 +33,17 @@ public final class Ui {
     private Ui() {
     }
 
-    /** 걸리는 시간 칸(D-38). 10분부터 720분이고 범위 밖이나 숫자가 아니면 이전 값으로 돌아간다(05). */
+    /** 걸리는 시간 칸(D-38). 10분부터 720분, 5분 단위가 아닌 값은 받지 않아 이전 값으로 돌아간다(05). */
     public static javax.swing.JSpinner minutes(int value) {
-        return new javax.swing.JSpinner(new Minutes(value));
-    }
-
-    /** 걸리는 시간 칸의 값. 5분 단위가 아닌 값은 가까운 5분 값으로 맞추고 rounded에 알린다(D-95). */
-    public static final class Minutes extends javax.swing.SpinnerNumberModel {
-        /** 맞춘 값을 받는다. 칸 값이 바뀐 뒤에 부른다. */
-        public java.util.function.IntConsumer rounded = m -> { };
-
-        Minutes(int value) {
-            super(value, 10, 720, 5);
-        }
-
-        @Override
-        public void setValue(Object v) {
-            if (v instanceof Number n && n.intValue() % 5 != 0) {
-                int m = Math.round(n.intValue() / 5f) * 5;
-                super.setValue(m);
-                rounded.accept(m);
-                return;
+        return new javax.swing.JSpinner(new javax.swing.SpinnerNumberModel(value, 10, 720, 5) {
+            @Override
+            public void setValue(Object v) {
+                if (v instanceof Number n && n.intValue() % 5 != 0) {
+                    throw new IllegalArgumentException("5분 단위가 아님");
+                }
+                super.setValue(v);
             }
-            super.setValue(v);
-        }
+        });
     }
 
     /**
