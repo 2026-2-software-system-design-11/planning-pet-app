@@ -35,7 +35,7 @@ public final class TaskForm {
     public final JLabel periodHint = Ui.hint("반복 일정은 기간을 정할 수 없어요");
     /** 반복 끝 날짜를 사용자가 고쳤는가. 고치기 전에는 시작 날짜를 따라간다(D-79). */
     private boolean endTouched;
-    /** 마감을 사용자가 골랐는가. 고른 뒤에는 날짜나 종류를 바꾸고 기간을 껐다 켜도 다시 채우지 않는다(D-96). */
+    /** 마감을 사용자가 골랐는가(저장해 둔 마감 포함). 고른 뒤에는 날짜나 종류를 바꾸고 기간을 껐다 켜도 다시 채우지 않는다(D-96). */
     private boolean dueTouched;
     public final JSpinner due = new JSpinner(new SpinnerDateModel());
     public final JTextArea memo = new JTextArea(3, 22);
@@ -121,6 +121,8 @@ public final class TaskForm {
         Ui.setDate(date, first);
         Ui.setDate(due, t != null && t.dueDate != null ? t.dueDate : DefaultDates.due(first, weekStart));
         period.setSelected(t != null && t.dueDate != null);
+        // D-96: 수정 창에서 저장해 둔 마감도 고른 마감이다.
+        dueTouched = t != null && t.dueDate != null;
         if (t != null) {
             fixed.setSelected(t.kind == Task.Kind.FIXED);
             timed.setSelected(t.timed() && !t.period());
