@@ -22,6 +22,8 @@ public final class TaskForm {
     /** 다음 날 새벽 값이면 시작 칸 옆에 적는 실제 날과 시각 "(토 01:30)"(D-77). */
     public final JLabel realTime = new JLabel();
     public final JSpinner minutes = Ui.minutes(30);
+    /** 걸리는 시간 칸에 쳐 넣은 값을 맞췄거나 받지 않았을 때 칸 아래 글(D-98). */
+    public final JLabel minutesNotice = new TypedField(minutes, Typed::minutes, () -> this.relayout.run()).notice;
     /** 7번 반복(D-64): 안 함, 매일, 요일. 요일이면 요일 단추 일곱(월부터 일)에서 하나 이상 고른다. */
     public final JComboBox<String> repeat = new JComboBox<>(new String[] {"안 함", "매일", "요일"});
     public final JToggleButton[] days = new JToggleButton[7];
@@ -127,6 +129,7 @@ public final class TaskForm {
         line("시작 시각", Ui.flow(timed, start, realTime));
         line("", errors.get("시작 시각"));
         line("걸리는 시간 (분)", Ui.flow(minutes, endLabel));
+        line("", minutesNotice);
         line("", errors.get("걸리는 시간"));
         line("", minutesHint);
         JComponent[] repeatParts = new JComponent[8];

@@ -130,6 +130,7 @@ public final class ProtoCheck {
         eq("T-TYPE-4", "60 90 90 90 150", String.join(" ", java.util.stream.Stream.of("1시간", "1시간 30분", "1시간 반", "1.5시간", "2시간 반")
                 .map(w -> String.valueOf(Typed.minutes(w).value())).toList()));
         eq("D-98 칸 아래 글", "25 흐린 5분 단위로 맞췄어요(25분) / 25 빨간 " + Typed.MINUTES_BAD, typedField());
+        eq("D-98 입력 창 걸리는 시간 칸 아래 글", "흐린 5분 단위로 맞췄어요(25분) / 없음 / 없음", typedForm());
         Store c = MockData.sample();
         java.time.LocalDate nov = java.time.LocalDate.of(2026, 11, 1);
         TaskBook.CellPreview c14 = c.book.cellPreview(nov.withDayOfMonth(14));
@@ -316,6 +317,19 @@ public final class ProtoCheck {
         javax.swing.JSpinner s = Ui.minutes(30);
         javax.swing.JLabel l = new TypedField(s, Typed::minutes, () -> { }).notice;
         return type(s, "27") + " " + notice(l) + " / " + type(s, "반시간") + " " + notice(l);
+    }
+
+    /** 입력 창의 칸 아래 글은 다른 칸을 고쳐도 남고, 그 칸에 쳐 넣기 시작하거나 화살표를 누르면 사라진다. */
+    private static String typedForm() {
+        TaskForm f = new TaskForm(null, java.time.LocalDate.of(2026, 11, 16), java.time.LocalDateTime.of(2026, 11, 16, 9, 0));
+        type(f.minutes, "27");
+        f.title.setText("과제");
+        String kept = notice(f.minutesNotice);
+        ((javax.swing.JSpinner.DefaultEditor) f.minutes.getEditor()).getTextField().setText("4");
+        String typing = notice(f.minutesNotice);
+        type(f.minutes, "27");
+        f.minutes.setValue(f.minutes.getNextValue());
+        return kept + " / " + typing + " / " + notice(f.minutesNotice);
     }
 
     /** 칸에 글을 쳐 넣고 칸을 벗어난 것과 같다. 받지 않으면 이전 값이다. */
