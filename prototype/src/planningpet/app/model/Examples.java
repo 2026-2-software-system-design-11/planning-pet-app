@@ -2,6 +2,7 @@ package planningpet.app.model;
 
 import planningpet.common.model.Rules;
 import planningpet.schedule.model.DefaultDates;
+import planningpet.schedule.model.Repeat;
 import planningpet.schedule.model.Task;
 import planningpet.schedule.model.TaskDraft;
 import java.time.DayOfWeek;
@@ -17,10 +18,9 @@ public final class Examples {
     public static void fill(Store s) {
         LocalDate today = s.today();
         LocalDate week = Rules.weekStart(today, s.weekStart);
-        fixed(s, "자료구조", day(week, DayOfWeek.MONDAY), 9);
-        fixed(s, "자료구조", day(week, DayOfWeek.WEDNESDAY), 9);
-        fixed(s, "운영체제", day(week, DayOfWeek.TUESDAY), 10);
-        fixed(s, "운영체제", day(week, DayOfWeek.THURSDAY), 10);
+        // D-94: 수업은 그 주 첫날부터 4주 요일 반복이라 어느 요일에 시작해도 앞으로의 주에 보인다.
+        lecture(s, "자료구조", week, 9, DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY);
+        lecture(s, "운영체제", week, 10, DayOfWeek.TUESDAY, DayOfWeek.THURSDAY);
         Task algo = task(s, "알고리즘 과제 2번", today, LocalTime.of(10, 0), 60, "학업");
         algo.done = true;
         algo.doneDay = today;
@@ -30,15 +30,25 @@ public final class Examples {
         TaskDraft e = new TaskDraft(Task.Kind.TASK, "E사 지원서", today, null, 120, "")
                 .withDue(DefaultDates.due(today, s.weekStart));
         mark(s, s.book.add(e).get(0)).category = "프로젝트";
+        // D-94: 넣을 때의 모양을 적어 두고, 사용자가 고친 예시는 예시 지우기가 남긴다.
+        s.tasks.stream().filter(t -> s.sampleIds.contains(t.id)).forEach(t -> s.sampleLooks.put(t.id, look(t)));
     }
 
-    /** 그 주에서 그 요일인 날. */
-    private static LocalDate day(LocalDate weekStart, DayOfWeek dow) {
-        return weekStart.plusDays(Math.floorMod(dow.getValue() - weekStart.getDayOfWeek().getValue(), 7));
+    /** 고친 예시인지 견주는 모양: 제목, 시작 시각(다음 날 포함), 메모, 날짜(D-94). */
+    public static String look(Task t) {
+        return t.title + "|" + t.start + "|" + t.nextDay + "|" + t.memo + "|" + t.date;
     }
 
-    private static void fixed(Store s, String title, LocalDate date, int hour) {
-        mark(s, s.book.add(Task.Kind.FIXED, title, date, LocalTime.of(hour, 0), 75, "", null).get(0)).category = "학업";
+    /** 사용자가 제목, 시각, 메모, 날짜 가운데 하나라도 고친 예시인가(D-94). */
+    public static boolean edited(Store s, Task t) {
+        return s.sampleLooks.containsKey(t.id) && !s.sampleLooks.get(t.id).equals(look(t));
+    }
+
+    /** 고정 일정(학업) 75분을 그 주 첫날부터 4주 동안 고른 요일마다 넣는다. */
+    private static void lecture(Store s, String title, LocalDate week, int hour, DayOfWeek... days) {
+        TaskDraft d = new TaskDraft(Task.Kind.FIXED, title, week, LocalTime.of(hour, 0), 75, "")
+                .withRepeat(Repeat.weekly(days), week.plusDays(27));
+        s.book.add(d).forEach(t -> mark(s, t).category = "학업");
     }
 
     private static Task task(Store s, String title, LocalDate date, LocalTime start, int minutes, String category) {

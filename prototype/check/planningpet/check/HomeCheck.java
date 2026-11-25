@@ -21,9 +21,50 @@ final class HomeCheck {
     static void run() {
         added();
         doneGroup();
+        periodStays();
         calendar();
         weekStart();
         examples();
+        editedSamples();
+        sundayLectures();
+    }
+
+    /** T-EX-5. 일요일에 예시로 시작해도 다음 주 시간표에 수업이 보인다(D-94). */
+    static void sundayLectures() {
+        Store s = at("11-22T09:00");
+        new planningpet.pet.view.PickDialog().apply(s, true);
+        StringBuilder next = new StringBuilder();
+        for (LocalDate day = d("11-23"); day.isBefore(d("11-30")); day = day.plusDays(1)) {
+            for (Task t : s.book.dayPlan(day).timed()) {
+                if (t.kind == Task.Kind.FIXED) {
+                    next.append(day.toString().substring(5)).append(" ").append(t.title).append(", ");
+                }
+            }
+        }
+        eq("T-EX-5", "11-23 자료구조, 11-24 운영체제, 11-25 자료구조, 11-26 운영체제, ", next.toString());
+    }
+
+    /** T-EX-4. 사용자가 고친 예시는 예시 지우기가 남긴다(D-94). */
+    static void editedSamples() {
+        Store s = at("11-18T09:00");
+        planningpet.pet.view.PickDialog pd = new planningpet.pet.view.PickDialog();
+        pd.apply(s, true);
+        App app = Main.create(s);
+        MainScreen main = ProtoCheck.find(app.root, MainScreen.class);
+        Task draft = s.tasks.stream().filter(t -> t.title.equals("자소서 초안")).findFirst().orElseThrow();
+        TaskForm f = new TaskForm(draft, draft.date, s.now);
+        f.title.setText("내 자소서 진짜 초안");
+        f.memo.setText("2번 문항부터");
+        TaskDialog.trySave(app, f, draft);
+        int all = s.tasks.size();
+        java.util.List<String> asked = new java.util.ArrayList<>();
+        app.schedule.chooser = (title, message, options) -> {
+            asked.add(message);
+            return 0;
+        };
+        main.sampleButton.doClick();
+        eq("T-EX-4", "예시 일정 " + (all - 1) + "개를 지울까요? 새로 넣은 일정은 그대로 남아요. 고친 예시 1개는 남아요. / 내 자소서 진짜 초안 0",
+                asked.get(0) + " / " + String.join(" ", s.tasks.stream().map(t -> t.title).toList()) + " " + s.sampleIds.size());
     }
 
     static LocalDate d(String monthDay) {
@@ -53,8 +94,48 @@ final class HomeCheck {
         TaskForm f = new TaskForm(null, d("11-17"), s.now);
         f.title.setText("운동");
         boolean saved = TaskDialog.trySave(app, f, null);
-        eq("T-TALK-23", "'통계 레포트' 넣었구나! 오늘 남은 일 2개야. / '은행 서류' 11/20에 넣었어. / true '은행 서류' 11/20에 넣었어.",
+        eq("T-TALK-23", "'통계 레포트' 넣었구나! 오늘 남은 일 2개야. / '은행 서류' 11/20에 넣었어. / true '운동' 11/17에 넣었어.",
                 today + " / " + other + " / " + saved + " " + s.talk);
+        Store e = at("11-16T09:00");
+        new planningpet.pet.view.PickDialog().apply(e, false);
+        App ea = Main.create(e);
+        ea.control.windowShown();
+        ea.show("일정관리");
+        e.changed();
+        TaskForm fixed = new TaskForm(null, d("11-16"), e.now);
+        fixed.title.setText("자료구조");
+        fixed.fixed.doClick();
+        fixed.start.setValue("09:00");
+        boolean put = TaskDialog.trySave(ea, fixed, null);
+        String hint = HomeCheck.plain(ProtoCheck.find(ea.root, planningpet.schedule.view.ScheduleScreen.class).bubble.getText());
+        ea.show("홈");
+        eq("T-TALK-25", "true 지금 자동 배치할 할 일은 없어. / '자료구조' 넣었구나! 오늘 남은 일 1개야.", put + " " + hint + " / "
+                + ProtoCheck.find(ea.root, planningpet.home.view.PetCard.class).bubbleText());
+    }
+
+    /** T-LIST-10. 기간 할 일도 체크한 자리(시각 줄, "기간 안에 할 일")에 머문 뒤 "끝낸 일"로 간다(D-94). */
+    static void periodStays() {
+        Store s = at("11-18T08:00");
+        Task job = PeriodCheck.period(s, "지원서", "11-16", "11-22", 60);
+        s.book.setTime(job, java.time.LocalTime.of(9, 0), 60, d("11-18"), false);
+        Task report = PeriodCheck.period(s, "보고서", "11-16", "11-25", 30);
+        s.book.add(Task.Kind.TASK, "토익", d("11-18"), null, 30, "", null);
+        App app = Main.create(s);
+        MainScreen main = ProtoCheck.find(app.root, MainScreen.class);
+        app.redraw();
+        String before = rows(main.rows);
+        PeriodCheck.box(main.rows, job).doClick();
+        String first = rows(main.rows);
+        main.rows.settle();
+        PeriodCheck.box(main.rows, report).doClick();
+        String second = rows(main.rows);
+        main.rows.settle();
+        eq("T-LIST-10", "[ ] 지원서 09:00~10:00 60분 ~11/22까지 / 시각 없는 할 일 / [ ] 토익 시각 정하기 30분 / 기간 안에 할 일"
+                + " / [ ] 보고서 시각 정하기 30분 ~11/25까지 | [x] 지원서 09:00~10:00 60분 ~11/22까지 / 시각 없는 할 일 / [ ] 토익"
+                + " 시각 정하기 30분 / 기간 안에 할 일 / [ ] 보고서 시각 정하기 30분 ~11/25까지 | 시각 없는 할 일 / [ ] 토익 시각 정하기 30분"
+                + " / 기간 안에 할 일 / [x] 보고서 시각 정하기 30분 ~11/25까지 / 끝낸 일 1개 / [x] 지원서 시각 정하기 60분 ~11/22까지"
+                + " | 시각 없는 할 일 / [ ] 토익 시각 정하기 30분 / 끝낸 일 2개 / [x] 지원서 시각 정하기 60분 ~11/22까지 / [x] 보고서 시각 정하기"
+                + " 30분 ~11/25까지", before + " | " + first + " | " + second + " | " + rows(main.rows));
     }
 
     /** T-LIST-8. 끝낸 줄은 제자리에 머문 뒤 아래 "끝낸 일" 묶음으로 가고, 묶음은 접힌다(D-88). */
@@ -214,9 +295,11 @@ final class HomeCheck {
         App app = Main.create(s);
         app.control.windowShown();
         MainScreen main = ProtoCheck.find(app.root, MainScreen.class);
-        StringBuilder fixed = new StringBuilder();
-        s.tasks.stream().filter(t -> t.kind == Task.Kind.FIXED).forEach(t -> fixed.append(t.date.toString().substring(5)).append(" "));
-        eq("T-EX-1", "9 true " + "11-16 11-18 11-17 11-19 / [ ] 고정 자료구조 09:00~10:15 75분 / [ ] 자소서 초안 메모 14:00~15:30 90분"
+        // D-94: 수업은 4주 요일 반복 사본이다. 수와 첫날, 끝날을 본다.
+        java.util.List<String> days = s.tasks.stream().filter(t -> t.kind == Task.Kind.FIXED && t.seriesId != null)
+                .map(t -> t.date.toString().substring(5)).sorted().toList();
+        String fixed = days.size() + " " + days.get(0) + " " + days.get(days.size() - 1) + " ";
+        eq("T-EX-1", "21 true " + "16 11-16 12-10 / [ ] 고정 자료구조 09:00~10:15 75분 / [ ] 자소서 초안 메모 14:00~15:30 90분"
                 + " / 시각 없는 할 일 / [ ] 토익 단어 시각 정하기 30분 / 기간 안에 할 일 / [ ] E사 지원서 시각 정하기 120분 ~11/22까지"
                 + " / 끝낸 일 1개 / [x] 알고리즘 과제 2번 10:00~11:00 60분 / 0P / 처음 만났네! 나는 콩이야. 예시 일정을 넣어 뒀어. / true",
                 s.tasks.size() + " " + s.tasks.stream().allMatch(t -> s.sampleIds.contains(t.id)) + " " + fixed + "/ " + rows(main.rows)
@@ -236,7 +319,7 @@ final class HomeCheck {
         answer[0] = 0;
         main.sampleButton.doClick();
         planningpet.settings.view.SettingsScreen settings = ProtoCheck.find(app.root, planningpet.settings.view.SettingsScreen.class);
-        eq("T-EX-2", "예시 지우기 / 예시 일정 9개를 지울까요? 새로 넣은 일정은 그대로 남아요. / 지우기, 취소 | 10 9 | 과제 10P 0 false false 예시 일정이 없어요"
+        eq("T-EX-2", "예시 지우기 / 예시 일정 21개를 지울까요? 새로 넣은 일정은 그대로 남아요. / 지우기, 취소 | 22 21 | 과제 10P 0 false false 예시 일정이 없어요"
                 + " 예시를 지웠어. 수업부터 넣어 볼까?",
                 asked.get(0) + " | " + cancelled + " | " + String.join(" ", s.tasks.stream().map(t -> t.title).toList()) + " " + s.points + "P "
                 + s.sampleIds.size() + " " + main.sampleButton.isVisible() + " " + settings.clearSamples.isEnabled() + " "

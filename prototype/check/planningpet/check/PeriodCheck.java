@@ -55,6 +55,7 @@ final class PeriodCheck {
         edit();
         lists();
         narrow();
+        pills();
         rewards();
         talkAndCalendar();
         autoPlace();
@@ -414,7 +415,7 @@ final class PeriodCheck {
         m.book.setTime(e, LocalTime.of(9, 0), 120, d("11-17"), false);
         String day18 = new Talk(m).briefing();
         m.now = d("11-19").atTime(9, 0);
-        eq("D-67 어제 하기로 한 일", "오늘은 할 일이 없어. 어제 하기로 한 'E사 지원서'를 못 했어. 마감은 22일이야. E사 지원서는 22일까지야, 4일 남았어."
+        eq("D-67 어제 하기로 한 일", "오늘은 할 일이 없어. 어제 하기로 한 'E사 지원서'를 못 했어. 마감은 22일이야."
                 + " / 오늘은 할 일이 없어. 'E사 지원서' 마감이 3일 뒤(22일)야, D-3.",
                 day18 + " / " + new Talk(m).briefing());
         App done = Main.create(at("11-18T09:00"));
@@ -438,11 +439,41 @@ final class PeriodCheck {
         Task due = period(last, "E사 지원서", "11-16", "11-22", 120);
         eq("D-70 마감 날", "오늘 할 일 1개 남았어. 오늘이 E사 지원서 마감이야! true", new Talk(last).briefing() + " "
                 + last.book.dayPlan(d("11-22")).dueToday().contains(due));
+        Store twice = at("11-21T09:00");
+        Task missed = period(twice, "E사 지원서", "11-16", "11-22", 120);
+        twice.book.setTime(missed, LocalTime.of(9, 0), 120, d("11-20"), false);
+        period(twice, "F사 서류", "11-16", "11-23", 30);
+        eq("T-TALK-27", "오늘은 할 일이 없어. 어제 하기로 한 'E사 지원서'를 못 했어. 마감은 22일이야. 'F사 서류' 마감이 모레(23일)야, D-2.",
+                new Talk(twice).briefing());
+        App home = Main.create(at("11-18T09:00"));
+        TaskForm f = new TaskForm(null, d("11-18"), home.store.now);
+        f.title.setText("E사 지원서");
+        f.period.doClick();
+        Ui.setDate(f.due, d("11-22"));
+        TaskDialog.trySave(home, f, null);
+        String added = home.store.talk;
+        MainScreen main = ProtoCheck.find(home.root, MainScreen.class);
+        main.selectDate(d("11-19"));
+        String other = home.store.talk;
+        main.selectDate(d("11-18"));
+        eq("T-TALK-26", "'E사 지원서' 넣었구나! 22일까지야. / 11월 19일은 할 일이 없어. 기간 할 일 1개가 있어. / 오늘은 할 일이 없어."
+                + " E사 지원서는 22일까지야, 4일 남았어.", added + " / " + other + " / " + home.store.talk);
+        Store timed = at("11-22T09:00");
+        Task set = period(timed, "E사 지원서", "11-16", "11-22", 120);
+        timed.book.setTime(set, LocalTime.of(14, 0), 120, d("11-22"), false);
+        eq("T-TALK-24", "오늘 할 일 1개 남았어. 오늘이 E사 지원서 마감이야!", new Talk(timed).briefing());
         Store c = MockData.empty();
         period(c, "E사 지원서", "11-16", "11-22", 120);
         TaskBook.CellPreview c22 = c.book.cellPreview(d("11-22"));
         eq("D-65 기간 할 일은 마감 날 칸", "null 1개 true [E사 지원서]", c.book.cellPreview(d("11-16")) + " " + c22.text() + " " + c22.open()
                 + " " + c22.due());
+        App cal = Main.create(at("11-17T09:00"));
+        Task p = period(cal.store, "P", "11-16", "11-22", 60);
+        cal.store.book.setTime(p, LocalTime.of(9, 0), 60, d("11-18"), false);
+        cal.redraw();
+        MainScreen month = ProtoCheck.find(cal.root, MainScreen.class);
+        eq("T-CAL-8", "18 1개(진함) / 22 마감 P 마감", HomeCheck.cell(month, 18) + " / " + HomeCheck.cell(month, 22) + " "
+                + HomeCheck.tip(month, 22));
     }
 
     static String placed(Planner.Placement p) {
@@ -499,6 +530,46 @@ final class PeriodCheck {
                 + " / 기간 안에 할 일 / E사 지원서 120분 ~11/22까지 18일에 하려던 일 / 11/16 졸업 작품 기획서, 11/19 졸업 작품 기획서,"
                 + " 11/19 E사 지원서, 11/22 E사 지원서",
                 homeTitles + " / " + homeRows + " / " + titles(app.root, sched.untimed));
+    }
+
+    /** T-EDIT-15(D-94): 지난 날 목록의 기간 할 일과 끝낸 줄의 시각 알약은 누를 수 없다. */
+    static void pills() {
+        App app = Main.create(at("11-19T09:00"));
+        Task job = period(app.store, "지원서", "11-16", "11-22", 60);
+        Task toeic = app.store.book.add(Task.Kind.TASK, "토익", d("11-19"), null, 30, "", null).get(0);
+        app.schedule.check(toeic);
+        MainScreen home = ProtoCheck.find(app.root, MainScreen.class);
+        home.rows.settle();
+        home.selectDate(d("11-17"));
+        javax.swing.JButton past = pill(home.rows, job);
+        String before = past.isEnabled() + " " + past.getToolTipText();
+        past.doClick();
+        home.selectDate(d("11-19"));
+        eq("D-94 지난 날과 끝낸 줄의 알약", "false 지난 날에는 시각을 정할 수 없어요 / true / false / 2026-11-16 null",
+                before + " / " + pill(home.rows, job).isEnabled() + " / " + pill(home.rows, toeic).isEnabled() + " / " + job.date + " "
+                        + job.start);
+    }
+
+    /** 목록에서 그 일의 줄에 있는 시각 알약. */
+    static javax.swing.JButton pill(java.awt.Container list, Task t) {
+        for (java.awt.Component row : list.getComponents()) {
+            if (row instanceof java.awt.Container k && box(k, t) != null) {
+                return button(k);
+            }
+        }
+        return null;
+    }
+
+    private static javax.swing.JButton button(java.awt.Container c) {
+        for (java.awt.Component child : c.getComponents()) {
+            if (child instanceof javax.swing.JButton b && (b.getText().contains(":") || b.getText().equals("시각 정하기"))) {
+                return b;
+            }
+            if (child instanceof java.awt.Container k && button(k) != null) {
+                return button(k);
+            }
+        }
+        return null;
     }
 
     /** 메인 창을 1000x680으로 늘어놓고 목록의 제목 칸이 그리는 글을 잇는다. "…"로 줄인 글은 앞 네 글자 넘게 보여야 한다. */

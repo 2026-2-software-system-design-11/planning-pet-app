@@ -1,5 +1,6 @@
 package planningpet.schedule.controller;
 
+import planningpet.app.model.Examples;
 import planningpet.app.view.App;
 import planningpet.common.model.Rules;
 import planningpet.reward.model.*;
@@ -113,6 +114,10 @@ public final class TaskController {
 
     /** D-32. 메인 시각 칸을 누르면 그 아래에 시각 고치기 창을 연다. day는 그 목록의 날이다(D-65). */
     public void editTime(Task t, LocalDate day, java.awt.Component anchor) {
+        // D-94: 끝낸 일과 지난 날 목록의 기간 할 일은 목록에서 시각을 정하지 않는다(화면은 알약을 흐린다).
+        if (t.done || t.period() && day.isBefore(app.store.today())) {
+            return;
+        }
         TimeEditor.open(app, t, day, anchor);
     }
 
@@ -139,6 +144,9 @@ public final class TaskController {
                 } else if (fromHome()) {
                     // D-90: 홈에서 넣으면 펫이 넣은 일의 이름과 오늘 남은 수를 말한다.
                     app.store.say(app.talk.added(made.get(0)));
+                } else {
+                    // D-94: 일정관리에서 넣으면 홈 말풍선에만 남기고, 일정관리 말풍선은 D-39대로 힌트를 다시 정한다.
+                    app.store.sayAtHome(app.talk.added(made.get(0)));
                 }
             } else {
                 app.store.book.update(editing, d, scope == 1);
@@ -160,7 +168,7 @@ public final class TaskController {
         return true;
     }
 
-    /** 일정 입력 창을 홈에서 열었는가(D-90). 일정관리에서 넣으면 일정관리의 펫 말(D-39)을 따른다. */
+    /** 일정 입력 창을 홈에서 열었는가(D-90). 일정관리에서 넣으면 일정관리의 펫 말은 D-39를 따른다(D-94). */
     private boolean fromHome() {
         return "홈".equals(app.current());
     }
@@ -205,9 +213,9 @@ public final class TaskController {
         return out;
     }
 
-    /** 남은 예시 일정(D-74). 고친 예시도 든다. */
+    /** 남은 예시 일정(D-74). 사용자가 고친 예시는 내 일정으로 보아 뺀다(D-94). */
     public java.util.List<Task> samples() {
-        return app.store.tasks.stream().filter(t -> app.store.sampleIds.contains(t.id)).toList();
+        return app.store.tasks.stream().filter(t -> app.store.sampleIds.contains(t.id) && !Examples.edited(app.store, t)).toList();
     }
 
     /** 06의 31번. 확인 창을 거쳐 예시 일정을 모두 지운다. 지운 수를 돌려주고 없거나 취소하면 0. */
@@ -216,14 +224,16 @@ public final class TaskController {
         if (list.isEmpty()) {
             return 0;
         }
-        int answer = chooser.choose("예시 지우기", "예시 일정 " + list.size() + "개를 지울까요? 새로 넣은 일정은 그대로 남아요.",
-                new String[] {"지우기", "취소"});
+        long kept = app.store.tasks.stream().filter(t -> app.store.sampleIds.contains(t.id) && Examples.edited(app.store, t)).count();
+        int answer = chooser.choose("예시 지우기", "예시 일정 " + list.size() + "개를 지울까요? 새로 넣은 일정은 그대로 남아요."
+                + (kept > 0 ? " 고친 예시 " + kept + "개는 남아요." : ""), new String[] {"지우기", "취소"});
         if (answer != 0) {
             return 0;
         }
         app.control.change(() -> {
             list.forEach(t -> app.store.book.delete(t, false));
             app.store.sampleIds.clear();
+            app.store.sampleLooks.clear();
             app.store.say("예시를 지웠어. 수업부터 넣어 볼까?");
         });
         return list.size();

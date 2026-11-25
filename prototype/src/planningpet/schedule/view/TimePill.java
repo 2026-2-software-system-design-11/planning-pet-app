@@ -20,18 +20,25 @@ final class TimePill extends JButton {
     private final boolean empty;
     private final boolean done;
 
-    TimePill(String time, boolean done) {
+    /**
+     * locked면 누를 수 없는 흐린 글이다(D-94). 끝낸 줄과 지난 날 목록의 기간 할 일이 그렇다. why가 있으면 마우스를 올렸을 때 그 까닭을
+     * 보인다.
+     */
+    TimePill(String time, boolean done, boolean locked, String why) {
         super(time.isEmpty() ? "시각 정하기" : time);
         this.empty = time.isEmpty();
-        this.done = done;
+        this.done = done || locked;
+        setEnabled(!locked);
         setFont(Theme.bold(12));
         setOpaque(false);
         setContentAreaFilled(false);
         setBorderPainted(false);
         setFocusPainted(false);
         setRolloverEnabled(true);
-        setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
-        setToolTipText("눌러서 시각을 바꿔요");
+        if (!locked) {
+            setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
+        }
+        setToolTipText(locked ? why : "눌러서 시각을 바꿔요");
     }
 
     @Override
@@ -60,6 +67,11 @@ final class TimePill extends JButton {
         Color fill = down ? Theme.MINT_SOFT : over ? Theme.MINT_PALE : empty ? Theme.MINT_PALE : done ? Theme.CARD_TOP : Theme.DAY;
         Color line = over || down ? Theme.MINT : empty ? Theme.MINT_LINE : done ? Theme.CARD_EDGE : Theme.CARD_LINE;
         Color ink = done ? Theme.INK_DIM : empty ? Theme.ICON : Theme.INK;
+        if (done) {
+            // 흐린 알약은 바탕과 테두리도 끝낸 줄처럼 옅다(민트를 쓰지 않는다).
+            fill = Theme.CARD_TOP;
+            line = Theme.CARD_EDGE;
+        }
         g.setColor(fill);
         g.fillRoundRect(0, 0, w, h, h, h);
         g.setColor(line);

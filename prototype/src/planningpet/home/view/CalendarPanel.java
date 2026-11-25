@@ -145,8 +145,10 @@ public final class CalendarPanel extends JPanel {
     private JLabel cell(LocalDate date) {
         TaskBook.CellPreview preview = store.book.cellPreview(date, store.calendarFixed);
         boolean due = preview != null && !preview.due().isEmpty();
+        // D-94: 셀 일 없이 마감만 있는 날은 수를 그리지 않는다.
+        String count = preview == null ? "" : preview.text();
         String day = date.equals(selected) ? "<b>" + date.getDayOfMonth() + "</b>" : String.valueOf(date.getDayOfMonth());
-        String text = "<center>" + day + (preview == null ? "" : "<br><font size='2' color='"
+        String text = "<center>" + day + (count.isEmpty() ? "" : "<br><font size='2' color='"
                 + (preview.open() ? "#28977F" : "#8A96A0") + "'>" + preview.text() + "</font>")
                 + (due ? " <font size='2' color='#C0392B'>마감</font>" : "") + "</center>";
         boolean today = date.equals(store.today());
@@ -175,7 +177,7 @@ public final class CalendarPanel extends JPanel {
                 g.setFont(today || picked ? Theme.bold(14) : Theme.font(14));
                 FontMetrics fm = g.getFontMetrics();
                 String n = String.valueOf(date.getDayOfMonth());
-                int numY = preview == null ? (h + fm.getAscent() - fm.getDescent()) / 2 : h / 2 - 1;
+                int numY = count.isEmpty() ? (h + fm.getAscent() - fm.getDescent()) / 2 : h / 2 - 1;
                 g.setColor(ink);
                 g.drawString(n, (w - fm.stringWidth(n)) / 2, numY);
                 if (due) {
@@ -183,7 +185,7 @@ public final class CalendarPanel extends JPanel {
                     g.setColor(DUE);
                     g.fillOval((w + fm.stringWidth(n)) / 2 + 1, numY - fm.getAscent() + 1, 6, 6);
                 }
-                if (preview != null) {
+                if (!count.isEmpty()) {
                     g.setFont(Theme.font(11));
                     FontMetrics pf = g.getFontMetrics();
                     String p = PetCardArt.fit(preview.text(), pf, w - 6);
