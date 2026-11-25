@@ -58,6 +58,19 @@ public final class ProtoCheck {
         eq("T-VAL-8", "다음 날 04:00까지 끝나야 해요", msgs(f));
         f.title.setText("");
         eq("T-VAL-14", "제목을 써 주세요 / 다음 날 04:00까지 끝나야 해요", msgs(f));
+        f.minutes.setValue(30);
+        eq("D-95 27분은 25분", "25 true 5분 단위로 맞췄어요(25분)",
+                typed(f.minutes, "27") + " " + f.minutesNote.label.isVisible() + " " + f.minutesNote.label.getText());
+        f.minutes.setValue(30);
+        eq("D-95 다시 바꾸면 숨음, 범위 밖은 이전 값", "false 30 false",
+                f.minutesNote.label.isVisible() + " " + typed(f.minutes, "730") + " " + f.minutesNote.label.isVisible());
+        f.start.setValue("09:00");
+        eq("D-95 09:03은 09:05", "09:05 true 5분 단위로 맞췄어요(09:05)",
+                typed(f.start, "09:03") + " " + f.startNote.label.isVisible() + " " + f.startNote.label.getText());
+        eq("D-95 앞부분만 친 글, 시각이 아닌 글", "14:00 false 14:00", typed(f.start, "14") + " "
+                + f.startNote.label.isVisible() + " " + typed(f.start, "abc"));
+        eq("D-95 지금 값과 같게 맞춤, 끝", "true 03:55(다음 날)", typed(f.start, "13:58").equals("14:00")
+                && f.startNote.label.isVisible() ? "true " + Times.value(Times.rounded("03:58(다음 날)")) : "false");
         java.time.LocalDate nov16 = java.time.LocalDate.of(2026, 11, 16);
         Store p = MockData.empty();
         p.now = nov16.atTime(15, 23);
@@ -104,6 +117,10 @@ public final class ProtoCheck {
         longOne.start.setValue("03:30(다음 날)");
         eq("D-77 시각 고치기 04:00 넘김", "다음 날 04:00까지 끝나야 해요 (화 03:30)",
                 longOne.check() + " " + longOne.realTime.getText());
+        eq("D-95 시각 고치기 09:58은 10:00", "10:00 5분 단위로 맞췄어요(10:00)",
+                typed(longOne.start, "09:58") + " " + longOne.startNote.label.getText());
+        eq("D-95 시각 고치기 28분은 30분", "30 5분 단위로 맞췄어요(30분)",
+                typed(longOne.minutes, "28") + " " + longOne.minutesNote.label.getText());
         eq("시간 빼기는 할 일만", "true false", longOne.clear.isVisible() + " "
                 + new TimeEditor(d.book.dayPlan(nov16).timed().get(1), t1523).clear.isVisible());
         Store r = MockData.empty();
@@ -122,7 +139,7 @@ public final class ProtoCheck {
         r.book.delete(x, false);
         eq("T-DEL-1", "10 1", r.points + " " + r.rewardCount);
         eq("숫자 조사", "을 를", Rules.josa("과제 1", "을", "를") + " " + Rules.josa("과제 2", "을", "를"));
-        eq("D-38 5분 단위", "30 null 75", fiveMinute());
+        eq("D-38 5분 단위, D-95 맞추기", "25 null 75", fiveMinute());
         Store c = MockData.sample();
         java.time.LocalDate nov = java.time.LocalDate.of(2026, 11, 1);
         TaskBook.CellPreview c14 = c.book.cellPreview(nov.withDayOfMonth(14));
@@ -259,14 +276,22 @@ public final class ProtoCheck {
     private static String fiveMinute() {
         TaskForm f = new TaskForm(null, java.time.LocalDate.of(2026, 11, 16), java.time.LocalDateTime.of(2026, 11, 16, 9, 0));
         f.title.setText("과제");
-        try {
-            f.minutes.setValue(27);
-        } catch (IllegalArgumentException ignored) {
-            // 받지 않는다.
-        }
+        f.minutes.setValue(27);
         Object kept = f.minutes.getValue();
         f.minutes.setValue(75);
         return kept + " " + msgs(f) + " " + f.minutes.getValue();
+    }
+
+    /** 칸에 글을 쳐 넣고 칸을 벗어난 것과 같다. 받지 않는 글이면 이전 값이 남는다. */
+    static Object typed(javax.swing.JSpinner s, String text) {
+        var field = ((javax.swing.JSpinner.DefaultEditor) s.getEditor()).getTextField();
+        field.setText(text);
+        try {
+            field.commitEdit();
+        } catch (java.text.ParseException ignored) {
+            field.setValue(s.getValue());
+        }
+        return s.getValue();
     }
 
     /** 검사 문장을 칸 순서대로 " / "로 잇는다. 통과면 null. */

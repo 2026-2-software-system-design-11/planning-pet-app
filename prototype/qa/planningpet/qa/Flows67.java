@@ -99,7 +99,8 @@ final class Flows67 {
         q.eq("제목 길이", 100, f.title.getText().length());
         q.step("3", "국시 모의고사, 걸리는 시간 칸에 27을 쳐 넣고 칸을 벗어난다");
         f.title.setText("국시 모의고사");
-        q.eq("걸리는 시간", 30, Flows8910.type(f.minutes, "27"));
+        q.eq("걸리는 시간과 알림(D-95)", "25 5분 단위로 맞췄어요(25분)",
+                Flows8910.type(f.minutes, "27") + " " + f.minutesNote.label.getText());
         q.step("4", "제목을 비우고 시작 시각 03:30(다음 날), 40분으로 저장한다");
         f.title.setText("");
         f.timed.doClick();
