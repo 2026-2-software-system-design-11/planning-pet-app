@@ -129,6 +129,7 @@ public final class ProtoCheck {
                 typed("반시간") + " / " + typed("30abc") + " / " + typed("30분"));
         eq("T-TYPE-4", "60 90 90 90 150", String.join(" ", java.util.stream.Stream.of("1시간", "1시간 30분", "1시간 반", "1.5시간", "2시간 반")
                 .map(w -> String.valueOf(Typed.minutes(w).value())).toList()));
+        eq("D-98 칸 아래 글", "25 흐린 5분 단위로 맞췄어요(25분) / 25 빨간 " + Typed.MINUTES_BAD, typedField());
         Store c = MockData.sample();
         java.time.LocalDate nov = java.time.LocalDate.of(2026, 11, 1);
         TaskBook.CellPreview c14 = c.book.cellPreview(nov.withDayOfMonth(14));
@@ -308,6 +309,29 @@ public final class ProtoCheck {
     private static String typed(String text) {
         Typed.Read r = Typed.minutes(text);
         return r.value() + " " + r.notice();
+    }
+
+    /** 27은 25와 흐린 글, "반시간"은 이전 값과 빨간 글(D-98). */
+    private static String typedField() {
+        javax.swing.JSpinner s = Ui.minutes(30);
+        javax.swing.JLabel l = new TypedField(s, Typed::minutes, () -> { }).notice;
+        return type(s, "27") + " " + notice(l) + " / " + type(s, "반시간") + " " + notice(l);
+    }
+
+    /** 칸에 글을 쳐 넣고 칸을 벗어난 것과 같다. 받지 않으면 이전 값이다. */
+    static Object type(javax.swing.JSpinner s, String text) {
+        var field = ((javax.swing.JSpinner.DefaultEditor) s.getEditor()).getTextField();
+        field.setText(text);
+        try {
+            field.commitEdit();
+        } catch (java.text.ParseException ignored) {
+        }
+        return s.getValue();
+    }
+
+    /** 칸 아래 글. 안 보이면 "없음". */
+    static String notice(javax.swing.JLabel l) {
+        return !l.isVisible() ? "없음" : (planningpet.common.view.Theme.SUNDAY.equals(l.getForeground()) ? "빨간 " : "흐린 ") + l.getText();
     }
 
     /** 검사 문장을 칸 순서대로 " / "로 잇는다. 통과면 null. */
