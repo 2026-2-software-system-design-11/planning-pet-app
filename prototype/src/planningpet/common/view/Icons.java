@@ -18,7 +18,7 @@ import javax.swing.Icon;
  */
 public final class Icons {
     public enum Kind { HOME, ROOM, CALENDAR, CHART, GEAR, PAW, COIN, CART, SOFA, INFO, CHECK, HEART, SPARK, FLAME, BOX,
-        GAMEPAD, SEARCH, LEFT, RIGHT, PLUS, PENCIL, LOCK, SHIRT, HAT, BOW, COLLAR, BALL, GRID, DOTS, PLANT, CLOSE, EYE,
+        GAMEPAD, SEARCH, LEFT, RIGHT, DOWN, PLUS, PENCIL, LOCK, SHIRT, HAT, BOW, COLLAR, BALL, GRID, DOTS, PLANT, CLOSE, EYE,
         TRASH, CLOCK, CHECKLIST }
 
     private Icons() {
@@ -108,6 +108,7 @@ public final class Icons {
             }
             case LEFT -> g.draw(path(15, 5, 8, 12, 15, 19));
             case RIGHT -> g.draw(path(9, 5, 16, 12, 9, 19));
+            case DOWN -> g.draw(path(5, 9, 12, 16, 19, 9));
             case PLUS -> {
                 g.draw(path(12, 5, 12, 19));
                 g.draw(path(5, 12, 19, 12));
