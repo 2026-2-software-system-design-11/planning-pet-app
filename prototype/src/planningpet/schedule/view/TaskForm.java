@@ -43,6 +43,9 @@ public final class TaskForm {
     public JLabel dateLabel;
     /** 반복을 골라 기간 안에 하기가 흐려지면 옆에 늘 보이는 까닭(D-73). */
     public final JLabel periodHint = Ui.hint("반복 일정은 기간을 정할 수 없어요");
+    /** 마감이 지나도 끝내지 못한 기간 할 일을 고칠 때 날짜, 기간, 마감 칸이 흐린 까닭(D-99, #277). */
+    private static final String LOCKED = "마감이 지난 일은 날짜를 바꿀 수 없어요";
+    private final JLabel lockHint = Ui.hint(LOCKED);
     /** 반복 끝 날짜를 사용자가 고쳤는가. 고치기 전에는 시작 날짜를 따라간다(D-79). */
     private boolean endTouched;
     /** 마감을 사용자가 골랐는가(저장해 둔 마감 포함). 고른 뒤에는 날짜나 종류를 바꾸고 기간을 껐다 켜도 다시 채우지 않는다(D-96). */
@@ -60,6 +63,8 @@ public final class TaskForm {
     private final boolean editing;
     /** 수정하는 기간 할 일에 시각을 정해 둔 날. 마감은 이 날보다 앞일 수 없다(D-99, #272). 아니면 null. */
     private final LocalDate placed;
+    /** 마감이 지나도 끝내지 못한 기간 할 일을 고치는 중. 받지 않는 일이라 날짜와 마감을 바꾸지 않는다(D-99, #277). */
+    private final boolean pastDue;
     /** 반복 사본을 고치는 중(기간 칸은 꺼진 채 비활성, D-65). */
     private final boolean copy;
     /** sync 안에서 칸 값을 바꿀 때 다시 sync하지 않는다. */
@@ -107,6 +112,7 @@ public final class TaskForm {
         editing = t != null;
         placed = t != null && t.period() && t.timed() ? t.date : null;
         copy = t != null && t.seriesId != null;
+        pastDue = t != null && t.pastDue(planningpet.common.model.Rules.appDay(now));
         Ui.limit(title, 100);
         Ui.limit(memo, 1000);
         ButtonGroup kinds = new ButtonGroup();
@@ -135,7 +141,7 @@ public final class TaskForm {
         line("", errors.get("제목"));
         line("유형", Ui.flow(category));
         dateLabel = line("날짜", date);
-        line("기간", Ui.flow(period, periodHint, dueLabel, due));
+        line("기간", Ui.flow(period, periodHint, lockHint, dueLabel, due));
         line("", errors.get("마감"));
         line("시작 시각", Ui.flow(timed, start, realTime));
         // 칸 아래 글 줄은 이름 칸을 숨겨, 글이 없을 때 줄 여백도 차지하지 않는다.
@@ -297,8 +303,14 @@ public final class TaskForm {
         timed.setEnabled(!isFixed && !period.isSelected());
         timed.setToolTipText(period.isSelected() ? "기간 할 일의 시각은 목록에서 정해요" : null);
         start.setEnabled(timed.isSelected());
-        period.setEnabled(periodAllowed);
-        period.setToolTipText(isFixed ? "기간은 할 일만 정할 수 있어요" : null);
+        period.setEnabled(periodAllowed && !pastDue);
+        period.setToolTipText(isFixed ? "기간은 할 일만 정할 수 있어요" : pastDue ? LOCKED : null);
+        lockHint.setVisible(pastDue);
+        for (JSpinner c : new JSpinner[] {date, due}) {
+            c.setEnabled(!pastDue);
+            c.setToolTipText(pastDue ? LOCKED : null);
+            ((JSpinner.DefaultEditor) c.getEditor()).getTextField().setToolTipText(pastDue ? LOCKED : null);
+        }
         periodHint.setVisible(repeating && !isFixed && !copy);
         dateLabel.setText(period.isSelected() ? "시작일" : "날짜");
         dueLabel.setVisible(period.isSelected());

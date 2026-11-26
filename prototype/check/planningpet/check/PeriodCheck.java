@@ -61,6 +61,37 @@ final class PeriodCheck {
         autoPlace();
         pastCopies();
         formKeeps();
+        pastDueForm();
+    }
+
+    /** T-EDIT-41(D-99, #277): 마감이 지난 기간 할 일의 수정 창은 날짜, 기간 안에 하기, 마감일을 막고 까닭을 보인다. */
+    static void pastDueForm() {
+        App app = Main.create(at("11-18T09:00"));
+        Task q = period(app.store, "Q", "11-10", "11-16", 30);
+        Task p = period(app.store, "P", "11-16", "11-20", 30);
+        TaskForm f = TaskDialog.form(app, q, q.date);
+        String why = "마감이 지난 일은 날짜를 바꿀 수 없어요";
+        String locked = f.date.isEnabled() + " " + f.period.isEnabled() + " " + f.period.isSelected() + " " + f.due.isEnabled() + " "
+                + why.equals(f.date.getToolTipText()) + why.equals(f.period.getToolTipText()) + why.equals(f.due.getToolTipText()) + " "
+                + shown(f.panel, why) + " " + f.title.isEnabled() + f.category.isEnabled() + f.minutes.isEnabled() + f.memo.isEnabled();
+        f.title.setText("Q2");
+        f.minutes.setValue(60);
+        boolean saved = TaskDialog.trySave(app, f, q);
+        TaskForm g = TaskDialog.form(app, p, p.date);
+        eq("T-EDIT-41", "false false true false truetruetrue true truetruetruetrue / true Q2 60 2026-11-10 2026-11-16 / true true true false",
+                locked + " / " + saved + " " + q.title + " " + q.minutes + " " + q.date + " " + q.dueDate + " / " + g.date.isEnabled() + " "
+                        + g.period.isEnabled() + " " + g.due.isEnabled() + " " + shown(g.panel, why));
+    }
+
+    /** 패널 안에 그 글의 보이는 라벨이 있는가. */
+    static boolean shown(java.awt.Container c, String text) {
+        for (java.awt.Component x : c.getComponents()) {
+            if (x.isVisible() && (x instanceof javax.swing.JLabel l && text.equals(l.getText())
+                    || x instanceof java.awt.Container k && shown(k, text))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     static String picked(TaskForm f) {
