@@ -142,6 +142,7 @@ public final class ProtoCheck {
         eq("T-TYPE-9", "null 14:00처럼 적어 주세요 / null 14:00처럼 적어 주세요 / null 14:00처럼 적어 주세요", starts("25:00", "09:75", "점심"));
         eq("D-98 시작 시각 칸 아래 글", "09:05 흐린 5분 단위로 맞췄어요(09:05) / 14:00 / 흐린 하루는 새벽 4시에 넘어가요. 03:55(다음 날)로 맞췄어요"
                 + " / 흐린 최대 720분(12시간)까지 넣을 수 있어요 true", startTyped());
+        eq("D-98 입력 창 칸 아래 글 자리", "true true true", formNoticeRows());
         eq("S83 쳐 넣은 뒤 30분 안내", "true false 흐린 5분 단위로 맞췄어요(30분)", thirtyHint());
         Store c = MockData.sample();
         java.time.LocalDate nov = java.time.LocalDate.of(2026, 11, 1);
@@ -373,6 +374,18 @@ public final class ProtoCheck {
         type(e.minutes, "730");
         return form + " / " + field.getText() + " / " + notice(e.startNotice) + " / " + notice(e.minutesNotice) + " "
                 + (e.startNotice.getParent() != e.minutesNotice.getParent());
+    }
+
+    /** 칸 아래 글은 입력 창 panel에 붙고, 글이 없을 때는 이름 칸과 여백까지 자리를 차지하지 않는다(QA B-6). */
+    private static String formNoticeRows() {
+        TaskForm f = new TaskForm(null, java.time.LocalDate.of(2026, 11, 16), java.time.LocalDateTime.of(2026, 11, 16, 9, 0));
+        String parents = (f.startNotice.getParent() == f.panel) + " " + (f.minutesNotice.getParent() == f.panel);
+        int height = f.panel.getPreferredSize().height;
+        for (javax.swing.JLabel l : new javax.swing.JLabel[] {f.startNotice, f.minutesNotice}) {
+            f.panel.remove(f.panel.getComponentZOrder(l) - 1);
+            f.panel.remove(l);
+        }
+        return parents + " " + (height == f.panel.getPreferredSize().height);
     }
 
     /** 추가 창의 30분 안내는 값을 쳐 넣은 뒤에는 숨는다(S83). */

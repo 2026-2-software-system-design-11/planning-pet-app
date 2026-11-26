@@ -133,10 +133,11 @@ public final class TaskForm {
         line("기간", Ui.flow(period, periodHint, dueLabel, due));
         line("", errors.get("마감"));
         line("시작 시각", Ui.flow(timed, start, realTime));
-        line("", startNotice);
+        // 칸 아래 글 줄은 이름 칸을 숨겨, 글이 없을 때 줄 여백도 차지하지 않는다(QA B-6).
+        line("", startNotice).setVisible(false);
         line("", errors.get("시작 시각"));
         line("걸리는 시간 (분)", Ui.flow(minutes, endLabel));
-        line("", minutesNotice);
+        line("", minutesNotice).setVisible(false);
         line("", errors.get("걸리는 시간"));
         line("", minutesHint);
         JComponent[] repeatParts = new JComponent[8];
