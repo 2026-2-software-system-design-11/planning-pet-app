@@ -110,19 +110,22 @@ final class ListCheck {
         TimetablePanel table = ProtoCheck.find(app.root, TimetablePanel.class);
         TaskRows.TitleLabel title = title(sched.untimed, work);
         java.awt.Container row = title.getParent();
+        int before = pixels((javax.swing.JComponent) row, Theme.INK);
         mouse(title, MouseEvent.MOUSE_PRESSED, new java.awt.Point(5, 5));
         mouse(title, MouseEvent.MOUSE_DRAGGED, javax.swing.SwingUtilities.convertPoint(table, new java.awt.Point(300, 300), title));
-        String during = (sched.untimed.lifted() == work) + " " + table.dimmed().size();
+        String during = (sched.untimed.lifted() == work) + " " + table.dimmed().size() + " " + (before > 0) + " "
+                + (pixels((javax.swing.JComponent) row, Theme.INK) == 0);
         // 포커스를 가진 칸이 받은 것처럼 보낸다(창이 없으면 포커스가 없다).
         java.awt.KeyboardFocusManager.getCurrentKeyboardFocusManager().redispatchEvent(title, new java.awt.event.KeyEvent(title,
                 java.awt.event.KeyEvent.KEY_PRESSED, 0, 0,
                 java.awt.event.KeyEvent.VK_ESCAPE, java.awt.event.KeyEvent.CHAR_UNDEFINED));
         DragReturn back = ProtoCheck.find(frame.getLayeredPane(), DragReturn.class);
         String after = sched.untimed.lifted() + " " + table.dimmed().size() + " " + table.dragText() + " "
-                + back.to.equals(javax.swing.SwingUtilities.convertRectangle(row.getParent(), row.getBounds(), frame.getLayeredPane()));
+                + back.to.equals(javax.swing.SwingUtilities.convertRectangle(row.getParent(), row.getBounds(), frame.getLayeredPane())) + " "
+                + (pixels((javax.swing.JComponent) row, Theme.INK) == before);
         mouse(title, MouseEvent.MOUSE_DRAGGED, javax.swing.SwingUtilities.convertPoint(table, new java.awt.Point(320, 300), title));
         mouse(title, MouseEvent.MOUSE_RELEASED, javax.swing.SwingUtilities.convertPoint(table, new java.awt.Point(320, 300), title));
-        eq("T-EDIT-26", "true 1 / null 0 null true / 2026-11-17 null", during + " / " + after + " / " + work.date + " " + work.start);
+        eq("T-EDIT-26", "true 1 true true / null 0 null true true / 2026-11-17 null", during + " / " + after + " / " + work.date + " " + work.start);
     }
 
     /** T-EDIT-40(D-99, S146, S75): 글 상자 자리(오른쪽에 자리가 없으면 왼쪽, 보이는 아래 끝 안)와 주를 옮기면 닫힘. */
