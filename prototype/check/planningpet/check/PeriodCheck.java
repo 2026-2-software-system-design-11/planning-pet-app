@@ -60,6 +60,44 @@ final class PeriodCheck {
         talkAndCalendar();
         autoPlace();
         pastCopies();
+        formKeeps();
+    }
+
+    static String picked(TaskForm f) {
+        List<String> out = new java.util.ArrayList<>();
+        for (javax.swing.JToggleButton b : f.days) {
+            if (b.isSelected()) {
+                out.add(b.getText());
+            }
+        }
+        return out.isEmpty() ? "없음" : String.join(", ", out);
+    }
+
+    /** T-DEF-19(D-101): 입력 창은 사용자가 고른 값을 지키고 앱이 고른 값은 맥락을 따른다. */
+    static void formKeeps() {
+        TaskForm f = new TaskForm(null, d("11-18"), at("11-17T09:00").now);
+        f.title.setText("운동");
+        f.repeat.setSelectedIndex(2);
+        String seen = picked(f);
+        Ui.setDate(f.date, d("11-19"));
+        seen += " / " + picked(f);
+        f.days[3].doClick();
+        f.days[1].doClick();
+        f.days[3].doClick();
+        seen += " / " + picked(f);
+        Ui.setDate(f.date, d("11-20"));
+        seen += " / " + picked(f);
+        f.repeat.setSelectedIndex(1);
+        f.repeat.setSelectedIndex(2);
+        f.repeat.setSelectedIndex(0);
+        f.repeat.setSelectedIndex(2);
+        seen += " / " + picked(f);
+        f.days[1].doClick();
+        f.days[3].doClick();
+        f.repeat.setSelectedIndex(1);
+        f.repeat.setSelectedIndex(2);
+        eq("T-DEF-19", "수 / 목 / 화, 목 / 화, 목 / 화, 목 / 없음 반복: 요일을 하나 이상 골라 주세요",
+                seen + " / " + picked(f) + " " + msgs(f.problems()));
     }
 
     /** D-69: 지난 반복 사본은 밀린 일로 보이지 않는다. */

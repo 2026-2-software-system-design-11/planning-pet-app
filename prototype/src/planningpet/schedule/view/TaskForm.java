@@ -54,6 +54,10 @@ public final class TaskForm {
     private boolean syncing;
     /** 저장을 한 번 누른 뒤에는 칸을 고칠 때마다 다시 검사한다(D-43). */
     private boolean checked;
+    /** D-101: 요일을 한 번 고른 뒤에는 다른 반복을 거쳐 돌아와도 단추를 그대로 둔다. */
+    private boolean daysShown;
+    /** D-101: 앱이 골라 준 요일. 사용자가 요일 단추를 누르면 null이 되고 날짜를 따라가지 않는다. */
+    private java.time.DayOfWeek autoDay;
     /** 오류 글이 늘거나 줄면 창 크기를 다시 맞춘다. 창 없이 만들 때는 아무것도 하지 않는다. */
     Runnable relayout = () -> { };
     private int row;
@@ -81,7 +85,10 @@ public final class TaskForm {
         for (int i = 0; i < 7; i++) {
             days[i] = new JToggleButton(String.valueOf("월화수목금토일".charAt(i)));
             days[i].setMargin(new Insets(1, 4, 1, 4));
-            days[i].addActionListener(e -> sync());
+            days[i].addActionListener(e -> {
+                autoDay = null;
+                sync();
+            });
         }
         start.setValue(Times.value(DefaultDates.start(defaultDate, now)));
         for (String k : new String[] {"제목", "마감", "시작 시각", "걸리는 시간", "메모", "반복"}) {
@@ -136,12 +143,11 @@ public final class TaskForm {
         fixed.addActionListener(e -> sync());
         timed.addActionListener(e -> sync());
         repeat.addActionListener(e -> {
-            if (!syncing && repeat.getSelectedIndex() == 2) {
-                // 요일을 고르면 날짜의 요일이 골라져 있다(05 일정 입력 창 7번).
-                int dow = Ui.dateOf(date).getDayOfWeek().getValue() - 1;
-                for (int i = 0; i < 7; i++) {
-                    days[i].setSelected(i == dow);
-                }
+            if (!syncing && repeat.getSelectedIndex() == 2 && !daysShown) {
+                // 요일을 처음 고르면 날짜의 요일이 골라져 있다(D-93, 05 일정 입력 창 7번).
+                daysShown = true;
+                autoDay = Ui.dateOf(date).getDayOfWeek();
+                pick(autoDay);
             }
             sync();
         });
@@ -221,6 +227,17 @@ public final class TaskForm {
         repeatEnd.setEnabled(repeating && !editing);
         repeatHint.setVisible(period.isSelected());
         LocalDate day = Ui.dateOf(date);
+        // D-101: 앱이 골라 준 요일은 사용자가 단추를 누르기 전까지 날짜를 바꾸는 그 순간 따라간다.
+        if (autoDay != null && autoDay != day.getDayOfWeek()) {
+            boolean untouched = true;
+            for (int i = 0; i < 7; i++) {
+                untouched &= days[i].isSelected() == (i == autoDay.getValue() - 1);
+            }
+            autoDay = untouched ? day.getDayOfWeek() : null;
+            if (untouched) {
+                pick(autoDay);
+            }
+        }
         // D-79: 끝 날짜를 손대지 않았으면 반복을 고른 뒤에도 시작 날짜를 따라간다.
         if (!editing && !endTouched) {
             Ui.setDate(repeatEnd, DefaultDates.repeatEnd(isFixed ? Task.Kind.FIXED : Task.Kind.TASK, day));
@@ -237,6 +254,12 @@ public final class TaskForm {
             showErrors(problems());
         } else if (dueShown != due.isVisible()) {
             relayout.run();
+        }
+    }
+
+    private void pick(java.time.DayOfWeek d) {
+        for (int i = 0; i < 7; i++) {
+            days[i].setSelected(i == d.getValue() - 1);
         }
     }
 
