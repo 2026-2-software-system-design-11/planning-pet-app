@@ -92,9 +92,6 @@ public final class TimeEditor {
 
     /** 끝이 다음 날 04:00을 넘으면 문장, 아니면 null(D-77). */
     public String check() {
-        if ((int) minutes.getValue() % 5 != 0) {
-            return "10분부터 720분까지, 5분 단위예요";
-        }
         return Times.minuteOf(start.getValue()) + (int) minutes.getValue() > Task.DAY_END ? TaskCheck.END_PROBLEM : null;
     }
 

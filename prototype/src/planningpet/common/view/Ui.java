@@ -33,7 +33,7 @@ public final class Ui {
     private Ui() {
     }
 
-    /** 걸리는 시간 칸(D-38). 10분부터 720분, 5분 단위가 아닌 값은 받지 않아 이전 값으로 돌아간다(05). */
+    /** 걸리는 시간 칸(D-38). 10분부터 720분, 5분 단위다. 쳐 넣은 글은 TypedField가 이 범위의 5분 값으로 맞춰 넣으므로(D-98) 그 밖의 값은 받지 않는다. */
     public static javax.swing.JSpinner minutes(int value) {
         return new javax.swing.JSpinner(new javax.swing.SpinnerNumberModel(value, 10, 720, 5) {
             @Override

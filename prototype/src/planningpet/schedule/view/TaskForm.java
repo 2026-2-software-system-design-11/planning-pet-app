@@ -22,9 +22,9 @@ public final class TaskForm {
     /** 다음 날 새벽 값이면 시작 칸 옆에 적는 실제 날과 시각 "(토 01:30)"(D-77). */
     public final JLabel realTime = new JLabel();
     public final JSpinner minutes = Ui.minutes(30);
-    /** 걸리는 시간 칸에 쳐 넣은 값을 맞췄거나 받지 않았을 때 칸 아래 글(D-98). */
     /** 시작 시각 칸에 쳐 넣은 값을 맞췄거나 받지 않았을 때 칸 아래 글(D-98). */
     public final JLabel startNotice = new TypedField(start, Typed::start, () -> this.relayout.run()).notice;
+    /** 걸리는 시간 칸에 쳐 넣은 값을 맞췄거나 받지 않았을 때 칸 아래 글(D-98). 쳐 넣은 뒤에는 30분 안내를 숨긴다(S83). */
     private final TypedField minutesTyped = new TypedField(minutes, Typed::minutes, () -> {
         sync();
         this.relayout.run();
