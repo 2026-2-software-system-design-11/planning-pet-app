@@ -53,7 +53,20 @@ final class ListCheck {
         dropAt(sched, table, work, new java.awt.Point(thu - w / 2, seen.y + seen.height - 3));
         String low = work.date + " " + note.isVisible() + " " + (note.getY() + note.getHeight() <= seen.y + seen.height);
         sched.move(sched.weekStart().plusWeeks(1));
-        eq("T-EDIT-40", "2026-11-19 true true / 2026-11-18 true true / false", left + " / " + low + " / " + note.isVisible());
+        String moved = note.isVisible() + "";
+        sched.move(d("11-16"));
+        Task log = app.store.book.add(Task.Kind.TASK, "긴 일", d("11-17"), null, 720, "", null).get(0);
+        app.store.changed();
+        PeriodCheck.layout(app.root);
+        sched.scrollTo(24 * 60);
+        PeriodCheck.layout(app.root);
+        seen = table.getVisibleRect();
+        dropAt(sched, table, log, new java.awt.Point(thu + w / 2, seen.y + seen.height - 3));
+        java.awt.Rectangle now = table.getVisibleRect();
+        String pulled = planningpet.schedule.model.TaskBook.timeText(log) + " " + (now.y <= log.startMinute() * TimetablePanel.HOUR / 60)
+                + " " + now.contains(note.getBounds());
+        eq("T-EDIT-40", "2026-11-19 true true / 2026-11-18 true true / false / 16:00~04:00(다음 날) true true",
+                left + " / " + low + " / " + moved + " / " + pulled);
     }
 
     /** 일정관리 목록의 줄 t를 잡아 시간표 좌표 p에 놓는다. */
