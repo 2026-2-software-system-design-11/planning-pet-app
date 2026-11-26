@@ -56,8 +56,16 @@ final class ListCheck {
         DragReturn back = ProtoCheck.find(frame.getLayeredPane(), DragReturn.class);
         java.awt.Point at = javax.swing.SwingUtilities.convertPoint(title, new java.awt.Point(20, 60), frame.getLayeredPane());
         java.awt.Rectangle home = javax.swing.SwingUtilities.convertRectangle(row.getParent(), row.getBounds(), frame.getLayeredPane());
-        eq("T-EDIT-28", "2026-11-17 null false / true true true", work.date + " " + work.start + " " + table.note.isVisible() + " / "
-                + back.from.contains(at) + " " + back.to.equals(home) + " " + back.timer.isRunning());
+        String out = work.date + " " + work.start + " " + table.note.isVisible() + " / " + back.from.contains(at) + " " + back.to.equals(home)
+                + " " + back.timer.isRunning();
+        int w = (table.getWidth() - TimetablePanel.GUTTER) / 7;
+        java.awt.Point mon = new java.awt.Point(TimetablePanel.GUTTER + w / 2, table.getVisibleRect().y + 100);
+        dropAt(sched, table, work, mon);
+        java.awt.Point monAt = javax.swing.SwingUtilities.convertPoint(table, mon, frame.getLayeredPane());
+        boolean returned = java.util.Arrays.stream(frame.getLayeredPane().getComponents())
+                .anyMatch(c -> c instanceof DragReturn r && r.from.contains(monAt) && r.to.equals(home));
+        eq("T-EDIT-28", "2026-11-17 null false / true true true / 2026-11-17 null true 지난 날에는 놓을 수 없어요",
+                out + " / " + work.date + " " + work.start + " " + returned + " " + table.note.text.getText());
     }
 
     /** T-EDIT-27(D-99, S149, S152): 끄는 동안 시간표 끝에 닿으면 굴러가고 목록 위에서는 굴러가지 않는다. 빠르기는 끝에 가까울수록 빠르다. */
