@@ -52,11 +52,11 @@ public final class Typed {
     public static final String START_BAD = "14:00처럼 적어 주세요";
     private static final String NEXT_DAY = "(다음 날)";
     private static final Pattern CLOCK = Pattern.compile("(\\d{1,2}):(\\d{2})|(\\d{1,2}?)(\\d{2})|(\\d{1,2})");
-    private static final Pattern SPOKEN = Pattern.compile("(오전|오후|아침|낮|저녁|밤|새벽)?\\s*(\\d{1,2})\\s*시\\s*(?:(반)|(\\d{1,2})\\s*분)?");
+    private static final Pattern SPOKEN = Pattern.compile("(오전|오후|아침|낮|저녁|밤|새벽)?\\s*(\\d{1,2})\\s*(?:시|:)\\s*(?:(반)|(\\d{1,2})\\s*분?)?");
 
     /**
      * 시작 시각 칸. 목록 값과 그 앞부분("14"), "09:03", "930", "오후 2시 반"을 앱 하루의 5분 값으로 읽는다.
-     * 다음 날 04:00을 넘으면 03:55(다음 날)로 맞추고, 반올림은 날을 넘지 않는다(23:58은 23:55).
+     * 다음 날 04:00을 넘으면 03:55(다음 날)로 맞추고, 반올림은 날을 넘지 않는다(23:58은 23:55). 맞춘 까닭은 값을 정한 하나만 쓴다.
      */
     public static Read start(String text, java.time.LocalDate day) {
         String t = text.strip();
@@ -79,13 +79,24 @@ public final class Typed {
             return new Read(v, d.getDayOfMonth() + "일(" + "월화수목금토일".charAt(d.getDayOfWeek().getValue() - 1) + ") " + v
                     + planningpet.common.model.Rules.josa(v, "으로", "로") + " 읽었어요", 1);
         }
-        if (m >= Task.DAY_END) {
-            return new Read(Times.value(last), "하루는 새벽 4시에 넘어가요. " + Times.value(last) + "로 맞췄어요");
+        int r = (int) Math.round(m / 5.0) * 5;
+        // S117, S119: 까닭이 둘이면 값을 정한 까닭을 보인다. 다음 날 04:00을 넘으면 하루 끝이다.
+        if (m >= Task.DAY_END || r > last && m >= Task.DAY) {
+            return new Read(Times.value(last), "하루는 새벽 4시에 끝나서 " + Times.value(last) + "로 맞췄어요");
         }
-        int r = Math.min((int) Math.round(m / 5.0) * 5, m < Task.DAY ? Task.DAY - 5 : last);
+        r = Math.min(r, m < Task.DAY ? Task.DAY - 5 : last);
         String v = Times.value(r);
-        if (body.matches("(오전|아침)\\s*12\\s*시.*")) {
-            return new Read(v, "오전 12시는 밤 자정, " + v + "로 읽었어요");
+        Matcher w = SPOKEN.matcher(body);
+        String said = w.matches() ? w.group(1) : null;
+        if ("오전".equals(said) && w.group(2).equals("12")) {
+            return new Read(v, "오전 12시는 밤 자정" + (r == m ? ", " : "이라 ") + v + "로 읽었어요");
+        }
+        String as = v + planningpet.common.model.Rules.josa(v, "으로", "로") + " 읽었어요";
+        if ("오전".equals(said) && Integer.parseInt(w.group(2)) > 12) {
+            return new Read(v, "오전을 빼고 " + as);
+        }
+        if (body.matches("[1-8]:?\\d{2}")) {
+            return new Read(v, as);
         }
         return new Read(v, r == m ? null : "5분 단위로 맞췄어요(" + v + ")");
     }
@@ -109,6 +120,8 @@ public final class Typed {
             int g = c.group(1) != null ? 1 : c.group(3) != null ? 3 : 5;
             h = Integer.parseInt(c.group(g));
             min = g == 5 ? 0 : Integer.parseInt(c.group(g + 1));
+            // S110: 앞에 0 없이 친 한 자리 1~8시("730", "7:30")는 "7시 30분"처럼 오후다.
+            h += g != 5 && c.group(g).matches("[1-8]") ? 12 : 0;
         } else if (w.matches()) {
             h = hour(w.group(1), Integer.parseInt(w.group(2)));
             most = 29;
@@ -119,13 +132,14 @@ public final class Typed {
         return h < 0 || h > most || min > 59 ? -1 : h * 60 + min;
     }
 
-    /** "N시"의 시(S54, S60~S62, S81). 새벽과 밤의 1~3시, 밤의 4~5시, 밤과 오전의 12시는 다음 날이라 24를 더한다. */
+    /** "N시"의 시(S54, S60~S62, S81, S100). 새벽과 밤의 1~3시, 밤의 4~5시, 밤과 오전의 12시는 다음 날이라 24를 더한다. 아침 12시는 낮 12시다. */
     private static int hour(String word, int n) {
         if (n > 12) {
             return n > 23 ? -1 : n;
         }
         return switch (word == null ? "" : word) {
-            case "오전", "아침" -> n == 12 ? 24 : n;
+            case "오전" -> n == 12 ? 24 : n;
+            case "아침" -> n;
             case "오후", "저녁" -> n % 12 + 12;
             case "새벽" -> n == 12 ? 24 : n <= 3 ? n + 24 : n;
             case "밤" -> n == 12 ? 24 : n <= 5 ? n + 24 : n + 12;
