@@ -45,7 +45,14 @@ final class HomeCheck {
         main.selectDate(d("11-16"));
         app.schedule.delete(b);
         said.add(s.talk);
-        app.schedule.check(s.book.dayPlan(d("11-16")).untimed().get(0));
+        Task ga = s.book.dayPlan(d("11-16")).untimed().get(0);
+        app.schedule.check(ga);
+        said.add(s.talk);
+        TaskForm rename = new TaskForm(ga, ga.date, s.now);
+        rename.title.setText("가나");
+        TaskDialog.trySave(app, rename, ga);
+        said.add(s.talk);
+        app.schedule.check(ga);
         said.add(s.talk);
         app.show("일정관리");
         app.schedule.drop(c, d("11-16"), 600);
@@ -60,7 +67,7 @@ final class HomeCheck {
         said.add(s.talk);
         app.schedule.delete(s.tasks.stream().filter(t -> t.title.equals("영어 단어")).findFirst().orElseThrow());
         said.add(s.talk);
-        eq("T-TALK-30", "11월 16일 할 일은 1개야. / 잘했어! +10P / 이번 주 남은 날의 시각 없는 할 일이 2개 있어. 자동 배치를 눌러 볼래? / "
+        eq("T-TALK-30", "11월 16일 할 일은 1개야. / 잘했어! +10P / 11월 16일 할 일은 1개야. / 체크를 풀었어. -10P / 이번 주 남은 날의 시각 없는 할 일이 2개 있어. 자동 배치를 눌러 볼래? / "
                 + "11월 16일 할 일은 2개야. / "
                 + "오늘 할 일 1개 남았어. / '영어 단어' 넣었구나! 오늘 남은 일 2개야. / 오늘 할 일 1개 남았어.", String.join(" / ", said));
         eq("T-TALK-30 브리핑", "오늘 할 일 2개 남았어. 어제 못 끝낸 일 1개는 달력에 남아 있어. 내일 '통계 퀴즈'가 있어.", opened("11-17"));
