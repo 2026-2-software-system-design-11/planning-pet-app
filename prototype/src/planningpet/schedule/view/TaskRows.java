@@ -268,8 +268,10 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
         // D-69: 지난 반복 사본은 "지난 날" 없이 흐리게 보인다. D-78: 끝낸 일에는 붙이지 않는다.
         boolean past = withDate && !t.done && t.countDay().isBefore(control.today()) && !t.pastCopy(control.today());
         JLabel marks = marks(TaskBook.dueText(t), missedNote(t), dueTag(t, listDay), past);
-        label.setToolTipText(memoTip(t));
-        row.setToolTipText(memoTip(t));
+        // #277: 일정관리 목록의 마감이 지난 줄은 끌리지 않는 까닭을 먼저 보이고 메모는 그 아래다.
+        String tip = withDate && t.pastDue(control.today()) ? lockedTip(t) : memoTip(t);
+        label.setToolTipText(tip);
+        row.setToolTipText(tip);
         JLabel minutes = new JLabel(t.minutes + "분", JLabel.RIGHT);
         minutes.setFont(Theme.font(13));
         minutes.setForeground(t.done || dim ? Theme.INK_DIM : Theme.INK_SUB);
@@ -603,6 +605,13 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
     }
 
     /** 메모가 있으면 마우스를 올렸을 때 200자까지 보인다(D-33). */
+    /** 마감이 지난 줄의 툴팁(D-99, #277). 메모가 있으면 그 아래에 memoTip과 같은 꼴로 잇는다. */
+    static String lockedTip(Task t) {
+        String why = "마감이 지난 일은 옮길 수 없어요";
+        String memo = memoTip(t);
+        return memo == null ? why : memo.replace("<div style='width:280px'>", "<div style='width:280px'>" + why + "<br>");
+    }
+
     static String memoTip(Task t) {
         if (t.memo.isBlank()) {
             return null;

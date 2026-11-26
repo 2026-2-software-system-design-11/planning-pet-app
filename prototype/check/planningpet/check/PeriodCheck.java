@@ -61,6 +61,83 @@ final class PeriodCheck {
         autoPlace();
         pastCopies();
         formKeeps();
+        pastDueForm();
+        dueBeforeToday();
+        startAfterPlaced();
+    }
+
+    /** T-EDIT-41(D-99, #277): 마감이 지난 기간 할 일의 수정 창은 날짜, 기간 안에 하기, 마감일을 막고 까닭을 보인다. */
+    static void pastDueForm() {
+        App app = Main.create(at("11-18T09:00"));
+        Task q = period(app.store, "Q", "11-10", "11-16", 30);
+        Task p = period(app.store, "P", "11-16", "11-20", 30);
+        TaskForm f = TaskDialog.form(app, q, q.date);
+        String why = "마감이 지난 일은 날짜를 바꿀 수 없어요";
+        String locked = f.date.isEnabled() + " " + f.period.isEnabled() + " " + f.period.isSelected() + " " + f.due.isEnabled() + " "
+                + why.equals(f.date.getToolTipText()) + why.equals(f.period.getToolTipText()) + why.equals(f.due.getToolTipText()) + " "
+                + shown(f.panel, why) + " " + f.title.isEnabled() + f.category.isEnabled() + f.minutes.isEnabled() + f.memo.isEnabled();
+        f.title.setText("Q2");
+        f.minutes.setValue(60);
+        boolean saved = TaskDialog.trySave(app, f, q);
+        TaskForm g = TaskDialog.form(app, p, p.date);
+        eq("T-EDIT-41", "false false true false truetruetrue true truetruetruetrue / true Q2 60 2026-11-10 2026-11-16 / true true true false",
+                locked + " / " + saved + " " + q.title + " " + q.minutes + " " + q.date + " " + q.dueDate + " / " + g.date.isEnabled() + " "
+                        + g.period.isEnabled() + " " + g.due.isEnabled() + " " + shown(g.panel, why));
+    }
+
+    /** T-VAL-23(D-99, #277): 마감이 오늘보다 전인 기간 할 일은 새로 넣지 못하고, 끝내지 않은 일을 그렇게 고치지도 못한다. */
+    static void dueBeforeToday() {
+        App app = Main.create(at("11-18T09:00"));
+        TaskForm f = TaskDialog.form(app, null, d("11-10"));
+        f.title.setText("C사");
+        f.period.doClick();
+        Ui.setDate(f.due, d("11-17"));
+        String added = f.errorText() + " " + TaskDialog.trySave(app, f, null);
+        Ui.setDate(f.due, d("11-09"));
+        added += " / " + msgs(f.problems());
+        Ui.setDate(f.due, d("11-18"));
+        added += " / " + msgs(f.problems());
+        Task p = period(app.store, "P", "11-16", "11-20", 30);
+        Task done = period(app.store, "끝", "11-10", "11-16", 30);
+        app.schedule.check(done);
+        Task plain = app.store.book.add(Task.Kind.TASK, "보통", d("11-15"), null, 30, "", null).get(0);
+        TaskForm g = TaskDialog.form(app, p, p.date);
+        Ui.setDate(g.due, d("11-17"));
+        TaskForm h = TaskDialog.form(app, plain, plain.date);
+        h.period.doClick();
+        Ui.setDate(h.due, d("11-16"));
+        TaskForm k = TaskDialog.form(app, done, done.date);
+        k.title.setText("끝2");
+        eq("T-VAL-23", "마감일이 오늘보다 전이에요 false / 마감: 마감일이 시작일보다 전이에요 / 오류 없음 / 마감일이 오늘보다 전이에요 "
+                + "/ 마감일이 오늘보다 전이에요 / true 끝2 2026-11-16", added + " / " + g.errorText() + " / " + h.errorText() + " / "
+                        + TaskDialog.trySave(app, k, done) + " " + done.title + " " + done.dueDate);
+    }
+
+    /** T-VAL-24(D-99, #277): 시각을 정해 둔 기간 할 일의 시작일을 정해 둔 날 후로 옮기면 막는다. */
+    static void startAfterPlaced() {
+        App app = Main.create(at("11-18T09:00"));
+        Task plan = period(app.store, "계획", "11-17", "11-22", 30);
+        app.store.book.setTime(plan, 600, 30, d("11-19"), false);
+        TaskForm f = TaskDialog.form(app, plan, plan.startDay);
+        Ui.setDate(f.date, d("11-20"));
+        String moved = f.errorText() + " " + TaskDialog.trySave(app, f, plan);
+        Ui.setDate(f.due, d("11-18"));
+        moved += " / " + msgs(f.problems());
+        Ui.setDate(f.due, d("11-22"));
+        Ui.setDate(f.date, d("11-19"));
+        eq("T-VAL-24", "시작일이 시각을 정해 둔 11/19(목)보다 후예요 false / 마감: 마감일이 시작일보다 전이에요 / 오류 없음 / 2026-11-17 2026-11-19 10:00",
+                moved + " / " + msgs(f.problems()) + " / " + plan.startDay + " " + plan.date + " " + plan.start);
+    }
+
+    /** 패널 안에 그 글의 보이는 라벨이 있는가. */
+    static boolean shown(java.awt.Container c, String text) {
+        for (java.awt.Component x : c.getComponents()) {
+            if (x.isVisible() && (x instanceof javax.swing.JLabel l && text.equals(l.getText())
+                    || x instanceof java.awt.Container k && shown(k, text))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     static String picked(TaskForm f) {
