@@ -13,6 +13,9 @@ public final class TypedField {
     private final Runnable relayout;
     private Object about; // 글이 말하는 칸 값
     private String plain = ""; // 접기 전 글
+    /** 목록 칸에 친 글과 그 글로 채워 보인 값. */
+    private String raw = "";
+    private String shown;
     /** 칸에 글을 쳐 넣어 읽은 적이 있는가. 일정 입력 창은 그 뒤 30분 안내를 숨긴다(D-98). */
     public boolean typed;
     /** 마지막으로 읽은 값과 그때 옮길 날 수("밤 4시", S87). */
@@ -29,13 +32,20 @@ public final class TypedField {
         DocumentFilter filter = new DocumentFilter() {
             @Override
             public void replace(FilterBypass fb, int off, int len, String text, AttributeSet a) throws BadLocationException {
-                // 목록 칸은 쳐 넣는 동안 그 앞부분으로 시작하는 첫 값을 채워 보인다("14"는 "14:00", 지금 동작).
+                // 목록 칸은 쳐 넣는 동안 친 글로 채운 값을 보인다("14"는 "14:00", "2"는 "14:00", S88). 채운 값이 보이는 동안
+                // 다음 글자는 칸에 보이는 글이 아니라 친 글 뒤에 붙인다("2", "1"은 "21:00", QA B-1).
                 Document d = fb.getDocument();
-                String typed = text == null || text.isEmpty() || off + len != d.getLength() ? null : d.getText(0, off) + text;
+                String now = d.getText(0, d.getLength());
+                boolean filled = now.equals(shown) && off == raw.length() && off + len == now.length();
+                String typed = text == null || text.isEmpty() || off + len != now.length() ? null : (filled ? raw : now.substring(0, off)) + text;
                 String match = !(spinner.getModel() instanceof SpinnerListModel) || typed == null ? null : Typed.fill(typed);
+                shown = match;
+                raw = match == null ? "" : typed;
                 if (match != null) {
-                    fb.replace(0, d.getLength(), match, a);
-                    ((JSpinner.DefaultEditor) spinner.getEditor()).getTextField().select(off + text.length(), match.length());
+                    fb.replace(0, now.length(), match, a);
+                    ((JSpinner.DefaultEditor) spinner.getEditor()).getTextField().select(typed.length(), match.length());
+                } else if (filled && typed != null) {
+                    fb.replace(0, now.length(), typed, a);
                 } else {
                     super.replace(fb, off, len, text, a);
                 }
@@ -44,6 +54,7 @@ public final class TypedField {
 
             @Override
             public void remove(FilterBypass fb, int off, int len) throws BadLocationException {
+                shown = null;
                 super.remove(fb, off, len);
                 edited(fb.getDocument().getText(0, fb.getDocument().getLength()));
             }

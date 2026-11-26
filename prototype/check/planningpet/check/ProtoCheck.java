@@ -140,6 +140,7 @@ public final class ProtoCheck {
                 + "00:00(다음 날)로 읽었어요 / 14:00 null 1 1 0", starts("밤 4시", "밤 5시", "오전 12시", "오후 14시") + " "
                 + Typed.start("밤 4시", java.time.LocalDate.of(2026, 11, 18)).days() + " " + Typed.start("밤 5시", java.time.LocalDate.of(2026, 11, 18)).days()
                 + " " + Typed.start("오전 12시", java.time.LocalDate.of(2026, 11, 18)).days());
+        eq("B-1 한 글자씩 친 시작 시각", "21:30 20:00 22:30 14:30 / 21:30 20:00", keyed());
         eq("S88 한 글자를 채워 보인다", "13:00 3:00", oneDigitFill());
         eq("S81, S87 밤 4시", "2026-11-19 04:00 흐린 19일(목) 04:00으로 읽었어요 / 2026-11-19 240", nightForm());
         eq("T-TYPE-8", "14:00 14:00 20:00 09:00 12:00 14:30 14:30 07:00 19:00 21:00 12:00 11:00 01:00(다음 날) 02:00(다음 날) 00:00(다음 날) 05:00",
@@ -455,6 +456,36 @@ public final class ProtoCheck {
         type(e.start, "밤 4시");
         TimeEditor.save(app, t, e);
         return form + " / " + t.date + " " + t.startMinute();
+    }
+
+    /** 두 창의 시작 시각 칸에 키보드로 한 글자씩 친 값. 채워 보인 값이 아니라 친 글 뒤에 다음 글자가 붙는다(QA B-1). */
+    private static String keyed() {
+        TaskForm f = new TaskForm(null, java.time.LocalDate.of(2026, 11, 18), java.time.LocalDateTime.of(2026, 11, 18, 9, 0));
+        f.timed.setSelected(true);
+        f.sync();
+        TimeEditor e = new TimeEditor(MockData.sample().tasks.get(0), java.time.LocalDateTime.of(2026, 11, 14, 15, 23));
+        return keys(f.start, "21:30") + " " + keys(f.start, "20") + " " + keys(f.start, "2230") + " " + keys(f.start, "1430") + " / "
+                + keys(e.start, "21:30") + " " + keys(e.start, "20");
+    }
+
+    /** 칸의 글을 모두 고르고 EDT에서 한 글자씩 친 뒤(실제 키 입력과 같은 길) 칸을 벗어난 것과 같다. */
+    static Object keys(javax.swing.JSpinner s, String keys) {
+        var field = ((javax.swing.JSpinner.DefaultEditor) s.getEditor()).getTextField();
+        try {
+            javax.swing.SwingUtilities.invokeAndWait(() -> {
+                field.selectAll();
+                for (char c : keys.toCharArray()) {
+                    field.replaceSelection(String.valueOf(c));
+                }
+                try {
+                    field.commitEdit();
+                } catch (java.text.ParseException ignored) {
+                }
+            });
+        } catch (Exception x) {
+            throw new IllegalStateException(x);
+        }
+        return s.getValue();
     }
 
     /** 칸에 글을 쳐 넣고 칸을 벗어난 것과 같다. 받지 않으면 이전 값이다. */
