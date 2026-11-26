@@ -61,6 +61,7 @@ public final class Ui {
 
     /**
      * room 폭을 넘는 글은 그 폭에서 줄을 바꿔 잘리지 않게 한다. 줄은 빈칸에서 바꾸고, 빈칸 없이 폭을 넘는 낱말만 글자에서 끊는다.
+     * 괄호 묶음("03:55(다음 날)로")은 한 낱말로 보아 괄호 안의 빈칸에서 줄을 바꾸지 않는다(S162). 묶음이 room보다 넓을 때만 그 안에서 바꾼다.
      * 입력 창 오류 글(D-100)과 칸 아래 글(D-98)이 같이 쓴다. 폭은 라벨 글꼴로 재므로 테마와 상관없이 폭 안에 든다. 폭 안이면 글 그대로다.
      * Swing HTML은 글자색의 알파를 버리므로, 접은 글은 라벨 글자색을 흰 바탕에 섞은 불투명 색으로 적어 흐린 글(INK_DIM)도 흐리게 보인다.
      */
@@ -71,7 +72,14 @@ public final class Ui {
         }
         java.util.List<String> lines = new java.util.ArrayList<>();
         String line = "";
+        java.util.List<String> words = new java.util.ArrayList<>();
+        int depth = 0;
         for (String word : text.split(" ")) {
+            words.add(depth > 0 ? words.remove(words.size() - 1) + " " + word : word);
+            depth = Math.max(0, depth + (int) word.chars().filter(c -> c == '(').count() - (int) word.chars().filter(c -> c == ')').count());
+        }
+        words = words.stream().flatMap(w -> fm.stringWidth(w) > room ? java.util.Arrays.stream(w.split(" ")) : java.util.stream.Stream.of(w)).toList();
+        for (String word : words) {
             String next = line.isEmpty() ? word : line + " " + word;
             if (fm.stringWidth(next) <= room) {
                 line = next;

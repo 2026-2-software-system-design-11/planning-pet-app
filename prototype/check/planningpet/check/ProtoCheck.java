@@ -135,7 +135,7 @@ public final class ProtoCheck {
         eq("D-38 5분 단위", "30 null 75", fiveMinute());
         eq("T-TYPE-1", "25 5분 단위로 맞췄어요(25분) / 75 null", typed("27") + " / " + typed("75"));
         eq("T-TYPE-2", "720 최대 720분(12시간)까지 넣을 수 있어요 / 10 최소 10분부터 넣을 수 있어요", typed("730") + " / " + typed("5"));
-        eq("T-TYPE-3", "null 숫자(분)로 넣어 주세요(예: 30) / null 숫자(분)로 넣어 주세요(예: 30) / 30 null / 30 30분으로 읽었어요",
+        eq("T-TYPE-3", "null 분으로 넣어 주세요(예: 30) / null 분으로 넣어 주세요(예: 30) / 30 null / 30 30분으로 읽었어요",
                 typed("30abc") + " / " + typed("점심") + " / " + typed("30분") + " / " + typed("반시간"));
         eq("T-TYPE-4", "60 90 90 90 150", String.join(" ", java.util.stream.Stream.of("1시간", "1시간 30분", "1시간 반", "1.5시간", "2시간 반")
                 .map(w -> String.valueOf(Typed.minutes(w).value())).toList()));
@@ -143,6 +143,9 @@ public final class ProtoCheck {
         eq("D-98 입력 창 걸리는 시간 칸 아래 글", "흐린 5분 단위로 맞췄어요(25분) / 없음 / 없음", typedForm());
         eq("D-98 시각 고치기 창 칸 아래 글", "720 흐린 최대 720분(12시간)까지 넣을 수 있어요 true true 최대 720분(12시간)까지 넣을<br>수 있어요 true",
                 timeEditorNotice());
+        eq("T-TYPE-15", "빨간 14:00처럼 적어 주세요 true / 빨간 " + Typed.MINUTES_BAD + " true / 빨간 14:00처럼 적어 주세요 true / 빨간 "
+                + Typed.MINUTES_BAD + " true", redOneLine());
+        eq("T-TYPE-16", "0", parenWrap());
         eq("T-TYPE-5", "09:05 5분 단위로 맞췄어요(09:05) / 23:55 5분 단위로 맞췄어요(23:55) / 09:00 null", starts("09:03", "23:58", "09:00"));
         eq("T-TYPE-6", "03:55(다음 날) 하루는 새벽 4시에 끝나서 03:55(다음 날)로 맞췄어요", starts("04:10(다음 날)"));
         eq("T-TYPE-11", "19:30 19:30으로 읽었어요 / 19:30 19:30으로 읽었어요 / 07:30 null / 14:30 null / 14:30 null / 14:00 오전을 빼고 14:00으로 읽었어요"
@@ -162,12 +165,12 @@ public final class ProtoCheck {
         Typed.Read r30 = Typed.start("밤 4시", java.time.LocalDate.of(2026, 11, 30));
         Typed.Read due = Typed.start("밤 4시", java.time.LocalDate.of(2026, 11, 18), java.time.LocalDate.of(2026, 11, 18));
         eq("D-98 칸이 친 채 저장을 가름", "true false true false false false", typedBlocks());
-        eq("T-TYPE-13 친 채 저장", "false 빨간 숫자(분)로 넣어 주세요(예: 30) / true 1 / false 빨간 14:00처럼 적어 주세요", saveTyped());
-        eq("T-TYPE-13 두 창 두 칸에서 저장 단추로", "false 빨간 14:00처럼 적어 주세요 / false 빨간 숫자(분)로 넣어 주세요(예: 30) / "
-                + "false 빨간 14:00처럼 적어 주세요 / false 빨간 숫자(분)로 넣어 주세요(예: 30)", pressToSave());
+        eq("T-TYPE-13 친 채 저장", "false 빨간 분으로 넣어 주세요(예: 30) / true 1 / false 빨간 14:00처럼 적어 주세요", saveTyped());
+        eq("T-TYPE-13 두 창 두 칸에서 저장 단추로", "false 빨간 14:00처럼 적어 주세요 / false 빨간 분으로 넣어 주세요(예: 30) / "
+                + "false 빨간 14:00처럼 적어 주세요 / false 빨간 분으로 넣어 주세요(예: 30)", pressToSave());
         eq("T-TYPE-13 비운 칸은 막지 않음", "true true / true 600 true 60", blankSave());
         eq("T-TYPE-14 막힌 뒤 고치지 않고 다시 저장", "false true 1 / false true 600", againSave());
-        eq("T-TYPE-14 포커스만 저장 단추로 옮긴 뒤 저장", "빨간 숫자(분)로 넣어 주세요(예: 30) true true 2 / true 600", focusOnlySave());
+        eq("T-TYPE-14 포커스만 저장 단추로 옮긴 뒤 저장", "빨간 분으로 넣어 주세요(예: 30) true true 2 / true 600", focusOnlySave());
         eq("T-TYPE-14 다른 칸으로 옮긴 뒤 저장", "true true true", leaveSave());
         eq("D-98 이후 반복 모두의 밤 4시", "2026-11-19 240 2026-11-26 240 2026-12-03 240", nightSeries());
         eq("T-TYPE-12", "04:00 1 12월 1일(화) 04:00으로 읽었어요 / 03:55(다음 날) 0 마감(18일) 안에 두려고 03:55로 맞췄어요",
@@ -392,6 +395,58 @@ public final class ProtoCheck {
         int group = l.getParent().getComponent(0).getPreferredSize().width;
         return got + " " + (l.getPreferredSize().width <= group) + " "
                 + (l.getPreferredSize().height > l.getFontMetrics(l.getFont()).getHeight() * 1.5) + " " + l.getText().replaceAll("</?(html|font)[^>]*>", "") + " " + dim(l);
+    }
+
+    /** S162: 두 창의 빨간 글은 칸 묶음 너비(시각 고치기 창)나 제목 칸 너비(입력 창) 안에 줄바꿈 없이 한 줄로 든다. */
+    private static String redOneLine() {
+        TimeEditor e = new TimeEditor(MockData.sample().tasks.get(0), java.time.LocalDateTime.of(2026, 11, 14, 15, 23));
+        type(e.start, "25:00");
+        type(e.minutes, "30abc");
+        TaskForm f = new TaskForm(null, java.time.LocalDate.of(2026, 11, 16), java.time.LocalDateTime.of(2026, 11, 16, 9, 0));
+        f.timed.setSelected(true);
+        f.sync();
+        // 입력 창은 글이 넓으면 제목 칸도 따라 넓어지므로, 글을 띄우기 전의 제목 칸 폭과 패널 폭으로 견준다.
+        int wide = f.panel.getPreferredSize().width;
+        f.panel.setSize(f.panel.getPreferredSize());
+        f.panel.doLayout();
+        int title = f.title.getWidth();
+        type(f.start, "25:00");
+        type(f.minutes, "30abc");
+        StringBuilder out = new StringBuilder();
+        for (javax.swing.JLabel l : new javax.swing.JLabel[] {e.startNotice, e.minutesNotice, f.startNotice, f.minutesNotice}) {
+            boolean form = l == f.startNotice || l == f.minutesNotice;
+            int room = form ? title : l.getParent().getComponent(0).getPreferredSize().width;
+            out.append(out.length() > 0 ? " / " : "").append(notice(l)).append(' ').append(!l.getText().contains("<br>")
+                    && l.getPreferredSize().width <= room && (!form || f.panel.getPreferredSize().width == wide));
+        }
+        return out.toString();
+    }
+
+    /** S162: 어느 폭에서 접어도 괄호 안에서 줄이 바뀌지 않고, 줄은 폭 안에 들며, 이으면 원래 글이다. 어긋난 폭의 수. */
+    private static int parenWrap() {
+        int bad = 0;
+        for (java.awt.Font font : new java.awt.Font[] {planningpet.common.view.Theme.font(12), new javax.swing.JLabel().getFont()}) {
+            javax.swing.JLabel l = new javax.swing.JLabel();
+            l.setFont(font);
+            var fm = l.getFontMetrics(font);
+            for (String text : new String[] {"하루는 새벽 4시에 끝나서 03:55(다음 날)로 맞췄어요", "오전 12시는 밤 자정, 00:00(다음 날)로 읽었어요",
+                    "최대 720분(12시간)까지 넣을 수 있어요", "다음 날 04:00까지 끝나야 해요. 5분 단위로 정해 주세요. 걸리는 시간 25분이면 03:35(다음 날)이 맞아요"}) {
+                // 가장 넓은 괄호 묶음("03:55(다음 날)로")의 폭부터 잰다. 그 묶음에 빈칸이 있으면 1px 좁은 폭에서도 접는다. 그 폭에서는
+                // 묶음 안 빈칸에서 끊을 수밖에 없어 괄호는 보지 않고, 줄이 폭 안에 들고 이으면 원래 글인지 본다(넓은 묶음을 다시 나누는 갈래).
+                String widest = java.util.regex.Pattern.compile("\\S*\\([^)]*\\)\\S*").matcher(text).results().map(m -> m.group())
+                        .max(java.util.Comparator.comparingInt(fm::stringWidth)).orElse("");
+                int from = fm.stringWidth(widest);
+                for (int room = widest.contains(" ") ? from - 1 : from; room <= fm.stringWidth(text); room++) {
+                    String[] lines = Ui.wrap(text, l, room).replaceAll("</?(html|font)[^>]*>", "").split("<br>");
+                    for (String line : lines) {
+                        bad += fm.stringWidth(line) > room || room >= from
+                                && line.chars().filter(c -> c == '(').count() != line.chars().filter(c -> c == ')').count() ? 1 : 0;
+                    }
+                    bad += String.join(" ", lines).equals(text) ? 0 : 1;
+                }
+            }
+        }
+        return bad;
     }
 
     /** 라벨을 흰 바탕에 그려 가장 진한 점이 본문 글색(INK)보다 한참 밝으면 참이다. 두 줄로 접은 흐린 글도 흐리게 그려지는가. */
