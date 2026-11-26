@@ -623,19 +623,31 @@ final class PeriodCheck {
         app.show("일정관리");
         app.store.changed();
         ScheduleScreen sched = ProtoCheck.find(app.root, ScheduleScreen.class);
-        eq("D-65 기간 할 일은 한 줄", "11/16 P 30분 ~11/20까지 / 11/17 Q 30분 ~11/17까지 지난 날 / 11/20 P 30분 ~11/20까지 마감",
+        eq("D-65 기간 할 일은 한 줄", "11/17 Q 30분 ~11/17까지 지난 날 / 11/18 P 30분 ~11/20까지 / 11/20 P 30분 ~11/20까지 마감",
                 rows(sched.untimed));
         app.store.now = d("11-20").atTime(9, 0);
         app.store.changed();
-        eq("D-93 마감 날이 오늘이면 오늘 마감", "11/16 P 30분 ~11/20까지 / 11/17 Q 30분 ~11/17까지 지난 날 / 11/20 P 30분 ~11/20까지 오늘 마감",
+        eq("D-93 마감 날이 오늘이면 오늘 마감", "11/17 Q 30분 ~11/17까지 지난 날 / 11/20 P 30분 ~11/20까지 오늘 마감",
                 rows(sched.untimed));
         App wk = Main.create(at("11-17T09:00"));
         period(wk.store, "P", "11-16", "11-20", 30);
         period(wk.store, "Q", "11-16", "11-29", 30);
         Task r = period(wk.store, "R", "11-16", "11-19", 30);
         wk.schedule.check(r);
-        eq("D-93 첫날과 마감 날", "11/16 P, 11/16 Q, 11/17 R, 11/20 P", wk.store.book.untimedOfWeek(d("11-16")).stream()
-                .map(x -> x.day().getMonthValue() + "/" + x.day().getDayOfMonth() + " " + x.task().title).collect(Collectors.joining(", ")));
+        eq("D-93 첫날과 마감 날", "11/17 P, 11/17 Q, 11/17 R, 11/20 P", week(wk.store, "11-16"));
+        App now = Main.create(at("11-18T09:00"));
+        period(now.store, "P", "11-12", "11-27", 30);
+        period(now.store, "S", "11-20", "11-22", 30);
+        now.store.book.add(Task.Kind.TASK, "빨래", d("11-18"), null, 30, "", null);
+        String first = week(now.store, "11-16");
+        now.show("일정관리");
+        ScheduleScreen ns = ProtoCheck.find(now.root, ScheduleScreen.class);
+        ns.move(d("11-09"));
+        now.store.changed();
+        String lastWeek = rows(ns.untimed);
+        now.store.now = d("11-19").atTime(9, 0);
+        eq("T-EDIT-46", "11/18 P, 11/18 빨래, 11/20 S, 11/22 S / 11/18 빨래, 11/19 P, 11/20 S, 11/22 S / 11/15 P 30분 ~11/27까지",
+                first + " / " + week(now.store, "11-16") + " / " + lastWeek);
         App ga = Main.create(at("11-17T09:00"));
         Store g = ga.store;
         g.book.add(Task.Kind.TASK, "끝냄", d("11-17"), null, 30, "", null).get(0).done = true;
@@ -833,7 +845,7 @@ final class PeriodCheck {
         app.store.changed();
         ScheduleScreen sched = ProtoCheck.find(app.root, ScheduleScreen.class);
         eq("D-94 처음 창 크기에서도 제목이 읽힌다", "졸업 작품 기획서, E사 지원서 / 졸업 작품 기획서 60분 ~11/19까지 오늘 마감"
-                + " / 기간 안에 할 일 / E사 지원서 120분 ~11/22까지 18일에 하려던 일 / 11/16 졸업 작품 기획서, 11/19 졸업 작품 기획서,"
+                + " / 기간 안에 할 일 / E사 지원서 120분 ~11/22까지 18일에 하려던 일 / 11/19 졸업 작품 기획서,"
                 + " 11/19 E사 지원서, 11/22 E사 지원서",
                 homeTitles + " / " + homeRows + " / " + titles(app.root, sched.untimed));
     }
@@ -926,6 +938,12 @@ final class PeriodCheck {
     }
 
     /** 목록의 줄마다 글(라벨)을 화면 순서대로 잇는다. 줄 사이는 " / ". */
+    /** untimedOfWeek의 줄을 "11/17 P, 11/20 P"로. */
+    static String week(Store s, String weekStart) {
+        return s.book.untimedOfWeek(d(weekStart)).stream()
+                .map(x -> x.day().getMonthValue() + "/" + x.day().getDayOfMonth() + " " + x.task().title).collect(Collectors.joining(", "));
+    }
+
     static String rows(java.awt.Container list) {
         return java.util.Arrays.stream(list.getComponents()).map(row -> String.join(" ", labels(row, new java.util.ArrayList<>())))
                 .collect(Collectors.joining(" / "));

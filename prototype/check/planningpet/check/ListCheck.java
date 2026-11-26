@@ -346,9 +346,12 @@ final class ListCheck {
         Task job = PeriodCheck.period(late.store, "지원서", "11-12", "11-20", 30);
         late.schedule.timeOpener = (t, day, anchor) -> late.schedule.saveTime(t, 14 * 60, 30, day);
         late.show("일정관리");
+        ScheduleScreen lastWeek = ProtoCheck.find(late.root, ScheduleScreen.class);
+        lastWeek.move(d("11-09"));
         late.store.changed();
-        click(title(ProtoCheck.find(late.root, ScheduleScreen.class).untimed, job), 1);
-        eq("T-EDIT-22", "2026-11-18 14:00 2026-11-20", job.date + " " + job.start + " " + job.dueDate);
+        String row = PeriodCheck.rows(lastWeek.untimed);
+        click(title(lastWeek.untimed, job), 1);
+        eq("T-EDIT-22", "11/15 지원서 30분 ~11/20까지 / 2026-11-18 14:00 2026-11-20", row + " / " + job.date + " " + job.start + " " + job.dueDate);
     }
 
     /** 놓은 결과 글과 일의 날짜, 시각. */
