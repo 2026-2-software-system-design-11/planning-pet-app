@@ -68,10 +68,15 @@ public final class Task {
     }
 
     /**
-     * 시각을 정한 날에 못 끝낸 기간 할 일인가(D-67): 끝내지 않았고, 시각을 정한 날이 오늘보다 앞이고 마감보다도 앞이다. 데이터는
-     * 그대로 두고 오늘로 계산한다.
+     * 시각을 정한 날에 못 끝낸 기간 할 일인가(D-67): 끝내지 않았고, 시각을 정한 날이 오늘보다 앞이고 마감보다도 앞이며, 마감이 지나지
+     * 않았다. 마감이 지나면 마감이 지난 일(마감 날에만 "지난 날")이다. 데이터는 그대로 두고 오늘로 계산한다.
      */
     public boolean missed(LocalDate today) {
+        return leftPlan(today) && !dueDate.isBefore(today);
+    }
+
+    /** 시각을 정한 날이 지났고 마감보다도 앞인 끝내지 않은 기간 할 일. 마감이 지나도 계획한 칸과 그 날 목록에는 돌아가지 않는다. */
+    private boolean leftPlan(LocalDate today) {
         return period() && !done && timed() && date.isBefore(today) && date.isBefore(dueDate);
     }
 
@@ -90,7 +95,7 @@ public final class Task {
 
     /** 시간표와 목록의 시각 있는 칸에 놓이는가. 끝낸 기간 할 일(D-66)과 못 끝낸 계획(D-67)은 계획한 칸에서 빠진다. */
     public boolean onTimetable(LocalDate today) {
-        return timed() && !(period() && done) && !missed(today);
+        return timed() && !(period() && done) && !leftPlan(today);
     }
 
     /**

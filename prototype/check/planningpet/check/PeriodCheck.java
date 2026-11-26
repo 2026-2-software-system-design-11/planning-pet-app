@@ -609,6 +609,14 @@ final class PeriodCheck {
         over.book.setTime(o, LocalTime.of(9, 0), 30, d("11-17"), false);
         over.now = d("11-23").atTime(9, 0);
         eq("D-67 마감이 지나면 마감 날에만", "x x x due x", groups(over, o, "11-17", "11-18", "11-21", "11-22", "11-23"));
+        App gone = Main.create(at("11-18T09:00"));
+        Task gm = period(gone.store, "M", "11-16", "11-20", 30);
+        gone.store.book.setTime(gm, LocalTime.of(10, 0), 30, d("11-17"), false);
+        gone.store.now = d("11-22").atTime(9, 0);
+        gone.show("일정관리");
+        gone.store.changed();
+        eq("T-EDIT-47", "false false 11/20 M 30분 ~11/20까지 지난 날", gm.missed(d("11-22")) + " " + gm.onTimetable(d("11-22")) + " "
+                + rows(ProtoCheck.find(gone.root, ScheduleScreen.class).untimed));
         Store today = at("11-18T09:00");
         today.book.add(Task.Kind.TASK, "과제", d("11-18"), null, 30, "", null).get(0).done = true;
         today.book.add(Task.Kind.TASK, "빨래", d("11-18"), null, 30, "", null);
