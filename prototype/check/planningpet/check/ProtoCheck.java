@@ -431,13 +431,16 @@ public final class ProtoCheck {
             var fm = l.getFontMetrics(font);
             for (String text : new String[] {"하루는 새벽 4시에 끝나서 03:55(다음 날)로 맞췄어요", "오전 12시는 밤 자정, 00:00(다음 날)로 읽었어요",
                     "최대 720분(12시간)까지 넣을 수 있어요", "다음 날 04:00까지 끝나야 해요. 5분 단위로 정해 주세요. 걸리는 시간 25분이면 03:35(다음 날)이 맞아요"}) {
-                // 가장 넓은 괄호 묶음("03:55(다음 날)로")의 폭부터 잰다. 그보다 좁으면 묶음을 끊을 수밖에 없다.
-                int from = java.util.regex.Pattern.compile("\\S*\\([^)]*\\)\\S*").matcher(text).results()
-                        .mapToInt(m -> fm.stringWidth(m.group())).max().orElse(0);
-                for (int room = from; room <= fm.stringWidth(text); room++) {
+                // 가장 넓은 괄호 묶음("03:55(다음 날)로")의 폭부터 잰다. 그 묶음에 빈칸이 있으면 1px 좁은 폭에서도 접는다. 그 폭에서는
+                // 묶음 안 빈칸에서 끊을 수밖에 없어 괄호는 보지 않고, 줄이 폭 안에 들고 이으면 원래 글인지 본다(넓은 묶음을 다시 나누는 갈래).
+                String widest = java.util.regex.Pattern.compile("\\S*\\([^)]*\\)\\S*").matcher(text).results().map(m -> m.group())
+                        .max(java.util.Comparator.comparingInt(fm::stringWidth)).orElse("");
+                int from = fm.stringWidth(widest);
+                for (int room = widest.contains(" ") ? from - 1 : from; room <= fm.stringWidth(text); room++) {
                     String[] lines = Ui.wrap(text, l, room).replaceAll("</?(html|font)[^>]*>", "").split("<br>");
                     for (String line : lines) {
-                        bad += fm.stringWidth(line) > room || line.chars().filter(c -> c == '(').count() != line.chars().filter(c -> c == ')').count() ? 1 : 0;
+                        bad += fm.stringWidth(line) > room || room >= from
+                                && line.chars().filter(c -> c == '(').count() != line.chars().filter(c -> c == ')').count() ? 1 : 0;
                     }
                     bad += String.join(" ", lines).equals(text) ? 0 : 1;
                 }
