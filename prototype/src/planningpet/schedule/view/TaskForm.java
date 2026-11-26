@@ -62,6 +62,10 @@ public final class TaskForm {
     private Boolean timedBefore;
     private boolean periodBefore;
     private LocalDate dueBefore;
+    /** D-101: 기간 때문에 앱이 끄기 앞의 정하기. 기간을 끄면 되돌리고 null이 된다. */
+    private Boolean timedBeforePeriod;
+    /** D-101: 반복 때문에 앱이 끈 기간 할 일의 마감. 반복을 안 함으로 되돌리면 기간과 함께 되돌리고 null이 된다. */
+    private LocalDate dueBeforeRepeat;
     /** 오류 글이 늘거나 줄면 창 크기를 다시 맞춘다. 창 없이 만들 때는 아무것도 하지 않는다. */
     Runnable relayout = () -> { };
     private int row;
@@ -205,7 +209,7 @@ public final class TaskForm {
         boolean isFixed = fixed.isSelected();
         // D-101: 고정 일정이라서 앱이 바꾼 칸은 할 일로 돌아오면 사용자가 둔 값으로 되돌린다.
         if (isFixed && !editing && timedBefore == null) {
-            timedBefore = timed.isSelected();
+            timedBefore = timedBeforePeriod != null ? timedBeforePeriod : timed.isSelected();
             periodBefore = period.isSelected();
             dueBefore = Ui.dateOf(due);
         } else if (!isFixed && timedBefore != null) {
@@ -216,16 +220,29 @@ public final class TaskForm {
         }
         boolean repeating = repeat.getSelectedIndex() != 0;
         boolean periodAllowed = !isFixed && !copy && !repeating;
+        if (!isFixed && !copy && repeating && period.isSelected()) {
+            dueBeforeRepeat = Ui.dateOf(due);
+        } else if (periodAllowed && dueBeforeRepeat != null) {
+            period.setSelected(true);
+            Ui.setDate(due, dueBeforeRepeat);
+            dueBeforeRepeat = null;
+        }
         // 기간을 먼저 끈다. 기간 할 일에서 고정 일정으로 가도 정하기가 켜진다(05 일정 입력 창 4번).
         if (!periodAllowed) {
             period.setSelected(false);
         }
+        // D-68: 기간 할 일의 시각은 목록의 "시각 정하기"와 자동 배치로만 정한다. 기간을 끄면 앞의 정하기로 되돌린다(D-101).
+        if (period.isSelected()) {
+            if (timedBeforePeriod == null) {
+                timedBeforePeriod = timed.isSelected();
+            }
+            timed.setSelected(false);
+        } else if (timedBeforePeriod != null) {
+            timed.setSelected(timedBeforePeriod);
+            timedBeforePeriod = null;
+        }
         if (isFixed) {
             timed.setSelected(true);
-        }
-        // D-68: 기간 할 일의 시각은 목록의 "시각 정하기"와 자동 배치로만 정한다.
-        if (period.isSelected()) {
-            timed.setSelected(false);
         }
         timed.setEnabled(!isFixed && !period.isSelected());
         timed.setToolTipText(period.isSelected() ? "기간 할 일의 시각은 목록에서 정해요" : null);

@@ -121,6 +121,23 @@ final class PeriodCheck {
         k.task.doClick();
         eq("T-DEF-20", "false true / true 11:00 / true false true / true 2026-11-25 false false", kinds + " / " + moment + " / " + k.period.isSelected() + " "
                 + Ui.dateOf(k.due) + " " + k.timed.isSelected() + " " + k.timed.isEnabled());
+        TaskForm r = new TaskForm(null, d("11-18"), at("11-17T09:00").now);
+        r.timed.doClick();
+        r.start.setValue("10:00");
+        r.period.doClick();
+        r.period.doClick();
+        String back = r.timed.isSelected() + " " + r.start.getValue();
+        r.period.doClick();
+        Ui.setDate(r.due, d("11-25"));
+        r.fixed.doClick();
+        r.repeat.setSelectedIndex(1);
+        r.task.doClick();
+        back += " / " + r.period.isSelected() + " " + r.period.isEnabled();
+        r.repeat.setSelectedIndex(0);
+        back += " / " + r.period.isSelected() + " " + Ui.dateOf(r.due) + " " + r.timed.isSelected() + " " + r.timed.isEnabled();
+        r.period.doClick();
+        eq("T-DEF-21", "true 10:00 / false false / true 2026-11-25 false false / true 10:00",
+                back + " / " + r.timed.isSelected() + " " + r.start.getValue());
     }
 
     /** D-69: 지난 반복 사본은 밀린 일로 보이지 않는다. */
