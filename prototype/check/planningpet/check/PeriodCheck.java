@@ -181,7 +181,12 @@ final class PeriodCheck {
             Ui.setDate(e.date, d("11-17"));
             starts += " " + e.start.getValue();
         }
-        eq("T-DEF-23", "14:15 09:00 14:15 15:00 / 10:00 10:00 / 09:00 14:15", starts);
+        TaskForm later = new TaskForm(null, d("11-17"), held.now);
+        later.clock = () -> held.now;
+        held.now = java.time.LocalDateTime.parse("2026-11-17T14:41");
+        Ui.setDate(later.date, d("11-18"));
+        Ui.setDate(later.date, d("11-17"));
+        eq("T-DEF-23", "14:15 09:00 14:15 15:00 / 10:00 10:00 / 09:00 14:15 / 14:45", starts + " / " + later.start.getValue());
     }
 
     /** D-69: 지난 반복 사본은 밀린 일로 보이지 않는다. */
