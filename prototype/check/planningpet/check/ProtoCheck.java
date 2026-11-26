@@ -123,6 +123,29 @@ public final class ProtoCheck {
         eq("T-DEL-1", "10 1", r.points + " " + r.rewardCount);
         eq("숫자 조사", "을 를", Rules.josa("과제 1", "을", "를") + " " + Rules.josa("과제 2", "을", "를"));
         eq("D-38 5분 단위", "30 null 75", fiveMinute());
+        eq("T-TYPE-1", "25 5분 단위로 맞췄어요(25분) / 75 null", typed("27") + " / " + typed("75"));
+        eq("T-TYPE-2", "720 최대 720분(12시간)까지 넣을 수 있어요 / 10 최소 10분부터 넣을 수 있어요", typed("730") + " / " + typed("5"));
+        eq("T-TYPE-3", "null 숫자(분)로 넣어 주세요(예: 30) / null 숫자(분)로 넣어 주세요(예: 30) / 30 null",
+                typed("반시간") + " / " + typed("30abc") + " / " + typed("30분"));
+        eq("T-TYPE-4", "60 90 90 90 150", String.join(" ", java.util.stream.Stream.of("1시간", "1시간 30분", "1시간 반", "1.5시간", "2시간 반")
+                .map(w -> String.valueOf(Typed.minutes(w).value())).toList()));
+        eq("D-98 칸 아래 글", "25 흐린 5분 단위로 맞췄어요(25분) / 25 빨간 " + Typed.MINUTES_BAD, typedField());
+        eq("D-98 입력 창 걸리는 시간 칸 아래 글", "흐린 5분 단위로 맞췄어요(25분) / 없음 / 없음", typedForm());
+        eq("D-98 시각 고치기 창 칸 아래 글", "720 흐린 최대 720분(12시간)까지 넣을 수 있어요 true true 최대 720분(12시간)까지 넣을<br>수 있어요",
+                timeEditorNotice());
+        eq("T-TYPE-5", "09:05 5분 단위로 맞췄어요(09:05) / 23:55 5분 단위로 맞췄어요(23:55) / 09:00 null", starts("09:03", "23:58", "09:00"));
+        eq("T-TYPE-6", "03:55(다음 날) 하루는 새벽 4시에 넘어가요. 03:55(다음 날)로 맞췄어요", starts("04:10(다음 날)"));
+        eq("T-TYPE-7", "14:00 null / 09:00 null / 14:30 null / 09:30 null", starts("14", "9", "1430", "930"));
+        eq("T-TYPE-8", "14:00 14:00 20:00 09:00 12:00 14:30 14:30 07:00 19:00 21:00 12:00 11:00 01:00(다음 날) 02:00(다음 날) 00:00(다음 날) 05:00",
+                starts("오후 2시", "2시", "8시", "9시", "12시", "오후 2시 반", "2시 30분", "아침 7시", "저녁 7시", "밤 9시", "낮 12시", "낮 11시",
+                        "새벽 1시", "밤 2시", "밤 12시", "새벽 5시").replace(" null", "").replace(" /", ""));
+        eq("T-TYPE-9", "null 14:00처럼 적어 주세요 / null 14:00처럼 적어 주세요 / null 14:00처럼 적어 주세요", starts("25:00", "09:75", "점심"));
+        eq("D-98 다음 날 값 뒤 23:58의 글은 좁아진 칸 묶음 안", "23:55 true", nextThen2358());
+        eq("D-98 시작 시각 칸 아래 글", "09:05 흐린 5분 단위로 맞췄어요(09:05) / 14:00 / 흐린 하루는 새벽 4시에 넘어가요. 03:55(다음 날)로 맞췄어요"
+                + " / 흐린 최대 720분(12시간)까지 넣을 수 있어요 true", startTyped());
+        eq("D-98 입력 창 칸 아래 글 자리", "true true true", formNoticeRows());
+        eq("D-98 칸 아래 글이 뜨면 창 크기를 다시 맞춤", "true true true true", relayouts());
+        eq("D-98 쳐 넣은 뒤 30분 안내", "true false 흐린 5분 단위로 맞췄어요(30분)", thirtyHint());
         Store c = MockData.sample();
         java.time.LocalDate nov = java.time.LocalDate.of(2026, 11, 1);
         TaskBook.CellPreview c14 = c.book.cellPreview(nov.withDayOfMonth(14));
@@ -296,6 +319,130 @@ public final class ProtoCheck {
 
     private static float[] hsb(java.awt.Color c) {
         return java.awt.Color.RGBtoHSB(c.getRed(), c.getGreen(), c.getBlue(), null);
+    }
+
+    /** 걸리는 시간 칸에 쳐 넣은 글을 읽은 값과 칸 아래 글(06의 32번). */
+    private static String typed(String text) {
+        Typed.Read r = Typed.minutes(text);
+        return r.value() + " " + r.notice();
+    }
+
+    /** 27은 25와 흐린 글, "반시간"은 이전 값과 빨간 글(D-98). */
+    private static String typedField() {
+        javax.swing.JSpinner s = Ui.minutes(30);
+        javax.swing.JLabel l = new TypedField(s, Typed::minutes, () -> { }).notice;
+        return type(s, "27") + " " + notice(l) + " / " + type(s, "반시간") + " " + notice(l);
+    }
+
+    /** 입력 창의 칸 아래 글은 다른 칸을 고쳐도 남고, 그 칸에 쳐 넣기 시작하거나 화살표를 누르면 사라진다. */
+    private static String typedForm() {
+        TaskForm f = new TaskForm(null, java.time.LocalDate.of(2026, 11, 16), java.time.LocalDateTime.of(2026, 11, 16, 9, 0));
+        type(f.minutes, "27");
+        f.title.setText("과제");
+        String kept = notice(f.minutesNotice);
+        ((javax.swing.JSpinner.DefaultEditor) f.minutes.getEditor()).getTextField().setText("4");
+        String typing = notice(f.minutesNotice);
+        type(f.minutes, "27");
+        f.minutes.setValue(f.minutes.getNextValue());
+        return kept + " / " + typing + " / " + notice(f.minutesNotice);
+    }
+
+    /** 시각 고치기 창의 글은 걸리는 시간 칸 묶음 너비 안에서 두 줄로 접힌다(D-98). */
+    private static String timeEditorNotice() {
+        Task t = MockData.sample().tasks.get(0);
+        TimeEditor e = new TimeEditor(t, java.time.LocalDateTime.of(2026, 11, 14, 15, 23));
+        javax.swing.JLabel l = e.minutesNotice;
+        String got = type(e.minutes, "730") + " " + notice(l);
+        int group = l.getParent().getComponent(0).getPreferredSize().width;
+        return got + " " + (l.getPreferredSize().width <= group) + " "
+                + (l.getPreferredSize().height > l.getFontMetrics(l.getFont()).getHeight() * 1.5) + " " + l.getText().replaceAll("</?html>", "");
+    }
+
+    /** 시작 시각 칸에 쳐 넣은 글마다 읽은 값과 칸 아래 글(06의 32번). */
+    private static String starts(String... texts) {
+        return String.join(" / ", java.util.Arrays.stream(texts).map(Typed::start).map(r -> r.value() + " " + r.notice()).toList());
+    }
+
+    /** 입력 창 시작 시각은 09:03을 맞추고 "14"를 14:00으로 채운다. 시각 고치기 창의 두 글은 각자 칸 묶음 아래에 함께 뜬다. */
+    private static String startTyped() {
+        TaskForm f = new TaskForm(null, java.time.LocalDate.of(2026, 11, 16), java.time.LocalDateTime.of(2026, 11, 16, 9, 0));
+        f.timed.setSelected(true);
+        f.sync();
+        String form = type(f.start, "09:03") + " " + notice(f.startNotice);
+        var field = ((javax.swing.JSpinner.DefaultEditor) f.start.getEditor()).getTextField();
+        field.setText("14");
+        TimeEditor e = new TimeEditor(MockData.sample().tasks.get(0), java.time.LocalDateTime.of(2026, 11, 14, 15, 23));
+        type(e.start, "04:10(다음 날)");
+        type(e.minutes, "730");
+        return form + " / " + field.getText() + " / " + notice(e.startNotice) + " / " + notice(e.minutesNotice) + " "
+                + (e.startNotice.getParent() != e.minutesNotice.getParent());
+    }
+
+    /** 칸 아래 글은 입력 창 panel에 붙고, 글이 없을 때는 이름 칸과 여백까지 자리를 차지하지 않는다. 글 줄이 없으면 실패 문장을 낸다. */
+    private static String formNoticeRows() {
+        TaskForm f = new TaskForm(null, java.time.LocalDate.of(2026, 11, 16), java.time.LocalDateTime.of(2026, 11, 16, 9, 0));
+        String parents = (f.startNotice.getParent() == f.panel) + " " + (f.minutesNotice.getParent() == f.panel);
+        int height = f.panel.getPreferredSize().height;
+        for (javax.swing.JLabel l : new javax.swing.JLabel[] {f.startNotice, f.minutesNotice}) {
+            if (f.panel.getComponentZOrder(l) < 1) {
+                return parents + " 글 줄 없음";
+            }
+            f.panel.remove(f.panel.getComponentZOrder(l) - 1);
+            f.panel.remove(l);
+        }
+        return parents + " " + (height == f.panel.getPreferredSize().height);
+    }
+
+    /** 두 창 모두 칸 아래 글이 뜨면 relayout(창의 pack)을 부른다. 입력 창 시작, 걸리는 시간, 시각 고치기 창 시작, 걸리는 시간. */
+    private static String relayouts() {
+        int[] n = new int[4];
+        TaskForm f = new TaskForm(null, java.time.LocalDate.of(2026, 11, 16), java.time.LocalDateTime.of(2026, 11, 16, 9, 0));
+        f.timed.setSelected(true);
+        f.sync();
+        f.relayout = () -> n[0]++;
+        type(f.start, "09:03");
+        f.relayout = () -> n[1]++;
+        type(f.minutes, "27");
+        TimeEditor e = new TimeEditor(MockData.sample().tasks.get(0), java.time.LocalDateTime.of(2026, 11, 14, 15, 23));
+        e.relayout = () -> n[2]++;
+        type(e.start, "09:03");
+        e.relayout = () -> n[3]++;
+        type(e.minutes, "27");
+        return (n[0] > 0) + " " + (n[1] > 0) + " " + (n[2] > 0) + " " + (n[3] > 0);
+    }
+
+    /** 추가 창의 30분 안내는 값을 쳐 넣은 뒤에는 숨는다(D-98). */
+    private static String thirtyHint() {
+        TaskForm f = new TaskForm(null, java.time.LocalDate.of(2026, 11, 16), java.time.LocalDateTime.of(2026, 11, 16, 9, 0));
+        boolean before = f.minutesHint.isVisible();
+        type(f.minutes, "31");
+        return before + " " + f.minutesHint.isVisible() + " " + notice(f.minutesNotice);
+    }
+
+    /** 시각 고치기 창에서 01:00(다음 날)로 실제 시각 글이 보인 뒤 23:58을 치면, 글이 사라져 좁아진 칸 묶음 폭 안으로 다시 접힌다. */
+    private static String nextThen2358() {
+        TimeEditor e = new TimeEditor(MockData.sample().tasks.get(0), java.time.LocalDateTime.of(2026, 11, 14, 15, 23));
+        type(e.start, "01:00(다음 날)");
+        Object v = type(e.start, "23:58");
+        javax.swing.JLabel l = e.startNotice;
+        return v + " " + (l.isVisible() && l.getPreferredSize().width <= l.getParent().getComponent(0).getPreferredSize().width);
+    }
+
+    /** 칸에 글을 쳐 넣고 칸을 벗어난 것과 같다. 받지 않으면 이전 값이다. */
+    static Object type(javax.swing.JSpinner s, String text) {
+        var field = ((javax.swing.JSpinner.DefaultEditor) s.getEditor()).getTextField();
+        field.setText(text);
+        try {
+            field.commitEdit();
+        } catch (java.text.ParseException ignored) {
+        }
+        return s.getValue();
+    }
+
+    /** 칸 아래 글. 안 보이면 "없음". */
+    static String notice(javax.swing.JLabel l) {
+        return !l.isVisible() ? "없음" : (planningpet.common.view.Theme.SUNDAY.equals(l.getForeground()) ? "빨간 " : "흐린 ")
+                + l.getText().replace("<br>", " ").replaceAll("<[^>]*>", "");
     }
 
     /** 검사 문장을 칸 순서대로 " / "로 잇는다. 통과면 null. */
