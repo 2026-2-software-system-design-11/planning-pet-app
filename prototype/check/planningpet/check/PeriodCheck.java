@@ -909,7 +909,8 @@ final class PeriodCheck {
 
     private static javax.swing.JButton button(java.awt.Container c) {
         for (java.awt.Component child : c.getComponents()) {
-            if (child instanceof javax.swing.JButton b && (b.getText().contains(":") || b.getText().equals("시각 정하기"))) {
+            if (child instanceof javax.swing.JButton b && (b.getText().contains(":") || b.getText().equals("시각 정하기")
+                    || "시각 정하기".equals(b.getAccessibleContext().getAccessibleName()))) {
                 return b;
             }
             if (child instanceof java.awt.Container k && button(k) != null) {

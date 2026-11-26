@@ -19,6 +19,8 @@ import javax.swing.JButton;
 final class TimePill extends JButton {
     private final boolean empty;
     private final boolean done;
+    /** D-102(S103): 일정관리 목록의 작은 단추. 글 없이 시계 아이콘만 그린다. */
+    private boolean compact;
 
     /**
      * locked면 누를 수 없는 흐린 글이다(D-94). 끝낸 줄과 지난 날 목록의 기간 할 일이 그렇다. why가 있으면 마우스를 올렸을 때 그 까닭을
@@ -41,8 +43,21 @@ final class TimePill extends JButton {
         setToolTipText(locked ? why : "눌러서 시각을 바꿔요");
     }
 
+    /** 일정관리 목록의 작은 시각 단추(D-102). 홈 알약과 같은 민트에 시계 아이콘만 있고, 마우스를 올리면 "시각 정하기"다. */
+    static TimePill icon(boolean done, boolean locked, String why) {
+        TimePill p = new TimePill("", done, locked, why);
+        p.compact = true;
+        p.setText("");
+        p.getAccessibleContext().setAccessibleName("시각 정하기");
+        p.setToolTipText(locked ? why : "시각 정하기");
+        return p;
+    }
+
     @Override
     public Dimension getPreferredSize() {
+        if (compact) {
+            return new Dimension(30, 26);
+        }
         FontMetrics fm = getFontMetrics(getFont());
         // 폭은 줄마다 같다. 자정을 넘는 "23:30~01:00(다음 날)"(D-77)만 글에 맞춰 넓어진다.
         int w = Math.max(Math.max(fm.stringWidth("00:00~00:00"), fm.stringWidth("시각 정하기")), fm.stringWidth(getText()))
@@ -84,7 +99,7 @@ final class TimePill extends JButton {
         FontMetrics fm = g.getFontMetrics(getFont());
         int icon = 14;
         int tw = fm.stringWidth(getText());
-        int x = (w - (icon + 5 + tw)) / 2;
+        int x = compact ? (w - icon) / 2 : (w - (icon + 5 + tw)) / 2;
         Icons.draw(g, Icons.Kind.CLOCK, x, (h - icon) / 2, icon, done ? Theme.INK_DIM : Theme.ICON);
         g.setFont(getFont());
         g.setColor(ink);
