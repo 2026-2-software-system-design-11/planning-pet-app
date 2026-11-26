@@ -162,8 +162,8 @@ final class PeriodCheck {
         only.period.doClick();
         Ui.setDate(only.due, d("11-20"));
         Ui.setDate(only.date, d("11-23"));
-        eq("T-DEF-22", "2026-11-25 마감일이 시작일보다 앞이에요 / [] false / 마감일이 시작일보다 앞이에요 / 2026-12-06  / "
-                + "마감일이 시작일보다 앞이에요", warned + only.errorText());
+        eq("T-DEF-22", "2026-11-25 마감일이 시작일보다 전이에요 / [] false / 마감일이 시작일보다 전이에요 / 2026-12-06  / "
+                + "마감일이 시작일보다 전이에요", warned + only.errorText());
         TaskForm s = new TaskForm(null, d("11-17"), at("11-17T14:12").now);
         String starts = s.start.getValue() + "";
         Ui.setDate(s.date, d("11-18"));
@@ -240,7 +240,7 @@ final class PeriodCheck {
                 msgs(TaskCheck.check(task.withRepeat(wed, d("11-17")), false)) + " / "
                 + msgs(TaskCheck.check(task.withRepeat(wed, d("11-18")), false)));
         TaskDraft p18 = draft(Task.Kind.TASK, "11-18", null);
-        eq("D-65 마감은 날짜와 같거나 뒤", "마감: 마감일이 시작일보다 앞이에요 / 오류 없음 / 마감: 마감일이 시작일보다 앞이에요",
+        eq("D-65 마감은 날짜와 같거나 뒤", "마감: 마감일이 시작일보다 전이에요 / 오류 없음 / 마감: 마감일이 시작일보다 전이에요",
                 msgs(TaskCheck.check(p18.withDue(d("11-17")), false)) + " / "
                 + msgs(TaskCheck.check(p18.withDue(d("11-18")), false)) + " / "
                 + msgs(TaskCheck.check(p18.withDue(d("11-17")), true)));
@@ -250,7 +250,7 @@ final class PeriodCheck {
         app.schedule.check(done);
         TaskForm f = new TaskForm(done, done.date, app.store.now);
         Ui.setDate(f.due, d("11-17"));
-        eq("D-66 끝낸 할 일도 마감 검사", "마감: 마감일이 시작일보다 앞이에요", msgs(f.problems()));
+        eq("D-66 끝낸 할 일도 마감 검사", "마감: 마감일이 시작일보다 전이에요", msgs(f.problems()));
         // T-VAL-22(D-99, #272): 시각을 정해 둔 기간 할 일의 마감을 정해 둔 날보다 앞으로 당기면 막는다.
         Task plan = period(app.store, "계획", "11-17", "11-20", 30);
         app.store.book.setTime(plan, 600, 30, d("11-19"), false);
@@ -260,8 +260,8 @@ final class PeriodCheck {
         Ui.setDate(g.due, d("11-19"));
         pulled += " / " + msgs(g.problems());
         Ui.setDate(g.due, d("11-16"));
-        eq("T-VAL-22", "마감일이 시각을 정해 둔 11/19(목)보다 앞이에요 / 마감: 마감일이 시각을 정해 둔 11/19(목)보다 앞이에요 / 오류 없음"
-                + " / 마감: 마감일이 시작일보다 앞이에요 / 2026-11-19 10:00", pulled + " / " + msgs(g.problems()) + " / " + plan.date + " " + plan.start);
+        eq("T-VAL-22", "마감일이 시각을 정해 둔 11/19(목)보다 전이에요 / 마감: 마감일이 시각을 정해 둔 11/19(목)보다 전이에요 / 오류 없음"
+                + " / 마감: 마감일이 시작일보다 전이에요 / 2026-11-19 10:00", pulled + " / " + msgs(g.problems()) + " / " + plan.date + " " + plan.start);
         eq("D-65 기간 할 일은 반복하지 않는다", "반복: 기간 안에 하는 할 일은 반복할 수 없어요",
                 msgs(TaskCheck.check(task.withDue(d("11-22")).withRepeat(Repeat.DAILY, d("11-22")), false)));
         eq("D-65 기간은 할 일만", "마감: 기간은 할 일만 정할 수 있어요",
@@ -318,7 +318,7 @@ final class PeriodCheck {
         String followed = Ui.dateOf(follow.repeatEnd).toString();
         Ui.setDate(follow.repeatEnd, d("12-10"));
         Ui.setDate(follow.date, d("12-20"));
-        eq("D-79 끝 날짜는 손대기 전까지 따라간다", "2026-12-29 2026-12-10 반복: 반복 끝나는 날이 날짜보다 앞이에요",
+        eq("D-79 끝 날짜는 손대기 전까지 따라간다", "2026-12-29 2026-12-10 반복: 반복 끝나는 날이 날짜보다 전이에요",
                 followed + " " + Ui.dateOf(follow.repeatEnd) + " " + msgs(follow.problems()));
         TaskForm keep = new TaskForm(null, d("11-16"), at("11-16T09:00").now);
         TaskForm plain = new TaskForm(null, d("11-16"), at("11-16T09:00").now);
@@ -334,7 +334,7 @@ final class PeriodCheck {
             kept += Ui.dateOf(k.due) + " ";
         }
         Ui.setDate(keep.date, d("12-12"));
-        eq("T-DEF-16", "2026-12-10 2026-11-22 2026-12-10 마감: 마감일이 시작일보다 앞이에요",
+        eq("T-DEF-16", "2026-12-10 2026-11-22 2026-12-10 마감: 마감일이 시작일보다 전이에요",
                 kept + Ui.dateOf(keep.due) + " " + msgs(keep.problems()));
         TaskForm unpicked = new TaskForm(null, d("11-16"), at("11-16T09:00").now);
         unpicked.title.setText("보고서");
@@ -352,7 +352,7 @@ final class PeriodCheck {
         edit.period.doClick();
         String reopened = Ui.dateOf(edit.due) + " ";
         Ui.setDate(edit.date, d("12-12"));
-        eq("T-DEF-17", "2026-12-10 2026-12-10 마감: 마감일이 시작일보다 앞이에요",
+        eq("T-DEF-17", "2026-12-10 2026-12-10 마감: 마감일이 시작일보다 전이에요",
                 reopened + Ui.dateOf(edit.due) + " " + msgs(edit.problems()));
         TaskForm names = new TaskForm(null, d("11-16"), at("11-16T09:00").now);
         names.period.doClick();
