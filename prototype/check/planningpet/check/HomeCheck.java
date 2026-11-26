@@ -27,6 +27,42 @@ final class HomeCheck {
         examples();
         editedSamples();
         sundayLectures();
+        recount();
+    }
+
+    /** T-TALK-30. 그날 목록이 바뀌면 말풍선이 수를 다시 센다. 다른 말을 하는 중이어도 고른 날의 수 말로 바뀐다(D-106). */
+    static void recount() {
+        Store s = at("11-14T10:00");
+        s.book.add(Task.Kind.TASK, "가", d("11-16"), null, 30, "", null);
+        Task b = s.book.add(Task.Kind.TASK, "나", d("11-16"), null, 30, "", null).get(0);
+        Task c = s.book.add(Task.Kind.TASK, "다", d("11-17"), null, 30, "", null).get(0);
+        s.book.add(Task.Kind.TASK, "빨래", d("11-14"), null, 30, "", null);
+        Task e = s.book.add(Task.Kind.TASK, "청소", d("11-14"), null, 30, "", null).get(0);
+        App app = Main.create(s);
+        app.schedule.chooser = (title, message, options) -> 0;
+        MainScreen main = ProtoCheck.find(app.root, MainScreen.class);
+        java.util.List<String> said = new java.util.ArrayList<>();
+        main.selectDate(d("11-16"));
+        app.schedule.delete(b);
+        said.add(s.talk);
+        app.schedule.check(s.book.dayPlan(d("11-16")).untimed().get(0));
+        said.add(s.talk);
+        app.show("일정관리");
+        app.schedule.drop(c, d("11-16"), 600);
+        said.add(plain(ProtoCheck.find(app.root, planningpet.schedule.view.ScheduleScreen.class).bubble.getText()));
+        app.show("홈");
+        said.add(s.talk);
+        main.selectDate(d("11-14"));
+        app.schedule.delete(e);
+        said.add(s.talk);
+        main.quick.setText("영어 단어");
+        main.quick.postActionEvent();
+        said.add(s.talk);
+        app.schedule.delete(s.tasks.stream().filter(t -> t.title.equals("영어 단어")).findFirst().orElseThrow());
+        said.add(s.talk);
+        eq("T-TALK-30", "11월 16일 할 일은 1개야. / 잘했어! +10P / 이번 주 남은 날의 시각 없는 할 일이 2개 있어. 자동 배치를 눌러 볼래? / "
+                + "11월 16일 할 일은 2개야. / "
+                + "오늘 할 일 1개 남았어. / '영어 단어' 넣었구나! 오늘 남은 일 2개야. / 오늘 할 일 1개 남았어.", String.join(" / ", said));
     }
 
     /** T-EX-5. 일요일에 예시로 시작해도 다음 주 시간표에 수업이 보인다(D-94). */

@@ -33,6 +33,11 @@ public final class Talk {
         return briefing();
     }
 
+    /** D-106: 그 날의 수 말. 오늘이면 USUAL, 다른 날이면 OTHER_DATE다. 목록이 바뀌면 다시 센다. */
+    public Store.Recount dayLine(LocalDate date) {
+        return new Store.Recount(date, date.equals(s.today()) ? this::usual : () -> otherDate(date));
+    }
+
     public String briefing() {
         LocalDate today = s.today();
         StringBuilder b = new StringBuilder(left());

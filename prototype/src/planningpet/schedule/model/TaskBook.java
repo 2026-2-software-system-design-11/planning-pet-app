@@ -248,6 +248,14 @@ public final class TaskBook {
         return all;
     }
 
+    /** D-106: 그날 목록(dayPlan)의 묶음마다 든 일정과 그 날짜, 제목, 시각, 걸리는 시간, 끝냄. 목록이 바뀌었는지 견준다. */
+    public String listKey(LocalDate date) {
+        DayPlan p = dayPlan(date);
+        return java.util.stream.Stream.of(p.dueToday(), p.timed(), p.untimed(), p.period())
+                .map(l -> l.stream().map(t -> t.id + t.date + t.title + t.start + t.nextDay + t.minutes + t.done).toList())
+                .toList().toString();
+    }
+
     /**
      * 06의 6번(D-31, D-70). 메인 목록의 하루 시간표: 맨 위 "오늘 마감"인 시각 없는 기간 할 일, 시각 있는 할 일과 고정 일정, 그 아래
      * 시각 없는 할 일, 맨 아래 "기간 안에 할 일"(그날이 기간 안이고 시각이 없는 끝내지 않은 기간 할 일).

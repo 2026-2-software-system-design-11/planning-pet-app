@@ -46,6 +46,12 @@ public final class Store {
     public String talk = "";
     /** 펫이 새 말을 할 때마다 1씩 는다. 같은 문장을 다시 말해도 새 말로 알아본다. */
     public int talkSeq;
+    /** D-106: 말풍선이 어느 날의 수를 말하면 그 날과 다시 만들 말. 다른 말이면 null. */
+    public Recount recount;
+
+    /** D-106: 말풍선이 수를 말하는 날과 목록이 바뀌면 다시 만들 말. */
+    public record Recount(LocalDate day, java.util.function.Supplier<String> line) {
+    }
     private final List<Runnable> listeners = new ArrayList<>();
 
     /** 고른 펫(D-48). */
@@ -75,6 +81,13 @@ public final class Store {
     public void say(String line) {
         talk = line;
         talkSeq++;
+        recount = null;
+    }
+
+    /** D-106: 목록이 바뀌어 r대로 다시 쓴 말. 새 말이 아니어서 새 말 번호를 올리지 않는다(일정관리 말풍선은 D-39 그대로). */
+    public void retell(Recount r) {
+        recount = r;
+        talk = r.line().get();
     }
 
     /**
@@ -83,6 +96,7 @@ public final class Store {
      */
     public void sayAtHome(String line) {
         talk = line;
+        recount = null;
     }
 
     public void changed() {

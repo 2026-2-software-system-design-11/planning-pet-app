@@ -17,8 +17,8 @@ public final class HomeController {
         this.talk = talk;
     }
 
-    /** 날짜를 고르면 펫이 그 날을 말한다. 펫 말만 바꾸므로 알림만 보낸다. */
+    /** 날짜를 고르면 펫이 그 날을 말한다. 펫 말만 바꾸므로 알림만 보낸다. 그날 목록이 바뀌면 다시 센다(D-106). */
     public void selectDay(LocalDate date) {
-        control.say(date.equals(store.today()) ? talk.usual() : talk.otherDate(date));
+        control.say(talk.dayLine(date));
     }
 }
