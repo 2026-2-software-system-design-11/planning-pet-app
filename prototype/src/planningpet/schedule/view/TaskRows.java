@@ -419,6 +419,10 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
                 stop();
                 if (spot != null) {
                     dropOn.dropped(control.drop(t, spot.day(), spot.minute()), t, p);
+                } else {
+                    // S65: 시간표 밖에 놓으면 바뀌는 것 없이 상자가 목록의 그 줄 자리로 돌아간다.
+                    DragReturn.start(parts[0], javax.swing.SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), parts[0]),
+                            dropOn.boxSize(t));
                 }
             }
         };

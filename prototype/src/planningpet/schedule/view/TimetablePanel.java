@@ -158,6 +158,11 @@ public final class TimetablePanel extends JComponent {
         return getVisibleRect().contains(p) ? p : null;
     }
 
+    /** 따라오는 상자의 크기: 날 칸 폭과 걸리는 시간만 한 높이. */
+    public java.awt.Dimension boxSize(Task t) {
+        return new java.awt.Dimension((getWidth() - GUTTER) / 7 - 2, Math.max(t.minutes * HOUR / 60, 16));
+    }
+
     /** 끄는 동안 흐리게 그리는 날(놓을 수 없는 날). */
     public java.util.List<LocalDate> dimmed() {
         return dragging == null ? java.util.List.of()

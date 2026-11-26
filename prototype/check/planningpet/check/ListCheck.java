@@ -10,6 +10,7 @@ import planningpet.common.view.Theme;
 import planningpet.schedule.model.Task;
 import planningpet.schedule.view.ScheduleScreen;
 import planningpet.schedule.view.DragCursors;
+import planningpet.schedule.view.DragReturn;
 import planningpet.schedule.view.DropNote;
 import planningpet.schedule.view.TaskRows;
 import planningpet.schedule.view.TimetablePanel;
@@ -31,6 +32,32 @@ final class ListCheck {
         notePlace();
         escape();
         rollEdge();
+        outside();
+    }
+
+    /** T-EDIT-28(D-99): 시간표 밖에 놓으면 바뀌는 것이 없고, 상자가 손을 놓은 자리에서 목록의 그 줄 자리로 돌아간다. */
+    static void outside() {
+        App app = Main.create(at("11-17T09:00"));
+        Task work = app.store.book.add(Task.Kind.TASK, "과제", d("11-17"), null, 30, "", null).get(0);
+        app.show("일정관리");
+        app.store.changed();
+        javax.swing.JRootPane frame = new javax.swing.JRootPane();
+        frame.setContentPane(app.root);
+        frame.setSize(1000, 680);
+        PeriodCheck.layout(frame);
+        ScheduleScreen sched = ProtoCheck.find(app.root, ScheduleScreen.class);
+        TimetablePanel table = ProtoCheck.find(app.root, TimetablePanel.class);
+        TaskRows.TitleLabel title = title(sched.untimed, work);
+        java.awt.Container row = title.getParent();
+        mouse(title, MouseEvent.MOUSE_PRESSED, new java.awt.Point(5, 5));
+        mouse(title, MouseEvent.MOUSE_DRAGGED, javax.swing.SwingUtilities.convertPoint(table, new java.awt.Point(300, 300), title));
+        mouse(title, MouseEvent.MOUSE_DRAGGED, new java.awt.Point(20, 60));
+        mouse(title, MouseEvent.MOUSE_RELEASED, new java.awt.Point(20, 60));
+        DragReturn back = ProtoCheck.find(frame.getLayeredPane(), DragReturn.class);
+        java.awt.Point at = javax.swing.SwingUtilities.convertPoint(title, new java.awt.Point(20, 60), frame.getLayeredPane());
+        java.awt.Rectangle home = javax.swing.SwingUtilities.convertRectangle(row.getParent(), row.getBounds(), frame.getLayeredPane());
+        eq("T-EDIT-28", "2026-11-17 null false / true true true", work.date + " " + work.start + " " + table.note.isVisible() + " / "
+                + back.from.contains(at) + " " + back.to.equals(home) + " " + back.timer.isRunning());
     }
 
     /** T-EDIT-27(D-99): 끄는 동안 보이는 칸 끝에 닿으면 굴러가고, 끝에 가까울수록 많이 굴러간다. */
