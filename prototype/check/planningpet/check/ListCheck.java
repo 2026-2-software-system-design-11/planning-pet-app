@@ -407,7 +407,7 @@ final class ListCheck {
         for (java.awt.event.ActionListener l : pill.getActionListeners()) {
             l.actionPerformed(new java.awt.event.ActionEvent(pill, java.awt.event.ActionEvent.ACTION_PERFORMED, ""));
         }
-        eq("T-EDIT-42", "false [] 2026-11-10 null", pill.isEnabled() + " " + opened + " " + q.date + " " + q.start);
+        eq("T-EDIT-42", "false 마감이 지난 일은 시각을 정할 수 없어요 [] 2026-11-10 null", pill.isEnabled() + " " + pill.getToolTipText() + " " + opened + " " + q.date + " " + q.start);
     }
 
     /** T-EDIT-16(D-102): 한 번은 아무 일도 없고 두 번은 수정 창, 시각 단추는 둘째 줄 연필 앞. 설정을 켜면 두 목록 모두 한 번에 창, 두 번째는 없음. */
