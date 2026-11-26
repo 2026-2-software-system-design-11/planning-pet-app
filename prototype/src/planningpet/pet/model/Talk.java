@@ -36,18 +36,18 @@ public final class Talk {
     }
 
     /**
-     * D-106: opening이 한 말(said)을 목록이 바뀔 때 다시 만들 말. 처음 만난 인사는 수가 없어 null, WELCOME_BACK은 수만, BRIEFING은
-     * 1번 문장만 다시 세고 나머지 문장은 처음 말한 그대로 둔다.
+     * D-106: opening이 방금 한 말을 목록이 바뀔 때 다시 만들 말. 처음 만난 인사는 수가 없어 null, WELCOME_BACK은 수만 다시 센다.
+     * BRIEFING은 1번 문장을 다시 세고 2~5번 문장은 처음 말한 그대로 두며, 6번 문장은 규칙대로 다시 판단한다.
      */
-    public Store.Recount openingRecount(LocalDate before, String said) {
+    public Store.Recount openingRecount(LocalDate before) {
         if (before == null) {
             return null;
         }
         if (ChronoUnit.DAYS.between(before, s.today()) >= 8) {
             return new Store.Recount(s.today(), this::welcomeBack);
         }
-        String rest = said.substring(left().length());
-        return new Store.Recount(s.today(), () -> left() + rest);
+        Brief b = brief();
+        return new Store.Recount(s.today(), () -> left() + b.middle() + six(b));
     }
 
     /** D-106: 그 날의 수 말. 오늘이면 USUAL, 다른 날이면 OTHER_DATE다. 목록이 바뀌면 다시 센다. */
@@ -56,8 +56,17 @@ public final class Talk {
     }
 
     public String briefing() {
+        Brief b = brief();
+        return left() + b.middle() + six(b);
+    }
+
+    /** BRIEFING 2~5번 문장(middle)과 6번 문장을 정할 값: 4, 5번 문장이 없었는가(quiet), 3번 문장이 말한 일(told). */
+    private record Brief(String middle, boolean quiet, Task told) {
+    }
+
+    private Brief brief() {
         LocalDate today = s.today();
-        StringBuilder b = new StringBuilder(left());
+        StringBuilder b = new StringBuilder();
         // 세는 날(06 데이터 절)로 센다. 끝내지 않은 기간 할 일은 마감 날의 일이다(D-65).
         long yesterday = s.tasks.stream()
                 .filter(t -> t.kind == Task.Kind.TASK && !t.done && t.countDay().equals(today.minusDays(1)))
@@ -101,12 +110,17 @@ public final class Talk {
             b.append(" 내일 '").append(Rules.shortTitle(tomorrow.title)).append("'")
                     .append(Rules.josa(tomorrow.title, "이", "가")).append(" 있어.");
         }
-        if (s.book.checkables(today).isEmpty() && near == null && dueToday == null && tomorrow == null) {
-            // 기간 안에 할 일이 있으면 새로 적으라고 하지 않고 가장 가까운 마감을 알린다.
-            String period = periodLine(told);
-            b.append(period != null ? " " + period : told != null ? "" : " 아래 칸에 하나 적어 볼까?");
+        return new Brief(b.toString(), near == null && dueToday == null && tomorrow == null, told);
+    }
+
+    /** BRIEFING 6번 문장. 오늘 할 일이 없고 4, 5번 문장이 없을 때만 붙는다. 다시 셀 때도 지금 목록으로 다시 판단한다(D-106). */
+    private String six(Brief b) {
+        if (!s.book.checkables(s.today()).isEmpty() || !b.quiet()) {
+            return "";
         }
-        return b.toString();
+        // 기간 안에 할 일이 있으면 새로 적으라고 하지 않고 가장 가까운 마감을 알린다.
+        String period = periodLine(b.told());
+        return period != null ? " " + period : b.told() != null ? "" : " 아래 칸에 하나 적어 볼까?";
     }
 
     /** 오늘의 기간 안에 할 일 가운데(skip은 빼고) 마감, 넣은 순으로 첫 번째의 "{제목}은 {일}일까지야, {n}일 남았어."(D-70). 없으면 null. */

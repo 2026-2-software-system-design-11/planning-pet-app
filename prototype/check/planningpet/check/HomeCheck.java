@@ -96,6 +96,20 @@ final class HomeCheck {
         ua.schedule.delete(job);
         ua.show("홈");
         eq("T-TALK-30 고른 펫", "이제 경험치는 내가 받을게! 오늘 할 일 2개 남았어. / 오늘 할 일 1개 남았어.", picked + " / " + u.talk);
+        Store v = at("11-18T09:00");
+        Task far = v.book.add(Task.Kind.TASK, "가", d("11-20"), null, 30, "", null).get(0);
+        v.lastOpenDay = d("11-17");
+        App va = Main.create(v);
+        va.schedule.chooser = (title, message, options) -> 0;
+        java.util.List<String> brief = new java.util.ArrayList<>(java.util.List.of(va.control.windowShown()));
+        va.show("일정관리");
+        va.schedule.drop(far, d("11-18"), 840);
+        va.show("홈");
+        brief.add(v.talk);
+        va.schedule.delete(far);
+        brief.add(v.talk);
+        eq("T-TALK-30 빈 날 브리핑", "오늘은 할 일이 없어. 아래 칸에 하나 적어 볼까? / 오늘 할 일 1개 남았어. / "
+                + "오늘은 할 일이 없어. 아래 칸에 하나 적어 볼까?", String.join(" / ", brief));
         eq("T-TALK-30 넣은 뒤", "'영어 단어' 넣었구나! 오늘 남은 일 2개야. / 오늘 할 일 1개 남았어.", added + " / " + t.talk);
     }
 
