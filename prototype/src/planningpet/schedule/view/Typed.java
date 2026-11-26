@@ -14,8 +14,12 @@ public final class Typed {
     private Typed() {
     }
 
-    /** 칸에 넣을 값과 칸 아래 글. 받지 않으면 value가 null이고 글은 빨간 글, 받으면 흐린 글이다(맞추지 않았으면 null). */
-    public record Read(Object value, String notice) {
+    /** 칸에 넣을 값과 칸 아래 글. 받지 않으면 value가 null이고 글은 빨간 글, 받으면 흐린 글이다(맞추지 않았으면 null). days는 옮길 날 수. */
+    public record Read(Object value, String notice, int days) {
+        public Read(Object value, String notice) {
+            this(value, notice, 0);
+        }
+
         public boolean rejected() {
             return value == null;
         }
@@ -54,7 +58,7 @@ public final class Typed {
      * 시작 시각 칸. 목록 값과 그 앞부분("14"), "09:03", "930", "오후 2시 반"을 앱 하루의 5분 값으로 읽는다.
      * 다음 날 04:00을 넘으면 03:55(다음 날)로 맞추고, 반올림은 날을 넘지 않는다(23:58은 23:55).
      */
-    public static Read start(String text) {
+    public static Read start(String text, java.time.LocalDate day) {
         String t = text.strip();
         String f = fill(t);
         if (f != null) {
@@ -68,6 +72,13 @@ public final class Typed {
         }
         m += next && m < Task.DAY ? Task.DAY : 0;
         int last = Task.DAY_END - 5;
+        if (m >= Task.DAY_END && !next) {
+            // S81, S85: "밤 4시", "밤 5시"는 다음 달력 날의 그 시각이다.
+            String v = Times.value(Math.min((int) Math.round((m - Task.DAY) / 5.0) * 5, Task.DAY - 5));
+            java.time.LocalDate d = day.plusDays(1);
+            return new Read(v, d.getDayOfMonth() + "일(" + "월화수목금토일".charAt(d.getDayOfWeek().getValue() - 1) + ") " + v
+                    + planningpet.common.model.Rules.josa(v, "으로", "로") + " 읽었어요", 1);
+        }
         if (m >= Task.DAY_END) {
             return new Read(Times.value(last), "하루는 새벽 4시에 넘어가요. " + Times.value(last) + "로 맞췄어요");
         }
@@ -100,7 +111,7 @@ public final class Typed {
             min = g == 5 ? 0 : Integer.parseInt(c.group(g + 1));
         } else if (w.matches()) {
             h = hour(w.group(1), Integer.parseInt(w.group(2)));
-            most = 27;
+            most = 29;
             min = w.group(3) != null ? 30 : w.group(4) != null ? Integer.parseInt(w.group(4)) : 0;
         } else {
             return -1;
@@ -108,7 +119,7 @@ public final class Typed {
         return h < 0 || h > most || min > 59 ? -1 : h * 60 + min;
     }
 
-    /** "N시"의 시(S54, S60~S62, S81). 새벽과 밤의 1~3시, 밤과 오전의 12시는 다음 날이라 24를 더한다. */
+    /** "N시"의 시(S54, S60~S62, S81). 새벽과 밤의 1~3시, 밤의 4~5시, 밤과 오전의 12시는 다음 날이라 24를 더한다. */
     private static int hour(String word, int n) {
         if (n > 12) {
             return n > 23 ? -1 : n;
@@ -117,7 +128,7 @@ public final class Typed {
             case "오전", "아침" -> n == 12 ? 24 : n;
             case "오후", "저녁" -> n % 12 + 12;
             case "새벽" -> n == 12 ? 24 : n <= 3 ? n + 24 : n;
-            case "밤" -> n == 12 ? 24 : n <= 3 ? n + 24 : n <= 5 ? n : n + 12;
+            case "밤" -> n == 12 ? 24 : n <= 5 ? n + 24 : n + 12;
             default -> n == 0 || n >= 9 ? n : n + 12;
         };
     }

@@ -27,6 +27,9 @@ public final class TimeEditor {
     /** 시작 시각 칸 묶음과 걸리는 시간 칸 묶음 바로 아래에 따로 붙는 글(D-98). */
     public final JLabel startNotice;
     public final JLabel minutesNotice;
+    private final TypedField typedStart;
+    /** 시작 시각을 둘 날. "밤 4시"로 읽으면 저장할 때 그 다음 날로 옮긴다(S87). */
+    private final java.time.LocalDate base;
     /** 칸 아래 글이 늘거나 줄면 창 크기를 다시 맞춘다. 창 없이 만들 때는 아무것도 하지 않는다. */
     public Runnable relayout = () -> { };
     public final JLabel error = new JLabel(" ");
@@ -49,12 +52,12 @@ public final class TimeEditor {
         int from = placed ? t.startMinute() : DefaultDates.start(day, now);
         start.setValue(Times.value(from));
         // 시각 없는 기간 할 일은 창을 연 목록의 날로 옮겨지므로 그 날로 실제 날을 적는다.
-        java.time.LocalDate base = placed ? t.date : day;
+        base = placed ? t.date : day;
         realTime.setText(Times.real(base, from));
         minutes = Ui.minutes(t.minutes);
         TypedField typed = new TypedField(minutes, Typed::minutes, () -> relayout.run());
         minutesNotice = typed.notice;
-        TypedField typedStart = new TypedField(start, Typed::start, () -> relayout.run());
+        typedStart = new TypedField(start, x -> Typed.start(x, base), () -> relayout.run());
         startNotice = typedStart.notice;
         // 값이 바뀌면 실제 시각 글을 고치고, 그만큼 칸 묶음 폭이 바뀌니 칸 아래 글을 그 폭으로 다시 접는다(05 시각 고치기 창 1번).
         start.addChangeListener(x -> {
@@ -105,7 +108,9 @@ public final class TimeEditor {
             e.error.setText(problem);
             return false;
         }
-        return app.schedule.saveTime(t, Times.minuteOf(e.start.getValue()), (int) e.minutes.getValue(), e.day);
+        int days = e.typedStart.days(e.start.getValue());
+        return app.schedule.saveTime(t, Times.minuteOf(e.start.getValue()), (int) e.minutes.getValue(),
+                days > 0 ? e.base.plusDays(days) : e.day, days > 0);
     }
 
     /** 시각 빼기 버튼과 같다. 반복 사본의 범위 물음에서 취소하면 false(창은 열린 채다, D-72). */

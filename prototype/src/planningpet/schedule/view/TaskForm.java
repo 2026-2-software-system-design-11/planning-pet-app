@@ -23,7 +23,7 @@ public final class TaskForm {
     public final JLabel realTime = new JLabel();
     public final JSpinner minutes = Ui.minutes(30);
     /** 시작 시각 칸에 쳐 넣은 값을 맞췄거나 받지 않았을 때 칸 아래 글(D-98). */
-    public final JLabel startNotice = new TypedField(start, Typed::start, () -> this.relayout.run()).notice;
+    public final JLabel startNotice = new TypedField(start, x -> moved(Typed.start(x, Ui.dateOf(date))), () -> this.relayout.run()).notice;
     /** 걸리는 시간 칸에 쳐 넣은 값을 맞췄거나 받지 않았을 때 칸 아래 글(D-98). 쳐 넣은 뒤에는 30분 안내를 숨긴다. */
     private final TypedField minutesTyped = new TypedField(minutes, Typed::minutes, () -> { sync(); this.relayout.run(); });
     public final JLabel minutesNotice = minutesTyped.notice;
@@ -333,6 +333,14 @@ public final class TaskForm {
         for (int i = 0; i < 7; i++) {
             days[i].setSelected(i == d.getValue() - 1);
         }
+    }
+
+    /** "밤 4시"처럼 다음 날 시각으로 읽으면 날짜 칸을 그만큼 뒤로 옮긴다(S81). */
+    private Typed.Read moved(Typed.Read r) {
+        if (r.days() > 0) {
+            Ui.setDate(date, Ui.dateOf(date).plusDays(r.days()));
+        }
+        return r;
     }
 
     /** 06의 2번 검사. */

@@ -15,6 +15,9 @@ public final class TypedField {
     private String plain = ""; // 접기 전 글
     /** 칸에 글을 쳐 넣어 읽은 적이 있는가. 일정 입력 창은 그 뒤 30분 안내를 숨긴다(D-98). */
     public boolean typed;
+    /** 마지막으로 읽은 값과 그때 옮길 날 수("밤 4시", S87). */
+    private Object daysFor;
+    private int days;
     /** 0보다 크면 글을 이 너비(px) 안에서 낱말 사이로 접는다(시각 고치기 창, D-98). */
     public java.util.function.IntSupplier wrap = () -> 0;
 
@@ -59,6 +62,8 @@ public final class TypedField {
                         if (r.rejected()) {
                             throw new ParseException(text, 0);
                         }
+                        days = r.days();
+                        daysFor = r.value();
                         return r.value();
                     }
 
@@ -73,6 +78,11 @@ public final class TypedField {
                     }
                 }));
         spinner.addChangeListener(e -> edited(spinner.getValue()));
+    }
+
+    /** 칸 값이 마지막으로 읽은 값이면 그때 옮길 날 수, 아니면 0. */
+    public int days(Object value) {
+        return value.equals(daysFor) ? days : 0;
     }
 
     /** 칸의 글이나 값이 글이 말하는 값과 다르면(쳐 넣기 시작, 화살표) 글을 지운다. 다른 칸을 고칠 때는 남는다. */
