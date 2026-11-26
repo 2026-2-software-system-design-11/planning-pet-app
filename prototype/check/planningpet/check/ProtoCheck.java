@@ -143,7 +143,7 @@ public final class ProtoCheck {
                 + "00:00(다음 날)로 읽었어요 / 14:00 null 1 1 0", starts("밤 4시", "밤 5시", "오전 12시", "오후 14시") + " "
                 + Typed.start("밤 4시", java.time.LocalDate.of(2026, 11, 18)).days() + " " + Typed.start("밤 5시", java.time.LocalDate.of(2026, 11, 18)).days()
                 + " " + Typed.start("오전 12시", java.time.LocalDate.of(2026, 11, 18)).days());
-        eq("D-98 한 글자씩 친 시작 시각", "21:30 20:00 22:30 14:30 19:30 / 21:30 20:00", keyed());
+        eq("D-98 한 글자씩 친 시작 시각", "21:30 20:00 22:30 14:30 19:30 17:00 13:00 13:00 / 21:30 20:00 17:00", keyed());
         eq("D-98 한 글자를 채워 보인다", "13:00 3:00", oneDigitFill());
         eq("D-98 밤 4시", "2026-11-19 04:00 흐린 19일(목) 04:00으로 읽었어요 / 2026-11-19 240", nightForm());
         eq("D-98, D-101 밤 4시 뒤", "2026-11-19 / 2026-11-18 없음 / 2026-11-18 흐린 5분 단위로 맞췄어요(22:05) / 2026-11-18 245 없음", nightAfter());
@@ -511,18 +511,23 @@ public final class ProtoCheck {
         f.timed.setSelected(true);
         f.sync();
         TimeEditor e = new TimeEditor(MockData.sample().tasks.get(0), java.time.LocalDateTime.of(2026, 11, 14, 15, 23));
-        return keys(f.start, "21:30") + " " + keys(f.start, "20") + " " + keys(f.start, "2230") + " " + keys(f.start, "1430") + " " + keys(f.start, "730") + " / "
-                + keys(e.start, "21:30") + " " + keys(e.start, "20");
+        return keys(f.start, "21:30") + " " + keys(f.start, "20") + " " + keys(f.start, "2230") + " " + keys(f.start, "1430") + " " + keys(f.start, "730") + " "
+                + keys(f.start, "2\b5") + " " + keys(f.start, "8\b1") + " " + keys(f.start, "14\b") + " / "
+                + keys(e.start, "21:30") + " " + keys(e.start, "20") + " " + keys(e.start, "2\b5");
     }
 
-    /** 칸의 글을 모두 고르고 EDT에서 한 글자씩 친 뒤(실제 키 입력과 같은 길) 칸을 벗어난 것과 같다. */
+    /** 칸의 글을 모두 고르고 EDT에서 한 글자씩 친 뒤(실제 키 입력과 같은 길, "\b"는 Backspace) 칸을 벗어난 것과 같다. */
     static Object keys(javax.swing.JSpinner s, String keys) {
         var field = ((javax.swing.JSpinner.DefaultEditor) s.getEditor()).getTextField();
         try {
             javax.swing.SwingUtilities.invokeAndWait(() -> {
                 field.selectAll();
                 for (char c : keys.toCharArray()) {
-                    field.replaceSelection(String.valueOf(c));
+                    if (c == '\b') {
+                        field.getActionMap().get(javax.swing.text.DefaultEditorKit.deletePrevCharAction).actionPerformed(new java.awt.event.ActionEvent(field, 0, ""));
+                    } else {
+                        field.replaceSelection(String.valueOf(c));
+                    }
                 }
                 try {
                     field.commitEdit();

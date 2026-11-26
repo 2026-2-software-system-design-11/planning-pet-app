@@ -29,6 +29,7 @@ public final class TypedField {
         notice.setFont(Theme.font(12));
         notice.setVerticalAlignment(JLabel.TOP);
         notice.setVisible(false);
+        JFormattedTextField field = ((JSpinner.DefaultEditor) spinner.getEditor()).getTextField();
         DocumentFilter filter = new DocumentFilter() {
             @Override
             public void replace(FilterBypass fb, int off, int len, String text, AttributeSet a) throws BadLocationException {
@@ -43,7 +44,7 @@ public final class TypedField {
                 raw = match == null ? "" : typed;
                 if (match != null) {
                     fb.replace(0, now.length(), match, a);
-                    ((JSpinner.DefaultEditor) spinner.getEditor()).getTextField().select(typed.length(), match.length());
+                    field.select(typed.length(), match.length());
                 } else if (filled && typed != null) {
                     fb.replace(0, now.length(), typed, a);
                 } else {
@@ -54,12 +55,22 @@ public final class TypedField {
 
             @Override
             public void remove(FilterBypass fb, int off, int len) throws BadLocationException {
-                shown = null;
-                super.remove(fb, off, len);
+                // D-98: 채운 값이 보이는 동안 지우기는 친 글의 마지막 글자를 지우고 남은 글로 다시 채워 보인다("14" 뒤 Backspace는 "13:00").
+                String now = fb.getDocument().getText(0, fb.getDocument().getLength());
+                if (now.equals(shown) && !raw.isEmpty() && off == raw.length() && off + len == now.length()) {
+                    String left = raw.substring(0, raw.length() - 1);
+                    shown = Typed.fill(left);
+                    raw = shown == null ? "" : left;
+                    fb.replace(0, now.length(), shown == null ? left : shown, null);
+                    field.select(left.length(), field.getText().length());
+                } else {
+                    shown = null;
+                    super.remove(fb, off, len);
+                }
                 edited(fb.getDocument().getText(0, fb.getDocument().getLength()));
             }
         };
-        ((JSpinner.DefaultEditor) spinner.getEditor()).getTextField().setFormatterFactory(new DefaultFormatterFactory(
+        field.setFormatterFactory(new DefaultFormatterFactory(
                 new JFormattedTextField.AbstractFormatter() {
                     @Override
                     public Object stringToValue(String text) throws ParseException {
