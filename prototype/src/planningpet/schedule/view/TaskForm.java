@@ -427,7 +427,7 @@ public final class TaskForm {
     private void fill(JLabel l, String text) {
         // 보이는 제목 칸 폭이다. 창에 놓이기 전(창 없는 검사)에는 선호 폭을 쓴다.
         int room = title.getWidth() > 0 ? title.getWidth() : title.getPreferredSize().width;
-        l.setText(text.isEmpty() ? "" : Ui.wrap(text, l.getFontMetrics(l.getFont()), room));
+        l.setText(text.isEmpty() ? "" : Ui.wrap(text, l, room));
         l.putClientProperty("plain", text);
         l.setVisible(!text.isEmpty());
     }

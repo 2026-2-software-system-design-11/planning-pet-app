@@ -291,7 +291,7 @@ final class PeriodCheck {
                 new java.awt.Font(java.awt.Font.DIALOG, java.awt.Font.BOLD, 16)}) {
             label.setFont(font);
             wrap.showErrors(longest);
-            String[] lines = label.getText().replaceAll("^<html>|</html>$", "").split("<br>");
+            String[] lines = label.getText().replaceAll("^<html><font[^>]*>|</font></html>$", "").split("<br>");
             fits.append(lines.length > 1).append(' ').append(label.getPreferredSize().width <= room).append(' ')
                     .append(String.join(" ", lines).equals(longest.get(0)[1])).append(' ')
                     .append(wrap.panel.getPreferredSize().width == wide).append(" / ");

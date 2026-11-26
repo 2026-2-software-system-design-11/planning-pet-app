@@ -131,7 +131,7 @@ public final class ProtoCheck {
                 .map(w -> String.valueOf(Typed.minutes(w).value())).toList()));
         eq("D-98 칸 아래 글", "25 흐린 5분 단위로 맞췄어요(25분) / 25 빨간 " + Typed.MINUTES_BAD, typedField());
         eq("D-98 입력 창 걸리는 시간 칸 아래 글", "흐린 5분 단위로 맞췄어요(25분) / 없음 / 없음", typedForm());
-        eq("D-98 시각 고치기 창 칸 아래 글", "720 흐린 최대 720분(12시간)까지 넣을 수 있어요 true true 최대 720분(12시간)까지 넣을<br>수 있어요",
+        eq("D-98 시각 고치기 창 칸 아래 글", "720 흐린 최대 720분(12시간)까지 넣을 수 있어요 true true 최대 720분(12시간)까지 넣을<br>수 있어요 true",
                 timeEditorNotice());
         eq("T-TYPE-5", "09:05 5분 단위로 맞췄어요(09:05) / 23:55 5분 단위로 맞췄어요(23:55) / 09:00 null", starts("09:03", "23:58", "09:00"));
         eq("T-TYPE-6", "03:55(다음 날) 하루는 새벽 4시에 끝나서 03:55(다음 날)로 맞췄어요", starts("04:10(다음 날)"));
@@ -371,7 +371,27 @@ public final class ProtoCheck {
         String got = type(e.minutes, "730") + " " + notice(l);
         int group = l.getParent().getComponent(0).getPreferredSize().width;
         return got + " " + (l.getPreferredSize().width <= group) + " "
-                + (l.getPreferredSize().height > l.getFontMetrics(l.getFont()).getHeight() * 1.5) + " " + l.getText().replaceAll("</?html>", "");
+                + (l.getPreferredSize().height > l.getFontMetrics(l.getFont()).getHeight() * 1.5) + " " + l.getText().replaceAll("</?(html|font)[^>]*>", "") + " " + dim(l);
+    }
+
+    /** 라벨을 흰 바탕에 그려 가장 진한 점이 본문 글색(INK)보다 한참 밝으면 참이다. 두 줄로 접은 흐린 글도 흐리게 그려지는가. */
+    static boolean dim(javax.swing.JLabel l) {
+        l.setSize(l.getPreferredSize());
+        var img = new java.awt.image.BufferedImage(l.getWidth(), l.getHeight(), java.awt.image.BufferedImage.TYPE_INT_RGB);
+        var g = img.createGraphics();
+        g.setColor(java.awt.Color.WHITE);
+        g.fillRect(0, 0, l.getWidth(), l.getHeight());
+        l.paint(g);
+        g.dispose();
+        int darkest = 765;
+        for (int y = 0; y < img.getHeight(); y++) {
+            for (int x = 0; x < img.getWidth(); x++) {
+                int p = img.getRGB(x, y);
+                darkest = Math.min(darkest, (p >> 16 & 255) + (p >> 8 & 255) + (p & 255));
+            }
+        }
+        java.awt.Color ink = planningpet.common.view.Theme.INK;
+        return darkest > ink.getRed() + ink.getGreen() + ink.getBlue() + 200;
     }
 
     /** 시작 시각 칸에 쳐 넣은 글마다 읽은 값과 칸 아래 글(06의 32번). */

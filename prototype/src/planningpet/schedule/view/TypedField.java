@@ -133,7 +133,7 @@ public final class TypedField {
     /** 보이는 글을 지금의 wrap 폭으로 다시 접고 창 크기를 맞춘다. 값을 넣은 뒤 칸 묶음 폭이 바뀌면 부른다. */
     public void refold() {
         int w = wrap.getAsInt();
-        notice.setText(w > 0 && !plain.isEmpty() ? Ui.wrap(plain, notice.getFontMetrics(notice.getFont()), w) : plain);
+        notice.setText(w > 0 && !plain.isEmpty() ? Ui.wrap(plain, notice, w) : plain);
         relayout.run();
     }
 }
