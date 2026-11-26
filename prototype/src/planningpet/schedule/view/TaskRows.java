@@ -362,6 +362,8 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
             /** D-99: 끄는 동안 마우스가 시간표 끝에 머물면 굴린다(S66). inView는 보이는 칸 좌표의 마우스 자리다. */
             private java.awt.Point inView;
             private java.awt.Component held;
+            /** 마지막 마우스 자리(held 좌표). */
+            private java.awt.Point last;
             private final javax.swing.Timer roll = new javax.swing.Timer(30,
                     ev -> held.setCursor(dropOn.dragTo(dropOn.roll(inView)) ? DragCursors.NO : DragCursors.GRAB));
             /** D-99: 끄는 동안 Esc를 누르면 그만둔다. */
@@ -369,6 +371,8 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
                 if (ev.getID() == java.awt.event.KeyEvent.KEY_PRESSED
                         && ((java.awt.event.KeyEvent) ev).getKeyCode() == java.awt.event.KeyEvent.VK_ESCAPE) {
                     stop();
+                    // S94: Esc로 그만둘 때도 상자가 줄 자리로 돌아간다.
+                    DragReturn.start(parts[0], javax.swing.SwingUtilities.convertPoint(held, last, parts[0]), dropOn.boxSize(t));
                 }
             };
 
@@ -405,6 +409,7 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
                     roll.start();
                 }
                 inView = javax.swing.SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), dropOn.getParent());
+                last = e.getPoint();
                 e.getComponent().setCursor(dropOn.dragTo(onTable(e)) ? DragCursors.NO : DragCursors.GRAB);
             }
 
