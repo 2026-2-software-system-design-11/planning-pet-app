@@ -56,13 +56,13 @@ public final class Typed {
      */
     public static Read start(String text) {
         String t = text.strip();
-        for (String v : Times.values()) {
-            if (!t.isEmpty() && v.startsWith(t)) {
-                return new Read(v, null);
-            }
+        String f = fill(t);
+        if (f != null) {
+            return new Read(f, null);
         }
         boolean next = t.endsWith(NEXT_DAY);
-        int m = minuteOf(next ? t.substring(0, t.length() - NEXT_DAY.length()).strip() : t);
+        String body = next ? t.substring(0, t.length() - NEXT_DAY.length()).strip() : t;
+        int m = minuteOf(body);
         if (m < 0) {
             return new Read(null, START_BAD);
         }
@@ -72,7 +72,19 @@ public final class Typed {
             return new Read(Times.value(last), "하루는 새벽 4시에 넘어가요. " + Times.value(last) + "로 맞췄어요");
         }
         int r = Math.min((int) Math.round(m / 5.0) * 5, m < Task.DAY ? Task.DAY - 5 : last);
-        return new Read(Times.value(r), r == m ? null : "5분 단위로 맞췄어요(" + Times.value(r) + ")");
+        String v = Times.value(r);
+        if (body.matches("(오전|아침)\\s*12\\s*시.*")) {
+            return new Read(v, "오전 12시는 밤 자정, " + v + "로 읽었어요");
+        }
+        return new Read(v, r == m ? null : "5분 단위로 맞췄어요(" + v + ")");
+    }
+
+    /** 쳐 넣는 동안 시작 시각 칸에 채워 보일 값(S82, S88). 한 글자 1~8은 오후 시각, 아니면 그 앞부분으로 시작하는 첫 목록 값. */
+    public static String fill(String t) {
+        if (t.matches("[1-8]")) {
+            return Times.value((Integer.parseInt(t) + 12) * 60);
+        }
+        return t.isEmpty() ? null : Times.values().stream().filter(v -> v.startsWith(t)).findFirst().orElse(null);
     }
 
     /** 앱 하루의 분. 알아듣지 못하거나 시와 분이 범위 밖이면 -1. */
@@ -96,13 +108,13 @@ public final class Typed {
         return h < 0 || h > most || min > 59 ? -1 : h * 60 + min;
     }
 
-    /** "N시"의 시(D-98). 새벽과 밤의 1~3시, 밤 12시는 다음 날이라 24를 더한다. 13시부터는 그대로다. */
+    /** "N시"의 시(S54, S60~S62, S81). 새벽과 밤의 1~3시, 밤과 오전의 12시는 다음 날이라 24를 더한다. */
     private static int hour(String word, int n) {
         if (n > 12) {
             return n > 23 ? -1 : n;
         }
         return switch (word == null ? "" : word) {
-            case "오전", "아침" -> n % 12;
+            case "오전", "아침" -> n == 12 ? 24 : n;
             case "오후", "저녁" -> n % 12 + 12;
             case "새벽" -> n == 12 ? 24 : n <= 3 ? n + 24 : n;
             case "밤" -> n == 12 ? 24 : n <= 3 ? n + 24 : n <= 5 ? n : n + 12;

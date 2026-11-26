@@ -135,7 +135,9 @@ public final class ProtoCheck {
                 timeEditorNotice());
         eq("T-TYPE-5", "09:05 5분 단위로 맞췄어요(09:05) / 23:55 5분 단위로 맞췄어요(23:55) / 09:00 null", starts("09:03", "23:58", "09:00"));
         eq("T-TYPE-6", "03:55(다음 날) 하루는 새벽 4시에 넘어가요. 03:55(다음 날)로 맞췄어요", starts("04:10(다음 날)"));
-        eq("T-TYPE-7", "14:00 null / 09:00 null / 14:30 null / 09:30 null", starts("14", "9", "1430", "930"));
+        eq("T-TYPE-7", "14:00 null / 09:00 null / 14:30 null / 09:30 null / 13:00 null / 19:00 null", starts("14", "9", "1430", "930", "1", "7"));
+        eq("T-TYPE-10", "00:00(다음 날) 오전 12시는 밤 자정, 00:00(다음 날)로 읽었어요 / 14:00 null", starts("오전 12시", "오후 14시"));
+        eq("S88 한 글자를 채워 보인다", "13:00 3:00", oneDigitFill());
         eq("T-TYPE-8", "14:00 14:00 20:00 09:00 12:00 14:30 14:30 07:00 19:00 21:00 12:00 11:00 01:00(다음 날) 02:00(다음 날) 00:00(다음 날) 05:00",
                 starts("오후 2시", "2시", "8시", "9시", "12시", "오후 2시 반", "2시 30분", "아침 7시", "저녁 7시", "밤 9시", "낮 12시", "낮 11시",
                         "새벽 1시", "밤 2시", "밤 12시", "새벽 5시").replace(" null", "").replace(" /", ""));
@@ -426,6 +428,14 @@ public final class ProtoCheck {
         Object v = type(e.start, "23:58");
         javax.swing.JLabel l = e.startNotice;
         return v + " " + (l.isVisible() && l.getPreferredSize().width <= l.getParent().getComponent(0).getPreferredSize().width);
+    }
+
+    /** 시작 시각 칸에 "1"을 치면 쳐 넣는 동안 "13:00"이고 뒤 "3:00"이 골라져 있다. */
+    private static String oneDigitFill() {
+        var field = ((javax.swing.JSpinner.DefaultEditor) new TimeEditor(MockData.sample().tasks.get(0),
+                java.time.LocalDateTime.of(2026, 11, 14, 15, 23)).start.getEditor()).getTextField();
+        field.setText("1");
+        return field.getText() + " " + field.getSelectedText();
     }
 
     /** 칸에 글을 쳐 넣고 칸을 벗어난 것과 같다. 받지 않으면 이전 값이다. */

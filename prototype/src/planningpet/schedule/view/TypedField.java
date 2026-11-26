@@ -29,11 +29,10 @@ public final class TypedField {
                 // 목록 칸은 쳐 넣는 동안 그 앞부분으로 시작하는 첫 값을 채워 보인다("14"는 "14:00", 지금 동작).
                 Document d = fb.getDocument();
                 String typed = text == null || text.isEmpty() || off + len != d.getLength() ? null : d.getText(0, off) + text;
-                Object match = !(spinner.getModel() instanceof SpinnerListModel list) || typed == null ? null
-                        : list.getList().stream().filter(x -> x.toString().startsWith(typed)).findFirst().orElse(null);
+                String match = !(spinner.getModel() instanceof SpinnerListModel) || typed == null ? null : Typed.fill(typed);
                 if (match != null) {
-                    fb.replace(0, d.getLength(), match.toString(), a);
-                    ((JSpinner.DefaultEditor) spinner.getEditor()).getTextField().select(off + text.length(), match.toString().length());
+                    fb.replace(0, d.getLength(), match, a);
+                    ((JSpinner.DefaultEditor) spinner.getEditor()).getTextField().select(off + text.length(), match.length());
                 } else {
                     super.replace(fb, off, len, text, a);
                 }
