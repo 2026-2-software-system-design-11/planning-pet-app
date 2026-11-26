@@ -54,6 +54,10 @@ final class HomeCheck {
         said.add(s.talk);
         app.schedule.check(ga);
         said.add(s.talk);
+        TaskForm longer = new TaskForm(ga, ga.date, s.now);
+        longer.minutes.setValue(60);
+        TaskDialog.trySave(app, longer, ga);
+        said.add(s.talk);
         app.show("일정관리");
         app.schedule.drop(c, d("11-16"), 600);
         said.add(plain(ProtoCheck.find(app.root, planningpet.schedule.view.ScheduleScreen.class).bubble.getText()));
@@ -67,7 +71,7 @@ final class HomeCheck {
         said.add(s.talk);
         app.schedule.delete(s.tasks.stream().filter(t -> t.title.equals("영어 단어")).findFirst().orElseThrow());
         said.add(s.talk);
-        eq("T-TALK-30", "11월 16일 할 일은 1개야. / 잘했어! +10P / 11월 16일 할 일은 1개야. / 체크를 풀었어. -10P / 이번 주 남은 날의 시각 없는 할 일이 2개 있어. 자동 배치를 눌러 볼래? / "
+        eq("T-TALK-30", "11월 16일 할 일은 1개야. / 잘했어! +10P / 11월 16일 할 일은 1개야. / 체크를 풀었어. -10P / 11월 16일 할 일은 1개야. / 이번 주 남은 날의 시각 없는 할 일이 2개 있어. 자동 배치를 눌러 볼래? / "
                 + "11월 16일 할 일은 2개야. / "
                 + "오늘 할 일 1개 남았어. / '영어 단어' 넣었구나! 오늘 남은 일 2개야. / 오늘 할 일 1개 남았어.", String.join(" / ", said));
         eq("T-TALK-30 브리핑", "오늘 할 일 2개 남았어. 어제 못 끝낸 일 1개는 달력에 남아 있어. 내일 '통계 퀴즈'가 있어.", opened("11-17"));
@@ -110,6 +114,28 @@ final class HomeCheck {
         brief.add(v.talk);
         eq("T-TALK-30 빈 날 브리핑", "오늘은 할 일이 없어. 아래 칸에 하나 적어 볼까? / 오늘 할 일 1개 남았어. / "
                 + "오늘은 할 일이 없어. 아래 칸에 하나 적어 볼까?", String.join(" / ", brief));
+        Store w = at("11-18T09:00");
+        Task job2 = w.book.add(Task.Kind.TASK, "과제", d("11-18"), null, 30, "", null).get(0);
+        Task paper = w.book.add(Task.Kind.TASK, "F사 서류", d("11-16"), null, 30, "", null).get(0);
+        paper.dueDate = d("11-25");
+        paper.startDay = paper.date;
+        w.lastOpenDay = d("11-17");
+        App wa = Main.create(w);
+        wa.schedule.chooser = (title, message, options) -> 0;
+        String first = wa.control.windowShown();
+        wa.schedule.delete(job2);
+        eq("T-TALK-30 기간 할 일 문장", "오늘 할 일 1개 남았어. / 오늘은 할 일이 없어. F사 서류는 25일까지야, 7일 남았어.", first + " / " + w.talk);
+        Store x = at("11-18T09:00");
+        Task quiz = x.book.add(Task.Kind.TASK, "통계 퀴즈", d("11-19"), null, 30, "", null).get(0);
+        x.lastOpenDay = d("11-17");
+        App xa = Main.create(x);
+        xa.schedule.chooser = (title, message, options) -> 0;
+        String morning = xa.control.windowShown();
+        xa.show("일정관리");
+        xa.schedule.drop(quiz, d("11-18"), 900);
+        xa.show("홈");
+        eq("T-TALK-30 2~5번 그대로", "오늘은 할 일이 없어. 내일 '통계 퀴즈'가 있어. / 오늘 할 일 1개 남았어. 내일 '통계 퀴즈'가 있어.",
+                morning + " / " + x.talk);
         eq("T-TALK-30 넣은 뒤", "'영어 단어' 넣었구나! 오늘 남은 일 2개야. / 오늘 할 일 1개 남았어.", added + " / " + t.talk);
     }
 
