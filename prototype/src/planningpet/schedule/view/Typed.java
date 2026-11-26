@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
 /** 시작 시각과 걸리는 시간 칸에 쳐 넣은 글을 값으로 읽는다(D-98, 06의 32번). */
 public final class Typed {
     /** 받지 않을 때 걸리는 시간 칸 아래의 빨간 글. */
-    public static final String MINUTES_BAD = "숫자(분)로 넣어 주세요(예: 30)";
+    public static final String MINUTES_BAD = "분으로 넣어 주세요(예: 30)";
     private static final Pattern MINUTES = Pattern.compile("\\s*(\\d+)\\s*분?\\s*");
     private static final Pattern HOURS = Pattern.compile("\\s*(\\d{1,3}(?:\\.\\d{1,3})?)\\s*시간\\s*(?:(반)|(\\d{1,3})\\s*분)?\\s*");
 
