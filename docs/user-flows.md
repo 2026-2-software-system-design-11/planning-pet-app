@@ -451,7 +451,7 @@
 
 ## 06 커버리지
 
-06 검사 줄 329개 가운데 흐름 단계에서 확인하는 줄은 147개다. 나머지는 흐름으로 일어날 수 없거나(화면이 막는 값, 연도 경계, 실패 주입) 운영체제와 실제 앱이 있어야 해서 단위 검사와 수동 검사로 확인한다.
+06 검사 줄 330개 가운데 흐름 단계에서 확인하는 줄은 147개다. 나머지는 흐름으로 일어날 수 없거나(화면이 막는 값, 연도 경계, 실패 주입) 운영체제와 실제 앱이 있어야 해서 단위 검사와 수동 검사로 확인한다.
 
 `prototype/check.sh`(CoverageCheck)가 06 표의 검사 번호와 흐름 단계 표의 검사 줄 칸을 세어 이 절의 수, 번호 목록, 번호마다 적은 흐름 단계와 대조하고, 어긋나면 빠지거나 남는 번호와 자리를 찍고 실패한다.
 
@@ -472,7 +472,7 @@
 | 13 성취도 막대 | T-PRG-1: UF-1-1(1). T-PRG-2: UF-7-1(2). T-PRG-3: UF-6-1(2). T-PRG-4: UF-2-2(2). T-PRG-5: UF-4-1(3). T-PRG-6: UF-2-6(4) | T-PRG-7 단위(흐름에 자정 넘어 끝내는 일이 없음) |
 | 14 기본값 | T-DEF-1: UF-1-1(9). T-DEF-2: UF-2-5(1). T-DEF-3: UF-2-5(2). T-DEF-4: UF-2-5(4). T-DEF-5: UF-3-1(2), UF-3-1(3). T-DEF-6: UF-2-4(1). T-DEF-7: UF-8-2(2). T-DEF-8: UF-2-4(4). T-DEF-9: UF-8-1(3). T-DEF-10: UF-3-1(1), UF-5-4(1). T-DEF-11: UF-2-6(2). T-DEF-14: UF-8-1(6) | T-DEF-12, T-DEF-13, T-DEF-15 단위. T-DEF-16, T-DEF-17, T-DEF-18, T-DEF-19, T-DEF-20, T-DEF-21, T-DEF-22, T-DEF-23 단위(입력 창 칸 조작, 흐름에 경우가 없음) |
 | 15 브리핑 때 | T-BRF-1: UF-1-1(1), UF-2-1(1), UF-2-6(6). T-BRF-2: UF-1-1(8). T-BRF-4: UF-9-1(1). T-BRF-5: UF-9-2(1). T-BRF-6: UF-7-1(2), UF-10-1(1) | T-BRF-3 수동, 실제 앱 |
-| 16 펫 대사 | T-TALK-1: UF-2-1(1). T-TALK-2: UF-4-2(2), UF-8-2(1). T-TALK-3: UF-7-1(2), UF-10-1(1). T-TALK-5: UF-1-1(7), UF-4-1(2). T-TALK-6: UF-6-1(4). T-TALK-7: UF-5-1(2). T-TALK-8: UF-4-1(4). T-TALK-9: UF-6-2(1). T-TALK-10: UF-1-2(3). T-TALK-12: UF-1-3(2), UF-7-1(3). T-TALK-14: UF-2-6(6). T-TALK-21: UF-3-1(6). T-TALK-22: UF-1-4(4-1) | T-TALK-11 단위. T-TALK-4, T-TALK-15, T-TALK-16, T-TALK-17, T-TALK-18, T-TALK-19, T-TALK-20 단위. T-TALK-13 단위(흐름에 펫 데려오기가 아직 없음). T-TALK-23, T-TALK-25, T-TALK-28, T-TALK-29 단위(HomeCheck). T-TALK-24, T-TALK-26, T-TALK-27 단위(PeriodCheck) |
+| 16 펫 대사 | T-TALK-1: UF-2-1(1). T-TALK-2: UF-4-2(2), UF-8-2(1). T-TALK-3: UF-7-1(2), UF-10-1(1). T-TALK-5: UF-1-1(7), UF-4-1(2). T-TALK-6: UF-6-1(4). T-TALK-7: UF-5-1(2). T-TALK-8: UF-4-1(4). T-TALK-9: UF-6-2(1). T-TALK-10: UF-1-2(3). T-TALK-12: UF-1-3(2), UF-7-1(3). T-TALK-14: UF-2-6(6). T-TALK-21: UF-3-1(6). T-TALK-22: UF-1-4(4-1) | T-TALK-11 단위. T-TALK-4, T-TALK-15, T-TALK-16, T-TALK-17, T-TALK-18, T-TALK-19, T-TALK-20 단위. T-TALK-13 단위(흐름에 펫 데려오기가 아직 없음). T-TALK-23, T-TALK-25, T-TALK-28, T-TALK-29, T-TALK-30 단위(HomeCheck). T-TALK-24, T-TALK-26, T-TALK-27 단위(PeriodCheck) |
 | 17 알림 | 없음 | T-NTF-1, T-NTF-2, T-NTF-3, T-NTF-4, T-NTF-5, T-NTF-6, T-NTF-7, T-NTF-8, T-NTF-9, T-NTF-10, T-NTF-11 수동, 실제 앱 |
 | 18 자동 배치 | T-AUTO-1: UF-1-2(2). T-AUTO-2: UF-8-2(3). T-AUTO-4: UF-1-2(2). T-AUTO-5: UF-8-1(1). T-AUTO-6: UF-4-3(2), UF-8-1(2). T-AUTO-7: UF-8-1(5). T-AUTO-8: UF-4-3(1). T-AUTO-9: UF-8-1(2). T-AUTO-10: UF-2-5(3). T-AUTO-11: UF-2-6(8). T-AUTO-15: UF-4-3(2) | T-AUTO-3 단위(끝낸 일정을 피하는 경우가 흐름에 없음). T-AUTO-12, T-AUTO-13, T-AUTO-14 단위. T-AUTO-16 단위(HomeCheck). T-AUTO-17 단위(PeriodCheck) |
 | 19 시간표 열 | T-TT-1: UF-6-1(5). T-TT-2: UF-3-2(1). T-TT-3: UF-3-2(3). T-TT-8: UF-4-3(1). T-TT-9: UF-4-3(3) | T-TT-4, T-TT-5, T-TT-6, T-TT-7 단위 |
@@ -490,4 +490,4 @@
 | 31 예시 | 없음 | T-EX-1, T-EX-2, T-EX-3, T-EX-4, T-EX-5 단위(HomeCheck) |
 | 32 칸에 쳐 넣은 글 | T-TYPE-1: UF-6-3(3) | T-TYPE-2, T-TYPE-3, T-TYPE-4, T-TYPE-5, T-TYPE-6, T-TYPE-7, T-TYPE-8, T-TYPE-9, T-TYPE-10, T-TYPE-11, T-TYPE-12 단위(흐름에 그 글을 치는 단계가 없음). T-TYPE-13, T-TYPE-14, T-TYPE-15, T-TYPE-16 단위(ProtoCheck) |
 
-- 흐름 밖: 단위 149개(화면이 막는 값과 경계, 흐름에 경우가 없는 줄), 실패 주입 단위 4개, 수동과 실제 앱 29개(알림, 저장, 날 바뀜의 잠자기, 하나만 실행, 창과 자동 실행).
+- 흐름 밖: 단위 150개(화면이 막는 값과 경계, 흐름에 경우가 없는 줄), 실패 주입 단위 4개, 수동과 실제 앱 29개(알림, 저장, 날 바뀜의 잠자기, 하나만 실행, 창과 자동 실행).
