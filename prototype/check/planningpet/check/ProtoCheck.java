@@ -239,6 +239,8 @@ public final class ProtoCheck {
         eq("D-42 시각 창의 이후 반복 모두는 시각만", "11:00 보강 11:00", timeOnly());
         eq("T-EDIT-43", "21:00 22:00 21:00 22:00 22:00 / 21:00 null 21:00 null null / 영어 단어 영어 단어 복습 영어 단어 영어 단어 복습 영어 단어 복습 / 30개 30개 30개",
                 doneCopies());
+        eq("T-EDIT-48", "11-16 21:00 / 11-18 04:00 / 11-18 21:00 끝 / 11-20 04:00 / 11-21 04:00", nightDoneCopy());
+        eq("T-EDIT-49", "11-16 21:00 / 11-18 21:00 끝 / 10 1 1 true", deleteDoneCopy());
         newRules();
         PeriodCheck.run();
         DayCheck.run();
@@ -315,6 +317,41 @@ public final class ProtoCheck {
         s.book.applyToSeries(t, t.date);
         return set + " / " + cleared + " / " + c.stream().map(x -> x.title).collect(java.util.stream.Collectors.joining(" ")) + " / "
                 + c.stream().map(x -> x.memo).filter(m -> !m.isEmpty()).collect(java.util.stream.Collectors.joining(" "));
+    }
+
+    /** T-EDIT-43의 처음 상태(11-16~11-20 21:00 매일, 11-18 사본 끝냄)를 오늘 11-18 22:00인 앱에 넣는다. */
+    private static java.util.List<Task> doneSeries(App app) {
+        app.store.now = java.time.LocalDateTime.of(2026, 11, 18, 22, 0);
+        java.util.List<Task> c = app.store.book.add(new TaskDraft(Task.Kind.TASK, "영어 단어", java.time.LocalDate.of(2026, 11, 16),
+                java.time.LocalTime.of(21, 0), 30, "").withRepeat(Repeat.DAILY, java.time.LocalDate.of(2026, 11, 20)));
+        app.game.complete(c.get(2));
+        app.schedule.chooser = (title, message, options) -> 1;
+        return c;
+    }
+
+    private static String copies(java.util.List<Task> c) {
+        return String.join(" / ", c.stream().map(x -> String.format("%02d-%02d", x.date.getMonthValue(), x.date.getDayOfMonth())
+                + (x.start == null ? "" : " " + x.start) + (x.done ? " 끝" : "")).toList());
+    }
+
+    /** T-EDIT-48(D-42, B267-1): 시각 고치기 창의 "밤 4시"와 이후 반복 모두는 끝낸 사본을 다음 날로 옮기지 않는다. */
+    private static String nightDoneCopy() {
+        App app = Main.create(MockData.empty());
+        java.util.List<Task> c = doneSeries(app);
+        TimeEditor e = new TimeEditor(c.get(1), app.store.now);
+        type(e.start, "밤 4시");
+        TimeEditor.save(app, c.get(1), e);
+        return copies(c);
+    }
+
+    /** T-EDIT-49(D-42, 06의 5번): 삭제의 이후 반복 모두는 끝낸 사본을 남기고 포인트와 보상 기록이 그대로다. */
+    private static String deleteDoneCopy() {
+        App app = Main.create(MockData.empty());
+        java.util.List<Task> c = doneSeries(app);
+        int exp = app.store.pet().exp;
+        app.schedule.delete(c.get(1));
+        return copies(app.store.tasks) + " / " + app.store.points + " " + app.store.rewardCount + " "
+                + app.store.book.rewardHistory().size() + " " + (app.store.pet().exp == exp);
     }
 
     /** 일정 입력 창 날짜 칸의 위 화살표가 바꿀 값. DateEditor가 아니라서 커서 자리와 관계없이 하루다. */

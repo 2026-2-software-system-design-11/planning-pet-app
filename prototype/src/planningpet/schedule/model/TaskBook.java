@@ -184,10 +184,10 @@ public final class TaskBook {
     /** 지운 일정 가운데 보상을 받았던 것. 친밀도(D-49)와 통계 포인트(D-55)가 지워도 줄지 않게 센다(D-19). */
     public final List<Task> deletedRewarded = new ArrayList<>();
 
-    /** 06의 5번. thisAndAfter면 같은 반복의 같거나 뒤 날짜 사본을 모두 지운다. 보상은 그대로 둔다. */
+    /** 06의 5번. thisAndAfter면 같은 반복의 같거나 뒤 날짜 사본 가운데 끝내지 않은 것도 지운다(끝낸 사본은 남김, D-42). 보상은 그대로 둔다. */
     public void delete(Task task, boolean thisAndAfter) {
         java.util.function.Predicate<Task> gone = thisAndAfter && task.seriesId != null
-                ? t -> task.seriesId.equals(t.seriesId) && !t.date.isBefore(task.date)
+                ? t -> t == task || !t.done && task.seriesId.equals(t.seriesId) && !t.date.isBefore(task.date)
                 : t -> t == task;
         tasks.stream().filter(gone).filter(t -> t.rewardDay != null).forEach(deletedRewarded::add);
         tasks.removeIf(gone);
