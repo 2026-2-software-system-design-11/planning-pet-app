@@ -199,7 +199,7 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
     }
 
     /**
-     * time이 null이면 시각 알약이 없고(일정관리 목록), ""이면 "시각 정하기" 알약이다. 끝낸 할 일은 제자리에서 회색 취소선이 된다.
+     * time이 null이면 일정관리 목록이라 "시각 정하기" 알약을 둘째 줄에 두고(D-102), ""이면 "시각 정하기" 알약이다. 끝낸 할 일은 제자리에서 회색 취소선이 된다.
      * rowDay가 있으면 줄 앞에 그 날짜를 붙인다(일정관리 목록). listDay는 이 줄이 보이는 목록의 날이다(D-65).
      * 줄 순서는 둥근 체크, (고정 표시), 제목, 시각 알약, 걸리는 시간, 연필, 휴지통이다(D-59).
      * 모양은 2026-11-24 홈 예시의 할 일 줄: 줄 사이 가는 선, 끝낸 줄은 민트빛 바탕, 마우스를 올린 줄은 DAY 바탕.
@@ -284,28 +284,27 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
         CircleButton delete = new CircleButton(Icons.Kind.TRASH, iconButton, "삭제", true);
         delete.addActionListener(e -> control.delete(t));
         java.util.List<JComponent> watched = new java.util.ArrayList<>(java.util.List.of(row, label, box, edit, delete));
+        // D-94, D-102: 시각 단추. 끝낸 줄은 누를 수 없다. 홈의 지난 날 목록에서 기간 할 일의 시각은 정하지 않는다. 일정관리 목록의
+        // 지난 날 줄은 마감이 남았으면 오늘로 정하고(S53), 마감이 지났으면 정하지 않는다.
+        java.time.LocalDate today = control.today();
+        boolean pastPeriod = !t.done && t.period() && listDay.isBefore(today) && (!withDate || t.dueDate.isBefore(today));
+        String why = pastPeriod ? "지난 날에는 시각을 정할 수 없어요" : null;
+        TimePill when = withDate ? TimePill.icon(t.done, t.done || pastPeriod, why) : new TimePill(time, t.done, t.done || pastPeriod, why);
+        java.time.LocalDate openDay = withDate && t.period() && listDay.isBefore(today) ? today : listDay;
+        when.addActionListener(e -> control.editTime(t, openDay, when));
+        watched.add(when);
         if (withDate) {
             // 일정관리 오른쪽 목록은 좁아서 버튼을 둘째 줄 오른쪽에 둔다.
             row.add(middle(minutes), BorderLayout.EAST);
             JPanel buttons = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 2, 0));
+            buttons.add(when);
             buttons.add(edit);
             buttons.add(delete);
             // D-44: 오늘보다 앞선 날짜는 둘째 줄 왼쪽에 "지난 날". 제목 줄에 붙이면 좁은 목록에서 제목이 잘린다.
             // D-94: 표시와 버튼이 한 줄에 안 들면 표시를 버튼 위 한 줄에 둔다.
             row.add(SecondLine.of(marks, buttons), BorderLayout.SOUTH);
         } else {
-            JComponent[] right;
-            if (time != null) {
-                // D-94: 끝낸 줄은 누를 수 없다. 지난 날 목록에서 기간 할 일의 시각은 정하지 않는다.
-                boolean pastPeriod = !t.done && t.period() && listDay.isBefore(control.today());
-                TimePill when = new TimePill(time, t.done, t.done || pastPeriod, pastPeriod ? "지난 날에는 시각을 정할 수 없어요" : null);
-                when.addActionListener(e -> control.editTime(t, listDay, when));
-                watched.add(when);
-                right = new JComponent[] {when, minutes, edit, delete};
-            } else {
-                right = new JComponent[] {minutes, edit, delete};
-            }
-            row.add(middle(right), BorderLayout.EAST);
+            row.add(middle(when, minutes, edit, delete), BorderLayout.EAST);
             if (marks != null) {
                 row.add(marks, BorderLayout.SOUTH);
             }
@@ -326,13 +325,11 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
 
             @Override
             public void mouseClicked(MouseEvent e) {
-                if (withDate) {
-                    // D-99: 일정관리 목록은 한 번 누르면 시각 고치기 창이다. 두 번 눌러도 창은 하나이고 수정 창은 연필로 연다.
+                // D-102: 한 번 누르면 고르기만 하고 두 번 누르면 수정 창이다. 설정 "목록 누르기"를 켜면 한 번 누를 때 시각 단추처럼
+                // 시각 고치기 창이 뜨고 두 번째 누름은 아무 일도 하지 않는다(창은 단추 아래에 떠서 누른 자리를 덮지 않는다).
+                if (control.listClickTime()) {
                     if (e.getClickCount() == 1 && javax.swing.SwingUtilities.isLeftMouseButton(e)) {
-                        // D-99: 지난 날 줄의 기간 할 일도 마감이 남았으면 창을 열고, 정하면 오늘의 일이 된다.
-                        java.time.LocalDate today = control.today();
-                        boolean late = t.period() && listDay.isBefore(today) && !t.dueDate.isBefore(today);
-                        control.editTime(t, late ? today : listDay, label);
+                        when.doClick(0);
                     }
                 } else if (e.getClickCount() == 2) {
                     control.edit(t);

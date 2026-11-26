@@ -14,6 +14,7 @@ import planningpet.schedule.view.DragCursors;
 import planningpet.schedule.view.DragReturn;
 import planningpet.schedule.view.DropNote;
 import planningpet.schedule.view.TaskRows;
+import planningpet.schedule.view.TimeEditor;
 import planningpet.schedule.view.TimetablePanel;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -336,11 +337,12 @@ final class ListCheck {
                         + java.util.stream.Stream.of("11-16", "11-17", "11-18", "11-19").map(x -> d(x)).filter(x -> q.shownOn(x, d("11-18"))).toList());
     }
 
-    /** T-EDIT-16(D-99): 일정관리 목록 줄을 한 번 누르면 시각 고치기 창, 두 번 눌러도 창 하나, 끝낸 줄은 없다. */
+    /** T-EDIT-16(D-102): 한 번은 고르기, 두 번은 수정 창, 시각 단추는 둘째 줄 연필 앞. 설정을 켜면 두 목록 모두 한 번에 창, 두 번째는 없음. */
     static void rowClick() {
         App app = Main.create(at("11-17T09:00"));
         Task work = app.store.book.add(Task.Kind.TASK, "과제", d("11-18"), null, 30, "", null).get(0);
         Task wash = app.store.book.add(Task.Kind.TASK, "빨래", d("11-18"), null, 30, "", null).get(0);
+        Task read = app.store.book.add(Task.Kind.TASK, "독서", d("11-17"), null, 30, "", null).get(0);
         app.schedule.check(wash);
         List<String> opened = new ArrayList<>();
         app.schedule.timeOpener = (t, day, anchor) -> opened.add("창 " + t.title + " " + day);
@@ -349,10 +351,30 @@ final class ListCheck {
         app.store.changed();
         ScheduleScreen sched = ProtoCheck.find(app.root, ScheduleScreen.class);
         click(title(sched.untimed, work), 1);
+        click(title(sched.untimed, work), 2);
+        javax.swing.JButton pill = PeriodCheck.pill(sched.untimed, work);
+        pill.doClick(0);
+        java.awt.Component[] line = pill.getParent().getComponents();
+        String off = String.join(", ", opened) + " / " + (line[0] == pill) + " " + pill.getText().isEmpty() + " " + pill.getToolTipText() + " "
+                + ((javax.swing.JButton) line[1]).getToolTipText() + " "
+                + PeriodCheck.pill(sched.untimed, wash).isEnabled();
+        opened.clear();
+        app.settings.listClickTime(true);
         click(title(sched.untimed, work), 1);
         click(title(sched.untimed, work), 2);
-        click(title(sched.untimed, wash), 1);
-        eq("T-EDIT-16", "창 과제 2026-11-18, 창 과제 2026-11-18", String.join(", ", opened));
+        app.show("홈");
+        app.store.changed();
+        var home = ProtoCheck.find(app.root, planningpet.home.view.MainScreen.class);
+        click(title(home.rows, read), 1);
+        click(title(home.rows, read), 2);
+        app.root.setSize(1000, 680);
+        PeriodCheck.layout(app.root);
+        TaskRows.TitleLabel at = title(home.rows, read);
+        java.awt.Point pressed = javax.swing.SwingUtilities.convertPoint(at, new java.awt.Point(5, 5), app.root);
+        javax.swing.JButton homePill = PeriodCheck.pill(home.rows, read);
+        java.awt.Point top = javax.swing.SwingUtilities.convertPoint(homePill, new java.awt.Point(0, 0), app.root);
+        eq("T-EDIT-16", "수정 과제, 창 과제 2026-11-18 / true true 시각 정하기 수정 false / 창 과제 2026-11-18, 창 독서 2026-11-17 true",
+                off + " / " + String.join(", ", opened) + " " + (TimeEditor.below(top, homePill.getHeight()).y > pressed.y));
         App late = Main.create(at("11-18T09:00"));
         Task job = PeriodCheck.period(late.store, "지원서", "11-12", "11-20", 30);
         late.schedule.timeOpener = (t, day, anchor) -> late.schedule.saveTime(t, 14 * 60, 30, day);
@@ -361,7 +383,7 @@ final class ListCheck {
         lastWeek.move(d("11-09"));
         late.store.changed();
         String row = PeriodCheck.rows(lastWeek.untimed);
-        click(title(lastWeek.untimed, job), 1);
+        PeriodCheck.pill(lastWeek.untimed, job).doClick(0);
         eq("T-EDIT-22", "11/15 지원서 30분 ~11/20까지 / 2026-11-18 14:00 2026-11-20", row + " / " + job.date + " " + job.start + " " + job.dueDate);
     }
 

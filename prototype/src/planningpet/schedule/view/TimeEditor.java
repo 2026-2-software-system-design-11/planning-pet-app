@@ -126,6 +126,11 @@ public final class TimeEditor {
         return app.schedule.clearTime(t);
     }
 
+    /** 창의 왼쪽 위: 누른 칸(왼쪽 위 top, 높이 height) 바로 아래. 누른 자리를 덮지 않아 빨리 두 번 누른 두 번째가 창에 닿지 않는다(D-102). */
+    public static Point below(Point top, int height) {
+        return new Point(top.x, top.y + height + 2);
+    }
+
     public static void open(App app, Task t, java.time.LocalDate day, Component anchor) {
         TimeEditor e = new TimeEditor(t, day, app.store.now);
         JDialog d = new JDialog(SwingUtilities.getWindowAncestor(app.root), JDialog.ModalityType.APPLICATION_MODAL);
@@ -152,8 +157,7 @@ public final class TimeEditor {
         d.getRootPane().registerKeyboardAction(x -> d.dispose(),
                 KeyStroke.getKeyStroke("ESCAPE"), JComponent.WHEN_IN_FOCUSED_WINDOW);
         d.pack();
-        Point p = anchor.getLocationOnScreen();
-        d.setLocation(p.x, p.y + anchor.getHeight() + 2);
+        d.setLocation(below(anchor.getLocationOnScreen(), anchor.getHeight()));
         d.setVisible(true);
     }
 }
