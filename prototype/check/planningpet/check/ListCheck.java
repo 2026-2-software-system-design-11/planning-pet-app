@@ -56,15 +56,17 @@ final class ListCheck {
         String five = table.dimmed() + "";
         mouse(title, MouseEvent.MOUSE_DRAGGED, new java.awt.Point(11, 5));
         String six = table.dimmed() + "";
-        mouse(title, MouseEvent.MOUSE_RELEASED, new java.awt.Point(11, 5));
-        String outside = five + " " + six;
+        java.awt.Point head = new java.awt.Point(wed.x, table.getVisibleRect().y - 10);
+        mouse(title, MouseEvent.MOUSE_DRAGGED, javax.swing.SwingUtilities.convertPoint(table, head, title));
+        mouse(title, MouseEvent.MOUSE_RELEASED, javax.swing.SwingUtilities.convertPoint(table, head, title));
+        String outside = five + " " + six + " " + work.date + " " + work.start;
         mouse(title, MouseEvent.MOUSE_PRESSED, new java.awt.Point(5, 5));
         mouse(title, MouseEvent.MOUSE_DRAGGED, javax.swing.SwingUtilities.convertPoint(table, mon, title));
         String no = (title.getCursor() == DragCursors.NO) + "";
         mouse(title, MouseEvent.MOUSE_DRAGGED, javax.swing.SwingUtilities.convertPoint(table, wed, title));
         String grab = (title.getCursor() == DragCursors.GRAB) + "";
         mouse(title, MouseEvent.MOUSE_RELEASED, javax.swing.SwingUtilities.convertPoint(table, wed, title));
-        eq("T-EDIT-24", "false 2026-11-17 null / true true true / [] [2026-11-16] / 2026-11-18 14:00 []",
+        eq("T-EDIT-24", "false 2026-11-17 null / true true true / [] [2026-11-16] 2026-11-17 null / 2026-11-18 14:00 []",
                 byBox + " / " + open + " " + no + " " + grab + " / " + outside + " / " + work.date + " " + work.start + " " + table.dimmed());
     }
 
