@@ -150,6 +150,11 @@ final class PeriodCheck {
         Ui.setDate(keep.date, d("12-12"));
         eq("T-DEF-16", "2026-12-10 2026-11-22 2026-12-10 마감: 마감일이 시작일보다 앞이에요",
                 kept + Ui.dateOf(keep.due) + " " + msgs(keep.problems()));
+        TaskForm unpicked = new TaskForm(null, d("11-16"), at("11-16T09:00").now);
+        unpicked.title.setText("보고서");
+        unpicked.period.doClick();
+        Ui.setDate(unpicked.date, d("11-23"));
+        eq("T-DEF-18", "2026-11-29 오류 없음", Ui.dateOf(unpicked.due) + " " + msgs(unpicked.problems()));
         App saved = Main.create(at("11-16T09:00"));
         Task report = period(saved.store, "보고서", "11-16", "12-10", 30);
         TaskForm edit = new TaskForm(report, report.date, saved.store.now);

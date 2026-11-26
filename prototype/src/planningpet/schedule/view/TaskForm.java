@@ -182,7 +182,7 @@ public final class TaskForm {
 
     /**
      * 고정 일정이면 시작 시각이 켜진 채 비활성이고 기간은 꺼진 채 비활성이다(D-16, D-65). 반복과 기간은 함께 고를 수 없다(D-65).
-     * 반복이 안 함인 동안 끝 날짜는, 기간을 켜기 전에는 마감이 날짜를 따라간다(06의 14번). 고른 마감은 따라가지 않는다(D-96).
+     * 반복이 안 함인 동안 끝 날짜는, 마감을 고르기 전에는 기간을 켰든 껐든 마감이 날짜를 따라간다(06의 14번). 고른 마감은 따라가지 않는다(D-96).
      */
     public void sync() {
         if (syncing) {
@@ -225,7 +225,7 @@ public final class TaskForm {
         if (!editing && !endTouched) {
             Ui.setDate(repeatEnd, DefaultDates.repeatEnd(isFixed ? Task.Kind.FIXED : Task.Kind.TASK, day));
         }
-        if (!period.isSelected() && !dueTouched) {
+        if (!dueTouched) {
             Ui.setDate(due, DefaultDates.due(day, weekStart));
         }
         minutesHint.setVisible(!editing && (int) minutes.getValue() == 30);
