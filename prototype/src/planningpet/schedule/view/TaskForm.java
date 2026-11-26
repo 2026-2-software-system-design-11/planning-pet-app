@@ -23,7 +23,12 @@ public final class TaskForm {
     public final JLabel realTime = new JLabel();
     public final JSpinner minutes = Ui.minutes(30);
     /** 시작 시각 칸에 쳐 넣은 값을 맞췄거나 받지 않았을 때 칸 아래 글(D-98). */
-    public final JLabel startNotice = new TypedField(start, x -> moved(Typed.start(x, Ui.dateOf(date))), () -> this.relayout.run()).notice;
+    private final TypedField startTyped = new TypedField(start, x -> moved(Typed.start(x, night() != null ? this.nightFrom : Ui.dateOf(date))),
+            () -> this.relayout.run());
+    public final JLabel startNotice = startTyped.notice;
+    /** "밤 4시"로 날짜를 옮기기 전의 날(S101, S114). moving은 그 날짜를 옮기는 동안이다. */
+    private LocalDate nightFrom;
+    private boolean moving;
     /** 걸리는 시간 칸에 쳐 넣은 값을 맞췄거나 받지 않았을 때 칸 아래 글(D-98). 쳐 넣은 뒤에는 30분 안내를 숨긴다. */
     private final TypedField minutesTyped = new TypedField(minutes, Typed::minutes, () -> { sync(); this.relayout.run(); });
     public final JLabel minutesNotice = minutesTyped.notice;
@@ -231,6 +236,14 @@ public final class TaskForm {
         }
         syncing = true;
         boolean dueShown = due.isVisible();
+        // S114, D-101: "밤 4시"로 옮긴 날짜는 "정하기"를 끄거나 시작 칸을 다른 값으로 바꾸면 원래 날로 돌아간다.
+        if (!moving && night() != null && (!timed.isSelected() || startTyped.days(start.getValue()) == 0)) {
+            Ui.setDate(date, nightFrom);
+            nightFrom = null;
+            if (!timed.isSelected()) {
+                startTyped.clear();
+            }
+        }
         task.setEnabled(!editing);
         fixed.setEnabled(!editing);
         boolean isFixed = fixed.isSelected();
@@ -338,9 +351,18 @@ public final class TaskForm {
     /** "밤 4시"처럼 다음 날 시각으로 읽으면 날짜 칸을 그만큼 뒤로 옮긴다(S81). */
     private Typed.Read moved(Typed.Read r) {
         if (r.days() > 0) {
-            Ui.setDate(date, Ui.dateOf(date).plusDays(r.days()));
+            // S101: 다시 쳐도 처음 옮긴 날 그대로다.
+            nightFrom = night() != null ? nightFrom : Ui.dateOf(date);
+            moving = true;
+            Ui.setDate(date, nightFrom.plusDays(r.days()));
+            moving = false;
         }
         return r;
+    }
+
+    /** "밤 4시"로 옮긴 날짜가 그대로면 옮기기 전의 날, 아니면(사용자가 날짜를 바꿈) null. */
+    private LocalDate night() {
+        return nightFrom != null && Ui.dateOf(date).equals(nightFrom.plusDays(1)) ? nightFrom : null;
     }
 
     /** 06의 2번 검사. */

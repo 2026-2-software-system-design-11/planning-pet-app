@@ -146,6 +146,11 @@ public final class ProtoCheck {
         eq("B-1 한 글자씩 친 시작 시각", "21:30 20:00 22:30 14:30 19:30 / 21:30 20:00", keyed());
         eq("S88 한 글자를 채워 보인다", "13:00 3:00", oneDigitFill());
         eq("S81, S87 밤 4시", "2026-11-19 04:00 흐린 19일(목) 04:00으로 읽었어요 / 2026-11-19 240", nightForm());
+        eq("S99, S101, S114, D-101 밤 4시 뒤", "2026-11-19 / 2026-11-18 없음 / 2026-11-18 흐린 5분 단위로 맞췄어요(22:05) / 2026-11-18 245 없음", nightAfter());
+        Typed.Read r30 = Typed.start("밤 4시", java.time.LocalDate.of(2026, 11, 30));
+        Typed.Read due = Typed.start("밤 4시", java.time.LocalDate.of(2026, 11, 18), java.time.LocalDate.of(2026, 11, 18));
+        eq("T-TYPE-12", "04:00 1 12월 1일(화) 04:00으로 읽었어요 / 03:55(다음 날) 0 마감(18일) 안에 두려고 03:55로 맞췄어요",
+                r30.value() + " " + r30.days() + " " + r30.notice() + " / " + due.value() + " " + due.days() + " " + due.notice());
         eq("T-TYPE-8", "14:00 14:00 20:00 09:00 12:00 14:30 14:30 07:00 19:00 21:00 12:00 11:00 01:00(다음 날) 02:00(다음 날) 00:00(다음 날) 05:00",
                 starts("오후 2시", "2시", "8시", "9시", "12시", "오후 2시 반", "2시 30분", "아침 7시", "저녁 7시", "밤 9시", "낮 12시", "낮 11시",
                         "새벽 1시", "밤 2시", "밤 12시", "새벽 5시").replace(" null", "").replace(" /", ""));
@@ -444,6 +449,32 @@ public final class ProtoCheck {
                 java.time.LocalDateTime.of(2026, 11, 14, 15, 23)).start.getEditor()).getTextField();
         field.setText("1");
         return field.getText() + " " + field.getSelectedText();
+    }
+
+    /** 다시 친 "밤 4시"는 19일 그대로, "정하기"를 끄거나 다른 값으로 바꾸면 18일로 돌아간다. 시각 고치기 창은 화살표 뒤 원래 날이다. */
+    private static String nightAfter() {
+        TaskForm f = new TaskForm(null, java.time.LocalDate.of(2026, 11, 18), java.time.LocalDateTime.of(2026, 11, 18, 9, 0));
+        f.timed.setSelected(true);
+        f.sync();
+        type(f.start, "밤 4시");
+        type(f.start, "밤 4시");
+        String again = Ui.dateOf(f.date).toString();
+        f.timed.setSelected(false);
+        f.sync();
+        String off = Ui.dateOf(f.date) + " " + notice(f.startNotice);
+        f.timed.setSelected(true);
+        f.sync();
+        type(f.start, "밤 4시");
+        type(f.start, "22:03");
+        String other = Ui.dateOf(f.date) + " " + notice(f.startNotice);
+        App app = Main.create(MockData.empty());
+        Task t = app.store.book.add(Task.Kind.TASK, "야간 과제", java.time.LocalDate.of(2026, 11, 18), java.time.LocalTime.of(22, 0), 60, "", null).get(0);
+        TimeEditor e = new TimeEditor(t, app.store.now);
+        type(e.start, "밤 4시");
+        e.start.setValue(e.start.getNextValue());
+        String arrowed = notice(e.startNotice);
+        TimeEditor.save(app, t, e);
+        return again + " / " + off + " / " + other + " / " + t.date + " " + t.startMinute() + " " + arrowed;
     }
 
     /** "밤 4시"는 입력 창 날짜를 하루 뒤로 옮기고, 시각 고치기 창은 저장할 때 그 일을 다음 날로 옮긴다. */

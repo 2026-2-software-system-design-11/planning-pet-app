@@ -59,6 +59,11 @@ public final class Typed {
      * 다음 날 04:00을 넘으면 03:55(다음 날)로 맞추고, 반올림은 날을 넘지 않는다(23:58은 23:55). 맞춘 까닭은 값을 정한 하나만 쓴다.
      */
     public static Read start(String text, java.time.LocalDate day) {
+        return start(text, day, null);
+    }
+
+    /** due가 있으면(기간 할 일) "밤 4시"로 마감 다음 날로 넘기지 않고 그날 끝 03:55(다음 날)로 맞춘다(S116). */
+    public static Read start(String text, java.time.LocalDate day, java.time.LocalDate due) {
         String t = text.strip();
         String f = fill(t);
         if (f != null) {
@@ -74,9 +79,14 @@ public final class Typed {
         int last = Task.DAY_END - 5;
         if (m >= Task.DAY_END && !next) {
             // S81, S85: "밤 4시", "밤 5시"는 다음 달력 날의 그 시각이다.
-            String v = Times.value(Math.min((int) Math.round((m - Task.DAY) / 5.0) * 5, Task.DAY - 5));
             java.time.LocalDate d = day.plusDays(1);
-            return new Read(v, d.getDayOfMonth() + "일(" + "월화수목금토일".charAt(d.getDayOfWeek().getValue() - 1) + ") " + v
+            if (due != null && d.isAfter(due)) {
+                return new Read(Times.value(last), "마감(" + due.getDayOfMonth() + "일) 안에 두려고 03:55로 맞췄어요");
+            }
+            String v = Times.value(Math.min((int) Math.round((m - Task.DAY) / 5.0) * 5, Task.DAY - 5));
+            // S112: 일정의 달과 다르면 달을 붙인다("12월 1일(화)").
+            String month = d.getMonthValue() == day.getMonthValue() ? "" : d.getMonthValue() + "월 ";
+            return new Read(v, month + d.getDayOfMonth() + "일(" + "월화수목금토일".charAt(d.getDayOfWeek().getValue() - 1) + ") " + v
                     + planningpet.common.model.Rules.josa(v, "으로", "로") + " 읽었어요", 1);
         }
         int r = (int) Math.round(m / 5.0) * 5;

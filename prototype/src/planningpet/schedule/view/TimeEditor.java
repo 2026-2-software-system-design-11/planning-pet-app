@@ -57,7 +57,7 @@ public final class TimeEditor {
         minutes = Ui.minutes(t.minutes);
         TypedField typed = new TypedField(minutes, Typed::minutes, () -> relayout.run());
         minutesNotice = typed.notice;
-        typedStart = new TypedField(start, x -> Typed.start(x, base), () -> relayout.run());
+        typedStart = new TypedField(start, x -> Typed.start(x, base, t.period() ? t.dueDate : null), () -> relayout.run());
         startNotice = typedStart.notice;
         // 값이 바뀌면 실제 시각 글을 고치고, 그만큼 칸 묶음 폭이 바뀌니 칸 아래 글을 그 폭으로 다시 접는다(05 시각 고치기 창 1번).
         start.addChangeListener(x -> {

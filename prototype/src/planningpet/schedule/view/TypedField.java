@@ -91,6 +91,11 @@ public final class TypedField {
         spinner.addChangeListener(e -> edited(spinner.getValue()));
     }
 
+    /** 칸 아래 글을 지운다(칸이 꺼질 때). */
+    public void clear() {
+        show(null, null, null);
+    }
+
     /** 칸 값이 마지막으로 읽은 값이면 그때 옮길 날 수, 아니면 0. */
     public int days(Object value) {
         return value.equals(daysFor) ? days : 0;
@@ -107,6 +112,8 @@ public final class TypedField {
     private void show(String text, java.awt.Color color, Object value) {
         about = text == null ? null : value;
         plain = text == null ? "" : text;
+        // S99: 글이 사라지면("밤 4시" 뒤 화살표) 그 읽기로 옮길 날도 없어진다.
+        days = text == null ? 0 : days;
         notice.setForeground(color);
         notice.setVisible(text != null);
         refold();
