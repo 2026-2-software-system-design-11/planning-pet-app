@@ -242,14 +242,6 @@ public final class TaskForm {
         }
         syncing = true;
         boolean dueShown = due.isVisible();
-        // D-98, D-101: "밤 4시"로 옮긴 날짜는 "정하기"를 끄거나 시작 칸을 다른 값으로 바꾸면 원래 날로 돌아간다.
-        if (!moving && night() != null && (!timed.isSelected() || startTyped.days(start.getValue()) == 0)) {
-            Ui.setDate(date, nightFrom);
-            nightFrom = null;
-            if (!timed.isSelected()) {
-                startTyped.clear();
-            }
-        }
         task.setEnabled(!editing);
         fixed.setEnabled(!editing);
         boolean isFixed = fixed.isSelected();
@@ -289,6 +281,15 @@ public final class TaskForm {
         }
         if (isFixed) {
             timed.setSelected(true);
+        }
+        // D-98, D-101: "밤 4시"로 옮긴 날짜는 "정하기"를 끄거나 시작 칸을 다른 값으로 바꾸면 원래 날로 돌아간다.
+        // 기간 안에 하기를 켜서 앱이 정하기를 끈 것도 끈 것이라 기간과 고정 일정을 다룬 뒤에 본다(D-98).
+        if (!moving && night() != null && (!timed.isSelected() || startTyped.days(start.getValue()) == 0)) {
+            Ui.setDate(date, nightFrom);
+            nightFrom = null;
+            if (!timed.isSelected()) {
+                startTyped.clear();
+            }
         }
         timed.setEnabled(!isFixed && !period.isSelected());
         timed.setToolTipText(period.isSelected() ? "기간 할 일의 시각은 목록에서 정해요" : null);

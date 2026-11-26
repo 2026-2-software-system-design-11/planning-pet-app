@@ -146,7 +146,7 @@ public final class ProtoCheck {
         eq("D-98 한 글자씩 친 시작 시각", "21:30 20:00 22:30 14:30 19:30 17:00 13:00 13:00 / 21:30 20:00 17:00", keyed());
         eq("D-98 한 글자를 채워 보인다", "13:00 3:00", oneDigitFill());
         eq("D-98 밤 4시", "2026-11-19 04:00 흐린 19일(목) 04:00으로 읽었어요 / 2026-11-19 240", nightForm());
-        eq("D-98, D-101 밤 4시 뒤", "2026-11-19 / 2026-11-18 없음 / 2026-11-18 흐린 5분 단위로 맞췄어요(22:05) / 2026-11-18 245 없음 / 2026-11-19", nightAfter());
+        eq("D-98, D-101 밤 4시 뒤", "2026-11-19 / 2026-11-18 없음 / 2026-11-18 흐린 5분 단위로 맞췄어요(22:05) / 2026-11-18 245 없음 / 2026-11-19 / 2026-11-18 없음", nightAfter());
         Typed.Read r30 = Typed.start("밤 4시", java.time.LocalDate.of(2026, 11, 30));
         Typed.Read due = Typed.start("밤 4시", java.time.LocalDate.of(2026, 11, 18), java.time.LocalDate.of(2026, 11, 18));
         eq("D-98 이후 반복 모두의 밤 4시", "2026-11-19 240 2026-11-26 240 2026-12-03 240", nightSeries());
@@ -514,7 +514,15 @@ public final class ProtoCheck {
         e.start.setValue(e.start.getNextValue());
         String arrowed = notice(e.startNotice);
         TimeEditor.save(app, t, e);
-        return again + " / " + off + " / " + other + " / " + t.date + " " + t.startMinute() + " " + arrowed + " / " + hand;
+        // 기간 안에 하기를 켜면 정하기가 꺼지므로 그 순간 원래 날로 돌아가고 글도 지운다(D-98).
+        TaskForm g = new TaskForm(null, java.time.LocalDate.of(2026, 11, 18), java.time.LocalDateTime.of(2026, 11, 18, 9, 0));
+        g.timed.setSelected(true);
+        g.sync();
+        type(g.start, "밤 4시");
+        g.period.setSelected(true);
+        g.sync();
+        String period = Ui.dateOf(g.date) + " " + notice(g.startNotice);
+        return again + " / " + off + " / " + other + " / " + t.date + " " + t.startMinute() + " " + arrowed + " / " + hand + " / " + period;
     }
 
     /** "밤 4시"는 입력 창 날짜를 하루 뒤로 옮기고, 시각 고치기 창은 저장할 때 그 일을 다음 날로 옮긴다. */
