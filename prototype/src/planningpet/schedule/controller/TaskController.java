@@ -157,9 +157,11 @@ public final class TaskController {
                 } else if (fromHome()) {
                     // D-90: 홈에서 넣으면 펫이 넣은 일의 이름과 오늘 남은 수를 말한다.
                     app.store.say(app.talk.added(made.get(0)));
+                    app.store.recount = app.talk.addedRecount(made.get(0)); // D-106
                 } else {
                     // D-94: 일정관리에서 넣으면 홈 말풍선에만 남기고, 일정관리 말풍선은 D-39대로 힌트를 다시 정한다.
                     app.store.sayAtHome(app.talk.added(made.get(0)));
+                    app.store.recount = app.talk.addedRecount(made.get(0)); // D-106
                 }
             } else {
                 app.store.book.update(editing, d, scope == 1);
@@ -177,6 +179,7 @@ public final class TaskController {
         app.control.change(() -> {
             Task made = app.store.book.add(Task.Kind.TASK, title, date, null, 30, "", null).get(0);
             app.store.say(app.talk.added(made)); // D-90
+            app.store.recount = app.talk.addedRecount(made); // D-106
         });
         return true;
     }

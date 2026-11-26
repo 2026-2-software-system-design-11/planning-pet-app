@@ -63,6 +63,35 @@ final class HomeCheck {
         eq("T-TALK-30", "11월 16일 할 일은 1개야. / 잘했어! +10P / 이번 주 남은 날의 시각 없는 할 일이 2개 있어. 자동 배치를 눌러 볼래? / "
                 + "11월 16일 할 일은 2개야. / "
                 + "오늘 할 일 1개 남았어. / '영어 단어' 넣었구나! 오늘 남은 일 2개야. / 오늘 할 일 1개 남았어.", String.join(" / ", said));
+        eq("T-TALK-30 브리핑", "오늘 할 일 2개 남았어. 어제 못 끝낸 일 1개는 달력에 남아 있어. 내일 '통계 퀴즈'가 있어.", opened("11-17"));
+        eq("T-TALK-30 오랜만", "오랜만이야! 다시 와서 반가워. 오늘 할 일은 2개야.", opened("11-10"));
+        Store t = at("11-18T09:00");
+        Task wash = t.book.add(Task.Kind.TASK, "빨래", d("11-18"), null, 30, "", null).get(0);
+        App ta = Main.create(t);
+        ta.schedule.chooser = (title, message, options) -> 0;
+        ProtoCheck.find(ta.root, MainScreen.class).selectDate(d("11-20"));
+        TaskForm f = new TaskForm(null, d("11-18"), t.now);
+        f.title.setText("영어 단어");
+        TaskDialog.trySave(ta, f, null);
+        String added = t.talk;
+        ta.schedule.delete(wash);
+        eq("T-TALK-30 넣은 뒤", "'영어 단어' 넣었구나! 오늘 남은 일 2개야. / 오늘 할 일 1개 남았어.", added + " / " + t.talk);
+    }
+
+    /** 오늘 11-18에 할 일 셋, 11-17에 못 끝낸 일, 11-19에 "통계 퀴즈". before에 마지막으로 열었고, 연 뒤 "과제"를 지운 말풍선. */
+    static String opened(String before) {
+        Store s = at("11-18T09:00");
+        Task job = s.book.add(Task.Kind.TASK, "과제", d("11-18"), null, 30, "", null).get(0);
+        s.book.add(Task.Kind.TASK, "빨래", d("11-18"), null, 30, "", null);
+        s.book.add(Task.Kind.TASK, "청소", d("11-18"), null, 30, "", null);
+        s.book.add(Task.Kind.TASK, "은행", d("11-17"), null, 30, "", null);
+        s.book.add(Task.Kind.TASK, "통계 퀴즈", d("11-19"), null, 30, "", null);
+        s.lastOpenDay = d(before);
+        App app = Main.create(s);
+        app.schedule.chooser = (title, message, options) -> 0;
+        app.control.windowShown();
+        app.schedule.delete(job);
+        return s.talk;
     }
 
     /** T-EX-5. 일요일에 예시로 시작해도 다음 주 시간표에 수업이 보인다(D-94). */

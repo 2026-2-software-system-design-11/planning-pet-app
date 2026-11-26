@@ -56,6 +56,7 @@ public final class AppController {
             Visits.recordOpen(store);
             line[0] = talk.opening(before);
             store.say(line[0]);
+            store.recount = talk.openingRecount(before, line[0]); // D-106
         });
         return line[0];
     }
