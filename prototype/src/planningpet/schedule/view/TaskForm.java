@@ -85,7 +85,8 @@ public final class TaskForm {
     public TaskForm(Task t, LocalDate defaultDate, java.time.LocalDateTime now, java.time.DayOfWeek weekStart) {
         this.weekStart = weekStart;
         this.now = now;
-        startTouched = t != null;
+        // D-101: 수정 창에서 저장해 둔 시각은 사용자 값이다. 시각 없는 일정의 시작 칸은 앱이 채운 값이라 날짜를 따라간다.
+        startTouched = t != null && t.timed();
         editing = t != null;
         copy = t != null && t.seriesId != null;
         Ui.limit(title, 100);

@@ -172,7 +172,16 @@ final class PeriodCheck {
         starts += " " + s.start.getValue();
         s.start.setValue("15:00");
         Ui.setDate(s.date, d("11-18"));
-        eq("T-DEF-23", "14:15 09:00 14:15 15:00", starts + " " + s.start.getValue());
+        starts += " " + s.start.getValue();
+        Store held = at("11-17T14:12");
+        for (String at : new String[] {"10:00", null}) {
+            Task saved = held.book.add(draft(Task.Kind.TASK, "11-18", at)).get(0);
+            TaskForm e = new TaskForm(saved, saved.date, held.now);
+            starts += " / " + e.start.getValue();
+            Ui.setDate(e.date, d("11-17"));
+            starts += " " + e.start.getValue();
+        }
+        eq("T-DEF-23", "14:15 09:00 14:15 15:00 / 10:00 10:00 / 09:00 14:15", starts);
     }
 
     /** D-69: 지난 반복 사본은 밀린 일로 보이지 않는다. */
