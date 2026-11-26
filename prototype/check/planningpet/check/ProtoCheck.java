@@ -165,6 +165,10 @@ public final class ProtoCheck {
         eq("T-TYPE-13 친 채 저장", "false 빨간 숫자(분)로 넣어 주세요(예: 30) / true 1 / false 빨간 14:00처럼 적어 주세요", saveTyped());
         eq("T-TYPE-13 두 창 두 칸에서 저장 단추로", "false 빨간 14:00처럼 적어 주세요 / false 빨간 숫자(분)로 넣어 주세요(예: 30) / "
                 + "false 빨간 14:00처럼 적어 주세요 / false 빨간 숫자(분)로 넣어 주세요(예: 30)", pressToSave());
+        eq("T-TYPE-13 비운 칸은 막지 않음", "true true / true 600 true 60", blankSave());
+        eq("T-TYPE-14 막힌 뒤 고치지 않고 다시 저장", "false true 1 / false true 600", againSave());
+        eq("T-TYPE-14 포커스만 저장 단추로 옮긴 뒤 저장", "빨간 숫자(분)로 넣어 주세요(예: 30) true true 2 / true 600", focusOnlySave());
+        eq("T-TYPE-14 다른 칸으로 옮긴 뒤 저장", "true true true", leaveSave());
         eq("D-98 이후 반복 모두의 밤 4시", "2026-11-19 240 2026-11-26 240 2026-12-03 240", nightSeries());
         eq("T-TYPE-12", "04:00 1 12월 1일(화) 04:00으로 읽었어요 / 03:55(다음 날) 0 마감(18일) 안에 두려고 03:55로 맞췄어요",
                 r30.value() + " " + r30.days() + " " + r30.notice() + " / " + due.value() + " " + due.days() + " " + due.notice());
@@ -504,6 +508,21 @@ public final class ProtoCheck {
         return first + " / " + second + " / " + TimeEditor.save(app, t, e) + " " + notice(e.startNotice);
     }
 
+    /** 받을 수 없는 글을 치고 제목 칸, 체크박스, 시각 빼기(Tab)로 옮기면 빨간 글만 뜨고 그 뒤의 저장은 막지 않는다(D-98). */
+    private static String leaveSave() {
+        StringBuilder out = new StringBuilder();
+        for (int i = 0; i < 2; i++) {
+            javax.swing.JButton save = new javax.swing.JButton("저장");
+            TaskForm f = formWithSave(Main.create(MockData.empty()), save, out);
+            leave(f.minutes, "30abc", i == 0 ? f.title : f.timed);
+            click(save);
+        }
+        TimeEditor e = editorWithSave(Main.create(MockData.empty()), out);
+        leave(e.minutes, "30abc", e.clear);
+        click(e.save);
+        return out.toString().trim();
+    }
+
     /** 저장 단추를 누른 채 칸의 글을 두고 포커스가 단추로 옮겨 간 뒤 떼는 것과 같다(실제 창의 저장 누름). 떼면 단추의 동작이 돈다. */
     static void pressSave(javax.swing.JSpinner s, String text, javax.swing.AbstractButton save) {
         save.getModel().setArmed(true);
@@ -511,6 +530,44 @@ public final class ProtoCheck {
         leave(s, text, save);
         save.getModel().setPressed(false);
         save.getModel().setArmed(false);
+    }
+
+    /** 포커스가 이미 있는 단추를 누르고 떼는 것과 같다(Space나 클릭). */
+    static void click(javax.swing.AbstractButton b) {
+        b.getModel().setArmed(true);
+        b.getModel().setPressed(true);
+        b.getModel().setPressed(false);
+        b.getModel().setArmed(false);
+    }
+
+    /** 받을 수 없는 글을 친 칸에서 저장 단추로 포커스만 옮기거나(Shift+Tab) 단추를 눌렀다 밖에서 뗀 뒤의 저장은 보이는 이전 값으로 한다(D-98). */
+    private static String focusOnlySave() {
+        App app = Main.create(MockData.empty());
+        TaskForm f = new TaskForm(null, java.time.LocalDate.of(2026, 11, 18), app.store.now);
+        javax.swing.JButton save = new javax.swing.JButton("저장");
+        TaskDialog.content(f, new javax.swing.JButton("취소"), save, null);
+        f.title.setText("보고서");
+        StringBuilder out = new StringBuilder();
+        save.addActionListener(x -> out.append(TaskDialog.trySave(app, f, null)).append(" "));
+        leave(f.minutes, "30abc", save);
+        out.append(notice(f.minutesNotice)).append(" ");
+        click(save);
+        TaskForm g = new TaskForm(null, java.time.LocalDate.of(2026, 11, 18), app.store.now);
+        javax.swing.JButton gSave = new javax.swing.JButton("저장");
+        TaskDialog.content(g, new javax.swing.JButton("취소"), gSave, null);
+        g.title.setText("발표");
+        gSave.getModel().setArmed(true);
+        gSave.getModel().setPressed(true);
+        leave(g.minutes, "30abc", gSave);
+        gSave.getModel().setArmed(false);
+        gSave.getModel().setPressed(false);
+        out.append(TaskDialog.trySave(app, g, null)).append(" ").append(app.store.tasks.size()).append(" / ");
+        Task t = app.store.book.add(Task.Kind.TASK, "과제", java.time.LocalDate.of(2026, 11, 18), java.time.LocalTime.of(10, 0), 60, "", null).get(0);
+        TimeEditor e = new TimeEditor(t, app.store.now);
+        e.save.addActionListener(x -> out.append(TimeEditor.save(app, t, e)).append(" ").append(t.startMinute()));
+        leave(e.start, "abc", e.save);
+        click(e.save);
+        return out.toString();
     }
 
     /** 저장 단추를 붙인 일정 입력 창. 단추를 떼면 저장하고 그 결과를 out에 붙인다. */
@@ -547,6 +604,39 @@ public final class ProtoCheck {
             out.append(notice(i == 0 ? e.startNotice : e.minutesNotice)).append(" / ");
         }
         return out.substring(0, out.length() - 3);
+    }
+
+    /** 두 창의 두 칸을 비운 채 저장을 누르면 막지 않고 이전 값으로 저장한다(D-98). */
+    private static String blankSave() {
+        StringBuilder out = new StringBuilder();
+        for (int i = 0; i < 2; i++) {
+            javax.swing.JButton save = new javax.swing.JButton("저장");
+            TaskForm f = formWithSave(Main.create(MockData.empty()), save, out);
+            pressSave(i == 0 ? f.start : f.minutes, "", save);
+        }
+        out.append("/ ");
+        for (int i = 0; i < 2; i++) {
+            App app = Main.create(MockData.empty());
+            TimeEditor e = editorWithSave(app, out);
+            pressSave(i == 0 ? e.start : e.minutes, "", e.save);
+            out.append(i == 0 ? app.store.tasks.get(0).startMinute() + " " : app.store.tasks.get(0).minutes);
+        }
+        return out.toString();
+    }
+
+    /** 친 채 저장으로 막힌 뒤 칸을 고치지 않고 다시 저장하면 보이는 이전 값으로 저장한다(D-98). */
+    private static String againSave() {
+        App app = Main.create(MockData.empty());
+        StringBuilder out = new StringBuilder();
+        javax.swing.JButton save = new javax.swing.JButton("저장");
+        TaskForm f = formWithSave(app, save, out);
+        pressSave(f.minutes, "30abc", save);
+        click(save);
+        out.append(app.store.tasks.size()).append(" / ");
+        TimeEditor e = editorWithSave(app, out);
+        pressSave(e.start, "abc", e.save);
+        click(e.save);
+        return out + "" + app.store.tasks.get(app.store.tasks.size() - 1).startMinute();
     }
 
     /** 칸에 글을 치고 포커스를 to로 옮긴 것과 같다. JFormattedTextField처럼 포커스 리스너를 부른 뒤 글을 확정하고, 받지 않으면 이전 값으로 돌린다. */
