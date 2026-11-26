@@ -29,6 +29,8 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
     /** D-94: 지난번에 그린 묶음(due, timed, untimed, period)과 그 날. 머무는 줄을 체크하기 전 자리에 두는 데 쓴다. */
     private java.util.Map<String, List<Task>> shown = java.util.Map.of();
     private java.time.LocalDate shownDay;
+    /** D-99: 일정관리 목록 줄을 끌어 놓을 시간표. 일정관리가 넣는다. 없으면 끌 수 없다. */
+    TimetablePanel dropOn;
     /** "끝낸 일 {수}개" 묶음 제목. 묶음이 없으면 목록에 없다. */
     public final javax.swing.JButton doneHead = new javax.swing.JButton();
 
@@ -315,6 +317,9 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
         };
         label.addMouseListener(mouse);
         row.addMouseListener(mouse);
+        if (withDate && !t.done && dropOn != null) {
+            draggable(t, row, label);
+        }
         // 줄 위에 마우스가 있는 동안(줄 안 버튼 위 포함) 줄 바탕을 칠한다.
         MouseAdapter hover = new MouseAdapter() {
             @Override
@@ -331,6 +336,57 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
         };
         watched.forEach(c -> c.addMouseListener(hover));
         return row;
+    }
+
+    /** D-99: 체크박스, 연필, 휴지통을 뺀 줄을 잡아 시간표로 끈다. 줄 위는 펼친 손, 끄는 동안 쥔 손, 놓을 수 없는 날 위는 금지 모양. */
+    private void draggable(Task t, JComponent... parts) {
+        MouseAdapter drag = new MouseAdapter() {
+            private java.awt.Point from;
+            private boolean on;
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                from = javax.swing.SwingUtilities.isLeftMouseButton(e) ? e.getPoint() : null;
+            }
+
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                if (from == null || !on && from.distance(e.getPoint()) <= 5) {
+                    return;
+                }
+                if (!on) {
+                    on = true;
+                    dropOn.drag(t);
+                }
+                e.getComponent().setCursor(dropOn.dragTo(onTable(e)) ? DragCursors.NO : DragCursors.GRAB);
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                if (!on) {
+                    return;
+                }
+                on = false;
+                e.getComponent().setCursor(DragCursors.OPEN);
+                java.awt.Point p = onTable(e);
+                TimetablePanel.Spot spot = p == null ? null : dropOn.spotAt(p);
+                dropOn.drag(null);
+                if (spot != null) {
+                    control.drop(t, spot.day(), spot.minute());
+                }
+            }
+        };
+        for (JComponent c : parts) {
+            c.setCursor(DragCursors.OPEN);
+            c.addMouseListener(drag);
+            c.addMouseMotionListener(drag);
+        }
+    }
+
+    /** 마우스 자리를 시간표 좌표로. 시간표의 보이는 칸 밖이면 null. */
+    private java.awt.Point onTable(MouseEvent e) {
+        java.awt.Point p = javax.swing.SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), dropOn);
+        return dropOn.getVisibleRect().contains(p) ? p : null;
     }
 
     /**

@@ -38,8 +38,17 @@ public final class TimetablePanel extends JComponent {
     /** 자정 아래 "다음 날" 칸의 바탕(D-77). */
     private static final Color NIGHT = new Color(0x1B, 0x22, 0x38, 14);
 
+    /** D-99: 끄는 중인 일(끌지 않으면 null)과 따라오는 상자의 자리(시간표 밖이면 null). */
+    private Task dragging;
+    private Spot dragSpot;
+    private final TaskController control;
+
+    /** 시간표의 한 자리: 날짜와 앱 하루의 분(D-77). */
+    public record Spot(LocalDate day, int minute) { }
+
     public TimetablePanel(Store store, TaskController control) {
         this.store = store;
+        this.control = control;
         setPreferredSize(new Dimension(300, HOUR * HOURS));
         setToolTipText("");
         addMouseListener(new MouseAdapter() {
@@ -78,6 +87,43 @@ public final class TimetablePanel extends JComponent {
                 mousePressed(e);
             }
         });
+    }
+
+    /** 시간표 좌표 p의 날짜와 분. 날 칸 밖이면 null. */
+    public Spot spotAt(java.awt.Point p) {
+        int w = (getWidth() - GUTTER) / 7;
+        boolean out = w <= 0 || p.x < GUTTER || p.x >= GUTTER + 7 * w || p.y < 0 || p.y >= getHeight();
+        return out ? null : new Spot(monday.plusDays((p.x - GUTTER) / w), p.y * 60 / HOUR);
+    }
+
+    /** D-99: 끌기를 시작하거나(t) 끝낸다(null). 끄는 동안 놓을 수 없는 날을 흐린다. */
+    public void drag(Task t) {
+        dragging = t;
+        dragSpot = null;
+        repaint();
+    }
+
+    /** D-99: 상자를 시간표 좌표 p로 옮긴다(시간표 밖이면 상자가 없다). 그 자리에 놓을 수 없으면 true. */
+    public boolean dragTo(java.awt.Point p) {
+        dragSpot = p == null ? null : spotAt(p);
+        repaint();
+        return dragSpot != null && control.blocked(dragging, dragSpot.day()) != null;
+    }
+
+    /** 따라오는 상자의 글: 놓을 시각("14:00~14:30")이나 까닭("지난 날"). 상자가 없으면 null. */
+    public String dragText() {
+        if (dragging == null || dragSpot == null) {
+            return null;
+        }
+        String why = control.blocked(dragging, dragSpot.day());
+        int start = TaskBook.dropStart(dragSpot.minute(), dragging.minutes);
+        return why != null ? why : TaskBook.spanText(start, start + dragging.minutes);
+    }
+
+    /** 끄는 동안 흐리게 그리는 날(놓을 수 없는 날). */
+    public java.util.List<LocalDate> dimmed() {
+        return dragging == null ? java.util.List.of()
+                : java.util.stream.IntStream.range(0, 7).mapToObj(monday::plusDays).filter(d -> control.blocked(dragging, d) != null).toList();
     }
 
     /** 마지막으로 그린 블록과 체크박스 자리. 블라인드 검사가 번호를 찍는다. */
@@ -222,6 +268,33 @@ public final class TimetablePanel extends JComponent {
                 text.dispose();
             }
         }
+        paintDrag(g, day);
         g.dispose();
+    }
+
+    /** D-99: 놓을 수 없는 날을 회색으로 흐리고, 놓일 자리에 반투명 상자와 글을 그린다(놓을 수 없으면 회색 상자와 까닭). */
+    private void paintDrag(Graphics2D g, int day) {
+        if (dragging == null) {
+            return;
+        }
+        g.setColor(new Color(0x8A, 0x96, 0xA0, 70));
+        for (LocalDate d : dimmed()) {
+            g.fillRect(GUTTER + (int) (d.toEpochDay() - monday.toEpochDay()) * day, 0, day, getHeight());
+        }
+        String text = dragText();
+        if (text == null) {
+            return;
+        }
+        boolean blocked = control.blocked(dragging, dragSpot.day()) != null;
+        int start = TaskBook.dropStart(dragSpot.minute(), dragging.minutes);
+        Rectangle r = new Rectangle(GUTTER + (int) (dragSpot.day().toEpochDay() - monday.toEpochDay()) * day + 1,
+                start * HOUR / 60, day - 2, Math.max(dragging.minutes * HOUR / 60, 16));
+        g.setColor(blocked ? new Color(0xB0, 0xB8, 0xC0, 150) : new Color(0xC7, 0xF0, 0xE4, 170));
+        g.fillRoundRect(r.x, r.y, r.width, r.height, 10, 10);
+        g.setColor(blocked ? Theme.INK_DIM : Theme.MINT_DEEP);
+        g.drawRoundRect(r.x, r.y, r.width - 1, r.height - 1, 10, 10);
+        g.setColor(blocked ? Theme.INK_SUB : Theme.INK);
+        g.setFont(Theme.font(11));
+        g.drawString(text, r.x + 4, r.y + 13);
     }
 }

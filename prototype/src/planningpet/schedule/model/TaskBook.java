@@ -320,8 +320,11 @@ public final class TaskBook {
      * "10:00~11:00". 자정에 끝나면 "24:00", 자정을 넘으면 "23:30~01:00(다음 날)", 자정 넘어 시작하면 "01:30~02:00(다음 날)"(D-77).
      */
     public static String timeText(Task t) {
-        int start = t.startMinute();
-        int end = t.endMinute();
+        return spanText(t.startMinute(), t.endMinute());
+    }
+
+    /** 앱 하루의 분 start부터 end까지의 시각 글(timeText와 같은 꼴, D-77). */
+    public static String spanText(int start, int end) {
         if (start >= Task.DAY) {
             return Task.hhmm(start) + "~" + Task.hhmm(end) + "(다음 날)";
         }
