@@ -13,7 +13,7 @@ public final class TypedField {
     private final Runnable relayout;
     private Object about; // 글이 말하는 칸 값
     private String plain = ""; // 접기 전 글
-    /** 칸에 글을 쳐 넣어 읽은 적이 있는가. 일정 입력 창은 그 뒤 30분 안내를 숨긴다(S83). */
+    /** 칸에 글을 쳐 넣어 읽은 적이 있는가. 일정 입력 창은 그 뒤 30분 안내를 숨긴다(D-98). */
     public boolean typed;
     /** 0보다 크면 글을 이 너비(px) 안에서 낱말 사이로 접는다(시각 고치기 창, D-98). */
     public java.util.function.IntSupplier wrap = () -> 0;

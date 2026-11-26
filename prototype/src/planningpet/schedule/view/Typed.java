@@ -96,7 +96,7 @@ public final class Typed {
         return h < 0 || h > most || min > 59 ? -1 : h * 60 + min;
     }
 
-    /** "N시"의 시(S54, S60~S62). 새벽과 밤의 1~3시, 밤 12시는 다음 날이라 24를 더한다. 13시부터는 그대로다. */
+    /** "N시"의 시(D-98). 새벽과 밤의 1~3시, 밤 12시는 다음 날이라 24를 더한다. 13시부터는 그대로다. */
     private static int hour(String word, int n) {
         if (n > 12) {
             return n > 23 ? -1 : n;

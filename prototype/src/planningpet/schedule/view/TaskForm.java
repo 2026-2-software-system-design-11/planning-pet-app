@@ -24,11 +24,8 @@ public final class TaskForm {
     public final JSpinner minutes = Ui.minutes(30);
     /** 시작 시각 칸에 쳐 넣은 값을 맞췄거나 받지 않았을 때 칸 아래 글(D-98). */
     public final JLabel startNotice = new TypedField(start, Typed::start, () -> this.relayout.run()).notice;
-    /** 걸리는 시간 칸에 쳐 넣은 값을 맞췄거나 받지 않았을 때 칸 아래 글(D-98). 쳐 넣은 뒤에는 30분 안내를 숨긴다(S83). */
-    private final TypedField minutesTyped = new TypedField(minutes, Typed::minutes, () -> {
-        sync();
-        this.relayout.run();
-    });
+    /** 걸리는 시간 칸에 쳐 넣은 값을 맞췄거나 받지 않았을 때 칸 아래 글(D-98). 쳐 넣은 뒤에는 30분 안내를 숨긴다. */
+    private final TypedField minutesTyped = new TypedField(minutes, Typed::minutes, () -> { sync(); this.relayout.run(); });
     public final JLabel minutesNotice = minutesTyped.notice;
     /** 7번 반복(D-64): 안 함, 매일, 요일. 요일이면 요일 단추 일곱(월부터 일)에서 하나 이상 고른다. */
     public final JComboBox<String> repeat = new JComboBox<>(new String[] {"안 함", "매일", "요일"});
@@ -75,7 +72,7 @@ public final class TaskForm {
     /** D-101: 반복 때문에 앱이 끈 기간 할 일의 마감. 반복을 안 함으로 되돌리면 기간과 함께 되돌리고 null이 된다. */
     private LocalDate dueBeforeRepeat;
     /** 오류 글이 늘거나 줄면 창 크기를 다시 맞춘다. 창 없이 만들 때는 아무것도 하지 않는다. */
-    Runnable relayout = () -> { };
+    public Runnable relayout = () -> { };
     private int row;
 
     /** S129(D-101): 날짜를 바꾼 그 순간의 시계. 앱 창은 앱 시계(Store.now)를 넣는다. 처음은 창을 연 때다. */
@@ -133,7 +130,7 @@ public final class TaskForm {
         line("기간", Ui.flow(period, periodHint, dueLabel, due));
         line("", errors.get("마감"));
         line("시작 시각", Ui.flow(timed, start, realTime));
-        // 칸 아래 글 줄은 이름 칸을 숨겨, 글이 없을 때 줄 여백도 차지하지 않는다(QA B-6).
+        // 칸 아래 글 줄은 이름 칸을 숨겨, 글이 없을 때 줄 여백도 차지하지 않는다.
         line("", startNotice).setVisible(false);
         line("", errors.get("시작 시각"));
         line("걸리는 시간 (분)", Ui.flow(minutes, endLabel));

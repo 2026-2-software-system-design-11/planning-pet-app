@@ -144,7 +144,8 @@ public final class ProtoCheck {
         eq("D-98 시작 시각 칸 아래 글", "09:05 흐린 5분 단위로 맞췄어요(09:05) / 14:00 / 흐린 하루는 새벽 4시에 넘어가요. 03:55(다음 날)로 맞췄어요"
                 + " / 흐린 최대 720분(12시간)까지 넣을 수 있어요 true", startTyped());
         eq("D-98 입력 창 칸 아래 글 자리", "true true true", formNoticeRows());
-        eq("S83 쳐 넣은 뒤 30분 안내", "true false 흐린 5분 단위로 맞췄어요(30분)", thirtyHint());
+        eq("D-98 칸 아래 글이 뜨면 창 크기를 다시 맞춤", "true true true true", relayouts());
+        eq("D-98 쳐 넣은 뒤 30분 안내", "true false 흐린 5분 단위로 맞췄어요(30분)", thirtyHint());
         Store c = MockData.sample();
         java.time.LocalDate nov = java.time.LocalDate.of(2026, 11, 1);
         TaskBook.CellPreview c14 = c.book.cellPreview(nov.withDayOfMonth(14));
@@ -377,19 +378,40 @@ public final class ProtoCheck {
                 + (e.startNotice.getParent() != e.minutesNotice.getParent());
     }
 
-    /** 칸 아래 글은 입력 창 panel에 붙고, 글이 없을 때는 이름 칸과 여백까지 자리를 차지하지 않는다(QA B-6). */
+    /** 칸 아래 글은 입력 창 panel에 붙고, 글이 없을 때는 이름 칸과 여백까지 자리를 차지하지 않는다. 글 줄이 없으면 실패 문장을 낸다. */
     private static String formNoticeRows() {
         TaskForm f = new TaskForm(null, java.time.LocalDate.of(2026, 11, 16), java.time.LocalDateTime.of(2026, 11, 16, 9, 0));
         String parents = (f.startNotice.getParent() == f.panel) + " " + (f.minutesNotice.getParent() == f.panel);
         int height = f.panel.getPreferredSize().height;
         for (javax.swing.JLabel l : new javax.swing.JLabel[] {f.startNotice, f.minutesNotice}) {
+            if (f.panel.getComponentZOrder(l) < 1) {
+                return parents + " 글 줄 없음";
+            }
             f.panel.remove(f.panel.getComponentZOrder(l) - 1);
             f.panel.remove(l);
         }
         return parents + " " + (height == f.panel.getPreferredSize().height);
     }
 
-    /** 추가 창의 30분 안내는 값을 쳐 넣은 뒤에는 숨는다(S83). */
+    /** 두 창 모두 칸 아래 글이 뜨면 relayout(창의 pack)을 부른다. 입력 창 시작, 걸리는 시간, 시각 고치기 창 시작, 걸리는 시간. */
+    private static String relayouts() {
+        int[] n = new int[4];
+        TaskForm f = new TaskForm(null, java.time.LocalDate.of(2026, 11, 16), java.time.LocalDateTime.of(2026, 11, 16, 9, 0));
+        f.timed.setSelected(true);
+        f.sync();
+        f.relayout = () -> n[0]++;
+        type(f.start, "09:03");
+        f.relayout = () -> n[1]++;
+        type(f.minutes, "27");
+        TimeEditor e = new TimeEditor(MockData.sample().tasks.get(0), java.time.LocalDateTime.of(2026, 11, 14, 15, 23));
+        e.relayout = () -> n[2]++;
+        type(e.start, "09:03");
+        e.relayout = () -> n[3]++;
+        type(e.minutes, "27");
+        return (n[0] > 0) + " " + (n[1] > 0) + " " + (n[2] > 0) + " " + (n[3] > 0);
+    }
+
+    /** 추가 창의 30분 안내는 값을 쳐 넣은 뒤에는 숨는다(D-98). */
     private static String thirtyHint() {
         TaskForm f = new TaskForm(null, java.time.LocalDate.of(2026, 11, 16), java.time.LocalDateTime.of(2026, 11, 16, 9, 0));
         boolean before = f.minutesHint.isVisible();

@@ -28,7 +28,7 @@ public final class TimeEditor {
     public final JLabel startNotice;
     public final JLabel minutesNotice;
     /** 칸 아래 글이 늘거나 줄면 창 크기를 다시 맞춘다. 창 없이 만들 때는 아무것도 하지 않는다. */
-    Runnable relayout = () -> { };
+    public Runnable relayout = () -> { };
     public final JLabel error = new JLabel(" ");
     public final JButton clear = new JButton("시각 빼기");
     final JButton cancel = new JButton("취소");
@@ -68,7 +68,6 @@ public final class TimeEditor {
         JLabel name = new JLabel("<html><b>" + Ui.esc(t.title) + "</b></html>");
         JPanel fields = new JPanel(new BorderLayout(0, 4));
         fields.add(name, BorderLayout.NORTH);
-        // D-98: 칸 아래 글은 각 칸 묶음 바로 아래 그 너비 안에서 접힌다.
         JPanel row = new JPanel(new BorderLayout(12, 0));
         JPanel startRow = Ui.flow(new JLabel("시작 시각"), start, realTime);
         typedStart.wrap = () -> startRow.getPreferredSize().width;
