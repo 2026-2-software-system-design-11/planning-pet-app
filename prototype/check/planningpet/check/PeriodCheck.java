@@ -164,6 +164,15 @@ final class PeriodCheck {
         Ui.setDate(only.date, d("11-23"));
         eq("T-DEF-22", "2026-11-25 마감일이 시작일보다 앞이에요 / [] false / 마감일이 시작일보다 앞이에요 / 2026-12-06  / "
                 + "마감일이 시작일보다 앞이에요", warned + only.errorText());
+        TaskForm s = new TaskForm(null, d("11-17"), at("11-17T14:12").now);
+        String starts = s.start.getValue() + "";
+        Ui.setDate(s.date, d("11-18"));
+        starts += " " + s.start.getValue();
+        Ui.setDate(s.date, d("11-17"));
+        starts += " " + s.start.getValue();
+        s.start.setValue("15:00");
+        Ui.setDate(s.date, d("11-18"));
+        eq("T-DEF-23", "14:15 09:00 14:15 15:00", starts + " " + s.start.getValue());
     }
 
     /** D-69: 지난 반복 사본은 밀린 일로 보이지 않는다. */

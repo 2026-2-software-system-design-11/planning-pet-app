@@ -70,6 +70,10 @@ public final class TaskForm {
     Runnable relayout = () -> { };
     private int row;
 
+    /** S129(D-101): 창을 연 때와, 사용자가 시작 시각을 만졌는지. 만지기 전에는 날짜의 기본 시작 시각을 따라간다. */
+    private final java.time.LocalDateTime now;
+    private boolean startTouched;
+
     /** 마감 기본값이 쓰는 한 주의 시작 요일(D-91). */
     private final java.time.DayOfWeek weekStart;
 
@@ -80,6 +84,8 @@ public final class TaskForm {
 
     public TaskForm(Task t, LocalDate defaultDate, java.time.LocalDateTime now, java.time.DayOfWeek weekStart) {
         this.weekStart = weekStart;
+        this.now = now;
+        startTouched = t != null;
         editing = t != null;
         copy = t != null && t.seriesId != null;
         Ui.limit(title, 100);
@@ -166,7 +172,12 @@ public final class TaskForm {
             }
             sync();
         });
-        start.addChangeListener(e -> sync());
+        start.addChangeListener(e -> {
+            if (!syncing) {
+                startTouched = true;
+            }
+            sync();
+        });
         minutes.addChangeListener(e -> sync());
         title.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
             @Override
@@ -260,6 +271,9 @@ public final class TaskForm {
         repeatEnd.setEnabled(repeating && !editing);
         repeatHint.setVisible(period.isSelected());
         LocalDate day = Ui.dateOf(date);
+        if (!startTouched) {
+            start.setValue(Times.value(DefaultDates.start(day, now)));
+        }
         // D-101: 앱이 골라 준 요일은 사용자가 단추를 누르기 전까지 날짜를 바꾸는 그 순간 따라간다.
         if (autoDay != null && autoDay != day.getDayOfWeek()) {
             boolean untouched = true;
