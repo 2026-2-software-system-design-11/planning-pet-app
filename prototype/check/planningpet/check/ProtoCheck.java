@@ -405,15 +405,19 @@ public final class ProtoCheck {
         TaskForm f = new TaskForm(null, java.time.LocalDate.of(2026, 11, 16), java.time.LocalDateTime.of(2026, 11, 16, 9, 0));
         f.timed.setSelected(true);
         f.sync();
-        type(f.start, "25:00");
-        type(f.minutes, "30abc");
+        // 입력 창은 글이 넓으면 제목 칸도 따라 넓어지므로, 글을 띄우기 전의 제목 칸 폭과 패널 폭으로 견준다.
+        int wide = f.panel.getPreferredSize().width;
         f.panel.setSize(f.panel.getPreferredSize());
         f.panel.doLayout();
+        int title = f.title.getWidth();
+        type(f.start, "25:00");
+        type(f.minutes, "30abc");
         StringBuilder out = new StringBuilder();
         for (javax.swing.JLabel l : new javax.swing.JLabel[] {e.startNotice, e.minutesNotice, f.startNotice, f.minutesNotice}) {
-            int room = l == e.startNotice || l == e.minutesNotice ? l.getParent().getComponent(0).getPreferredSize().width : f.title.getWidth();
-            out.append(out.length() > 0 ? " / " : "").append(notice(l)).append(' ')
-                    .append(!l.getText().contains("<br>") && l.getPreferredSize().width <= room);
+            boolean form = l == f.startNotice || l == f.minutesNotice;
+            int room = form ? title : l.getParent().getComponent(0).getPreferredSize().width;
+            out.append(out.length() > 0 ? " / " : "").append(notice(l)).append(' ').append(!l.getText().contains("<br>")
+                    && l.getPreferredSize().width <= room && (!form || f.panel.getPreferredSize().width == wide));
         }
         return out.toString();
     }
