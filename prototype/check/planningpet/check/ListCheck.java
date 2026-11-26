@@ -60,9 +60,10 @@ final class ListCheck {
                 + back.from.contains(at) + " " + back.to.equals(home) + " " + back.timer.isRunning());
     }
 
-    /** T-EDIT-27(D-99): 끄는 동안 보이는 칸 끝에 닿으면 굴러가고, 끝에 가까울수록 많이 굴러간다. */
+    /** T-EDIT-27(D-99, S149, S152): 끄는 동안 시간표 끝에 닿으면 굴러가고 목록 위에서는 굴러가지 않는다. 빠르기는 끝에 가까울수록 빠르다. */
     static void rollEdge() {
         App app = Main.create(at("11-17T09:00"));
+        Task work = app.store.book.add(Task.Kind.TASK, "과제", d("11-17"), null, 30, "", null).get(0);
         app.show("일정관리");
         app.store.changed();
         app.root.setSize(1000, 680);
@@ -70,15 +71,29 @@ final class ListCheck {
         ScheduleScreen sched = ProtoCheck.find(app.root, ScheduleScreen.class);
         sched.scrollTo(13 * 60);
         TimetablePanel table = ProtoCheck.find(app.root, TimetablePanel.class);
-        int h = table.getParent().getHeight();
-        int top = sched.topMinute();
-        table.roll(new java.awt.Point(100, h - 20));
-        int near = sched.topMinute();
-        table.roll(new java.awt.Point(100, h - 3));
-        int nearer = sched.topMinute();
-        table.roll(new java.awt.Point(100, h / 2));
-        eq("T-EDIT-27", "true true true 0", (near > top) + " " + (nearer - near > near - top) + " "
-                + (TimetablePanel.rollStep(5, h) < 0) + " " + (sched.topMinute() - nearer));
+        java.awt.Container view = table.getParent();
+        int h = view.getHeight();
+        TaskRows.TitleLabel title = title(sched.untimed, work);
+        mouse(title, MouseEvent.MOUSE_PRESSED, new java.awt.Point(5, 5));
+        boolean running = true;
+        int[] tops = new int[4];
+        tops[0] = sched.topMinute();
+        java.awt.Point[] spots = {new java.awt.Point(100, h - 3), new java.awt.Point(-1, h - 3), new java.awt.Point(100, -15)};
+        for (int k = 0; k < spots.length; k++) {
+            java.awt.Point p = javax.swing.SwingUtilities.convertPoint(view, spots[k], title);
+            p.x = k == 1 ? title.getWidth() / 2 : p.x;
+            mouse(title, MouseEvent.MOUSE_DRAGGED, p);
+            running &= sched.untimed.rolling().isRunning();
+            for (int n = 0; n < 10; n++) {
+                sched.untimed.rolling().getActionListeners()[0].actionPerformed(null);
+            }
+            tops[k + 1] = sched.topMinute();
+        }
+        mouse(title, MouseEvent.MOUSE_RELEASED, new java.awt.Point(5, 5));
+        String speeds = (int) TimetablePanel.rollSpeed(h - 29, h) + " " + (int) TimetablePanel.rollSpeed(h, h) + " "
+                + (int) TimetablePanel.rollSpeed(h + 50, h) + " " + (int) TimetablePanel.rollSpeed(5, h) + " " + (int) TimetablePanel.rollSpeed(h / 2, h);
+        eq("T-EDIT-27", "true true true true / 66 240 240 -210 0", running + " " + (tops[1] > tops[0]) + " " + (tops[2] == tops[1]) + " " + (tops[3] < tops[2])
+                + " / " + speeds);
     }
 
     /** T-EDIT-26(D-99): 끄는 동안 줄은 흐리고, Esc를 누르면 끌기를 그만둔다. */

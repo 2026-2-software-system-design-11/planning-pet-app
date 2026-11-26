@@ -143,16 +143,34 @@ public final class TimetablePanel extends JComponent {
         }
     }
 
-    /** D-99: 끄는 동안 보이는 칸의 위, 아래 끝 30px 안이면 그쪽으로 굴릴 양(px). 끝에 가까울수록(넘으면 더) 빠르다. */
-    public static int rollStep(int y, int height) {
-        int d = y < 30 ? y - 30 : y > height - 30 ? y - (height - 30) : 0;
-        return d == 0 ? 0 : Integer.signum(d) * Math.min(24, Math.abs(d) / 2 + 2);
+    /** 끄는 동안 굴리는 보이는 칸 위, 아래 끝 띠의 폭(px). */
+    public static final int EDGE = 30;
+    /** 굴리다 남은 1px 아래 양. */
+    private double rollRest;
+
+    /**
+     * D-99: 끄는 동안 보이는 칸 높이 height에서 마우스 높이 y일 때 굴리는 빠르기(1초에 몇 분, 아래로 +, 위로 -).
+     * 끝 띠 안쪽 경계에서 60분, 끝에서 240분이고 그 사이는 끝에 가까울수록 빠르다(S149). 끝 밖(머리줄 위, 시간표 아래 밖)은 240분(S152).
+     */
+    public static double rollSpeed(int y, int height) {
+        int d = y < EDGE ? EDGE - y : y > height - EDGE ? y - (height - EDGE) : 0;
+        return d == 0 ? 0 : (y < EDGE ? -1 : 1) * (60 + 180.0 * Math.min(d, EDGE) / EDGE);
     }
 
-    /** 끄는 동안 마우스가 보이는 칸 좌표 inView에 있으면 한 번 굴리고, 그 자리의 시간표 좌표(보이는 칸 밖이면 null)를 돌려준다. */
-    public java.awt.Point roll(java.awt.Point inView) {
+    /**
+     * 끄는 동안 마우스가 보이는 칸 좌표 inView에 millis 동안 있었으면 굴리고, 그 자리의 시간표 좌표(보이는 칸 밖이면 null)를 돌려준다.
+     * 마우스가 시간표(시각 글 칸 포함)의 가로 범위 밖(목록 위)이면 굴리지 않는다(S152).
+     */
+    public java.awt.Point roll(java.awt.Point inView, int millis) {
         javax.swing.JViewport view = (javax.swing.JViewport) getParent();
-        int y = view.getViewPosition().y + rollStep(inView.y, view.getHeight());
+        if (inView.x >= 0 && inView.x < view.getWidth()) {
+            rollRest += rollSpeed(inView.y, view.getHeight()) * HOUR / 60 * millis / 1000;
+        } else {
+            rollRest = 0;
+        }
+        int step = (int) rollRest;
+        rollRest -= step;
+        int y = view.getViewPosition().y + step;
         view.setViewPosition(new java.awt.Point(0, Math.max(0, Math.min(getHeight() - view.getHeight(), y))));
         java.awt.Point p = new java.awt.Point(inView.x + view.getViewPosition().x, inView.y + view.getViewPosition().y);
         return getVisibleRect().contains(p) ? p : null;

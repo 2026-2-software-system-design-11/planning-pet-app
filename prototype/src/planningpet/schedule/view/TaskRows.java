@@ -33,6 +33,7 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
     TimetablePanel dropOn;
     /** D-99: 끄는 중이라 흐리게 그리는 줄의 일. 끌지 않으면 null. */
     private Task lifted;
+    private javax.swing.Timer rolling;
     /** "끝낸 일 {수}개" 묶음 제목. 묶음이 없으면 목록에 없다. */
     public final javax.swing.JButton doneHead = new javax.swing.JButton();
 
@@ -56,6 +57,11 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
     /** D-99: 끄는 중이라 흐리게 그리는 줄의 일. 끌지 않으면 null. */
     public Task lifted() {
         return lifted;
+    }
+
+    /** 끄는 동안 시간표를 굴리는 타이머(30ms마다). 끌지 않으면 null. */
+    public javax.swing.Timer rolling() {
+        return rolling;
     }
 
     /** D-88: 머물던 끝낸 줄을 "끝낸 일" 묶음으로 내려보낸다(1.5초가 지난 것과 같다). */
@@ -365,7 +371,7 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
             /** 마지막 마우스 자리(held 좌표). */
             private java.awt.Point last;
             private final javax.swing.Timer roll = new javax.swing.Timer(30,
-                    ev -> held.setCursor(dropOn.dragTo(dropOn.roll(inView)) ? DragCursors.NO : DragCursors.GRAB));
+                    ev -> held.setCursor(dropOn.dragTo(dropOn.roll(inView, 30)) ? DragCursors.NO : DragCursors.GRAB));
             /** D-99: 끄는 동안 Esc를 누르면 그만둔다. */
             private final java.awt.event.AWTEventListener esc = ev -> {
                 if (ev.getID() == java.awt.event.KeyEvent.KEY_PRESSED
@@ -380,6 +386,7 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
                 on = false;
                 from = null;
                 lifted = null;
+                rolling = null;
                 roll.stop();
                 java.awt.Toolkit.getDefaultToolkit().removeAWTEventListener(esc);
                 for (JComponent c : parts) {
@@ -406,6 +413,7 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
                     java.awt.Toolkit.getDefaultToolkit().addAWTEventListener(esc, java.awt.AWTEvent.KEY_EVENT_MASK);
                     dropOn.drag(t);
                     held = e.getComponent();
+                    rolling = roll;
                     roll.start();
                 }
                 inView = javax.swing.SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), dropOn.getParent());
