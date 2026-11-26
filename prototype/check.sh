@@ -17,8 +17,8 @@ if [ -n "$bad" ]; then
     echo "$bad"
     exit 1
 fi
-# 05 시각 고치기 창: open()이 앱 창 안으로 민 자리(spot, T-EDIT-45)를 쓰는지. 창을 띄우지 않는 검사는 창을 만들 수 없어 grep으로 본다.
-grep -q "spot(anchor, d.getSize(), app.root)" src/planningpet/schedule/view/TimeEditor.java || { echo "T-EDIT-45 어긋남: TimeEditor.open이 spot을 쓰지 않음"; exit 1; }
+# 05 시각 고치기 창: open()이 spot(T-EDIT-45가 화면 좌표까지 본다)의 결과를 그대로 창 자리로 쓰는지. 창을 띄우지 않는 검사는 창을 만들 수 없어 그 한 줄을 grep으로 본다.
+grep -q "d.setLocation(spot(anchor, d.getSize(), app.root, app.root.getLocationOnScreen()));" src/planningpet/schedule/view/TimeEditor.java || { echo "T-EDIT-45 어긋남: TimeEditor.open이 spot을 쓰지 않음"; exit 1; }
 # D-98: 칸 아래 글이 늘거나 줄면 창 크기를 다시 맞춘다. 창을 띄우지 않는 검사는 창을 만들 수 없어 그 줄을 grep으로 본다.
 for f in TaskDialog TimeEditor; do
     grep -q "relayout = d::pack" src/planningpet/schedule/view/$f.java || { echo "D-98 어긋남: $f.java에 relayout = d::pack 없음"; exit 1; }
