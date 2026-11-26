@@ -25,4 +25,6 @@ for f in TaskDialog TimeEditor; do
 done
 rm -rf out-check
 javac -encoding UTF-8 -cp out -d out-check $(find check -name '*.java')
+# 06 커버리지(#259): user-flows 06 커버리지 절의 수, 번호 목록, 번호마다 적은 흐름 단계가 06 검사 표와 흐름 단계 표의 검사 줄 칸에 맞는지.
+java -cp out-check planningpet.check.CoverageCheck ../docs/06-functions.md ../docs/user-flows.md
 java -Djava.awt.headless=true -cp out:out-check planningpet.check.ProtoCheck
