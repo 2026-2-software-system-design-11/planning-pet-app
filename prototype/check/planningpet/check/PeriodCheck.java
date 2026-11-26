@@ -62,6 +62,7 @@ final class PeriodCheck {
         pastCopies();
         formKeeps();
         pastDueForm();
+        dueBeforeToday();
     }
 
     /** T-EDIT-41(D-99, #277): 마감이 지난 기간 할 일의 수정 창은 날짜, 기간 안에 하기, 마감일을 막고 까닭을 보인다. */
@@ -81,6 +82,34 @@ final class PeriodCheck {
         eq("T-EDIT-41", "false false true false truetruetrue true truetruetruetrue / true Q2 60 2026-11-10 2026-11-16 / true true true false",
                 locked + " / " + saved + " " + q.title + " " + q.minutes + " " + q.date + " " + q.dueDate + " / " + g.date.isEnabled() + " "
                         + g.period.isEnabled() + " " + g.due.isEnabled() + " " + shown(g.panel, why));
+    }
+
+    /** T-VAL-23(D-99, #277): 마감이 오늘보다 전인 기간 할 일은 새로 넣지 못하고, 끝내지 않은 일을 그렇게 고치지도 못한다. */
+    static void dueBeforeToday() {
+        App app = Main.create(at("11-18T09:00"));
+        TaskForm f = TaskDialog.form(app, null, d("11-10"));
+        f.title.setText("C사");
+        f.period.doClick();
+        Ui.setDate(f.due, d("11-17"));
+        String added = f.errorText() + " " + TaskDialog.trySave(app, f, null);
+        Ui.setDate(f.due, d("11-09"));
+        added += " / " + msgs(f.problems());
+        Ui.setDate(f.due, d("11-18"));
+        added += " / " + msgs(f.problems());
+        Task p = period(app.store, "P", "11-16", "11-20", 30);
+        Task done = period(app.store, "끝", "11-10", "11-16", 30);
+        app.schedule.check(done);
+        Task plain = app.store.book.add(Task.Kind.TASK, "보통", d("11-15"), null, 30, "", null).get(0);
+        TaskForm g = TaskDialog.form(app, p, p.date);
+        Ui.setDate(g.due, d("11-17"));
+        TaskForm h = TaskDialog.form(app, plain, plain.date);
+        h.period.doClick();
+        Ui.setDate(h.due, d("11-16"));
+        TaskForm k = TaskDialog.form(app, done, done.date);
+        k.title.setText("끝2");
+        eq("T-VAL-23", "마감일이 오늘보다 전이에요 false / 마감: 마감일이 시작일보다 전이에요 / 오류 없음 / 마감일이 오늘보다 전이에요 "
+                + "/ 마감일이 오늘보다 전이에요 / true 끝2 2026-11-16", added + " / " + g.errorText() + " / " + h.errorText() + " / "
+                        + TaskDialog.trySave(app, k, done) + " " + done.title + " " + done.dueDate);
     }
 
     /** 패널 안에 그 글의 보이는 라벨이 있는가. */

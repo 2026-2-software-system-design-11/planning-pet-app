@@ -18,11 +18,14 @@ public final class TaskCheck {
     public static final String END_PROBLEM = "다음 날 04:00까지 끝나야 해요";
 
     public static List<String[]> check(TaskDraft f, boolean editing) {
-        return check(f, editing, null);
+        return check(f, editing, null, null);
     }
 
-    /** placed는 수정하는 기간 할 일에 시각을 정해 둔 날(아니면 null). 마감은 그 날보다 앞일 수 없다(D-99, #272). */
-    public static List<String[]> check(TaskDraft f, boolean editing, LocalDate placed) {
+    /**
+     * placed는 수정하는 기간 할 일에 시각을 정해 둔 날(아니면 null). 마감은 그 날보다 앞일 수 없다(D-99, #272). today가 있으면 마감은 그보다
+     * 전일 수 없다(마감이 지난 일은 받지 않는다, D-99, #277). 끝낸 일과 마감이 지난 일을 고칠 때는 null이다.
+     */
+    public static List<String[]> check(TaskDraft f, boolean editing, LocalDate placed, LocalDate today) {
         List<String[]> out = new ArrayList<>();
         if (f.title().isBlank()) {
             out.add(new String[] {"제목", "제목을 써 주세요"});
@@ -34,6 +37,8 @@ public final class TaskCheck {
                 out.add(new String[] {"마감", "기간은 할 일만 정할 수 있어요"});
             } else if (f.dueDate().isBefore(f.date())) {
                 out.add(new String[] {"마감", "마감일이 시작일보다 전이에요"});
+            } else if (today != null && f.dueDate().isBefore(today)) {
+                out.add(new String[] {"마감", "마감일이 오늘보다 전이에요"});
             } else if (placed != null && f.dueDate().isBefore(placed)) {
                 out.add(new String[] {"마감", "마감일이 시각을 정해 둔 " + placed.getMonthValue() + "/" + placed.getDayOfMonth() + "("
                         + "월화수목금토일".charAt(placed.getDayOfWeek().getValue() - 1) + ")보다 전이에요"});

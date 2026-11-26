@@ -65,6 +65,8 @@ public final class TaskForm {
     private final LocalDate placed;
     /** 마감이 지나도 끝내지 못한 기간 할 일을 고치는 중. 받지 않는 일이라 날짜와 마감을 바꾸지 않는다(D-99, #277). */
     private final boolean pastDue;
+    /** 끝낸 일을 고치는 중. 마감을 오늘 전으로 두어도 막지 않는다(D-99, #277). */
+    private final boolean doneTask;
     /** 반복 사본을 고치는 중(기간 칸은 꺼진 채 비활성, D-65). */
     private final boolean copy;
     /** sync 안에서 칸 값을 바꿀 때 다시 sync하지 않는다. */
@@ -113,6 +115,7 @@ public final class TaskForm {
         placed = t != null && t.period() && t.timed() ? t.date : null;
         copy = t != null && t.seriesId != null;
         pastDue = t != null && t.pastDue(planningpet.common.model.Rules.appDay(now));
+        doneTask = t != null && t.done;
         Ui.limit(title, 100);
         Ui.limit(memo, 1000);
         ButtonGroup kinds = new ButtonGroup();
@@ -351,7 +354,9 @@ public final class TaskForm {
         endLabel.setText(s == null ? "" : Times.endHint(s, (int) minutes.getValue()));
         realTime.setText(s == null ? "" : Times.real(day, s));
         // S102, S128(D-101): 마감 칸은 저장 전에도 값이 바뀔 때마다 바로 검사한다. 다른 칸은 저장 뒤다(D-43).
-        boolean dueLate = period.isSelected() && (Ui.dateOf(due).isBefore(day) || placed != null && Ui.dateOf(due).isBefore(placed));
+        LocalDate floor = today();
+        boolean dueLate = period.isSelected() && (Ui.dateOf(due).isBefore(day) || placed != null && Ui.dateOf(due).isBefore(placed)
+                || floor != null && Ui.dateOf(due).isBefore(floor));
         syncing = false;
         JLabel dueError = errors.get("마감");
         if (checked) {
@@ -400,7 +405,12 @@ public final class TaskForm {
 
     /** 06의 2번 검사. */
     public java.util.List<String[]> problems() {
-        return TaskCheck.check(draft(), editing, placed);
+        return TaskCheck.check(draft(), editing, placed, today());
+    }
+
+    /** 마감이 넘지 말아야 할 앱의 오늘(D-99, #277). 끝낸 일과 마감이 지난 일을 고칠 때는 null. */
+    private LocalDate today() {
+        return doneTask || pastDue ? null : planningpet.common.model.Rules.appDay(clock.get());
     }
 
     public boolean editing() {
