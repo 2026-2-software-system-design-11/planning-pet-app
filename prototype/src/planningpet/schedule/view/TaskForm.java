@@ -222,7 +222,13 @@ public final class TaskForm {
             }
             sync();
         });
-        date.addChangeListener(e -> sync());
+        date.addChangeListener(e -> {
+            // D-98: 사용자가 날짜 칸을 손으로 바꾸면 그 뒤로는 옮긴 날로 다시 돌려 놓아도 사용자가 고른 날이다.
+            if (!moving && !syncing) {
+                nightFrom = null;
+            }
+            sync();
+        });
         sync();
     }
 
@@ -360,7 +366,7 @@ public final class TaskForm {
         return r;
     }
 
-    /** "밤 4시"로 옮긴 날짜가 그대로면 옮기기 전의 날, 아니면(사용자가 날짜를 바꿈) null. */
+    /** "밤 4시"로 옮긴 날짜가 그대로면 옮기기 전의 날, 아니면(사용자가 날짜를 바꾼 적이 있음) null. */
     private LocalDate night() {
         return nightFrom != null && Ui.dateOf(date).equals(nightFrom.plusDays(1)) ? nightFrom : null;
     }

@@ -146,7 +146,7 @@ public final class ProtoCheck {
         eq("D-98 한 글자씩 친 시작 시각", "21:30 20:00 22:30 14:30 19:30 17:00 13:00 13:00 / 21:30 20:00 17:00", keyed());
         eq("D-98 한 글자를 채워 보인다", "13:00 3:00", oneDigitFill());
         eq("D-98 밤 4시", "2026-11-19 04:00 흐린 19일(목) 04:00으로 읽었어요 / 2026-11-19 240", nightForm());
-        eq("D-98, D-101 밤 4시 뒤", "2026-11-19 / 2026-11-18 없음 / 2026-11-18 흐린 5분 단위로 맞췄어요(22:05) / 2026-11-18 245 없음", nightAfter());
+        eq("D-98, D-101 밤 4시 뒤", "2026-11-19 / 2026-11-18 없음 / 2026-11-18 흐린 5분 단위로 맞췄어요(22:05) / 2026-11-18 245 없음 / 2026-11-19", nightAfter());
         Typed.Read r30 = Typed.start("밤 4시", java.time.LocalDate.of(2026, 11, 30));
         Typed.Read due = Typed.start("밤 4시", java.time.LocalDate.of(2026, 11, 18), java.time.LocalDate.of(2026, 11, 18));
         eq("D-98 이후 반복 모두의 밤 4시", "2026-11-19 240 2026-11-26 240 2026-12-03 240", nightSeries());
@@ -480,6 +480,13 @@ public final class ProtoCheck {
         type(f.start, "밤 4시");
         type(f.start, "22:03");
         String other = Ui.dateOf(f.date) + " " + notice(f.startNotice);
+        // 날짜를 손으로 20일로 바꿨다가 19일로 돌려 놓으면 사용자가 고른 날이라 정하기를 꺼도 그대로다.
+        type(f.start, "밤 4시");
+        Ui.setDate(f.date, java.time.LocalDate.of(2026, 11, 20));
+        Ui.setDate(f.date, java.time.LocalDate.of(2026, 11, 19));
+        f.timed.setSelected(false);
+        f.sync();
+        String hand = Ui.dateOf(f.date).toString();
         App app = Main.create(MockData.empty());
         Task t = app.store.book.add(Task.Kind.TASK, "야간 과제", java.time.LocalDate.of(2026, 11, 18), java.time.LocalTime.of(22, 0), 60, "", null).get(0);
         TimeEditor e = new TimeEditor(t, app.store.now);
@@ -487,7 +494,7 @@ public final class ProtoCheck {
         e.start.setValue(e.start.getNextValue());
         String arrowed = notice(e.startNotice);
         TimeEditor.save(app, t, e);
-        return again + " / " + off + " / " + other + " / " + t.date + " " + t.startMinute() + " " + arrowed;
+        return again + " / " + off + " / " + other + " / " + t.date + " " + t.startMinute() + " " + arrowed + " / " + hand;
     }
 
     /** "밤 4시"는 입력 창 날짜를 하루 뒤로 옮기고, 시각 고치기 창은 저장할 때 그 일을 다음 날로 옮긴다. */
