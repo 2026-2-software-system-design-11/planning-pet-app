@@ -12,6 +12,7 @@ public final class TypedField {
     public final JLabel notice = new JLabel();
     private final Runnable relayout;
     private Object about; // 글이 말하는 칸 값
+    private String plain = ""; // 접기 전 글
     /** 칸에 글을 쳐 넣어 읽은 적이 있는가. 일정 입력 창은 그 뒤 30분 안내를 숨긴다(S83). */
     public boolean typed;
     /** 0보다 크면 글을 이 너비(px) 안에서 낱말 사이로 접는다(시각 고치기 창, D-98). */
@@ -85,10 +86,16 @@ public final class TypedField {
     /** 글을 보이거나(text가 null이면) 지운다. 글이 늘거나 줄면 창 크기를 다시 맞춘다. */
     private void show(String text, java.awt.Color color, Object value) {
         about = text == null ? null : value;
-        int w = wrap.getAsInt();
-        notice.setText(text == null ? "" : w > 0 ? Ui.wrap(text, notice.getFontMetrics(notice.getFont()), w) : text);
+        plain = text == null ? "" : text;
         notice.setForeground(color);
         notice.setVisible(text != null);
+        refold();
+    }
+
+    /** 보이는 글을 지금의 wrap 폭으로 다시 접고 창 크기를 맞춘다. 값을 넣은 뒤 칸 묶음 폭이 바뀌면 부른다. */
+    public void refold() {
+        int w = wrap.getAsInt();
+        notice.setText(w > 0 && !plain.isEmpty() ? Ui.wrap(plain, notice.getFontMetrics(notice.getFont()), w) : plain);
         relayout.run();
     }
 }

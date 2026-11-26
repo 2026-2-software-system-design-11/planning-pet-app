@@ -140,6 +140,7 @@ public final class ProtoCheck {
                 starts("오후 2시", "2시", "8시", "9시", "12시", "오후 2시 반", "2시 30분", "아침 7시", "저녁 7시", "밤 9시", "낮 12시", "낮 11시",
                         "새벽 1시", "밤 2시", "밤 12시", "새벽 5시").replace(" null", "").replace(" /", ""));
         eq("T-TYPE-9", "null 14:00처럼 적어 주세요 / null 14:00처럼 적어 주세요 / null 14:00처럼 적어 주세요", starts("25:00", "09:75", "점심"));
+        eq("D-98 다음 날 값 뒤 23:58의 글은 좁아진 칸 묶음 안", "23:55 true", nextThen2358());
         eq("D-98 시작 시각 칸 아래 글", "09:05 흐린 5분 단위로 맞췄어요(09:05) / 14:00 / 흐린 하루는 새벽 4시에 넘어가요. 03:55(다음 날)로 맞췄어요"
                 + " / 흐린 최대 720분(12시간)까지 넣을 수 있어요 true", startTyped());
         eq("D-98 입력 창 칸 아래 글 자리", "true true true", formNoticeRows());
@@ -394,6 +395,15 @@ public final class ProtoCheck {
         boolean before = f.minutesHint.isVisible();
         type(f.minutes, "31");
         return before + " " + f.minutesHint.isVisible() + " " + notice(f.minutesNotice);
+    }
+
+    /** 시각 고치기 창에서 01:00(다음 날)로 실제 시각 글이 보인 뒤 23:58을 치면, 글이 사라져 좁아진 칸 묶음 폭 안으로 다시 접힌다. */
+    private static String nextThen2358() {
+        TimeEditor e = new TimeEditor(MockData.sample().tasks.get(0), java.time.LocalDateTime.of(2026, 11, 14, 15, 23));
+        type(e.start, "01:00(다음 날)");
+        Object v = type(e.start, "23:58");
+        javax.swing.JLabel l = e.startNotice;
+        return v + " " + (l.isVisible() && l.getPreferredSize().width <= l.getParent().getComponent(0).getPreferredSize().width);
     }
 
     /** 칸에 글을 쳐 넣고 칸을 벗어난 것과 같다. 받지 않으면 이전 값이다. */

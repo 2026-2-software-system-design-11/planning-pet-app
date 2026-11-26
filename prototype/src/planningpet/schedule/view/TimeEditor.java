@@ -51,12 +51,16 @@ public final class TimeEditor {
         // 시각 없는 기간 할 일은 창을 연 목록의 날로 옮겨지므로 그 날로 실제 날을 적는다.
         java.time.LocalDate base = placed ? t.date : day;
         realTime.setText(Times.real(base, from));
-        start.addChangeListener(x -> realTime.setText(Times.real(base, Times.minuteOf(start.getValue()))));
         minutes = Ui.minutes(t.minutes);
         TypedField typed = new TypedField(minutes, Typed::minutes, () -> relayout.run());
         minutesNotice = typed.notice;
         TypedField typedStart = new TypedField(start, Typed::start, () -> relayout.run());
         startNotice = typedStart.notice;
+        // 값이 바뀌면 실제 시각 글을 고치고, 그만큼 칸 묶음 폭이 바뀌니 칸 아래 글을 그 폭으로 다시 접는다(05 시각 고치기 창 1번).
+        start.addChangeListener(x -> {
+            realTime.setText(Times.real(base, Times.minuteOf(start.getValue())));
+            typedStart.refold();
+        });
         error.setForeground(Theme.SUNDAY);
         error.setFont(Theme.font(12));
         panel.setBorder(BorderFactory.createEmptyBorder(12, 14, 12, 14));
