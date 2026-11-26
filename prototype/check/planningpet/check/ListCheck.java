@@ -156,7 +156,7 @@ final class ListCheck {
         eq("T-EDIT-26", "true 1 true true / null 0 null true true / 2026-11-17 null", during + " / " + after + " / " + work.date + " " + work.start);
     }
 
-    /** T-EDIT-40(D-99, S146, S75): 글 상자 자리(오른쪽에 자리가 없으면 왼쪽, 보이는 아래 끝 안)와 주를 옮기면 닫힘. */
+    /** T-EDIT-40(D-99, S146, S75): 글 상자 자리(금 칸은 오른쪽에 자리가 없어 왼쪽, 보이는 아래 끝 안)와 주를 옮기면 닫힘. */
     static void notePlace() {
         App app = Main.create(at("11-17T09:00"));
         Task work = app.store.book.add(Task.Kind.TASK, "과제", d("11-17"), null, 30, "", null).get(0);
@@ -171,8 +171,9 @@ final class ListCheck {
         DropNote note = table.note;
         int w = (table.getWidth() - TimetablePanel.GUTTER) / 7;
         int thu = TimetablePanel.GUTTER + 3 * w;
-        dropAt(sched, table, work, new java.awt.Point(thu + w / 2, (14 * 60 + 7) * TimetablePanel.HOUR / 60));
-        String left = work.date + " " + note.isVisible() + " " + (note.getX() + note.getWidth() <= thu);
+        // 금 칸은 시스템 글꼴과 앱 글꼴(Pretendard) 모두에서 왼쪽에 든다(목 칸은 글꼴에 따라 왼쪽이나 아래).
+        dropAt(sched, table, work, new java.awt.Point(thu + w + w / 2, (14 * 60 + 7) * TimetablePanel.HOUR / 60));
+        String left = work.date + " " + note.isVisible() + " " + (note.getX() + note.getWidth() <= thu + w);
         note.undo.doClick();
         java.awt.Rectangle seen = table.getVisibleRect();
         dropAt(sched, table, work, new java.awt.Point(thu - w / 2, seen.y + seen.height - 3));
@@ -190,7 +191,7 @@ final class ListCheck {
         java.awt.Rectangle now = table.getVisibleRect();
         String pulled = planningpet.schedule.model.TaskBook.timeText(log) + " " + (now.y <= log.startMinute() * TimetablePanel.HOUR / 60)
                 + " " + now.contains(note.getBounds());
-        eq("T-EDIT-40", "2026-11-19 true true / 2026-11-18 true true / false / 16:00~04:00(다음 날) true true",
+        eq("T-EDIT-40", "2026-11-20 true true / 2026-11-18 true true / false / 16:00~04:00(다음 날) true true",
                 left + " / " + low + " / " + moved + " / " + pulled);
     }
 
