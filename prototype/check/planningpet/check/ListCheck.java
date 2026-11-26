@@ -52,13 +52,20 @@ final class ListCheck {
         TaskRows.TitleLabel title = title(sched.untimed, work);
         String open = (title.getCursor() == DragCursors.OPEN) + "";
         mouse(title, MouseEvent.MOUSE_PRESSED, new java.awt.Point(5, 5));
+        mouse(title, MouseEvent.MOUSE_DRAGGED, new java.awt.Point(10, 5));
+        String five = table.dimmed() + "";
+        mouse(title, MouseEvent.MOUSE_DRAGGED, new java.awt.Point(11, 5));
+        String six = table.dimmed() + "";
+        mouse(title, MouseEvent.MOUSE_RELEASED, new java.awt.Point(11, 5));
+        String outside = five + " " + six;
+        mouse(title, MouseEvent.MOUSE_PRESSED, new java.awt.Point(5, 5));
         mouse(title, MouseEvent.MOUSE_DRAGGED, javax.swing.SwingUtilities.convertPoint(table, mon, title));
         String no = (title.getCursor() == DragCursors.NO) + "";
         mouse(title, MouseEvent.MOUSE_DRAGGED, javax.swing.SwingUtilities.convertPoint(table, wed, title));
         String grab = (title.getCursor() == DragCursors.GRAB) + "";
         mouse(title, MouseEvent.MOUSE_RELEASED, javax.swing.SwingUtilities.convertPoint(table, wed, title));
-        eq("T-EDIT-24", "false 2026-11-17 null / true true true / 2026-11-18 14:00 []",
-                byBox + " / " + open + " " + no + " " + grab + " / " + work.date + " " + work.start + " " + table.dimmed());
+        eq("T-EDIT-24", "false 2026-11-17 null / true true true / [] [2026-11-16] / 2026-11-18 14:00 []",
+                byBox + " / " + open + " " + no + " " + grab + " / " + outside + " / " + work.date + " " + work.start + " " + table.dimmed());
     }
 
     static void mouse(java.awt.Component c, int id, java.awt.Point p) {

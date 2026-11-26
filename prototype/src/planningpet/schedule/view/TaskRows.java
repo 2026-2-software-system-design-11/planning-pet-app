@@ -351,7 +351,7 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
 
             @Override
             public void mouseDragged(MouseEvent e) {
-                if (from == null || !on && from.distance(e.getPoint()) < 5) {
+                if (from == null || !on && from.distance(e.getPoint()) <= 5) {
                     return;
                 }
                 if (!on) {
