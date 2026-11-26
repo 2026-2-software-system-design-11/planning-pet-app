@@ -131,7 +131,7 @@ public final class TimetablePanel extends JComponent {
         int day = (getWidth() - GUTTER) / 7;
         int x = GUTTER + (int) (t.date.toEpochDay() - monday.toEpochDay()) * day;
         if (r.text() != null && r.undo() == null) {
-            note.open(r.text(), null, at.x + 12, at.y + 12, at.x - 12);
+            note.open(r.text(), null, at.x + 12, at.y + 12, at.x - 12, null);
         } else if (r.text() != null) {
             int top = t.startMinute() * HOUR / 60;
             // S148: 당겨진 블록의 위 끝이 보이는 칸 위면 시간표를 굴려 블록 위 끝과 글 상자를 함께 보인다.
@@ -139,8 +139,18 @@ public final class TimetablePanel extends JComponent {
             if (top < seen.y) {
                 scrollRectToVisible(new java.awt.Rectangle(0, top, 1, seen.height));
             }
-            note.open(r.text(), r.undo(), x + day + 2, top, x - 2);
+            int[] c = Planner.columns(store.book.timedOn(t.date)).getOrDefault(t, new int[] {0, 1});
+            note.open(r.text(), r.undo(), x + day + 2, top, x - 2, blockRect(x, t, c, day));
+            if (note.getY() < getVisibleRect().y) { // S158: 블록 위에 뜬 글 상자도 보이게 굴린다.
+                scrollRectToVisible(note.getBounds());
+            }
         }
+    }
+
+    /** 왼쪽 끝이 x인 날 칸(폭 day)에서 겹침 열 c(Planner.columns의 [열, 열 수])에 그리는 일정 t의 블록 자리. */
+    private static Rectangle blockRect(int x, Task t, int[] c, int day) {
+        int w = day / c[1];
+        return new Rectangle(x + c[0] * w + 1, t.startMinute() * HOUR / 60, w - 2, Math.max(t.minutes * HOUR / 60, 16));
     }
 
     /** 끄는 동안 굴리는 보이는 칸 위, 아래 끝 띠의 폭(px). */
@@ -287,9 +297,7 @@ public final class TimetablePanel extends JComponent {
             var columns = Planner.columns(tasks);
             for (Task t : tasks) {
                 int[] c = columns.get(t);
-                int w = day / c[1];
-                Rectangle r = new Rectangle(GUTTER + i * day + c[0] * w + 1, t.startMinute() * HOUR / 60,
-                        w - 2, Math.max(t.minutes * HOUR / 60, 16));
+                Rectangle r = blockRect(GUTTER + i * day, t, c, day);
                 blocks.put(r, t);
                 boolean lit = flashing.contains(t);
                 g.setColor(lit ? Theme.MINT_SELECTED : t.done ? Theme.DAY : t.kind == Task.Kind.FIXED ? Theme.TRACK : Theme.MINT_SOFT);
