@@ -325,7 +325,7 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
 
             @Override
             public void mouseClicked(MouseEvent e) {
-                // D-102: 한 번 누르면 고르기만 하고 두 번 누르면 수정 창이다. 설정 "목록 누르기"를 켜면 한 번 누를 때 시각 단추처럼
+                // D-102: 한 번 누르면 아무 일도 없고 두 번 누르면 수정 창이다. 설정 "목록 누르기"를 켜면 한 번 누를 때 시각 단추처럼
                 // 시각 고치기 창이 뜨고 두 번째 누름은 아무 일도 하지 않는다(창은 단추 아래에 떠서 누른 자리를 덮지 않는다).
                 if (control.listClickTime()) {
                     if (e.getClickCount() == 1 && javax.swing.SwingUtilities.isLeftMouseButton(e)) {

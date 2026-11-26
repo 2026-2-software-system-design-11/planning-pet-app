@@ -50,7 +50,7 @@ public final class SettingsScreen extends JPanel {
         sunday.addActionListener(e -> app.settings.weekStart(java.time.DayOfWeek.SUNDAY));
         line(new JLabel("<html><b>목록 누르기</b></html>"), listClickTime);
         line(new JLabel(), Ui.hint("켜면 홈과 일정관리 목록에서 줄을 한 번 누를 때 시각 고치기 창이 떠요. 모든 칸은 연필 단추로 고쳐요."
-                + " 끄면 한 번은 고르기, 두 번은 수정 창이에요."));
+                + " 끄면 두 번 누를 때 수정 창이 떠요."));
         listClickTime.addActionListener(e -> app.settings.listClickTime(listClickTime.isSelected()));
         clearSamples.addActionListener(e -> app.schedule.clearSamples());
         line(new JLabel("<html><b>예시 일정</b></html>"), Ui.flow(clearSamples, sampleCount));

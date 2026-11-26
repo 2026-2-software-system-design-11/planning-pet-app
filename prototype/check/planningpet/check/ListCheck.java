@@ -337,7 +337,7 @@ final class ListCheck {
                         + java.util.stream.Stream.of("11-16", "11-17", "11-18", "11-19").map(x -> d(x)).filter(x -> q.shownOn(x, d("11-18"))).toList());
     }
 
-    /** T-EDIT-16(D-102): 한 번은 고르기, 두 번은 수정 창, 시각 단추는 둘째 줄 연필 앞. 설정을 켜면 두 목록 모두 한 번에 창, 두 번째는 없음. */
+    /** T-EDIT-16(D-102): 한 번은 아무 일도 없고 두 번은 수정 창, 시각 단추는 둘째 줄 연필 앞. 설정을 켜면 두 목록 모두 한 번에 창, 두 번째는 없음. */
     static void rowClick() {
         App app = Main.create(at("11-17T09:00"));
         Task work = app.store.book.add(Task.Kind.TASK, "과제", d("11-18"), null, 30, "", null).get(0);
