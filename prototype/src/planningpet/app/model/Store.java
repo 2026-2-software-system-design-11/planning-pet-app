@@ -35,6 +35,8 @@ public final class Store {
     public final Set<String> placed = new LinkedHashSet<>();
     /** 설정 "달력에 고정 일정 보이기"(D-86). 처음은 끔. */
     public boolean calendarFixed;
+    /** 설정 "목록 누르기"(D-102). 켜면 홈과 일정관리 목록에서 줄을 한 번 누를 때 시각 고치기 창이 뜬다. 처음은 끔. */
+    public boolean listClickTime;
     /** 첫 실행의 "예시로 둘러보기"로 넣은 예시 일정의 id(D-74). 예시 지우기가 지우고 비운다. */
     public final Set<String> sampleIds = new LinkedHashSet<>();
     /** 예시 일정마다 넣을 때의 제목, 시각, 메모, 날짜(D-94). 이와 다르면 사용자가 고친 예시라 예시 지우기가 남긴다. */

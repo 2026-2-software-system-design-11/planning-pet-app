@@ -18,6 +18,11 @@ public final class SettingsController {
         control.change(() -> store.calendarFixed = on);
     }
 
+    /** D-102. "목록 누르기". 켜면 홈과 일정관리 목록에서 줄을 한 번 누를 때 시각 고치기 창이 뜬다. */
+    public void listClickTime(boolean on) {
+        control.change(() -> store.listClickTime = on);
+    }
+
     /** D-91. "한 주 시작". 홈 달력, 일정관리의 주, 자동 배치 범위, 통계의 주, 마감 기본값이 따른다. */
     public void weekStart(java.time.DayOfWeek first) {
         control.change(() -> store.weekStart = first);

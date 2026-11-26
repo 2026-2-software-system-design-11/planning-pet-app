@@ -96,6 +96,11 @@ public final class TaskController {
         return scope >= 0;
     }
 
+    /** 설정 "목록 누르기"(D-102). 켜면 목록 줄을 한 번 누를 때 시각 고치기 창이 뜬다. */
+    public boolean listClickTime() {
+        return app.store.listClickTime;
+    }
+
     public LocalDate today() {
         return app.store.today();
     }

@@ -126,6 +126,16 @@ public final class TimeEditor {
         return app.schedule.clearTime(t);
     }
 
+    /**
+     * 창의 왼쪽 위(화면 좌표, root의 화면 자리 rootOnScreen을 더함): 누른 칸 바로 아래. 누른 자리를 덮지 않아 빨리 두 번 누른 두 번째가 창에 닿지 않는다(D-102). 창이 root
+     * 오른쪽 밖으로 나가면 오른쪽 끝을 root 오른쪽 끝에 맞춰 왼쪽으로 밀고, root보다 넓으면 왼쪽 끝을 맞춘다(05 시각 고치기 창).
+     */
+    public static Point spot(Component anchor, java.awt.Dimension size, Component root, Point rootOnScreen) {
+        Point p = SwingUtilities.convertPoint(anchor, 0, 0, root);
+        return new Point(rootOnScreen.x + Math.max(0, Math.min(p.x, root.getWidth() - size.width)),
+                rootOnScreen.y + p.y + anchor.getHeight() + 2);
+    }
+
     public static void open(App app, Task t, java.time.LocalDate day, Component anchor) {
         TimeEditor e = new TimeEditor(t, day, app.store.now);
         JDialog d = new JDialog(SwingUtilities.getWindowAncestor(app.root), JDialog.ModalityType.APPLICATION_MODAL);
@@ -152,8 +162,7 @@ public final class TimeEditor {
         d.getRootPane().registerKeyboardAction(x -> d.dispose(),
                 KeyStroke.getKeyStroke("ESCAPE"), JComponent.WHEN_IN_FOCUSED_WINDOW);
         d.pack();
-        Point p = anchor.getLocationOnScreen();
-        d.setLocation(p.x, p.y + anchor.getHeight() + 2);
+        d.setLocation(spot(anchor, d.getSize(), app.root, app.root.getLocationOnScreen()));
         d.setVisible(true);
     }
 }

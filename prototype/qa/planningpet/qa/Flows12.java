@@ -20,6 +20,7 @@ final class Flows12 {
         flows.put("UF-1-3", Flows12::uf13);
         flows.put("UF-1-4", Flows14::uf14);
         flows.put("UF-1-5", FlowsDrag::uf15);
+        flows.put("UF-1-6", FlowsSetting::uf16);
         flows.put("UF-2-1", () -> uf21(new Qa("UF-2-1")));
         flows.put("UF-2-2", () -> uf22(new Qa("UF-2-2")));
         flows.put("UF-2-3", Flows12::uf23);
