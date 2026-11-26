@@ -635,7 +635,7 @@ final class PeriodCheck {
         String onDue = gm.missed(d("11-20")) + " " + rows(gs.untimed);
         gone.store.now = d("11-22").atTime(9, 0);
         gone.store.changed();
-        eq("T-EDIT-47", "true 11/20 M 30분 ~11/20까지 17일에 하려던 일 오늘 마감 / false false 11/20 M 30분 ~11/20까지 지난 날",
+        eq("T-EDIT-47", "true 11/20 M 30분 17일에 하려던 일 오늘 마감 / false false 11/20 M 30분 ~11/20까지 지난 날",
                 onDue + " / " + gm.missed(d("11-22")) + " " + gm.onTimetable(d("11-22")) + " " + rows(gs.untimed));
         Store today = at("11-18T09:00");
         today.book.add(Task.Kind.TASK, "과제", d("11-18"), null, 30, "", null).get(0).done = true;
@@ -651,11 +651,11 @@ final class PeriodCheck {
         app.show("일정관리");
         app.store.changed();
         ScheduleScreen sched = ProtoCheck.find(app.root, ScheduleScreen.class);
-        eq("D-65 기간 할 일은 한 줄", "11/17 Q 30분 ~11/17까지 지난 날 / 11/18 P 30분 ~11/20까지 / 11/20 P 30분 ~11/20까지 마감",
+        eq("D-65 기간 할 일은 한 줄", "11/17 Q 30분 ~11/17까지 지난 날 / 11/18 P 30분 ~11/20까지 / 11/20 P 30분 마감",
                 rows(sched.untimed));
         app.store.now = d("11-20").atTime(9, 0);
         app.store.changed();
-        eq("D-93 마감 날이 오늘이면 오늘 마감", "11/17 Q 30분 ~11/17까지 지난 날 / 11/20 P 30분 ~11/20까지 오늘 마감",
+        eq("D-93 마감 날이 오늘이면 오늘 마감", "11/17 Q 30분 ~11/17까지 지난 날 / 11/20 P 30분 오늘 마감",
                 rows(sched.untimed));
         App wk = Main.create(at("11-17T09:00"));
         period(wk.store, "P", "11-16", "11-20", 30);

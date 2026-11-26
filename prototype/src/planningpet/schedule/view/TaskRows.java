@@ -267,7 +267,9 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
         // D-94: 마감 글, 하려던 일, "오늘 마감"과 "마감", "지난 날"은 제목 아래 둘째 줄 왼쪽이다. 제목이 줄의 폭을 먼저 받는다.
         // D-69: 지난 반복 사본은 "지난 날" 없이 흐리게 보인다. D-78: 끝낸 일에는 붙이지 않는다.
         boolean past = withDate && !t.done && t.countDay().isBefore(control.today()) && !t.pastCopy(control.today());
-        JLabel marks = marks(TaskBook.dueText(t), missedNote(t), dueTag(t, listDay), past);
+        // D-102(S160): 일정관리 목록의 마감 날 줄은 줄 앞 날짜가 마감 날이라 "~11/22까지"를 빼고 "마감", "오늘 마감"만 보인다.
+        String tag = dueTag(t, listDay);
+        JLabel marks = marks(withDate && tag != null ? null : TaskBook.dueText(t), missedNote(t), tag, past);
         // #277: 일정관리 목록의 마감이 지난 줄은 끌리지 않는 까닭을 먼저 보이고 메모는 그 아래다.
         String tip = withDate && t.pastDue(control.today()) ? lockedTip(t) : memoTip(t);
         label.setToolTipText(tip);
@@ -297,7 +299,8 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
         if (withDate) {
             // 일정관리 오른쪽 목록은 좁아서 버튼을 둘째 줄 오른쪽에 둔다.
             row.add(middle(minutes), BorderLayout.EAST);
-            JPanel buttons = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 2, 0));
+            // D-102(S160): 세 단추는 틈 없이 붙어 첫날 줄과 마감 날 줄의 표시가 단추와 한 줄에 든다.
+            JPanel buttons = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 0, 0));
             buttons.add(when);
             buttons.add(edit);
             buttons.add(delete);

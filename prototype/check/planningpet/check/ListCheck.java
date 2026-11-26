@@ -29,6 +29,7 @@ final class ListCheck {
         rowClick();
         pastDueClock();
         editorSpot();
+        twoLines();
         places();
         pastDue();
         drops();
@@ -337,6 +338,32 @@ final class ListCheck {
         eq("T-EDIT-21", "true true / false [] / null 2026-11-10 시각 없음 / null 2026-11-10 시각 없음 / 2026-11-16 [2026-11-16]",
                 tips + drag + " / " + dropped(app, q, "11-18", 600) + " / " + dropped(app, q, "11-19", 600) + " / " + q.dueDate + " "
                         + java.util.stream.Stream.of("11-16", "11-17", "11-18", "11-19").map(x -> d(x)).filter(x -> q.shownOn(x, d("11-18"))).toList());
+    }
+
+    /** T-WEEK-6(D-102, S160): 첫날 줄(마감 전이면 오늘 묶음, D-105)과 마감 날 줄은 표시가 단추와 한 줄에 들어 두 줄(56px)이다. "~10/20까지"는 날짜 글이 가장 넓다. */
+    static void twoLines() {
+        App app = Main.create(at("11-18T09:00"));
+        PeriodCheck.period(app.store, "지원서", "11-12", "11-20", 60);
+        PeriodCheck.period(app.store, "발표", "11-18", "11-18", 60);
+        Task wide = PeriodCheck.period(app.store, "토익", "11-19", "11-22", 30);
+        wide.dueDate = java.time.LocalDate.of(2027, 10, 20);
+        app.show("일정관리");
+        app.store.changed();
+        app.root.setSize(1000, 680);
+        PeriodCheck.layout(app.root);
+        PeriodCheck.layout(app.root);
+        ScheduleScreen sched = ProtoCheck.find(app.root, ScheduleScreen.class);
+        List<String> got = new ArrayList<>();
+        for (java.awt.Component row : sched.untimed.getComponents()) {
+            TaskRows.TitleLabel t = row instanceof java.awt.Container k ? find(k) : null;
+            if (t != null) {
+                got.add(t.getText().replaceAll("<[^>]+>", "").trim() + " " + row.getHeight());
+            }
+        }
+        javax.swing.JButton pill = PeriodCheck.pill(sched.untimed, wide);
+        got.add("시계와 연필 " + pill.getPreferredSize().equals(pill.getParent().getComponent(1).getPreferredSize()));
+        eq("T-WEEK-6", "11/18 지원서 56, 11/18 발표 56, 11/19 토익 56, 11/20 지원서 56, 시계와 연필 true / 11/18 지원서 60분 ~11/20까지"
+                + " / 11/18 발표 60분 오늘 마감 / 11/19 토익 30분 ~10/20까지 / 11/20 지원서 60분 마감", String.join(", ", got) + " / " + PeriodCheck.rows(sched.untimed));
     }
 
     /** T-EDIT-43(05 시각 고치기 창): 창은 단추 바로 아래이고, 앱 창 오른쪽 밖으로 나가면 왼쪽으로 밀려 앱 창 안에 든다. */

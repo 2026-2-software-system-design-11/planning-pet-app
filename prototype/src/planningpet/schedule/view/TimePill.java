@@ -19,7 +19,7 @@ import javax.swing.JButton;
 final class TimePill extends JButton {
     private final boolean empty;
     private final boolean done;
-    /** D-102(S103): 일정관리 목록의 작은 단추. 글 없이 시계 아이콘만 그린다. */
+    /** D-102(S103, S160): 일정관리 목록의 작은 단추. 글 없이 시계 아이콘만 그리고 연필, 휴지통과 같은 26px 원이다. */
     private boolean compact;
 
     /**
@@ -56,7 +56,7 @@ final class TimePill extends JButton {
     @Override
     public Dimension getPreferredSize() {
         if (compact) {
-            return new Dimension(30, 26);
+            return new Dimension(26, 26);
         }
         FontMetrics fm = getFontMetrics(getFont());
         // 폭은 줄마다 같다. 자정을 넘는 "23:30~01:00(다음 날)"(D-77)만 글에 맞춰 넓어진다.
