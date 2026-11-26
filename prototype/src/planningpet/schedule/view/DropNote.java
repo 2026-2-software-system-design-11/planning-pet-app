@@ -51,8 +51,11 @@ public final class DropNote extends Card {
         setVisible(false);
     }
 
-    /** 글을 보인다. undo가 있으면 "되돌리기"와 함께 5초, 없으면 3초. x, y는 상자 왼쪽 위, right는 그 자리에 둘 수 없을 때 오른쪽 끝. */
-    void open(String message, Runnable undo, int x, int y, int right) {
+    /**
+     * 글을 보인다. undo가 있으면 "되돌리기"와 함께 5초, 없으면 3초. x, y는 상자 왼쪽 위, right는 그 자리에 둘 수 없을 때 오른쪽 끝.
+     * 놓인 블록 block이 있고 양쪽 다 자리가 없으면 블록 바로 아래(보이는 칸 안에 자리가 없으면 위)에 블록 왼쪽 끝을 맞춘다(S158).
+     */
+    void open(String message, Runnable undo, int x, int y, int right, java.awt.Rectangle block) {
         text.setText(message);
         undoing = undo;
         this.undo.setVisible(undo != null);
@@ -61,7 +64,12 @@ public final class DropNote extends Card {
         // 시간표의 보이는 아래 끝에서는 잘리지 않게 위로 올린다.
         java.awt.Rectangle seen = ((javax.swing.JComponent) getParent()).getVisibleRect();
         int maxY = (seen.isEmpty() ? getParent().getHeight() : seen.y + seen.height) - size.height - 2;
-        setBounds(Math.max(0, x > maxX ? right - size.width : x), Math.max(0, Math.min(y, maxY)), size.width, size.height);
+        x = x > maxX ? right - size.width : x;
+        if (x < 0 && block != null) {
+            x = Math.min(block.x, maxX);
+            y = block.y + block.height + 2 <= maxY ? block.y + block.height + 2 : block.y - size.height - 2;
+        }
+        setBounds(Math.max(0, x), Math.max(0, Math.min(y, maxY)), size.width, size.height);
         timer.setInitialDelay(undo != null ? PLACED_MILLIS : WHY_MILLIS);
         timer.restart();
         setVisible(true);

@@ -36,6 +36,7 @@ final class ListCheck {
         preview();
         grab();
         notePlace();
+        noteBelow();
         escape();
         rollEdge();
         outside();
@@ -191,6 +192,40 @@ final class ListCheck {
                 + " " + now.contains(note.getBounds());
         eq("T-EDIT-40", "2026-11-19 true true / 2026-11-18 true true / false / 16:00~04:00(다음 날) true true",
                 left + " / " + low + " / " + moved + " / " + pulled);
+    }
+
+    /** T-EDIT-50~53(S158, S147, S148): 블록 양쪽에 글 상자가 들지 않으면 블록 바로 아래(왼쪽 끝 맞춤, 넘치면 밂), 아래 자리가 없으면 바로 위. */
+    static void noteBelow() {
+        String[][] cases = {{"T-EDIT-50", "11-16", "150", "2"}, {"T-EDIT-51", "11-16", "150", "3"}, {"T-EDIT-52", "11-16", "720", "2"},
+                {"T-EDIT-53", "11-15", "150", "2"}};
+        String[] want = {"2026-11-18 22:00~00:30(다음 날) 아래 맞춤 false true true", "2026-11-19 22:00~00:30(다음 날) 아래 밂 false true true",
+                "2026-11-18 16:00~04:00(다음 날) 위 밂 false true true", "2026-11-17 22:00~00:30(다음 날) 아래 맞춤 false true true"};
+        for (int k = 0; k < cases.length; k++) {
+            String[] c = cases[k];
+            planningpet.app.model.Store s = at(c[1] + "T09:00");
+            s.weekStart = c[1].equals("11-15") ? java.time.DayOfWeek.SUNDAY : java.time.DayOfWeek.MONDAY;
+            App app = Main.create(s);
+            Task t = app.store.book.add(Task.Kind.TASK, "빨래", d(c[1]), null, Integer.parseInt(c[2]), "", null).get(0);
+            app.show("일정관리");
+            app.store.changed();
+            app.root.setSize(1000, 680);
+            PeriodCheck.layout(app.root);
+            ScheduleScreen sched = ProtoCheck.find(app.root, ScheduleScreen.class);
+            TimetablePanel table = ProtoCheck.find(app.root, TimetablePanel.class);
+            sched.scrollTo(28 * 60);
+            PeriodCheck.layout(app.root);
+            int w = (table.getWidth() - TimetablePanel.GUTTER) / 7;
+            int col = TimetablePanel.GUTTER + Integer.parseInt(c[3]) * w;
+            java.awt.Rectangle seen = table.getVisibleRect();
+            dropAt(sched, table, t, new java.awt.Point(col + w / 2, t.minutes > 600 ? seen.y + seen.height - 3 : 22 * TimetablePanel.HOUR));
+            java.awt.Rectangle b = new java.awt.Rectangle(col, t.startMinute() * TimetablePanel.HOUR / 60, w, t.minutes * TimetablePanel.HOUR / 60);
+            java.awt.Rectangle n = table.note.getBounds();
+            java.awt.Rectangle now = table.getVisibleRect();
+            String side = n.y == b.y + b.height + 2 ? "아래" : n.y + n.height + 2 == b.y ? "위" : "옆";
+            String x = n.x == b.x ? "맞춤" : n.x + n.width == table.getWidth() - 2 ? "밂" : n.x + "";
+            eq(c[0], want[k], t.date + " " + planningpet.schedule.model.TaskBook.timeText(t) + " " + side + " " + x + " " + n.intersects(b) + " "
+                    + (n.x >= 0 && n.x + n.width <= table.getWidth()) + " " + (now.contains(n) && now.y <= b.y));
+        }
     }
 
     /** 일정관리 목록의 줄 t를 잡아 시간표 좌표 p에 놓는다. */

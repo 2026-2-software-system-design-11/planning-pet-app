@@ -131,7 +131,7 @@ public final class TimetablePanel extends JComponent {
         int day = (getWidth() - GUTTER) / 7;
         int x = GUTTER + (int) (t.date.toEpochDay() - monday.toEpochDay()) * day;
         if (r.text() != null && r.undo() == null) {
-            note.open(r.text(), null, at.x + 12, at.y + 12, at.x - 12);
+            note.open(r.text(), null, at.x + 12, at.y + 12, at.x - 12, null);
         } else if (r.text() != null) {
             int top = t.startMinute() * HOUR / 60;
             // S148: 당겨진 블록의 위 끝이 보이는 칸 위면 시간표를 굴려 블록 위 끝과 글 상자를 함께 보인다.
@@ -139,7 +139,10 @@ public final class TimetablePanel extends JComponent {
             if (top < seen.y) {
                 scrollRectToVisible(new java.awt.Rectangle(0, top, 1, seen.height));
             }
-            note.open(r.text(), r.undo(), x + day + 2, top, x - 2);
+            note.open(r.text(), r.undo(), x + day + 2, top, x - 2, new java.awt.Rectangle(x, top, day, t.minutes * HOUR / 60));
+            if (note.getY() < getVisibleRect().y) { // S158: 블록 위에 뜬 글 상자도 보이게 굴린다.
+                scrollRectToVisible(note.getBounds());
+            }
         }
     }
 
