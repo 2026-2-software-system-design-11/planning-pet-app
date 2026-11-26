@@ -25,7 +25,11 @@ public final class TaskForm {
     /** 걸리는 시간 칸에 쳐 넣은 값을 맞췄거나 받지 않았을 때 칸 아래 글(D-98). */
     /** 시작 시각 칸에 쳐 넣은 값을 맞췄거나 받지 않았을 때 칸 아래 글(D-98). */
     public final JLabel startNotice = new TypedField(start, Typed::start, () -> this.relayout.run()).notice;
-    public final JLabel minutesNotice = new TypedField(minutes, Typed::minutes, () -> this.relayout.run()).notice;
+    private final TypedField minutesTyped = new TypedField(minutes, Typed::minutes, () -> {
+        sync();
+        this.relayout.run();
+    });
+    public final JLabel minutesNotice = minutesTyped.notice;
     /** 7번 반복(D-64): 안 함, 매일, 요일. 요일이면 요일 단추 일곱(월부터 일)에서 하나 이상 고른다. */
     public final JComboBox<String> repeat = new JComboBox<>(new String[] {"안 함", "매일", "요일"});
     public final JToggleButton[] days = new JToggleButton[7];
@@ -309,7 +313,7 @@ public final class TaskForm {
         if (!dueTouched) {
             Ui.setDate(due, DefaultDates.due(day, weekStart));
         }
-        minutesHint.setVisible(!editing && (int) minutes.getValue() == 30);
+        minutesHint.setVisible(!editing && (int) minutes.getValue() == 30 && !minutesTyped.typed);
         Integer s = startTime();
         endLabel.setText(s == null ? "" : Times.endHint(s, (int) minutes.getValue()));
         realTime.setText(s == null ? "" : Times.real(day, s));

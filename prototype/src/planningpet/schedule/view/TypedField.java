@@ -11,6 +11,8 @@ public final class TypedField {
     public final JLabel notice = new JLabel();
     private final Runnable relayout;
     private Object about; // 글이 말하는 칸 값
+    /** 칸에 글을 쳐 넣어 읽은 적이 있는가. 일정 입력 창은 그 뒤 30분 안내를 숨긴다(S83). */
+    public boolean typed;
     /** 0보다 크면 글을 이 너비(px) 안에서 접는다(시각 고치기 창, D-98). */
     public java.util.function.IntSupplier wrap = () -> 0;
 
@@ -50,6 +52,7 @@ public final class TypedField {
                         if (text.equals(String.valueOf(now))) {
                             return now;
                         }
+                        typed = true;
                         Typed.Read r = reader.apply(text);
                         show(r.notice(), r.rejected() ? Theme.SUNDAY : Theme.INK_DIM, r.rejected() ? now : r.value());
                         if (r.rejected()) {

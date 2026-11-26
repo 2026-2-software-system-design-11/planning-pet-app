@@ -141,6 +141,7 @@ public final class ProtoCheck {
         eq("T-TYPE-9", "null 14:00처럼 적어 주세요 / null 14:00처럼 적어 주세요 / null 14:00처럼 적어 주세요", starts("25:00", "09:75", "점심"));
         eq("D-98 시작 시각 칸 아래 글", "09:05 흐린 5분 단위로 맞췄어요(09:05) / 14:00 / 흐린 하루는 새벽 4시에 넘어가요. 03:55(다음 날)로 맞췄어요"
                 + " / 흐린 최대 720분(12시간)까지 넣을 수 있어요 true", startTyped());
+        eq("S83 쳐 넣은 뒤 30분 안내", "true false 흐린 5분 단위로 맞췄어요(30분)", thirtyHint());
         Store c = MockData.sample();
         java.time.LocalDate nov = java.time.LocalDate.of(2026, 11, 1);
         TaskBook.CellPreview c14 = c.book.cellPreview(nov.withDayOfMonth(14));
@@ -371,6 +372,14 @@ public final class ProtoCheck {
         type(e.minutes, "730");
         return form + " / " + field.getText() + " / " + notice(e.startNotice) + " / " + notice(e.minutesNotice) + " "
                 + (e.startNotice.getParent() != e.minutesNotice.getParent());
+    }
+
+    /** 추가 창의 30분 안내는 값을 쳐 넣은 뒤에는 숨는다(S83). */
+    private static String thirtyHint() {
+        TaskForm f = new TaskForm(null, java.time.LocalDate.of(2026, 11, 16), java.time.LocalDateTime.of(2026, 11, 16, 9, 0));
+        boolean before = f.minutesHint.isVisible();
+        type(f.minutes, "31");
+        return before + " " + f.minutesHint.isVisible() + " " + notice(f.minutesNotice);
     }
 
     /** 칸에 글을 쳐 넣고 칸을 벗어난 것과 같다. 받지 않으면 이전 값이다. */
