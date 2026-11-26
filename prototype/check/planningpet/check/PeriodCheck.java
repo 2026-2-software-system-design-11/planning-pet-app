@@ -133,6 +133,41 @@ final class PeriodCheck {
         Ui.setDate(follow.date, d("12-20"));
         eq("D-79 끝 날짜는 손대기 전까지 따라간다", "2026-12-29 2026-12-10 반복: 반복 끝나는 날이 날짜보다 앞이에요",
                 followed + " " + Ui.dateOf(follow.repeatEnd) + " " + msgs(follow.problems()));
+        TaskForm keep = new TaskForm(null, d("11-16"), at("11-16T09:00").now);
+        TaskForm plain = new TaskForm(null, d("11-16"), at("11-16T09:00").now);
+        String kept = "";
+        for (TaskForm k : new TaskForm[] {keep, plain}) {
+            k.title.setText("보고서");
+            k.period.doClick();
+            if (k == keep) {
+                Ui.setDate(k.due, d("12-10"));
+            }
+            k.fixed.doClick();
+            k.task.doClick();
+            k.period.doClick();
+            kept += Ui.dateOf(k.due) + " ";
+        }
+        Ui.setDate(keep.date, d("12-12"));
+        eq("T-DEF-16", "2026-12-10 2026-11-22 2026-12-10 마감: 마감일이 시작일보다 앞이에요",
+                kept + Ui.dateOf(keep.due) + " " + msgs(keep.problems()));
+        TaskForm unpicked = new TaskForm(null, d("11-16"), at("11-16T09:00").now);
+        unpicked.title.setText("보고서");
+        unpicked.period.doClick();
+        Ui.setDate(unpicked.date, d("11-23"));
+        String moved = Ui.dateOf(unpicked.due) + " " + msgs(unpicked.problems());
+        Ui.setDate(unpicked.date, d("11-25"));
+        eq("T-DEF-18", "2026-11-29 오류 없음 2026-11-29 오류 없음",
+                moved + " " + Ui.dateOf(unpicked.due) + " " + msgs(unpicked.problems()));
+        App saved = Main.create(at("11-16T09:00"));
+        Task report = period(saved.store, "보고서", "11-16", "12-10", 30);
+        TaskForm edit = new TaskForm(report, report.date, saved.store.now);
+        edit.period.doClick();
+        Ui.setDate(edit.date, d("11-20"));
+        edit.period.doClick();
+        String reopened = Ui.dateOf(edit.due) + " ";
+        Ui.setDate(edit.date, d("12-12"));
+        eq("T-DEF-17", "2026-12-10 2026-12-10 마감: 마감일이 시작일보다 앞이에요",
+                reopened + Ui.dateOf(edit.due) + " " + msgs(edit.problems()));
         TaskForm names = new TaskForm(null, d("11-16"), at("11-16T09:00").now);
         names.period.doClick();
         String on = names.dateLabel.getText() + " " + names.dueLabel.getText();
