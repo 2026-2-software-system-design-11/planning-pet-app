@@ -240,7 +240,8 @@ public final class ProtoCheck {
         eq("T-EDIT-43", "21:00 22:00 21:00 22:00 22:00 / 21:00 null 21:00 null null / 영어 단어 영어 단어 복습 영어 단어 영어 단어 복습 영어 단어 복습 / 30개 30개 30개",
                 doneCopies());
         eq("T-EDIT-48", "11-16 21:00 / 11-18 04:00 / 11-18 21:00 끝 / 11-20 04:00 / 11-21 04:00", nightDoneCopy());
-        eq("T-EDIT-49", "11-16 21:00 / 11-18 21:00 끝 / 10 1 1 true", deleteDoneCopy());
+        eq("T-EDIT-49", "11-16 21:00 / 11-18 21:00 끝 / 10 1 1 true", deleteDoneCopy(1));
+        eq("T-EDIT-49 끝낸 사본을 눌러 지움", "11-16 21:00 / 11-17 21:00 / 10 1 1 true", deleteDoneCopy(2));
         newRules();
         PeriodCheck.run();
         DayCheck.run();
@@ -344,12 +345,15 @@ public final class ProtoCheck {
         return copies(c);
     }
 
-    /** T-EDIT-49(D-42, 06의 5번): 삭제의 이후 반복 모두는 끝낸 사본을 남기고 포인트와 보상 기록이 그대로다. */
-    private static String deleteDoneCopy() {
+    /**
+     * T-EDIT-49(D-42, 06의 5번): 삭제의 이후 반복 모두는 지운 사본과 끝내지 않은 사본을 지우고 끝낸 사본을 남긴다. 포인트와 보상 기록은
+     * 그대로다. pressed는 지울 사본(1은 11-17, 2는 끝낸 11-18)이다.
+     */
+    private static String deleteDoneCopy(int pressed) {
         App app = Main.create(MockData.empty());
         java.util.List<Task> c = doneSeries(app);
         int exp = app.store.pet().exp;
-        app.schedule.delete(c.get(1));
+        app.schedule.delete(c.get(pressed));
         return copies(app.store.tasks) + " / " + app.store.points + " " + app.store.rewardCount + " "
                 + app.store.book.rewardHistory().size() + " " + (app.store.pet().exp == exp);
     }
