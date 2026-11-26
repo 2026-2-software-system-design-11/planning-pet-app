@@ -375,6 +375,17 @@ public final class TaskForm {
         return nightFrom != null && Ui.dateOf(date).equals(nightFrom.plusDays(1)) ? nightFrom : null;
     }
 
+    /** 받을 수 없는 글을 친 채 저장을 누르면 true. 칸 순서대로 첫 칸에 빨간 글과 커서를 둔다(D-98). */
+    public boolean blocked() {
+        return timed.isSelected() && startTyped.blocks() || minutesTyped.blocks();
+    }
+
+    /** 창의 저장 단추를 알린다. 이 단추를 누르는 동안 포커스가 칸에서 단추로 옮겨 갈 때만 친 채 저장으로 본다(D-98). */
+    public void saveWith(javax.swing.AbstractButton save) {
+        startTyped.saveWith(save);
+        minutesTyped.saveWith(save);
+    }
+
     /** 06의 2번 검사. */
     public java.util.List<String[]> problems() {
         return TaskCheck.check(draft(), editing, placed);

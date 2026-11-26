@@ -162,6 +162,9 @@ public final class ProtoCheck {
         Typed.Read r30 = Typed.start("밤 4시", java.time.LocalDate.of(2026, 11, 30));
         Typed.Read due = Typed.start("밤 4시", java.time.LocalDate.of(2026, 11, 18), java.time.LocalDate.of(2026, 11, 18));
         eq("D-98 칸이 친 채 저장을 가름", "true false true false false false", typedBlocks());
+        eq("T-TYPE-13 친 채 저장", "false 빨간 숫자(분)로 넣어 주세요(예: 30) / true 1 / false 빨간 14:00처럼 적어 주세요", saveTyped());
+        eq("T-TYPE-13 두 창 두 칸에서 저장 단추로", "false 빨간 14:00처럼 적어 주세요 / false 빨간 숫자(분)로 넣어 주세요(예: 30) / "
+                + "false 빨간 14:00처럼 적어 주세요 / false 빨간 숫자(분)로 넣어 주세요(예: 30)", pressToSave());
         eq("D-98 이후 반복 모두의 밤 4시", "2026-11-19 240 2026-11-26 240 2026-12-03 240", nightSeries());
         eq("T-TYPE-12", "04:00 1 12월 1일(화) 04:00으로 읽었어요 / 03:55(다음 날) 0 마감(18일) 안에 두려고 03:55로 맞췄어요",
                 r30.value() + " " + r30.days() + " " + r30.notice() + " / " + due.value() + " " + due.days() + " " + due.notice());
@@ -485,6 +488,22 @@ public final class ProtoCheck {
         return field.getText() + " " + field.getSelectedText();
     }
 
+    /** 받을 수 없는 글을 친 채 저장하면 막고, 빨간 글이 뜨고 이전 값으로 돌아간 뒤 저장하면 그 값으로 저장한다(D-98). */
+    private static String saveTyped() {
+        App app = Main.create(MockData.empty());
+        TaskForm f = new TaskForm(null, java.time.LocalDate.of(2026, 11, 18), app.store.now);
+        f.title.setText("보고서");
+        var field = ((javax.swing.JSpinner.DefaultEditor) f.minutes.getEditor()).getTextField();
+        field.setText("30abc");
+        String first = TaskDialog.trySave(app, f, null) + " " + notice(f.minutesNotice);
+        field.setValue(field.getValue());
+        String second = TaskDialog.trySave(app, f, null) + " " + app.store.tasks.size();
+        Task t = app.store.tasks.get(0);
+        TimeEditor e = new TimeEditor(t, java.time.LocalDate.of(2026, 11, 18), app.store.now);
+        ((javax.swing.JSpinner.DefaultEditor) e.start.getEditor()).getTextField().setText("25:00");
+        return first + " / " + second + " / " + TimeEditor.save(app, t, e) + " " + notice(e.startNotice);
+    }
+
     /** 저장 단추를 누른 채 칸의 글을 두고 포커스가 단추로 옮겨 간 뒤 떼는 것과 같다(실제 창의 저장 누름). 떼면 단추의 동작이 돈다. */
     static void pressSave(javax.swing.JSpinner s, String text, javax.swing.AbstractButton save) {
         save.getModel().setArmed(true);
@@ -492,6 +511,42 @@ public final class ProtoCheck {
         leave(s, text, save);
         save.getModel().setPressed(false);
         save.getModel().setArmed(false);
+    }
+
+    /** 저장 단추를 붙인 일정 입력 창. 단추를 떼면 저장하고 그 결과를 out에 붙인다. */
+    private static TaskForm formWithSave(App app, javax.swing.JButton save, StringBuilder out) {
+        TaskForm f = new TaskForm(null, java.time.LocalDate.of(2026, 11, 18), app.store.now);
+        TaskDialog.content(f, new javax.swing.JButton("취소"), save, null);
+        f.title.setText("보고서");
+        f.timed.setSelected(true);
+        f.sync();
+        save.addActionListener(x -> out.append(TaskDialog.trySave(app, f, null)).append(" "));
+        return f;
+    }
+
+    /** 10:00, 60분 할 일의 시각 고치기 창. 저장 단추를 떼면 저장하고 그 결과를 out에 붙인다. */
+    private static TimeEditor editorWithSave(App app, StringBuilder out) {
+        Task t = app.store.book.add(Task.Kind.TASK, "과제", java.time.LocalDate.of(2026, 11, 18), java.time.LocalTime.of(10, 0), 60, "", null).get(0);
+        TimeEditor e = new TimeEditor(t, app.store.now);
+        e.save.addActionListener(x -> out.append(TimeEditor.save(app, t, e)).append(" "));
+        return e;
+    }
+
+    /** 두 창의 시작 칸과 걸리는 시간 칸에 받을 수 없는 글을 친 채 저장을 누르면 막고 그 칸 아래 빨간 글을 보인다(D-98). */
+    private static String pressToSave() {
+        StringBuilder out = new StringBuilder();
+        for (int i = 0; i < 2; i++) {
+            javax.swing.JButton save = new javax.swing.JButton("저장");
+            TaskForm f = formWithSave(Main.create(MockData.empty()), save, out);
+            pressSave(i == 0 ? f.start : f.minutes, i == 0 ? "abc" : "30abc", save);
+            out.append(notice(i == 0 ? f.startNotice : f.minutesNotice)).append(" / ");
+        }
+        for (int i = 0; i < 2; i++) {
+            TimeEditor e = editorWithSave(Main.create(MockData.empty()), out);
+            pressSave(i == 0 ? e.start : e.minutes, i == 0 ? "abc" : "30abc", e.save);
+            out.append(notice(i == 0 ? e.startNotice : e.minutesNotice)).append(" / ");
+        }
+        return out.substring(0, out.length() - 3);
     }
 
     /** 칸에 글을 치고 포커스를 to로 옮긴 것과 같다. JFormattedTextField처럼 포커스 리스너를 부른 뒤 글을 확정하고, 받지 않으면 이전 값으로 돌린다. */
