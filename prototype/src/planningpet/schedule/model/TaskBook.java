@@ -336,20 +336,20 @@ public final class TaskBook {
     }
 
     /**
-     * 06의 7번. 일정관리 오른쪽 목록: 그 주에 보이는 시각 없는 할 일을 그 주에서 보이는 첫날에 한 줄씩. 끝내지 않은 기간 할 일은
-     * 마감 날이 그 주에 있고 첫날과 다르면 마감 날에 한 줄을 더한다(D-93). 줄의 날짜 순, 같은 날은 넣은 순.
+     * 06의 7번. 일정관리 오른쪽 목록: 그 주에 보이는 시각 없는 할 일을 한 줄씩(줄의 날짜는 rowDay, D-105). 끝내지 않은 기간 할 일은
+     * 마감 날이 그 주에 있고 줄의 날짜와 다르면 마감 날에 한 줄을 더한다(D-93). 줄의 날짜 순, 같은 날은 넣은 순.
      */
     public List<WeekRow> untimedOfWeek(LocalDate weekStart) {
         LocalDate now = today();
         List<WeekRow> rows = new ArrayList<>();
         tasks.stream().filter(t -> t.kind == Task.Kind.TASK && !t.onTimetable(now)).forEach(t -> {
-            LocalDate first = rowDay(t, weekStart, now);
-            if (first == null) {
+            LocalDate day = rowDay(t, weekStart, now);
+            if (day == null) {
                 return;
             }
-            rows.add(new WeekRow(t, first));
+            rows.add(new WeekRow(t, day));
             boolean dueInWeek = t.period() && !t.done && !t.dueDate.isBefore(weekStart) && t.dueDate.isBefore(weekStart.plusDays(7));
-            if (dueInWeek && !t.dueDate.equals(first) && t.shownOn(t.dueDate, now)) {
+            if (dueInWeek && !t.dueDate.equals(day) && t.shownOn(t.dueDate, now)) {
                 rows.add(new WeekRow(t, t.dueDate));
             }
         });
@@ -357,14 +357,22 @@ public final class TaskBook {
         return rows;
     }
 
-    /** 일정관리 목록 줄의 날짜: 그 주에서 보이는 첫날. 그 주에 보이지 않으면 null(D-65). */
+    /**
+     * 일정관리 목록 줄의 날짜(D-65, D-105): 그 주에서 보이는 날 가운데 오늘이거나 오늘 뒤인 첫날. 그런 날이 없으면(오늘이 없는 지난주)
+     * 그 주에서 보이는 마지막 날. 마감 전 기간 할 일은 이번 주에서 오늘 줄이 된다. 그 주에 보이지 않으면 null.
+     */
     public static LocalDate rowDay(Task t, LocalDate weekStart, LocalDate today) {
+        LocalDate last = null;
         for (int i = 0; i < 7; i++) {
-            if (t.shownOn(weekStart.plusDays(i), today)) {
-                return weekStart.plusDays(i);
+            LocalDate day = weekStart.plusDays(i);
+            if (t.shownOn(day, today)) {
+                if (!day.isBefore(today)) {
+                    return day;
+                }
+                last = day;
             }
         }
-        return null;
+        return last;
     }
 
     /** 겹친 일정과 겹친 분(D-87). sameDay가 아니면 그 일정은 앞날이나 다음 날의 일이다(D-94). */
