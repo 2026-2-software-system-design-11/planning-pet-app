@@ -290,7 +290,8 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
         boolean pastPeriod = !t.done && t.period() && listDay.isBefore(today) && (!withDate || t.dueDate.isBefore(today));
         String why = pastPeriod ? "지난 날에는 시각을 정할 수 없어요" : null;
         TimePill when = withDate ? TimePill.icon(t.done, t.done || pastPeriod, why) : new TimePill(time, t.done, t.done || pastPeriod, why);
-        java.time.LocalDate openDay = withDate && t.period() && listDay.isBefore(today) ? today : listDay;
+        // 마감이 지난 줄은 목록의 날(지난 날)을 그대로 넘겨 컨트롤러도 막는다(사용자 결정 2026-11-26).
+        java.time.LocalDate openDay = withDate && t.period() && listDay.isBefore(today) && !t.dueDate.isBefore(today) ? today : listDay;
         when.addActionListener(e -> control.editTime(t, openDay, when));
         watched.add(when);
         if (withDate) {

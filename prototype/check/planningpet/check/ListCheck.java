@@ -27,6 +27,7 @@ final class ListCheck {
 
     static void run() {
         rowClick();
+        pastDueClock();
         places();
         pastDue();
         drops();
@@ -335,6 +336,24 @@ final class ListCheck {
         eq("T-EDIT-21", "true true / false [] / null 2026-11-10 시각 없음 / null 2026-11-10 시각 없음 / 2026-11-16 [2026-11-16]",
                 tips + drag + " / " + dropped(app, q, "11-18", 600) + " / " + dropped(app, q, "11-19", 600) + " / " + q.dueDate + " "
                         + java.util.stream.Stream.of("11-16", "11-17", "11-18", "11-19").map(x -> d(x)).filter(x -> q.shownOn(x, d("11-18"))).toList());
+    }
+
+    /** T-EDIT-42(D-102): 마감이 지난 기간 할 일 줄의 시각 단추는 흐리고, 단추의 동작을 불러도 컨트롤러가 막는다. */
+    static void pastDueClock() {
+        App app = Main.create(at("11-18T09:00"));
+        Task q = PeriodCheck.period(app.store, "Q", "11-10", "11-16", 30);
+        List<String> opened = new ArrayList<>();
+        app.schedule.timeOpener = (t, day, anchor) -> opened.add("창 " + t.title + " " + day);
+        app.show("일정관리");
+        app.store.changed();
+        ScheduleScreen sched = ProtoCheck.find(app.root, ScheduleScreen.class);
+        javax.swing.JButton pill = PeriodCheck.pill(sched.untimed, q);
+        app.settings.listClickTime(true);
+        click(title(sched.untimed, q), 1);
+        for (java.awt.event.ActionListener l : pill.getActionListeners()) {
+            l.actionPerformed(new java.awt.event.ActionEvent(pill, java.awt.event.ActionEvent.ACTION_PERFORMED, ""));
+        }
+        eq("T-EDIT-42", "false [] 2026-11-10 null", pill.isEnabled() + " " + opened + " " + q.date + " " + q.start);
     }
 
     /** T-EDIT-16(D-102): 한 번은 아무 일도 없고 두 번은 수정 창, 시각 단추는 둘째 줄 연필 앞. 설정을 켜면 두 목록 모두 한 번에 창, 두 번째는 없음. */
