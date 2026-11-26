@@ -18,7 +18,7 @@ public final class TypedField {
     private String shown;
     /** 칸에 글을 쳐 넣어 읽은 적이 있는가. 일정 입력 창은 그 뒤 30분 안내를 숨긴다(D-98). */
     public boolean typed;
-    /** 마지막으로 읽은 값과 그때 옮길 날 수("밤 4시", S87). */
+    /** 마지막으로 읽은 값과 그때 옮길 날 수("밤 4시", D-98). */
     private Object daysFor;
     private int days;
     /** 0보다 크면 글을 이 너비(px) 안에서 낱말 사이로 접는다(시각 고치기 창, D-98). */
@@ -32,8 +32,8 @@ public final class TypedField {
         DocumentFilter filter = new DocumentFilter() {
             @Override
             public void replace(FilterBypass fb, int off, int len, String text, AttributeSet a) throws BadLocationException {
-                // 목록 칸은 쳐 넣는 동안 친 글로 채운 값을 보인다("14"는 "14:00", "2"는 "14:00", S88). 채운 값이 보이는 동안
-                // 다음 글자는 칸에 보이는 글이 아니라 친 글 뒤에 붙인다("2", "1"은 "21:00", QA B-1).
+                // 목록 칸은 쳐 넣는 동안 친 글로 채운 값을 보인다("14"는 "14:00", "2"는 "14:00", D-98). 채운 값이 보이는 동안
+                // 다음 글자는 칸에 보이는 글이 아니라 친 글 뒤에 붙인다("2", "1"은 "21:00", D-98).
                 Document d = fb.getDocument();
                 String now = d.getText(0, d.getLength());
                 boolean filled = now.equals(shown) && off == raw.length() && off + len == now.length();
@@ -112,7 +112,7 @@ public final class TypedField {
     private void show(String text, java.awt.Color color, Object value) {
         about = text == null ? null : value;
         plain = text == null ? "" : text;
-        // S99: 글이 사라지면("밤 4시" 뒤 화살표) 그 읽기로 옮길 날도 없어진다.
+        // D-98: 글이 사라지면("밤 4시" 뒤 화살표) 그 읽기로 옮길 날도 없어진다.
         days = text == null ? 0 : days;
         notice.setForeground(color);
         notice.setVisible(text != null);

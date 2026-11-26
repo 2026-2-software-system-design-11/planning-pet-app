@@ -143,13 +143,13 @@ public final class ProtoCheck {
                 + "00:00(다음 날)로 읽었어요 / 14:00 null 1 1 0", starts("밤 4시", "밤 5시", "오전 12시", "오후 14시") + " "
                 + Typed.start("밤 4시", java.time.LocalDate.of(2026, 11, 18)).days() + " " + Typed.start("밤 5시", java.time.LocalDate.of(2026, 11, 18)).days()
                 + " " + Typed.start("오전 12시", java.time.LocalDate.of(2026, 11, 18)).days());
-        eq("B-1 한 글자씩 친 시작 시각", "21:30 20:00 22:30 14:30 19:30 / 21:30 20:00", keyed());
-        eq("S88 한 글자를 채워 보인다", "13:00 3:00", oneDigitFill());
-        eq("S81, S87 밤 4시", "2026-11-19 04:00 흐린 19일(목) 04:00으로 읽었어요 / 2026-11-19 240", nightForm());
-        eq("S99, S101, S114, D-101 밤 4시 뒤", "2026-11-19 / 2026-11-18 없음 / 2026-11-18 흐린 5분 단위로 맞췄어요(22:05) / 2026-11-18 245 없음", nightAfter());
+        eq("D-98 한 글자씩 친 시작 시각", "21:30 20:00 22:30 14:30 19:30 / 21:30 20:00", keyed());
+        eq("D-98 한 글자를 채워 보인다", "13:00 3:00", oneDigitFill());
+        eq("D-98 밤 4시", "2026-11-19 04:00 흐린 19일(목) 04:00으로 읽었어요 / 2026-11-19 240", nightForm());
+        eq("D-98, D-101 밤 4시 뒤", "2026-11-19 / 2026-11-18 없음 / 2026-11-18 흐린 5분 단위로 맞췄어요(22:05) / 2026-11-18 245 없음", nightAfter());
         Typed.Read r30 = Typed.start("밤 4시", java.time.LocalDate.of(2026, 11, 30));
         Typed.Read due = Typed.start("밤 4시", java.time.LocalDate.of(2026, 11, 18), java.time.LocalDate.of(2026, 11, 18));
-        eq("S111 이후 반복 모두의 밤 4시", "2026-11-19 240 2026-11-26 240 2026-12-03 240", nightSeries());
+        eq("D-98 이후 반복 모두의 밤 4시", "2026-11-19 240 2026-11-26 240 2026-12-03 240", nightSeries());
         eq("T-TYPE-12", "04:00 1 12월 1일(화) 04:00으로 읽었어요 / 03:55(다음 날) 0 마감(18일) 안에 두려고 03:55로 맞췄어요",
                 r30.value() + " " + r30.days() + " " + r30.notice() + " / " + due.value() + " " + due.days() + " " + due.notice());
         eq("T-TYPE-8", "14:00 14:00 20:00 09:00 12:00 14:30 14:30 07:00 19:00 21:00 12:00 11:00 01:00(다음 날) 02:00(다음 날) 00:00(다음 날) 05:00",
@@ -505,7 +505,7 @@ public final class ProtoCheck {
         return form + " / " + t.date + " " + t.startMinute();
     }
 
-    /** 두 창의 시작 시각 칸에 키보드로 한 글자씩 친 값. 채워 보인 값이 아니라 친 글 뒤에 다음 글자가 붙는다(QA B-1). */
+    /** 두 창의 시작 시각 칸에 키보드로 한 글자씩 친 값. 채워 보인 값이 아니라 친 글 뒤에 다음 글자가 붙는다(D-98). */
     private static String keyed() {
         TaskForm f = new TaskForm(null, java.time.LocalDate.of(2026, 11, 18), java.time.LocalDateTime.of(2026, 11, 18, 9, 0));
         f.timed.setSelected(true);

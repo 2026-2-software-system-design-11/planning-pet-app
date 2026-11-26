@@ -64,7 +64,7 @@ public final class Typed {
         return start(text, day, null);
     }
 
-    /** due가 있으면(기간 할 일) "밤 4시"로 마감 다음 날로 넘기지 않고 그날 끝 03:55(다음 날)로 맞춘다(S116). */
+    /** due가 있으면(기간 할 일) "밤 4시"로 마감 다음 날로 넘기지 않고 그날 끝 03:55(다음 날)로 맞춘다(D-98). */
     public static Read start(String text, java.time.LocalDate day, java.time.LocalDate due) {
         String t = text.strip();
         String f = fill(t);
@@ -80,19 +80,19 @@ public final class Typed {
         m += next && m < Task.DAY ? Task.DAY : 0;
         int last = Task.DAY_END - 5;
         if (m >= Task.DAY_END && !next) {
-            // S81, S85: "밤 4시", "밤 5시"는 다음 달력 날의 그 시각이다.
+            // D-98: "밤 4시", "밤 5시"는 다음 달력 날의 그 시각이다.
             java.time.LocalDate d = day.plusDays(1);
             if (due != null && d.isAfter(due)) {
                 return new Read(Times.value(last), "마감(" + due.getDayOfMonth() + "일) 안에 두려고 03:55로 맞췄어요");
             }
             String v = Times.value(Math.min((int) Math.round((m - Task.DAY) / 5.0) * 5, Task.DAY - 5));
-            // S112: 일정의 달과 다르면 달을 붙인다("12월 1일(화)").
+            // D-98: 일정의 달과 다르면 달을 붙인다("12월 1일(화)").
             String month = d.getMonthValue() == day.getMonthValue() ? "" : d.getMonthValue() + "월 ";
             return new Read(v, month + d.getDayOfMonth() + "일(" + "월화수목금토일".charAt(d.getDayOfWeek().getValue() - 1) + ") " + v
                     + planningpet.common.model.Rules.josa(v, "으로", "로") + " 읽었어요", 1);
         }
         int r = (int) Math.round(m / 5.0) * 5;
-        // S117, S119: 까닭이 둘이면 값을 정한 까닭을 보인다. 다음 날 04:00을 넘으면 하루 끝이다.
+        // D-98: 까닭이 둘이면 값을 정한 까닭을 보인다. 다음 날 04:00을 넘으면 하루 끝이다.
         if (m >= Task.DAY_END || r > last && m >= Task.DAY) {
             return new Read(Times.value(last), "하루는 새벽 4시에 끝나서 " + Times.value(last) + "로 맞췄어요");
         }
@@ -113,7 +113,7 @@ public final class Typed {
         return new Read(v, r == m ? null : "5분 단위로 맞췄어요(" + v + ")");
     }
 
-    /** 쳐 넣는 동안 시작 시각 칸에 채워 보일 값(S82, S88). 한 글자 1~8은 오후 시각, 아니면 그 앞부분으로 시작하는 첫 목록 값. */
+    /** 쳐 넣는 동안 시작 시각 칸에 채워 보일 값(D-98). 한 글자 1~8은 오후 시각, 아니면 그 앞부분으로 시작하는 첫 목록 값. */
     public static String fill(String t) {
         if (t.matches("[1-8]")) {
             return Times.value((Integer.parseInt(t) + 12) * 60);
@@ -132,7 +132,7 @@ public final class Typed {
             int g = c.group(1) != null ? 1 : c.group(3) != null ? 3 : 5;
             h = Integer.parseInt(c.group(g));
             min = g == 5 ? 0 : Integer.parseInt(c.group(g + 1));
-            // S110: 앞에 0 없이 친 한 자리 1~8시("730", "7:30")는 "7시 30분"처럼 오후다.
+            // D-98: 앞에 0 없이 친 한 자리 1~8시("730", "7:30")는 "7시 30분"처럼 오후다.
             h += g != 5 && c.group(g).matches("[1-8]") ? 12 : 0;
         } else if (w.matches()) {
             h = hour(w.group(1), Integer.parseInt(w.group(2)));
@@ -144,7 +144,7 @@ public final class Typed {
         return h < 0 || h > most || min > 59 ? -1 : h * 60 + min;
     }
 
-    /** "N시"의 시(S54, S60~S62, S81, S100). 새벽과 밤의 1~3시, 밤의 4~5시, 밤과 오전의 12시는 다음 날이라 24를 더한다. 아침 12시는 낮 12시다. */
+    /** "N시"의 시(D-98). 새벽과 밤의 1~3시, 밤의 4~5시, 밤과 오전의 12시는 다음 날이라 24를 더한다. 아침 12시는 낮 12시다. */
     private static int hour(String word, int n) {
         if (n > 12) {
             return n > 23 ? -1 : n;

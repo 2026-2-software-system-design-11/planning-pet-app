@@ -28,7 +28,7 @@ public final class TimeEditor {
     public final JLabel startNotice;
     public final JLabel minutesNotice;
     private final TypedField typedStart;
-    /** 시작 시각을 둘 날. "밤 4시"로 읽으면 저장할 때 그 다음 날로 옮긴다(S87). */
+    /** 시작 시각을 둘 날. "밤 4시"로 읽으면 저장할 때 그 다음 날로 옮긴다(D-98). */
     private final java.time.LocalDate base;
     /** 칸 아래 글이 늘거나 줄면 창 크기를 다시 맞춘다. 창 없이 만들 때는 아무것도 하지 않는다. */
     public Runnable relayout = () -> { };
