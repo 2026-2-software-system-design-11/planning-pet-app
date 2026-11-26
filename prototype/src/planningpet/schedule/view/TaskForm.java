@@ -54,9 +54,30 @@ public final class TaskForm {
     private boolean syncing;
     /** 저장을 한 번 누른 뒤에는 칸을 고칠 때마다 다시 검사한다(D-43). */
     private boolean checked;
+    /** D-101: 요일을 한 번 고른 뒤에는 다른 반복을 거쳐 돌아와도 단추를 그대로 둔다. */
+    private boolean daysShown;
+    /** D-101: 앱이 골라 준 요일. 사용자가 요일 단추를 누르면 null이 되고 날짜를 따라가지 않는다. */
+    private java.time.DayOfWeek autoDay;
+    /** D-101: 고정 일정으로 가기 앞의 시작 시각 정하기, 기간 안에 하기, 마감. 할 일로 돌아오면 되돌리고 null이 된다. */
+    private Boolean timedBefore;
+    private boolean periodBefore;
+    private LocalDate dueBefore;
+    /** D-101: 기간 때문에 앱이 끄기 앞의 정하기. 기간을 끄면 되돌리고 null이 된다. */
+    private Boolean timedBeforePeriod;
+    /** D-101: 반복 때문에 앱이 끈 기간 할 일의 마감. 반복을 안 함으로 되돌리면 기간과 함께 되돌리고 null이 된다. */
+    private LocalDate dueBeforeRepeat;
     /** 오류 글이 늘거나 줄면 창 크기를 다시 맞춘다. 창 없이 만들 때는 아무것도 하지 않는다. */
     Runnable relayout = () -> { };
     private int row;
+
+    /** S129(D-101): 날짜를 바꾼 그 순간의 시계. 앱 창은 앱 시계(Store.now)를 넣는다. 처음은 창을 연 때다. */
+    public java.util.function.Supplier<java.time.LocalDateTime> clock;
+    /** S129(D-101): 사용자가 시작 시각을 만졌는지. 만지기 전에는 날짜의 기본 시작 시각을 따라간다. */
+    private boolean startTouched;
+    /** S129: 시작 시각을 마지막으로 잰 날짜. 날짜가 바뀐 때만 다시 잰다. 처음 sync에서 잰다. */
+    private LocalDate startDay;
+    /** S144: 지난 sync에서 시작 칸을 쓸 수 있었는지. 쓸 수 있게 되는 순간에도 다시 잰다. */
+    private boolean startOpen;
 
     /** 마감 기본값이 쓰는 한 주의 시작 요일(D-91). */
     private final java.time.DayOfWeek weekStart;
@@ -68,6 +89,9 @@ public final class TaskForm {
 
     public TaskForm(Task t, LocalDate defaultDate, java.time.LocalDateTime now, java.time.DayOfWeek weekStart) {
         this.weekStart = weekStart;
+        clock = () -> now;
+        // D-101: 수정 창에서 저장해 둔 시각은 사용자 값이다. 시각 없는 일정의 시작 칸은 앱이 채운 값이라 날짜를 따라간다.
+        startTouched = t != null && t.timed();
         editing = t != null;
         copy = t != null && t.seriesId != null;
         Ui.limit(title, 100);
@@ -81,7 +105,10 @@ public final class TaskForm {
         for (int i = 0; i < 7; i++) {
             days[i] = new JToggleButton(String.valueOf("월화수목금토일".charAt(i)));
             days[i].setMargin(new Insets(1, 4, 1, 4));
-            days[i].addActionListener(e -> sync());
+            days[i].addActionListener(e -> {
+                autoDay = null;
+                sync();
+            });
         }
         start.setValue(Times.value(DefaultDates.start(defaultDate, now)));
         for (String k : new String[] {"제목", "마감", "시작 시각", "걸리는 시간", "메모", "반복"}) {
@@ -126,7 +153,9 @@ public final class TaskForm {
         if (t != null) {
             fixed.setSelected(t.kind == Task.Kind.FIXED);
             timed.setSelected(t.timed() && !t.period());
-            start.setValue(t.timed() ? Times.value(t.startMinute()) : "09:00");
+            if (t.timed()) {
+                start.setValue(Times.value(t.startMinute()));
+            }
             minutes.setValue(t.minutes);
             memo.setText(t.memo);
             category.setSelectedItem(t.category);
@@ -136,12 +165,11 @@ public final class TaskForm {
         fixed.addActionListener(e -> sync());
         timed.addActionListener(e -> sync());
         repeat.addActionListener(e -> {
-            if (!syncing && repeat.getSelectedIndex() == 2) {
-                // 요일을 고르면 날짜의 요일이 골라져 있다(05 일정 입력 창 7번).
-                int dow = Ui.dateOf(date).getDayOfWeek().getValue() - 1;
-                for (int i = 0; i < 7; i++) {
-                    days[i].setSelected(i == dow);
-                }
+            if (!syncing && repeat.getSelectedIndex() == 2 && !daysShown) {
+                // 요일을 처음 고르면 날짜의 요일이 골라져 있다(D-93, 05 일정 입력 창 7번).
+                daysShown = true;
+                autoDay = Ui.dateOf(date).getDayOfWeek();
+                pick(autoDay);
             }
             sync();
         });
@@ -152,7 +180,12 @@ public final class TaskForm {
             }
             sync();
         });
-        start.addChangeListener(e -> sync());
+        start.addChangeListener(e -> {
+            if (!syncing) {
+                startTouched = true;
+            }
+            sync();
+        });
         minutes.addChangeListener(e -> sync());
         title.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
             @Override
@@ -193,21 +226,46 @@ public final class TaskForm {
         task.setEnabled(!editing);
         fixed.setEnabled(!editing);
         boolean isFixed = fixed.isSelected();
+        // D-101: 고정 일정이라서 앱이 바꾼 칸은 할 일로 돌아오면 사용자가 둔 값으로 되돌린다.
+        if (isFixed && !editing && timedBefore == null) {
+            timedBefore = timedBeforePeriod != null ? timedBeforePeriod : timed.isSelected();
+            periodBefore = period.isSelected();
+            dueBefore = Ui.dateOf(due);
+        } else if (!isFixed && timedBefore != null) {
+            timed.setSelected(timedBefore);
+            period.setSelected(periodBefore);
+            Ui.setDate(due, dueBefore);
+            timedBefore = null;
+        }
+        boolean repeating = repeat.getSelectedIndex() != 0;
+        boolean periodAllowed = !isFixed && !copy && !repeating;
+        if (!isFixed && !copy && repeating && period.isSelected()) {
+            dueBeforeRepeat = Ui.dateOf(due);
+        } else if (periodAllowed && dueBeforeRepeat != null) {
+            period.setSelected(true);
+            Ui.setDate(due, dueBeforeRepeat);
+            dueBeforeRepeat = null;
+        }
+        // 기간을 먼저 끈다. 기간 할 일에서 고정 일정으로 가도 정하기가 켜진다(05 일정 입력 창 4번).
+        if (!periodAllowed) {
+            period.setSelected(false);
+        }
+        // D-68: 기간 할 일의 시각은 목록의 "시각 정하기"와 자동 배치로만 정한다. 기간을 끄면 앞의 정하기로 되돌린다(D-101).
+        if (period.isSelected()) {
+            if (timedBeforePeriod == null) {
+                timedBeforePeriod = timed.isSelected();
+            }
+            timed.setSelected(false);
+        } else if (timedBeforePeriod != null) {
+            timed.setSelected(timedBeforePeriod);
+            timedBeforePeriod = null;
+        }
         if (isFixed) {
             timed.setSelected(true);
-        }
-        // D-68: 기간 할 일의 시각은 목록의 "시각 정하기"와 자동 배치로만 정한다.
-        if (period.isSelected()) {
-            timed.setSelected(false);
         }
         timed.setEnabled(!isFixed && !period.isSelected());
         timed.setToolTipText(period.isSelected() ? "기간 할 일의 시각은 목록에서 정해요" : null);
         start.setEnabled(timed.isSelected());
-        boolean repeating = repeat.getSelectedIndex() != 0;
-        boolean periodAllowed = !isFixed && !copy && !repeating;
-        if (!periodAllowed) {
-            period.setSelected(false);
-        }
         period.setEnabled(periodAllowed);
         period.setToolTipText(isFixed ? "기간은 할 일만 정할 수 있어요" : null);
         periodHint.setVisible(repeating && !isFixed && !copy);
@@ -221,6 +279,23 @@ public final class TaskForm {
         repeatEnd.setEnabled(repeating && !editing);
         repeatHint.setVisible(period.isSelected());
         LocalDate day = Ui.dateOf(date);
+        boolean opened = start.isEnabled() && !startOpen;
+        startOpen = start.isEnabled();
+        if (!startTouched && (!day.equals(startDay) || opened)) {
+            start.setValue(Times.value(DefaultDates.start(day, clock.get())));
+        }
+        startDay = day;
+        // D-101: 앱이 골라 준 요일은 사용자가 단추를 누르기 전까지 날짜를 바꾸는 그 순간 따라간다.
+        if (autoDay != null && autoDay != day.getDayOfWeek()) {
+            boolean untouched = true;
+            for (int i = 0; i < 7; i++) {
+                untouched &= days[i].isSelected() == (i == autoDay.getValue() - 1);
+            }
+            autoDay = untouched ? day.getDayOfWeek() : null;
+            if (untouched) {
+                pick(autoDay);
+            }
+        }
         // D-79: 끝 날짜를 손대지 않았으면 반복을 고른 뒤에도 시작 날짜를 따라간다.
         if (!editing && !endTouched) {
             Ui.setDate(repeatEnd, DefaultDates.repeatEnd(isFixed ? Task.Kind.FIXED : Task.Kind.TASK, day));
@@ -232,11 +307,23 @@ public final class TaskForm {
         Integer s = startTime();
         endLabel.setText(s == null ? "" : Times.endHint(s, (int) minutes.getValue()));
         realTime.setText(s == null ? "" : Times.real(day, s));
+        // S102, S128(D-101): 마감 칸은 저장 전에도 값이 바뀔 때마다 바로 검사한다. 다른 칸은 저장 뒤다(D-43).
+        boolean dueLate = period.isSelected() && Ui.dateOf(due).isBefore(day);
         syncing = false;
+        JLabel dueError = errors.get("마감");
         if (checked) {
             showErrors(problems());
+        } else if (dueLate || dueError.isVisible()) {
+            fill(dueError, problems().stream().filter(p -> dueLate && p[0].equals("마감")).map(p -> p[1]).findFirst().orElse(""));
+            relayout.run();
         } else if (dueShown != due.isVisible()) {
             relayout.run();
+        }
+    }
+
+    private void pick(java.time.DayOfWeek d) {
+        for (int i = 0; i < 7; i++) {
+            days[i].setSelected(i == d.getValue() - 1);
         }
     }
 
@@ -285,20 +372,20 @@ public final class TaskForm {
     /** 검사 결과를 칸 아래에 보인다. 고친 칸의 오류는 지운다. */
     public void showErrors(java.util.List<String[]> problems) {
         checked = true;
-        errors.values().forEach(l -> {
-            l.setText("");
-            l.putClientProperty("plain", "");
-            l.setVisible(false);
-        });
-        // 보이는 제목 칸 폭이다. 창에 놓이기 전(창 없는 검사)에는 선호 폭을 쓴다.
-        int room = title.getWidth() > 0 ? title.getWidth() : title.getPreferredSize().width;
+        errors.values().forEach(l -> fill(l, ""));
         for (String[] p : problems) {
-            JLabel l = errors.get(p[0]);
-            l.setText(wrap(p[1], l.getFontMetrics(l.getFont()), room));
-            l.putClientProperty("plain", p[1]);
-            l.setVisible(true);
+            fill(errors.get(p[0]), p[1]);
         }
         relayout.run();
+    }
+
+    /** 오류 줄 하나를 채운다. 빈 글이면 숨긴다. 원래 문장은 plain 속성에 둔다(errorText, error가 읽는다). */
+    private void fill(JLabel l, String text) {
+        // 보이는 제목 칸 폭이다. 창에 놓이기 전(창 없는 검사)에는 선호 폭을 쓴다.
+        int room = title.getWidth() > 0 ? title.getWidth() : title.getPreferredSize().width;
+        l.setText(text.isEmpty() ? "" : wrap(text, l.getFontMetrics(l.getFont()), room));
+        l.putClientProperty("plain", text);
+        l.setVisible(!text.isEmpty());
     }
 
     /**

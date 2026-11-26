@@ -60,6 +60,140 @@ final class PeriodCheck {
         talkAndCalendar();
         autoPlace();
         pastCopies();
+        formKeeps();
+    }
+
+    static String picked(TaskForm f) {
+        List<String> out = new java.util.ArrayList<>();
+        for (javax.swing.JToggleButton b : f.days) {
+            if (b.isSelected()) {
+                out.add(b.getText());
+            }
+        }
+        return out.isEmpty() ? "없음" : String.join(", ", out);
+    }
+
+    /** T-DEF-19, T-DEF-20(D-101): 입력 창은 사용자가 고른 값을 지키고 앱이 고른 값은 맥락을 따른다. */
+    static void formKeeps() {
+        TaskForm f = new TaskForm(null, d("11-18"), at("11-17T09:00").now);
+        f.title.setText("운동");
+        f.repeat.setSelectedIndex(2);
+        String seen = picked(f);
+        Ui.setDate(f.date, d("11-19"));
+        seen += " / " + picked(f);
+        f.days[3].doClick();
+        f.days[1].doClick();
+        f.days[3].doClick();
+        seen += " / " + picked(f);
+        Ui.setDate(f.date, d("11-20"));
+        seen += " / " + picked(f);
+        f.repeat.setSelectedIndex(1);
+        f.repeat.setSelectedIndex(2);
+        f.repeat.setSelectedIndex(0);
+        f.repeat.setSelectedIndex(2);
+        seen += " / " + picked(f);
+        f.days[1].doClick();
+        f.days[3].doClick();
+        f.repeat.setSelectedIndex(1);
+        f.repeat.setSelectedIndex(2);
+        TaskForm once = new TaskForm(null, d("11-18"), at("11-17T09:00").now);
+        once.repeat.setSelectedIndex(2);
+        once.days[2].doClick();
+        once.days[2].doClick();
+        Ui.setDate(once.date, d("11-19"));
+        eq("T-DEF-19", "수 / 목 / 화, 목 / 화, 목 / 화, 목 / 없음 반복: 요일을 하나 이상 골라 주세요 / 수",
+                seen + " / " + picked(f) + " " + msgs(f.problems()) + " / " + picked(once));
+        TaskForm k = new TaskForm(null, d("11-18"), at("11-17T09:00").now);
+        k.fixed.doClick();
+        k.task.doClick();
+        String kinds = k.timed.isSelected() + " " + k.timed.isEnabled();
+        k.timed.doClick();
+        k.start.setValue("10:00");
+        k.fixed.doClick();
+        k.start.setValue("11:00");
+        k.task.doClick();
+        kinds += " / " + k.timed.isSelected() + " " + k.start.getValue();
+        k.timed.doClick();
+        k.period.doClick();
+        Ui.setDate(k.due, d("11-25"));
+        k.fixed.doClick();
+        String moment = k.timed.isSelected() + " " + k.timed.isEnabled() + " " + k.start.isEnabled();
+        k.task.doClick();
+        eq("T-DEF-20", "false true / true 11:00 / true false true / true 2026-11-25 false false", kinds + " / " + moment + " / " + k.period.isSelected() + " "
+                + Ui.dateOf(k.due) + " " + k.timed.isSelected() + " " + k.timed.isEnabled());
+        TaskForm r = new TaskForm(null, d("11-18"), at("11-17T09:00").now);
+        r.timed.doClick();
+        r.start.setValue("10:00");
+        r.period.doClick();
+        r.period.doClick();
+        String back = r.timed.isSelected() + " " + r.start.getValue();
+        r.period.doClick();
+        Ui.setDate(r.due, d("11-25"));
+        r.fixed.doClick();
+        r.repeat.setSelectedIndex(1);
+        r.task.doClick();
+        back += " / " + r.period.isSelected() + " " + r.period.isEnabled();
+        r.repeat.setSelectedIndex(0);
+        back += " / " + r.period.isSelected() + " " + Ui.dateOf(r.due) + " " + r.timed.isSelected() + " " + r.timed.isEnabled();
+        r.period.doClick();
+        eq("T-DEF-21", "true 10:00 / false false / true 2026-11-25 false false / true 10:00",
+                back + " / " + r.timed.isSelected() + " " + r.start.getValue());
+        String warned = "";
+        for (boolean chosen : new boolean[] {true, false}) {
+            TaskForm w = new TaskForm(null, d("11-18"), at("11-17T09:00").now);
+            w.title.setText("보고서");
+            w.period.doClick();
+            if (chosen) {
+                Ui.setDate(w.due, d("11-25"));
+            }
+            w.fixed.doClick();
+            Ui.setDate(w.date, d("11-30"));
+            w.task.doClick();
+            warned += Ui.dateOf(w.due) + " " + w.errorText() + " / ";
+            if (chosen) {
+                Ui.setDate(w.due, d("12-01"));
+                warned += "[" + w.errorText() + "] " + w.errors.get("마감").isVisible() + " / ";
+                Ui.setDate(w.date, d("12-02"));
+                warned += w.errorText() + " / ";
+            }
+        }
+        TaskForm only = new TaskForm(null, d("11-18"), at("11-17T09:00").now);
+        only.title.setText("보고서");
+        only.period.doClick();
+        Ui.setDate(only.due, d("11-20"));
+        Ui.setDate(only.date, d("11-23"));
+        eq("T-DEF-22", "2026-11-25 마감일이 시작일보다 앞이에요 / [] false / 마감일이 시작일보다 앞이에요 / 2026-12-06  / "
+                + "마감일이 시작일보다 앞이에요", warned + only.errorText());
+        TaskForm s = new TaskForm(null, d("11-17"), at("11-17T14:12").now);
+        String starts = s.start.getValue() + "";
+        Ui.setDate(s.date, d("11-18"));
+        starts += " " + s.start.getValue();
+        Ui.setDate(s.date, d("11-17"));
+        starts += " " + s.start.getValue();
+        s.start.setValue("15:00");
+        Ui.setDate(s.date, d("11-18"));
+        starts += " " + s.start.getValue();
+        Store held = at("11-17T14:12");
+        for (String at : new String[] {"10:00", null}) {
+            Task saved = held.book.add(draft(Task.Kind.TASK, "11-18", at)).get(0);
+            TaskForm e = new TaskForm(saved, saved.date, held.now);
+            starts += " / " + e.start.getValue();
+            Ui.setDate(e.date, d("11-17"));
+            starts += " " + e.start.getValue();
+        }
+        App app = Main.create(at("11-17T14:12"));
+        TaskForm later = TaskDialog.form(app, null, d("11-17"));
+        app.store.now = java.time.LocalDateTime.parse("2026-11-17T14:41");
+        later.title.setText("빨래");
+        starts += " / " + later.start.getValue();
+        Ui.setDate(later.date, d("11-18"));
+        Ui.setDate(later.date, d("11-17"));
+        starts += " " + later.start.getValue();
+        app.store.now = java.time.LocalDateTime.parse("2026-11-17T14:12");
+        TaskForm open = TaskDialog.form(app, null, d("11-17"));
+        app.store.now = java.time.LocalDateTime.parse("2026-11-17T14:41");
+        open.timed.doClick();
+        eq("T-DEF-23", "14:15 09:00 14:15 15:00 / 10:00 10:00 / 09:00 14:15 / 14:15 14:45 / 14:45", starts + " / " + open.start.getValue());
     }
 
     /** D-69: 지난 반복 사본은 밀린 일로 보이지 않는다. */
@@ -186,7 +320,6 @@ final class PeriodCheck {
             }
             k.fixed.doClick();
             k.task.doClick();
-            k.period.doClick();
             kept += Ui.dateOf(k.due) + " ";
         }
         Ui.setDate(keep.date, d("12-12"));
