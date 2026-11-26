@@ -60,8 +60,8 @@ public final class Ui {
     }
 
     /**
-     * room 폭을 넘는 글은 그 폭에서 줄을 바꿔 잘리지 않게 한다. 줄은 빈칸에서 바꾸고, 빈칸 없이 폭을 넘는 낱말만 글자에서 끊는다(D-98).
-     * #202의 입력 창 오류 글과 같은 방식이다. 폭 안이면 글 그대로다.
+     * room 폭을 넘는 글은 그 폭에서 줄을 바꿔 잘리지 않게 한다. 줄은 빈칸에서 바꾸고, 빈칸 없이 폭을 넘는 낱말만 글자에서 끊는다.
+     * 입력 창 오류 글(D-100)과 칸 아래 글(D-98)이 같이 쓴다. 폭은 라벨 글꼴로 재므로 테마와 상관없이 폭 안에 든다. 폭 안이면 글 그대로다.
      */
     public static String wrap(String text, java.awt.FontMetrics fm, int room) {
         if (fm.stringWidth(text) <= room) {
