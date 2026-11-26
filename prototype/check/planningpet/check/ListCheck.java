@@ -42,14 +42,16 @@ final class ListCheck {
         setting();
     }
 
-    /** D-102: 설정 "목록 누르기"는 처음 꺼져 있고, 켜면 앱 데이터에 남는다. */
+    /** T-EDIT-44(D-102): 설정 "목록 누르기"는 처음 꺼져 있고, 켜면 앱 데이터에 남으며, 화면 밖에서 바뀐 값을 설정 화면이 따른다. */
     static void setting() {
         App app = Main.create(at("11-17T09:00"));
         var screen = ProtoCheck.find(app.root, planningpet.settings.view.SettingsScreen.class);
         String before = screen.listClickTime.getText() + " " + screen.listClickTime.isSelected() + " " + app.store.listClickTime;
         screen.listClickTime.doClick();
-        eq("D-102 설정 목록 누르기", "줄을 한 번 누르면 시각 고치기 창 열기 false false / true true",
-                before + " / " + screen.listClickTime.isSelected() + " " + app.store.listClickTime);
+        String on = screen.listClickTime.isSelected() + " " + app.store.listClickTime;
+        app.settings.listClickTime(false);
+        eq("T-EDIT-44", "줄을 한 번 누르면 시각 고치기 창 열기 false false / true true / false",
+                before + " / " + on + " / " + screen.listClickTime.isSelected());
     }
 
     /** T-EDIT-28(D-99): 시간표 밖에 놓으면 바뀌는 것이 없고, 상자가 손을 놓은 자리에서 목록의 그 줄 자리로 돌아간다. */
