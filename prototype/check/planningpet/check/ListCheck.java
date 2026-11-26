@@ -28,6 +28,7 @@ final class ListCheck {
     static void run() {
         rowClick();
         pastDueClock();
+        editorSpot();
         places();
         pastDue();
         drops();
@@ -338,6 +339,30 @@ final class ListCheck {
                         + java.util.stream.Stream.of("11-16", "11-17", "11-18", "11-19").map(x -> d(x)).filter(x -> q.shownOn(x, d("11-18"))).toList());
     }
 
+    /** T-EDIT-43(05 시각 고치기 창): 창은 단추 바로 아래이고, 앱 창 오른쪽 밖으로 나가면 왼쪽으로 밀려 앱 창 안에 든다. */
+    static void editorSpot() {
+        App app = Main.create(at("11-17T09:00"));
+        Task work = app.store.book.add(Task.Kind.TASK, "과제", d("11-18"), null, 30, "", null).get(0);
+        Task read = app.store.book.add(Task.Kind.TASK, "독서", d("11-17"), null, 30, "", null).get(0);
+        java.awt.Dimension size = new TimeEditor(work, d("11-18"), app.store.now).panel.getPreferredSize();
+        List<String> got = new ArrayList<>();
+        for (String screen : List.of("일정관리", "홈")) {
+            app.show(screen);
+            app.store.changed();
+            app.root.setSize(1000, 680);
+            PeriodCheck.layout(app.root);
+            java.awt.Container list = screen.equals("홈") ? ProtoCheck.find(app.root, planningpet.home.view.MainScreen.class).rows
+                    : ProtoCheck.find(app.root, ScheduleScreen.class).untimed;
+            javax.swing.JButton pill = PeriodCheck.pill(list, screen.equals("홈") ? read : work);
+            java.awt.Rectangle b = javax.swing.SwingUtilities.convertRectangle(pill.getParent(), pill.getBounds(), app.root);
+            java.awt.Point p = TimeEditor.spot(pill, size, app.root);
+            got.add(screen + " " + (p.x + size.width <= 1000) + " " + (p.x <= b.x) + " " + (p.y == b.y + b.height + 2));
+        }
+        app.root.setSize(size.width - 50, 680);
+        got.add("좁은 창 " + TimeEditor.spot(app.root, size, app.root).x);
+        eq("T-EDIT-43", "일정관리 true true true, 홈 true true true, 좁은 창 0", String.join(", ", got));
+    }
+
     /** T-EDIT-42(D-102): 마감이 지난 기간 할 일 줄의 시각 단추는 흐리고, 단추의 동작을 불러도 컨트롤러가 막는다. */
     static void pastDueClock() {
         App app = Main.create(at("11-18T09:00"));
@@ -391,9 +416,8 @@ final class ListCheck {
         TaskRows.TitleLabel at = title(home.rows, read);
         java.awt.Point pressed = javax.swing.SwingUtilities.convertPoint(at, new java.awt.Point(5, 5), app.root);
         javax.swing.JButton homePill = PeriodCheck.pill(home.rows, read);
-        java.awt.Point top = javax.swing.SwingUtilities.convertPoint(homePill, new java.awt.Point(0, 0), app.root);
         eq("T-EDIT-16", "수정 과제, 창 과제 2026-11-18 / true true 시각 정하기 수정 false / 창 과제 2026-11-18, 창 독서 2026-11-17 true",
-                off + " / " + String.join(", ", opened) + " " + (TimeEditor.below(top, homePill.getHeight()).y > pressed.y));
+                off + " / " + String.join(", ", opened) + " " + (TimeEditor.spot(homePill, new java.awt.Dimension(300, 150), app.root).y > pressed.y));
         App late = Main.create(at("11-18T09:00"));
         Task job = PeriodCheck.period(late.store, "지원서", "11-12", "11-20", 30);
         late.schedule.timeOpener = (t, day, anchor) -> late.schedule.saveTime(t, 14 * 60, 30, day);
