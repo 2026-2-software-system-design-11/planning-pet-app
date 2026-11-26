@@ -63,7 +63,10 @@ public final class PetController {
         control.change(() -> {
             store.activeKind = kind;
             // D-62: 새로 고른 펫이 경험치를 받는다고 알리고 평소 말을 잇는다.
-            store.say("이제 경험치는 내가 받을게! " + new planningpet.pet.model.Talk(store).usual());
+            planningpet.pet.model.Talk talk = new planningpet.pet.model.Talk(store);
+            store.say("이제 경험치는 내가 받을게! " + talk.usual());
+            // D-106: 오늘 목록이 바뀌면 앞말을 빼고 USUAL로 다시 센다.
+            store.recount = talk.dayLine(store.today());
         });
     }
 

@@ -82,6 +82,20 @@ final class HomeCheck {
         TaskDialog.trySave(ta, f, null);
         String added = t.talk;
         ta.schedule.delete(wash);
+        Store u = at("11-18T09:00");
+        Task job = u.book.add(Task.Kind.TASK, "과제", d("11-18"), null, 30, "", null).get(0);
+        u.book.add(Task.Kind.TASK, "빨래", d("11-18"), null, 30, "", null);
+        u.pets.add(new planningpet.pet.model.PetState("DOG", "바둑"));
+        u.activeKind = "DOG";
+        App ua = Main.create(u);
+        ua.schedule.chooser = (title, message, options) -> 0;
+        ProtoCheck.find(ua.root, MainScreen.class).selectDate(d("11-20"));
+        ua.pet.select("CAT");
+        String picked = u.talk;
+        ua.show("일정관리");
+        ua.schedule.delete(job);
+        ua.show("홈");
+        eq("T-TALK-30 고른 펫", "이제 경험치는 내가 받을게! 오늘 할 일 2개 남았어. / 오늘 할 일 1개 남았어.", picked + " / " + u.talk);
         eq("T-TALK-30 넣은 뒤", "'영어 단어' 넣었구나! 오늘 남은 일 2개야. / 오늘 할 일 1개 남았어.", added + " / " + t.talk);
     }
 
