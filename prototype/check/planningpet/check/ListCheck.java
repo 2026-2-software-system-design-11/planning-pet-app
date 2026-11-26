@@ -6,6 +6,7 @@ import static planningpet.check.ProtoCheck.eq;
 
 import planningpet.app.Main;
 import planningpet.app.view.App;
+import planningpet.common.view.Theme;
 import planningpet.schedule.model.Task;
 import planningpet.schedule.view.ScheduleScreen;
 import planningpet.schedule.view.DragCursors;
@@ -71,6 +72,8 @@ final class ListCheck {
                 byBox + " / " + open + " " + no + " " + grab + " / " + outside + " / " + work.date + " " + work.start + " " + table.dimmed());
         DropNote note = table.note;
         String placed = note(note, TimetablePanel.GUTTER + 3 * w);
+        note.doLayout();
+        placed += " " + (pixels(note.undo, Theme.TASK_TEXT) > 0 && pixels(note.undo, Theme.INK) == 0);
         mouse(note, MouseEvent.MOUSE_ENTERED, new java.awt.Point(2, 2));
         String held = note.timer.isRunning() + "";
         note.undo.doClick();
@@ -82,7 +85,7 @@ final class ListCheck {
         String why = note(note, mon.x);
         mouse(title, MouseEvent.MOUSE_PRESSED, new java.awt.Point(5, 5));
         mouse(title, MouseEvent.MOUSE_DRAGGED, javax.swing.SwingUtilities.convertPoint(table, wed, title));
-        eq("T-EDIT-25", "true 11/18 14:00~14:30에 놓았어요 true 5000 오른쪽 / false / 2026-11-17 null false"
+        eq("T-EDIT-25", "true 11/18 14:00~14:30에 놓았어요 true 5000 오른쪽 true / false / 2026-11-17 null false"
                 + " / true 지난 날에는 놓을 수 없어요 false 3000 오른쪽 / false",
                 placed + " / " + held + " / " + undone + " / " + why + " / " + note.isVisible());
     }
@@ -91,6 +94,22 @@ final class ListCheck {
     static String note(DropNote n, int x) {
         return n.isVisible() + " " + n.text.getText() + " " + n.undo.isVisible() + " " + n.timer.getInitialDelay() + " "
                 + (n.getX() >= x ? "오른쪽" : "왼쪽");
+    }
+
+    /** 부품을 그려 색 c에 가까운 화소의 수를 센다. */
+    static int pixels(javax.swing.JComponent part, java.awt.Color c) {
+        java.awt.image.BufferedImage img = new java.awt.image.BufferedImage(part.getWidth(), part.getHeight(), java.awt.image.BufferedImage.TYPE_INT_ARGB);
+        java.awt.Graphics2D g = img.createGraphics();
+        part.paint(g);
+        g.dispose();
+        int n = 0;
+        for (int x = 0; x < img.getWidth(); x++) {
+            for (int y = 0; y < img.getHeight(); y++) {
+                java.awt.Color p = new java.awt.Color(img.getRGB(x, y), true);
+                n += p.getAlpha() > 200 && Math.abs(p.getRed() - c.getRed()) + Math.abs(p.getGreen() - c.getGreen()) + Math.abs(p.getBlue() - c.getBlue()) < 24 ? 1 : 0;
+            }
+        }
+        return n;
     }
 
     static void mouse(java.awt.Component c, int id, java.awt.Point p) {
