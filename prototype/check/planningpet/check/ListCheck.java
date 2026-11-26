@@ -10,6 +10,7 @@ import planningpet.common.view.Theme;
 import planningpet.schedule.model.Task;
 import planningpet.schedule.view.ScheduleScreen;
 import planningpet.schedule.view.DragCursors;
+import planningpet.schedule.view.DragReturn;
 import planningpet.schedule.view.DropNote;
 import planningpet.schedule.view.TaskRows;
 import planningpet.schedule.view.TimetablePanel;
@@ -29,6 +30,110 @@ final class ListCheck {
         preview();
         grab();
         notePlace();
+        escape();
+        rollEdge();
+        outside();
+    }
+
+    /** T-EDIT-28(D-99): 시간표 밖에 놓으면 바뀌는 것이 없고, 상자가 손을 놓은 자리에서 목록의 그 줄 자리로 돌아간다. */
+    static void outside() {
+        App app = Main.create(at("11-17T09:00"));
+        Task work = app.store.book.add(Task.Kind.TASK, "과제", d("11-17"), null, 30, "", null).get(0);
+        app.show("일정관리");
+        app.store.changed();
+        javax.swing.JRootPane frame = new javax.swing.JRootPane();
+        frame.setContentPane(app.root);
+        frame.setSize(1000, 680);
+        PeriodCheck.layout(frame);
+        ScheduleScreen sched = ProtoCheck.find(app.root, ScheduleScreen.class);
+        TimetablePanel table = ProtoCheck.find(app.root, TimetablePanel.class);
+        TaskRows.TitleLabel title = title(sched.untimed, work);
+        java.awt.Container row = title.getParent();
+        mouse(title, MouseEvent.MOUSE_PRESSED, new java.awt.Point(5, 5));
+        mouse(title, MouseEvent.MOUSE_DRAGGED, javax.swing.SwingUtilities.convertPoint(table, new java.awt.Point(300, 300), title));
+        mouse(title, MouseEvent.MOUSE_DRAGGED, new java.awt.Point(20, 60));
+        mouse(title, MouseEvent.MOUSE_RELEASED, new java.awt.Point(20, 60));
+        DragReturn back = ProtoCheck.find(frame.getLayeredPane(), DragReturn.class);
+        java.awt.Point at = javax.swing.SwingUtilities.convertPoint(title, new java.awt.Point(20, 60), frame.getLayeredPane());
+        java.awt.Rectangle home = javax.swing.SwingUtilities.convertRectangle(row.getParent(), row.getBounds(), frame.getLayeredPane());
+        String out = work.date + " " + work.start + " " + table.note.isVisible() + " / " + back.from.contains(at) + " " + back.to.equals(home)
+                + " " + back.timer.isRunning();
+        int w = (table.getWidth() - TimetablePanel.GUTTER) / 7;
+        java.awt.Point mon = new java.awt.Point(TimetablePanel.GUTTER + w / 2, table.getVisibleRect().y + 100);
+        dropAt(sched, table, work, mon);
+        java.awt.Point monAt = javax.swing.SwingUtilities.convertPoint(table, mon, frame.getLayeredPane());
+        boolean returned = java.util.Arrays.stream(frame.getLayeredPane().getComponents())
+                .anyMatch(c -> c instanceof DragReturn r && r.from.contains(monAt) && r.to.equals(home));
+        eq("T-EDIT-28", "2026-11-17 null false / true true true / 2026-11-17 null true 지난 날에는 놓을 수 없어요",
+                out + " / " + work.date + " " + work.start + " " + returned + " " + table.note.text.getText());
+    }
+
+    /** T-EDIT-27(D-99, S149, S152): 끄는 동안 시간표 끝에 닿으면 굴러가고 목록 위에서는 굴러가지 않는다. 빠르기는 끝에 가까울수록 빠르다. */
+    static void rollEdge() {
+        App app = Main.create(at("11-17T09:00"));
+        Task work = app.store.book.add(Task.Kind.TASK, "과제", d("11-17"), null, 30, "", null).get(0);
+        app.show("일정관리");
+        app.store.changed();
+        app.root.setSize(1000, 680);
+        PeriodCheck.layout(app.root);
+        ScheduleScreen sched = ProtoCheck.find(app.root, ScheduleScreen.class);
+        sched.scrollTo(13 * 60);
+        TimetablePanel table = ProtoCheck.find(app.root, TimetablePanel.class);
+        java.awt.Container view = table.getParent();
+        int h = view.getHeight();
+        TaskRows.TitleLabel title = title(sched.untimed, work);
+        mouse(title, MouseEvent.MOUSE_PRESSED, new java.awt.Point(5, 5));
+        boolean running = true;
+        int[] tops = new int[4];
+        tops[0] = sched.topMinute();
+        java.awt.Point[] spots = {new java.awt.Point(100, h - 3), new java.awt.Point(-1, h - 3), new java.awt.Point(100, -15)};
+        for (int k = 0; k < spots.length; k++) {
+            java.awt.Point p = javax.swing.SwingUtilities.convertPoint(view, spots[k], title);
+            p.x = k == 1 ? title.getWidth() / 2 : p.x;
+            mouse(title, MouseEvent.MOUSE_DRAGGED, p);
+            running &= sched.untimed.rolling().isRunning();
+            for (int n = 0; n < 10; n++) {
+                sched.untimed.rolling().getActionListeners()[0].actionPerformed(null);
+            }
+            tops[k + 1] = sched.topMinute();
+        }
+        mouse(title, MouseEvent.MOUSE_RELEASED, new java.awt.Point(5, 5));
+        String speeds = (int) TimetablePanel.rollSpeed(h - 29, h) + " " + (int) TimetablePanel.rollSpeed(h, h) + " "
+                + (int) TimetablePanel.rollSpeed(h + 50, h) + " " + (int) TimetablePanel.rollSpeed(5, h) + " " + (int) TimetablePanel.rollSpeed(h / 2, h);
+        eq("T-EDIT-27", "true true true true / 66 240 240 -210 0", running + " " + (tops[1] > tops[0]) + " " + (tops[2] == tops[1]) + " " + (tops[3] < tops[2])
+                + " / " + speeds);
+    }
+
+    /** T-EDIT-26(D-99): 끄는 동안 줄은 흐리고, Esc를 누르면 끌기를 그만둔다. */
+    static void escape() {
+        App app = Main.create(at("11-17T09:00"));
+        Task work = app.store.book.add(Task.Kind.TASK, "과제", d("11-17"), null, 30, "", null).get(0);
+        app.show("일정관리");
+        app.store.changed();
+        javax.swing.JRootPane frame = new javax.swing.JRootPane();
+        frame.setContentPane(app.root);
+        frame.setSize(1000, 680);
+        PeriodCheck.layout(frame);
+        ScheduleScreen sched = ProtoCheck.find(app.root, ScheduleScreen.class);
+        TimetablePanel table = ProtoCheck.find(app.root, TimetablePanel.class);
+        TaskRows.TitleLabel title = title(sched.untimed, work);
+        java.awt.Container row = title.getParent();
+        int before = pixels((javax.swing.JComponent) row, Theme.INK);
+        mouse(title, MouseEvent.MOUSE_PRESSED, new java.awt.Point(5, 5));
+        mouse(title, MouseEvent.MOUSE_DRAGGED, javax.swing.SwingUtilities.convertPoint(table, new java.awt.Point(300, 300), title));
+        String during = (sched.untimed.lifted() == work) + " " + table.dimmed().size() + " " + (before > 0) + " "
+                + (pixels((javax.swing.JComponent) row, Theme.INK) == 0);
+        // 포커스를 가진 칸이 받은 것처럼 보낸다(창이 없으면 포커스가 없다).
+        java.awt.KeyboardFocusManager.getCurrentKeyboardFocusManager().redispatchEvent(title, new java.awt.event.KeyEvent(title,
+                java.awt.event.KeyEvent.KEY_PRESSED, 0, 0,
+                java.awt.event.KeyEvent.VK_ESCAPE, java.awt.event.KeyEvent.CHAR_UNDEFINED));
+        DragReturn back = ProtoCheck.find(frame.getLayeredPane(), DragReturn.class);
+        String after = sched.untimed.lifted() + " " + table.dimmed().size() + " " + table.dragText() + " "
+                + back.to.equals(javax.swing.SwingUtilities.convertRectangle(row.getParent(), row.getBounds(), frame.getLayeredPane())) + " "
+                + (pixels((javax.swing.JComponent) row, Theme.INK) == before);
+        mouse(title, MouseEvent.MOUSE_DRAGGED, javax.swing.SwingUtilities.convertPoint(table, new java.awt.Point(320, 300), title));
+        mouse(title, MouseEvent.MOUSE_RELEASED, javax.swing.SwingUtilities.convertPoint(table, new java.awt.Point(320, 300), title));
+        eq("T-EDIT-26", "true 1 true true / null 0 null true true / 2026-11-17 null", during + " / " + after + " / " + work.date + " " + work.start);
     }
 
     /** T-EDIT-40(D-99, S146, S75): 글 상자 자리(오른쪽에 자리가 없으면 왼쪽, 보이는 아래 끝 안)와 주를 옮기면 닫힘. */

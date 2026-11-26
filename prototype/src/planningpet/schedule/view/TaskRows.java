@@ -31,6 +31,9 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
     private java.time.LocalDate shownDay;
     /** D-99: 일정관리 목록 줄을 끌어 놓을 시간표. 일정관리가 넣는다. 없으면 끌 수 없다. */
     TimetablePanel dropOn;
+    /** D-99: 끄는 중이라 흐리게 그리는 줄의 일. 끌지 않으면 null. */
+    private Task lifted;
+    private javax.swing.Timer rolling;
     /** "끝낸 일 {수}개" 묶음 제목. 묶음이 없으면 목록에 없다. */
     public final javax.swing.JButton doneHead = new javax.swing.JButton();
 
@@ -49,6 +52,16 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
             doneFolded = !doneFolded;
             resort.run();
         });
+    }
+
+    /** D-99: 끄는 중이라 흐리게 그리는 줄의 일. 끌지 않으면 null. */
+    public Task lifted() {
+        return lifted;
+    }
+
+    /** 끄는 동안 시간표를 굴리는 타이머(30ms마다). 끌지 않으면 null. */
+    public javax.swing.Timer rolling() {
+        return rolling;
     }
 
     /** D-88: 머물던 끝낸 줄을 "끝낸 일" 묶음으로 내려보낸다(1.5초가 지난 것과 같다). */
@@ -195,6 +208,15 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
         boolean withDate = rowDay != null;
         boolean[] over = {false};
         JPanel row = new JPanel(new BorderLayout(6, 0)) {
+            @Override
+            public void paint(java.awt.Graphics graphics) {
+                // D-99: 끄는 동안 그 줄은 흐리게 남는다.
+                java.awt.Graphics2D g = (java.awt.Graphics2D) graphics.create();
+                g.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, lifted == t ? 0.4f : 1f));
+                super.paint(g);
+                g.dispose();
+            }
+
             @Override
             protected void paintComponent(java.awt.Graphics graphics) {
                 java.awt.Graphics2D g = (java.awt.Graphics2D) graphics.create();
@@ -343,6 +365,36 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
         MouseAdapter drag = new MouseAdapter() {
             private java.awt.Point from;
             private boolean on;
+            /** D-99: 끄는 동안 마우스가 시간표 끝에 머물면 굴린다(S66). inView는 보이는 칸 좌표의 마우스 자리다. */
+            private java.awt.Point inView;
+            private java.awt.Component held;
+            /** 마지막 마우스 자리(held 좌표). */
+            private java.awt.Point last;
+            private final javax.swing.Timer roll = new javax.swing.Timer(30,
+                    ev -> held.setCursor(dropOn.dragTo(dropOn.roll(inView, 30)) ? DragCursors.NO : DragCursors.GRAB));
+            /** D-99: 끄는 동안 Esc를 누르면 그만둔다. */
+            private final java.awt.event.AWTEventListener esc = ev -> {
+                if (ev.getID() == java.awt.event.KeyEvent.KEY_PRESSED
+                        && ((java.awt.event.KeyEvent) ev).getKeyCode() == java.awt.event.KeyEvent.VK_ESCAPE) {
+                    stop();
+                    // S94: Esc로 그만둘 때도 상자가 줄 자리로 돌아간다.
+                    DragReturn.start(parts[0], javax.swing.SwingUtilities.convertPoint(held, last, parts[0]), dropOn.boxSize(t));
+                }
+            };
+
+            private void stop() {
+                on = false;
+                from = null;
+                lifted = null;
+                rolling = null;
+                roll.stop();
+                java.awt.Toolkit.getDefaultToolkit().removeAWTEventListener(esc);
+                for (JComponent c : parts) {
+                    c.setCursor(DragCursors.OPEN);
+                }
+                dropOn.drag(null);
+                parts[0].repaint();
+            }
 
             @Override
             public void mousePressed(MouseEvent e) {
@@ -356,23 +408,40 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
                 }
                 if (!on) {
                     on = true;
+                    lifted = t;
+                    parts[0].repaint();
+                    java.awt.Toolkit.getDefaultToolkit().addAWTEventListener(esc, java.awt.AWTEvent.KEY_EVENT_MASK);
                     dropOn.drag(t);
+                    held = e.getComponent();
+                    rolling = roll;
+                    roll.start();
                 }
+                inView = javax.swing.SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), dropOn.getParent());
+                last = e.getPoint();
                 e.getComponent().setCursor(dropOn.dragTo(onTable(e)) ? DragCursors.NO : DragCursors.GRAB);
             }
 
             @Override
             public void mouseReleased(MouseEvent e) {
                 if (!on) {
+                    from = null;
                     return;
                 }
-                on = false;
-                e.getComponent().setCursor(DragCursors.OPEN);
                 java.awt.Point p = onTable(e);
                 TimetablePanel.Spot spot = p == null ? null : dropOn.spotAt(p);
-                dropOn.drag(null);
+                stop();
                 if (spot != null) {
-                    dropOn.dropped(control.drop(t, spot.day(), spot.minute()), t, p);
+                    TaskController.Drop r = control.drop(t, spot.day(), spot.minute());
+                    dropOn.dropped(r, t, p);
+                    if (r.text() != null && r.undo() == null) {
+                        // S150: 놓을 수 없는 날에 놓아도 상자가 목록의 그 줄 자리로 돌아간다(까닭 글은 dropped가 띄운다).
+                        DragReturn.start(parts[0], javax.swing.SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), parts[0]),
+                                dropOn.boxSize(t));
+                    }
+                } else {
+                    // S65: 시간표 밖에 놓으면 바뀌는 것 없이 상자가 목록의 그 줄 자리로 돌아간다.
+                    DragReturn.start(parts[0], javax.swing.SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), parts[0]),
+                            dropOn.boxSize(t));
                 }
             }
         };

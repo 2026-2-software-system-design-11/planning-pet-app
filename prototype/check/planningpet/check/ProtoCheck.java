@@ -27,6 +27,16 @@ public final class ProtoCheck {
     }
 
     public static void main(String[] args) {
+        // 검사가 도중에 예외를 내도 실패로 끝낸다. 끄는 중의 굴리기 타이머가 남으면 JVM이 끝나지 않는다(#246 QA B246-2).
+        try {
+            checks();
+        } catch (Throwable e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+    }
+
+    private static void checks() {
         Store s = MockData.sample();
         Game g = new Game(s);
         Talk t = new Talk(s);

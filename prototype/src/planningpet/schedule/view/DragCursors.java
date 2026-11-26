@@ -26,7 +26,7 @@ public final class DragCursors {
             if (shape == 2) {
                 g.setColor(java.awt.Color.WHITE);
                 g.fillOval(4, 4, 22, 22);
-                g.setColor(Theme.INK_SUB);
+                g.setColor(Theme.SUNDAY);
                 g.setStroke(new BasicStroke(3f));
                 g.drawOval(5, 5, 20, 20);
                 g.drawLine(9, 21, 21, 9);
