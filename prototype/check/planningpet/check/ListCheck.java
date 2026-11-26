@@ -29,6 +29,31 @@ final class ListCheck {
         preview();
         grab();
         notePlace();
+        escape();
+    }
+
+    /** T-EDIT-26(D-99): 끄는 동안 줄은 흐리고, Esc를 누르면 끌기를 그만둔다. */
+    static void escape() {
+        App app = Main.create(at("11-17T09:00"));
+        Task work = app.store.book.add(Task.Kind.TASK, "과제", d("11-17"), null, 30, "", null).get(0);
+        app.show("일정관리");
+        app.store.changed();
+        app.root.setSize(1000, 680);
+        PeriodCheck.layout(app.root);
+        ScheduleScreen sched = ProtoCheck.find(app.root, ScheduleScreen.class);
+        TimetablePanel table = ProtoCheck.find(app.root, TimetablePanel.class);
+        TaskRows.TitleLabel title = title(sched.untimed, work);
+        mouse(title, MouseEvent.MOUSE_PRESSED, new java.awt.Point(5, 5));
+        mouse(title, MouseEvent.MOUSE_DRAGGED, javax.swing.SwingUtilities.convertPoint(table, new java.awt.Point(300, 300), title));
+        String during = (sched.untimed.lifted() == work) + " " + table.dimmed().size();
+        // 포커스를 가진 칸이 받은 것처럼 보낸다(창이 없으면 포커스가 없다).
+        java.awt.KeyboardFocusManager.getCurrentKeyboardFocusManager().redispatchEvent(title, new java.awt.event.KeyEvent(title,
+                java.awt.event.KeyEvent.KEY_PRESSED, 0, 0,
+                java.awt.event.KeyEvent.VK_ESCAPE, java.awt.event.KeyEvent.CHAR_UNDEFINED));
+        String after = sched.untimed.lifted() + " " + table.dimmed().size() + " " + table.dragText();
+        mouse(title, MouseEvent.MOUSE_DRAGGED, javax.swing.SwingUtilities.convertPoint(table, new java.awt.Point(320, 300), title));
+        mouse(title, MouseEvent.MOUSE_RELEASED, javax.swing.SwingUtilities.convertPoint(table, new java.awt.Point(320, 300), title));
+        eq("T-EDIT-26", "true 1 / null 0 null / 2026-11-17 null", during + " / " + after + " / " + work.date + " " + work.start);
     }
 
     /** T-EDIT-40(D-99, S146, S75): 글 상자 자리(오른쪽에 자리가 없으면 왼쪽, 보이는 아래 끝 안)와 주를 옮기면 닫힘. */
