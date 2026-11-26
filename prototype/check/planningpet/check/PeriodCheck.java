@@ -154,7 +154,10 @@ final class PeriodCheck {
         unpicked.title.setText("보고서");
         unpicked.period.doClick();
         Ui.setDate(unpicked.date, d("11-23"));
-        eq("T-DEF-18", "2026-11-29 오류 없음", Ui.dateOf(unpicked.due) + " " + msgs(unpicked.problems()));
+        String moved = Ui.dateOf(unpicked.due) + " " + msgs(unpicked.problems());
+        Ui.setDate(unpicked.date, d("11-25"));
+        eq("T-DEF-18", "2026-11-29 오류 없음 2026-11-29 오류 없음",
+                moved + " " + Ui.dateOf(unpicked.due) + " " + msgs(unpicked.problems()));
         App saved = Main.create(at("11-16T09:00"));
         Task report = period(saved.store, "보고서", "11-16", "12-10", 30);
         TaskForm edit = new TaskForm(report, report.date, saved.store.now);
