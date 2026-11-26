@@ -293,7 +293,7 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
         // 일정관리 목록에서 흐린 기간 할 일은 늘 마감이 지난 일이라 그 까닭을 보인다(#277 "옮길 수 없어요"와 같은 글투).
         String why = !pastPeriod ? null : withDate ? "마감이 지난 일은 시각을 정할 수 없어요" : "지난 날에는 시각을 정할 수 없어요";
         TimePill when = withDate ? TimePill.icon(t.done, t.done || pastPeriod, why) : new TimePill(time, t.done, t.done || pastPeriod, why);
-        // 마감이 지난 줄은 목록의 날(지난 날)을 그대로 넘겨 컨트롤러도 막는다(사용자 결정 2026-11-26).
+        // 마감이 지난 줄은 목록의 날(지난 날)을 그대로 넘겨 컨트롤러도 막는다(D-99, #247 QA B247-3).
         java.time.LocalDate openDay = withDate && t.period() && listDay.isBefore(today) && !t.dueDate.isBefore(today) ? today : listDay;
         when.addActionListener(e -> control.editTime(t, openDay, when));
         watched.add(when);
