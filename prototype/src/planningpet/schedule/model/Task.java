@@ -93,7 +93,10 @@ public final class Task {
         return kind == Kind.TASK && seriesId != null && !done && date.isBefore(today);
     }
 
-    /** 시간표와 목록의 시각 있는 칸에 놓이는가. 끝낸 기간 할 일(D-66)과 못 끝낸 계획(D-67)은 계획한 칸에서 빠진다. */
+    /**
+     * 시간표와 목록의 시각 있는 칸에 놓이는가. 끝낸 기간 할 일(D-66), 못 끝낸 계획(D-67), 마감이 지난 옛 계획(leftPlan)은 계획한 칸에서
+     * 빠진다.
+     */
     public boolean onTimetable(LocalDate today) {
         return timed() && !(period() && done) && !leftPlan(today);
     }
