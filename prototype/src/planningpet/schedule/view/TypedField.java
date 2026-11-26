@@ -21,6 +21,8 @@ public final class TypedField {
     /** 마지막으로 읽은 값과 그때 옮길 날 수("밤 4시", D-98). */
     private Object daysFor;
     private int days;
+    /** 친 글을 모두 지워 비운 채 벗어나면 되돌릴 치기 앞의 칸 아래 글과 옮길 날(D-98). 치기 앞에 글이 없었으면 null. */
+    private Runnable undo;
     /** 0보다 크면 글을 이 너비(px) 안에서 낱말 사이로 접는다(시각 고치기 창, D-98). */
     public java.util.function.IntSupplier wrap = () -> 0;
 
@@ -50,7 +52,7 @@ public final class TypedField {
                 } else {
                     super.replace(fb, off, len, text, a);
                 }
-                edited(fb.getDocument().getText(0, fb.getDocument().getLength()));
+                edited(fb.getDocument().getText(0, fb.getDocument().getLength()), true);
             }
 
             @Override
@@ -67,7 +69,7 @@ public final class TypedField {
                     shown = null;
                     super.remove(fb, off, len);
                 }
-                edited(fb.getDocument().getText(0, fb.getDocument().getLength()));
+                edited(fb.getDocument().getText(0, fb.getDocument().getLength()), true);
             }
         };
         field.setFormatterFactory(new DefaultFormatterFactory(
@@ -78,6 +80,15 @@ public final class TypedField {
                         if (text.equals(String.valueOf(now))) {
                             return now;
                         }
+                        // D-98: 친 글을 모두 지워 비운 채 벗어나면 빨간 글 없이 치기 앞의 상태(값, 칸 아래 글, 옮길 날)로 돌아간다.
+                        if (text.isBlank()) {
+                            if (undo != null) {
+                                undo.run();
+                            }
+                            undo = null;
+                            return now;
+                        }
+                        undo = null;
                         typed = true;
                         Typed.Read r = reader.apply(text);
                         show(r.notice(), r.rejected() ? Theme.SUNDAY : Theme.INK_DIM, r.rejected() ? now : r.value());
@@ -99,11 +110,12 @@ public final class TypedField {
                         return filter;
                     }
                 }));
-        spinner.addChangeListener(e -> edited(spinner.getValue()));
+        spinner.addChangeListener(e -> edited(spinner.getValue(), false));
     }
 
     /** 칸 아래 글을 지운다(칸이 꺼질 때). */
     public void clear() {
+        undo = null;
         show(null, null, null);
     }
 
@@ -113,9 +125,22 @@ public final class TypedField {
     }
 
     /** 칸의 글이나 값이 글이 말하는 값과 다르면(쳐 넣기 시작, 화살표) 글을 지운다. 다른 칸을 고칠 때는 남는다. */
-    private void edited(Object now) {
+    private void edited(Object now, boolean typing) {
         if (about != null && !about.toString().equals(now.toString())) {
+            if (typing) {
+                String text = plain;
+                java.awt.Color color = notice.getForeground();
+                Object value = about;
+                int d = days;
+                undo = () -> {
+                    show(text, color, value);
+                    days = d;
+                };
+            }
             show(null, null, null);
+        }
+        if (!typing) {
+            undo = null;
         }
     }
 

@@ -155,6 +155,8 @@ public final class ProtoCheck {
                 + " " + Typed.start("오전 12시", java.time.LocalDate.of(2026, 11, 18)).days());
         eq("D-98 한 글자씩 친 시작 시각", "21:30 20:00 22:30 14:30 19:30 17:00 13:00 13:00 / 21:30 20:00 17:00", keyed());
         eq("D-98 한 글자를 채워 보인다", "13:00 3:00", oneDigitFill());
+        eq("D-98 비운 칸은 치기 앞의 상태로", "true 없음 true 없음 / 25 흐린 5분 단위로 맞췄어요(25분) / 2026-11-19 04:00 흐린 19일(목) 04:00으로 읽었어요"
+                + " / 흐린 19일(목) 04:00으로 읽었어요 없음 2026-11-19 240", blanked());
         eq("D-98 밤 4시", "2026-11-19 04:00 흐린 19일(목) 04:00으로 읽었어요 / 2026-11-19 240", nightForm());
         eq("D-98, D-101 밤 4시 뒤", "2026-11-19 / 2026-11-18 없음 / 2026-11-18 흐린 5분 단위로 맞췄어요(22:05) / 2026-11-18 245 없음 / 2026-11-19 / 2026-11-18 없음", nightAfter());
         Typed.Read r30 = Typed.start("밤 4시", java.time.LocalDate.of(2026, 11, 30));
@@ -548,6 +550,31 @@ public final class ProtoCheck {
         type(e.start, "밤 4시");
         TimeEditor.save(app, t, e);
         return form + " / " + t.date + " " + t.startMinute();
+    }
+
+    /** 두 창의 두 칸에서 친 글을 모두 지워 비운 채 벗어나면 빨간 글 없이 치기 앞의 값, 칸 아래 글, "밤 4시"가 옮긴 날로 돌아간다(D-98). */
+    private static String blanked() {
+        TaskForm f = new TaskForm(null, java.time.LocalDate.of(2026, 11, 18), java.time.LocalDateTime.of(2026, 11, 18, 9, 0));
+        f.timed.setSelected(true);
+        f.sync();
+        Object start = f.start.getValue();
+        Object minutes = f.minutes.getValue();
+        String plain = keys(f.start, "2\b").equals(start) + " " + notice(f.startNotice) + " " + keys(f.minutes, "4\b").equals(minutes) + " " + notice(f.minutesNotice);
+        type(f.minutes, "27");
+        String dim = keys(f.minutes, "\b") + " " + notice(f.minutesNotice);
+        type(f.start, "밤 4시");
+        keys(f.start, "\b");
+        f.title.setText("보고서");
+        String night = Ui.dateOf(f.date) + " " + f.start.getValue() + " " + notice(f.startNotice);
+        App app = Main.create(MockData.empty());
+        Task t = app.store.book.add(Task.Kind.TASK, "야간 과제", java.time.LocalDate.of(2026, 11, 18), java.time.LocalTime.of(22, 0), 60, "", null).get(0);
+        TimeEditor e = new TimeEditor(t, app.store.now);
+        type(e.start, "밤 4시");
+        keys(e.start, "2\b");
+        keys(e.minutes, "4\b");
+        String editor = notice(e.startNotice) + " " + notice(e.minutesNotice);
+        TimeEditor.save(app, t, e);
+        return plain + " / " + dim + " / " + night + " / " + editor + " " + t.date + " " + t.startMinute();
     }
 
     /** 두 창의 시작 시각 칸에 키보드로 한 글자씩 친 값. 채워 보인 값이 아니라 친 글 뒤에 다음 글자가 붙는다(D-98). */
