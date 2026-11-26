@@ -95,8 +95,10 @@ public final class RoundButtonUI extends BasicButtonUI {
 
     @Override
     protected void paintText(Graphics g, AbstractButton b, java.awt.Rectangle r, String text) {
+        // 글자색을 따로 준 버튼(setForeground)은 그 색, 기본값(UIResource)이면 INK다.
+        Color own = b.getForeground() instanceof javax.swing.plaf.UIResource ? Theme.INK : b.getForeground();
         Color ink = !b.isEnabled() || Boolean.TRUE.equals(b.getClientProperty(DIM)) ? Theme.INK_DIM
-                : filled(b) ? Color.WHITE : Theme.INK;
+                : filled(b) ? Color.WHITE : own;
         g.setColor(ink);
         g.setFont(b.getFont());
         int mnemonic = b.getDisplayedMnemonicIndex();

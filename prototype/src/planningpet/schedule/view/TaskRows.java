@@ -372,7 +372,7 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
                 TimetablePanel.Spot spot = p == null ? null : dropOn.spotAt(p);
                 dropOn.drag(null);
                 if (spot != null) {
-                    control.drop(t, spot.day(), spot.minute());
+                    dropOn.dropped(control.drop(t, spot.day(), spot.minute()), t, p);
                 }
             }
         };
