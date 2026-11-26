@@ -27,6 +27,132 @@ final class HomeCheck {
         examples();
         editedSamples();
         sundayLectures();
+        recount();
+    }
+
+    /** T-TALK-30. 그날 목록이 바뀌면 말풍선이 수를 다시 센다. 다른 말을 하는 중이어도 고른 날의 수 말로 바뀐다(D-106). */
+    static void recount() {
+        Store s = at("11-14T10:00");
+        s.book.add(Task.Kind.TASK, "가", d("11-16"), null, 30, "", null);
+        Task b = s.book.add(Task.Kind.TASK, "나", d("11-16"), null, 30, "", null).get(0);
+        Task c = s.book.add(Task.Kind.TASK, "다", d("11-17"), null, 30, "", null).get(0);
+        s.book.add(Task.Kind.TASK, "빨래", d("11-14"), null, 30, "", null);
+        Task e = s.book.add(Task.Kind.TASK, "청소", d("11-14"), null, 30, "", null).get(0);
+        App app = Main.create(s);
+        app.schedule.chooser = (title, message, options) -> 0;
+        MainScreen main = ProtoCheck.find(app.root, MainScreen.class);
+        java.util.List<String> said = new java.util.ArrayList<>();
+        main.selectDate(d("11-16"));
+        app.schedule.delete(b);
+        said.add(s.talk);
+        Task ga = s.book.dayPlan(d("11-16")).untimed().get(0);
+        app.schedule.check(ga);
+        said.add(s.talk);
+        TaskForm rename = new TaskForm(ga, ga.date, s.now);
+        rename.title.setText("가나");
+        TaskDialog.trySave(app, rename, ga);
+        said.add(s.talk);
+        app.schedule.check(ga);
+        said.add(s.talk);
+        TaskForm longer = new TaskForm(ga, ga.date, s.now);
+        longer.minutes.setValue(60);
+        TaskDialog.trySave(app, longer, ga);
+        said.add(s.talk);
+        app.show("일정관리");
+        app.schedule.drop(c, d("11-16"), 600);
+        said.add(plain(ProtoCheck.find(app.root, planningpet.schedule.view.ScheduleScreen.class).bubble.getText()));
+        app.show("홈");
+        said.add(s.talk);
+        main.selectDate(d("11-14"));
+        app.schedule.delete(e);
+        said.add(s.talk);
+        main.quick.setText("영어 단어");
+        main.quick.postActionEvent();
+        said.add(s.talk);
+        app.schedule.delete(s.tasks.stream().filter(t -> t.title.equals("영어 단어")).findFirst().orElseThrow());
+        said.add(s.talk);
+        eq("T-TALK-30", "11월 16일 할 일은 1개야. / 잘했어! +10P / 11월 16일 할 일은 1개야. / 체크를 풀었어. -10P / 11월 16일 할 일은 1개야. / 이번 주 남은 날의 시각 없는 할 일이 2개 있어. 자동 배치를 눌러 볼래? / "
+                + "11월 16일 할 일은 2개야. / "
+                + "오늘 할 일 1개 남았어. / '영어 단어' 넣었구나! 오늘 남은 일 2개야. / 오늘 할 일 1개 남았어.", String.join(" / ", said));
+        eq("T-TALK-30 브리핑", "오늘 할 일 2개 남았어. 어제 못 끝낸 일 1개는 달력에 남아 있어. 내일 '통계 퀴즈'가 있어.", opened("11-17"));
+        eq("T-TALK-30 오랜만", "오랜만이야! 다시 와서 반가워. 오늘 할 일은 2개야.", opened("11-10"));
+        Store t = at("11-18T09:00");
+        Task wash = t.book.add(Task.Kind.TASK, "빨래", d("11-18"), null, 30, "", null).get(0);
+        App ta = Main.create(t);
+        ta.schedule.chooser = (title, message, options) -> 0;
+        ProtoCheck.find(ta.root, MainScreen.class).selectDate(d("11-20"));
+        TaskForm f = new TaskForm(null, d("11-18"), t.now);
+        f.title.setText("영어 단어");
+        TaskDialog.trySave(ta, f, null);
+        String added = t.talk;
+        ta.schedule.delete(wash);
+        Store u = at("11-18T09:00");
+        Task job = u.book.add(Task.Kind.TASK, "과제", d("11-18"), null, 30, "", null).get(0);
+        u.book.add(Task.Kind.TASK, "빨래", d("11-18"), null, 30, "", null);
+        u.pets.add(new planningpet.pet.model.PetState("DOG", "바둑"));
+        u.activeKind = "DOG";
+        App ua = Main.create(u);
+        ua.schedule.chooser = (title, message, options) -> 0;
+        ProtoCheck.find(ua.root, MainScreen.class).selectDate(d("11-20"));
+        ua.pet.select("CAT");
+        String picked = u.talk;
+        ua.show("일정관리");
+        ua.schedule.delete(job);
+        ua.show("홈");
+        eq("T-TALK-30 고른 펫", "이제 경험치는 내가 받을게! 오늘 할 일 2개 남았어. / 오늘 할 일 1개 남았어.", picked + " / " + u.talk);
+        Store v = at("11-18T09:00");
+        Task far = v.book.add(Task.Kind.TASK, "가", d("11-20"), null, 30, "", null).get(0);
+        v.lastOpenDay = d("11-17");
+        App va = Main.create(v);
+        va.schedule.chooser = (title, message, options) -> 0;
+        java.util.List<String> brief = new java.util.ArrayList<>(java.util.List.of(va.control.windowShown()));
+        va.show("일정관리");
+        va.schedule.drop(far, d("11-18"), 840);
+        va.show("홈");
+        brief.add(v.talk);
+        va.schedule.delete(far);
+        brief.add(v.talk);
+        eq("T-TALK-30 빈 날 브리핑", "오늘은 할 일이 없어. 아래 칸에 하나 적어 볼까? / 오늘 할 일 1개 남았어. / "
+                + "오늘은 할 일이 없어. 아래 칸에 하나 적어 볼까?", String.join(" / ", brief));
+        Store w = at("11-18T09:00");
+        Task job2 = w.book.add(Task.Kind.TASK, "과제", d("11-18"), null, 30, "", null).get(0);
+        Task paper = w.book.add(Task.Kind.TASK, "F사 서류", d("11-16"), null, 30, "", null).get(0);
+        paper.dueDate = d("11-25");
+        paper.startDay = paper.date;
+        w.lastOpenDay = d("11-17");
+        App wa = Main.create(w);
+        wa.schedule.chooser = (title, message, options) -> 0;
+        String first = wa.control.windowShown();
+        wa.schedule.delete(job2);
+        eq("T-TALK-30 기간 할 일 문장", "오늘 할 일 1개 남았어. / 오늘은 할 일이 없어. F사 서류는 25일까지야, 7일 남았어.", first + " / " + w.talk);
+        Store x = at("11-18T09:00");
+        Task quiz = x.book.add(Task.Kind.TASK, "통계 퀴즈", d("11-19"), null, 30, "", null).get(0);
+        x.lastOpenDay = d("11-17");
+        App xa = Main.create(x);
+        xa.schedule.chooser = (title, message, options) -> 0;
+        String morning = xa.control.windowShown();
+        xa.show("일정관리");
+        xa.schedule.drop(quiz, d("11-18"), 900);
+        xa.show("홈");
+        eq("T-TALK-30 2~5번 그대로", "오늘은 할 일이 없어. 내일 '통계 퀴즈'가 있어. / 오늘 할 일 1개 남았어. 내일 '통계 퀴즈'가 있어.",
+                morning + " / " + x.talk);
+        eq("T-TALK-30 넣은 뒤", "'영어 단어' 넣었구나! 오늘 남은 일 2개야. / 오늘 할 일 1개 남았어.", added + " / " + t.talk);
+    }
+
+    /** 오늘 11-18에 할 일 셋, 11-17에 못 끝낸 일, 11-19에 "통계 퀴즈". before에 마지막으로 열었고, 연 뒤 "과제"를 지운 말풍선. */
+    static String opened(String before) {
+        Store s = at("11-18T09:00");
+        Task job = s.book.add(Task.Kind.TASK, "과제", d("11-18"), null, 30, "", null).get(0);
+        s.book.add(Task.Kind.TASK, "빨래", d("11-18"), null, 30, "", null);
+        s.book.add(Task.Kind.TASK, "청소", d("11-18"), null, 30, "", null);
+        s.book.add(Task.Kind.TASK, "은행", d("11-17"), null, 30, "", null);
+        s.book.add(Task.Kind.TASK, "통계 퀴즈", d("11-19"), null, 30, "", null);
+        s.lastOpenDay = d(before);
+        App app = Main.create(s);
+        app.schedule.chooser = (title, message, options) -> 0;
+        app.control.windowShown();
+        app.schedule.delete(job);
+        return s.talk;
     }
 
     /** T-EX-5. 일요일에 예시로 시작해도 다음 주 시간표에 수업이 보인다(D-94). */

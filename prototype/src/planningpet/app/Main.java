@@ -69,6 +69,7 @@ public final class Main {
         MainScreen main = new MainScreen(app);
         app.addScreen("홈", "오늘도 계획을 세우고, 조금씩 성장해요!", main);
         app.watcher = new DayWatcher(app, main);
+        app.control.homeDay = main.calendar::selected; // D-106
         app.addScreen("일정관리", "내 일정을 한눈에 확인하고, 체계적으로 관리해요!", new ScheduleScreen(app));
         PetScreen room = new PetScreen(app);
         // D-59, D-80: 홈 펫 카드를 누르면 캐릭터 창을 상태 탭으로 연다. 나의 방의 펫 칩은 펫을 고르기만 한다.

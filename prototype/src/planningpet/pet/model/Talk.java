@@ -26,16 +26,47 @@ public final class Talk {
             return hello + (s.sampleIds.isEmpty() ? "수업부터 넣어 볼까?"
                     : "예시 일정을 넣어 뒀어.");
         }
-        if (ChronoUnit.DAYS.between(before, today) >= 8) {
-            int n = s.book.checkables(today).size();
-            return "오랜만이야! 다시 와서 반가워." + (n > 0 ? " 오늘 할 일은 " + n + "개야." : "");
+        return ChronoUnit.DAYS.between(before, today) >= 8 ? welcomeBack() : briefing();
+    }
+
+    /** WELCOME_BACK. */
+    public String welcomeBack() {
+        int n = s.book.checkables(s.today()).size();
+        return "오랜만이야! 다시 와서 반가워." + (n > 0 ? " 오늘 할 일은 " + n + "개야." : "");
+    }
+
+    /**
+     * D-106: opening이 방금 한 말을 목록이 바뀔 때 다시 만들 말. 처음 만난 인사는 수가 없어 null, WELCOME_BACK은 수만 다시 센다.
+     * BRIEFING은 1번 문장을 다시 세고 2~5번 문장은 처음 말한 그대로 두며, 6번 문장은 규칙대로 다시 판단한다.
+     */
+    public Store.Recount openingRecount(LocalDate before) {
+        if (before == null) {
+            return null;
         }
-        return briefing();
+        if (ChronoUnit.DAYS.between(before, s.today()) >= 8) {
+            return new Store.Recount(s.today(), this::welcomeBack);
+        }
+        Brief b = brief();
+        return new Store.Recount(s.today(), () -> left() + b.middle() + six(b));
+    }
+
+    /** D-106: 그 날의 수 말. 오늘이면 USUAL, 다른 날이면 OTHER_DATE다. 목록이 바뀌면 다시 센다. */
+    public Store.Recount dayLine(LocalDate date) {
+        return new Store.Recount(date, date.equals(s.today()) ? this::usual : () -> otherDate(date));
     }
 
     public String briefing() {
+        Brief b = brief();
+        return left() + b.middle() + six(b);
+    }
+
+    /** BRIEFING 2~5번 문장(middle)과 6번 문장을 정할 값: 4, 5번 문장이 없었는가(quiet), 3번 문장이 말한 일(told). */
+    private record Brief(String middle, boolean quiet, Task told) {
+    }
+
+    private Brief brief() {
         LocalDate today = s.today();
-        StringBuilder b = new StringBuilder(left());
+        StringBuilder b = new StringBuilder();
         // 세는 날(06 데이터 절)로 센다. 끝내지 않은 기간 할 일은 마감 날의 일이다(D-65).
         long yesterday = s.tasks.stream()
                 .filter(t -> t.kind == Task.Kind.TASK && !t.done && t.countDay().equals(today.minusDays(1)))
@@ -79,12 +110,17 @@ public final class Talk {
             b.append(" 내일 '").append(Rules.shortTitle(tomorrow.title)).append("'")
                     .append(Rules.josa(tomorrow.title, "이", "가")).append(" 있어.");
         }
-        if (s.book.checkables(today).isEmpty() && near == null && dueToday == null && tomorrow == null) {
-            // 기간 안에 할 일이 있으면 새로 적으라고 하지 않고 가장 가까운 마감을 알린다.
-            String period = periodLine(told);
-            b.append(period != null ? " " + period : told != null ? "" : " 아래 칸에 하나 적어 볼까?");
+        return new Brief(b.toString(), near == null && dueToday == null && tomorrow == null, told);
+    }
+
+    /** BRIEFING 6번 문장. 오늘 할 일이 없고 4, 5번 문장이 없을 때만 붙는다. 다시 셀 때도 지금 목록으로 다시 판단한다(D-106). */
+    private String six(Brief b) {
+        if (!s.book.checkables(s.today()).isEmpty() || !b.quiet()) {
+            return "";
         }
-        return b.toString();
+        // 기간 안에 할 일이 있으면 새로 적으라고 하지 않고 가장 가까운 마감을 알린다.
+        String period = periodLine(b.told());
+        return period != null ? " " + period : b.told() != null ? "" : " 아래 칸에 하나 적어 볼까?";
     }
 
     /** 오늘의 기간 안에 할 일 가운데(skip은 빼고) 마감, 넣은 순으로 첫 번째의 "{제목}은 {일}일까지야, {n}일 남았어."(D-70). 없으면 null. */
@@ -104,7 +140,7 @@ public final class Talk {
     }
 
     /** BRIEFING 1번 문장: 오늘 남은 수. */
-    private String left() {
+    public String left() {
         List<Task> list = s.book.checkables(s.today());
         long left = list.stream().filter(t -> !t.done).count();
         if (list.isEmpty()) {
@@ -129,6 +165,11 @@ public final class Talk {
         String month = first.date.getMonth() == s.today().getMonth() && first.date.getYear() == s.today().getYear() ? ""
                 : first.date.getMonthValue() + "월 ";
         return month + first.date.getDayOfMonth() + "일(" + day + ")부터 " + first.repeat.text(s.weekStart) + "마다 넣었어요";
+    }
+
+    /** D-106: 오늘 날짜로 넣은 보통 일의 ADDED("오늘 남은 일 {수}개야")는 목록이 바뀌면 USUAL로 바뀐다. 그 밖은 수가 없어 null. */
+    public Store.Recount addedRecount(Task t) {
+        return !t.period() && t.date.equals(s.today()) ? dayLine(s.today()) : null;
     }
 
     /** D-90. 홈에서 새 일정을 넣은 뒤: 오늘이면 이름과 오늘 남은 수, 다른 날이면 이름과 날짜. */
