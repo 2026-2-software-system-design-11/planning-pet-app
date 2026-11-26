@@ -181,12 +181,19 @@ final class PeriodCheck {
             Ui.setDate(e.date, d("11-17"));
             starts += " " + e.start.getValue();
         }
-        TaskForm later = new TaskForm(null, d("11-17"), held.now);
-        later.clock = () -> held.now;
-        held.now = java.time.LocalDateTime.parse("2026-11-17T14:41");
+        App app = Main.create(at("11-17T14:12"));
+        TaskForm later = TaskDialog.form(app, null, d("11-17"));
+        app.store.now = java.time.LocalDateTime.parse("2026-11-17T14:41");
+        later.title.setText("빨래");
+        starts += " / " + later.start.getValue();
         Ui.setDate(later.date, d("11-18"));
         Ui.setDate(later.date, d("11-17"));
-        eq("T-DEF-23", "14:15 09:00 14:15 15:00 / 10:00 10:00 / 09:00 14:15 / 14:45", starts + " / " + later.start.getValue());
+        starts += " " + later.start.getValue();
+        app.store.now = java.time.LocalDateTime.parse("2026-11-17T14:12");
+        TaskForm open = TaskDialog.form(app, null, d("11-17"));
+        app.store.now = java.time.LocalDateTime.parse("2026-11-17T14:41");
+        open.timed.doClick();
+        eq("T-DEF-23", "14:15 09:00 14:15 15:00 / 10:00 10:00 / 09:00 14:15 / 14:15 14:45 / 14:45", starts + " / " + open.start.getValue());
     }
 
     /** D-69: 지난 반복 사본은 밀린 일로 보이지 않는다. */

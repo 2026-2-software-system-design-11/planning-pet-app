@@ -74,6 +74,10 @@ public final class TaskForm {
     public java.util.function.Supplier<java.time.LocalDateTime> clock;
     /** S129(D-101): 사용자가 시작 시각을 만졌는지. 만지기 전에는 날짜의 기본 시작 시각을 따라간다. */
     private boolean startTouched;
+    /** S129: 시작 시각을 마지막으로 잰 날짜. 날짜가 바뀐 때만 다시 잰다. 처음 sync에서 잰다. */
+    private LocalDate startDay;
+    /** S144: 지난 sync에서 시작 칸을 쓸 수 있었는지. 쓸 수 있게 되는 순간에도 다시 잰다. */
+    private boolean startOpen;
 
     /** 마감 기본값이 쓰는 한 주의 시작 요일(D-91). */
     private final java.time.DayOfWeek weekStart;
@@ -149,7 +153,9 @@ public final class TaskForm {
         if (t != null) {
             fixed.setSelected(t.kind == Task.Kind.FIXED);
             timed.setSelected(t.timed() && !t.period());
-            start.setValue(t.timed() ? Times.value(t.startMinute()) : "09:00");
+            if (t.timed()) {
+                start.setValue(Times.value(t.startMinute()));
+            }
             minutes.setValue(t.minutes);
             memo.setText(t.memo);
             category.setSelectedItem(t.category);
@@ -273,9 +279,12 @@ public final class TaskForm {
         repeatEnd.setEnabled(repeating && !editing);
         repeatHint.setVisible(period.isSelected());
         LocalDate day = Ui.dateOf(date);
-        if (!startTouched) {
+        boolean opened = start.isEnabled() && !startOpen;
+        startOpen = start.isEnabled();
+        if (!startTouched && (!day.equals(startDay) || opened)) {
             start.setValue(Times.value(DefaultDates.start(day, clock.get())));
         }
+        startDay = day;
         // D-101: 앱이 골라 준 요일은 사용자가 단추를 누르기 전까지 날짜를 바꾸는 그 순간 따라간다.
         if (autoDay != null && autoDay != day.getDayOfWeek()) {
             boolean untouched = true;
