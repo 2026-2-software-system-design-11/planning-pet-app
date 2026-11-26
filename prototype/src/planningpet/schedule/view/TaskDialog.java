@@ -21,6 +21,7 @@ public final class TaskDialog {
 
     /** delete가 null이면 추가 창이다(삭제 버튼 없음). */
     public static JPanel content(TaskForm form, JButton cancel, JButton save, JButton delete) {
+        form.saveWith(save);
         JPanel root = new JPanel(new BorderLayout());
         root.add(form.panel, BorderLayout.CENTER);
         JPanel buttons = new JPanel(new BorderLayout());
@@ -88,6 +89,9 @@ public final class TaskDialog {
 
     /** 저장 버튼과 같다. 검사를 통과하면 저장하고 true, 아니면 칸 아래에 오류를 모두 보이고 false. */
     public static boolean trySave(App app, TaskForm f, Task editing) {
+        if (f.blocked()) {
+            return false;
+        }
         var problems = f.problems();
         f.showErrors(problems);
         if (!problems.isEmpty()) {

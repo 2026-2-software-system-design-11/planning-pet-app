@@ -28,6 +28,7 @@ public final class TimeEditor {
     public final JLabel startNotice;
     public final JLabel minutesNotice;
     private final TypedField typedStart;
+    private final TypedField typedMinutes;
     /** 시작 시각을 둘 날. "밤 4시"로 읽으면 저장할 때 그 다음 날로 옮긴다(D-98). */
     private final java.time.LocalDate base;
     /** 칸 아래 글이 늘거나 줄면 창 크기를 다시 맞춘다. 창 없이 만들 때는 아무것도 하지 않는다. */
@@ -35,7 +36,7 @@ public final class TimeEditor {
     public final JLabel error = new JLabel(" ");
     public final JButton clear = new JButton("시각 빼기");
     final JButton cancel = new JButton("취소");
-    final JButton save = new JButton("저장");
+    public final JButton save = new JButton("저장");
     public final Card panel = new Card(new BorderLayout(0, 6), Theme.BUBBLE_RADIUS);
     /** 창을 연 목록의 날. 시각 없는 기간 할 일에 시각을 정하면 날짜가 이 날로 옮겨진다(D-65). */
     final java.time.LocalDate day;
@@ -55,10 +56,13 @@ public final class TimeEditor {
         base = placed ? t.date : day;
         realTime.setText(Times.real(base, from));
         minutes = Ui.minutes(t.minutes);
-        TypedField typed = new TypedField(minutes, Typed::minutes, () -> relayout.run());
+        typedMinutes = new TypedField(minutes, Typed::minutes, () -> relayout.run());
+        TypedField typed = typedMinutes;
         minutesNotice = typed.notice;
         typedStart = new TypedField(start, x -> Typed.start(x, base, t.period() ? t.dueDate : null), () -> relayout.run());
         startNotice = typedStart.notice;
+        typedStart.saveWith(save);
+        typedMinutes.saveWith(save);
         // 값이 바뀌면 실제 시각 글을 고치고, 그만큼 칸 묶음 폭이 바뀌니 칸 아래 글을 그 폭으로 다시 접는다(05 시각 고치기 창 1번).
         start.addChangeListener(x -> {
             realTime.setText(Times.real(base, Times.minuteOf(start.getValue())));
@@ -103,6 +107,10 @@ public final class TimeEditor {
 
     /** 저장 버튼과 같다. 통과하면 true, 아니면 창 아래 문장을 채우고 false. */
     public static boolean save(App app, Task t, TimeEditor e) {
+        // D-98: 받을 수 없는 글을 친 채 저장을 누르면 저장하지 않고 창을 남겨 그 칸 아래 빨간 글과 커서를 둔다.
+        if (e.typedStart.blocks() || e.typedMinutes.blocks()) {
+            return false;
+        }
         String problem = e.check();
         if (problem != null) {
             e.error.setText(problem);
