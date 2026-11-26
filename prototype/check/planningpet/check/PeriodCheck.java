@@ -121,6 +121,48 @@ final class PeriodCheck {
                 msgs(TaskCheck.check(task.withDue(d("11-22")).withRepeat(Repeat.DAILY, d("11-22")), false)));
         eq("D-65 기간은 할 일만", "마감: 기간은 할 일만 정할 수 있어요",
                 msgs(TaskCheck.check(draft(Task.Kind.FIXED, "11-16", "10:00").withDue(d("11-22")), false)));
+        eq("T-VAL-5", "시작 시각: 고정 일정은 시작 시각이 있어야 해요",
+                msgs(TaskCheck.check(draft(Task.Kind.FIXED, "11-16", null), false)));
+        eq("T-VAL-6", "시작 시각: 5분 단위로 정해 주세요",
+                msgs(TaskCheck.check(draft(Task.Kind.TASK, "11-16", "09:03"), false)));
+        StringBuilder spans = new StringBuilder();
+        for (int m : new int[] {0, 27, 730, 10, 75, 720}) {
+            spans.append(" / ").append(msgs(TaskCheck.check(TaskDraft.at(Task.Kind.TASK, "일", d("11-16"), null, m), false)));
+        }
+        String span = "걸리는 시간: 10분부터 720분까지, 5분 단위예요";
+        eq("T-VAL-9", " / " + span + " / " + span + " / " + span + " / 오류 없음 / 오류 없음 / 오류 없음", spans);
+        String both = "시작 시각: 다음 날 04:00까지 끝나야 해요. 5분 단위로 정해 주세요. ";
+        List<String[]> late = TaskCheck.check(TaskDraft.at(Task.Kind.TASK, "일", d("11-16"), 27 * 60 + 53, 10), false);
+        eq("T-VAL-21 10분", both + "03:50(다음 날)이면 둘 다 맞아요", msgs(late));
+        eq("T-VAL-21 27분", both + "걸리는 시간 25분이면 03:35(다음 날)이 맞아요 / " + span,
+                msgs(TaskCheck.check(TaskDraft.at(Task.Kind.TASK, "일", d("11-16"), 27 * 60 + 53, 27), false)));
+        eq("T-VAL-21 730분", both + "걸리는 시간 720분이면 16:00이 맞아요 / " + span,
+                msgs(TaskCheck.check(TaskDraft.at(Task.Kind.TASK, "일", d("11-16"), 27 * 60 + 53, 730), false)));
+        // D-100: 보이는 제목 칸 폭을 넘는 오류 글만 빈칸에서 줄을 바꿔 그 폭 안에 들고, 글은 그대로 남는다. 창처럼 패널을 놓은 뒤
+        // 보고, 테마 글꼴과 상관없어야 하므로 라벨 글꼴을 바꿔 가며 본다. 칸 안에 드는 반복 오류는 한 줄 그대로다.
+        List<String[]> longest = TaskCheck.check(TaskDraft.at(Task.Kind.TASK, "일", d("11-16"), 27 * 60 + 53, 27), false);
+        TaskForm wrap = new TaskForm(null, d("11-16"), at("11-16T09:00").now);
+        javax.swing.JLabel label = wrap.errors.get("시작 시각");
+        int wide = wrap.panel.getPreferredSize().width;
+        wrap.panel.setSize(wrap.panel.getPreferredSize());
+        wrap.panel.doLayout();
+        int room = wrap.title.getWidth();
+        wrap.showErrors(TaskCheck.check(TaskDraft.at(Task.Kind.TASK, "운동", d("11-16"), null, 30)
+                .withRepeat(Repeat.DAILY, LocalDate.of(2027, 6, 1)), false));
+        javax.swing.JLabel many = wrap.errors.get("반복");
+        eq("D-100 칸 안에 드는 오류 글은 한 줄", "true 반복이 너무 많아요. 반복 끝나는 날을 앞당겨 주세요",
+                (room > wrap.title.getPreferredSize().width) + " " + many.getText());
+        StringBuilder fits = new StringBuilder();
+        for (java.awt.Font font : new java.awt.Font[] {label.getFont(), new java.awt.Font(java.awt.Font.DIALOG, java.awt.Font.PLAIN, 12),
+                new java.awt.Font(java.awt.Font.DIALOG, java.awt.Font.BOLD, 16)}) {
+            label.setFont(font);
+            wrap.showErrors(longest);
+            String[] lines = label.getText().replaceAll("^<html>|</html>$", "").split("<br>");
+            fits.append(lines.length > 1).append(' ').append(label.getPreferredSize().width <= room).append(' ')
+                    .append(String.join(" ", lines).equals(longest.get(0)[1])).append(' ')
+                    .append(wrap.panel.getPreferredSize().width == wide).append(" / ");
+        }
+        eq("D-100 오류 글 줄바꿈", "true true true true / ".repeat(3) + longest.get(0)[1] + " / " + longest.get(1)[1], fits + wrap.errorText());
         eq("T-DEF-5", "2027-03-01", DefaultDates.repeatEnd(Task.Kind.FIXED, d("11-16")));
         eq("D-64 할 일 반복 끝 4주", "2026-12-14", DefaultDates.repeatEnd(Task.Kind.TASK, d("11-16")));
         eq("D-65 마감 기본은 그 주 일요일", "2026-11-22 2026-11-29", DefaultDates.due(d("11-18")) + " " + DefaultDates.due(d("11-22")));
