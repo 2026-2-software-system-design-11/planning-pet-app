@@ -25,13 +25,20 @@ public final class TypedField {
     private Runnable undo;
     /** 0보다 크면 글을 이 너비(px) 안에서 낱말 사이로 접는다(시각 고치기 창, D-98). */
     public java.util.function.IntSupplier wrap = () -> 0;
+    private final JFormattedTextField field;
+    /** 그 창의 저장 단추. 이 단추를 누르는 동안 포커스가 칸에서 단추로 옮겨 갈 때만 친 채 저장으로 본다(D-98). */
+    private AbstractButton save;
+    /** 포커스가 지금 칸에서 저장 단추로 옮겨 가는 중이다. JFormattedTextField는 포커스 리스너를 부른 뒤 글을 확정한다. */
+    private boolean toSave;
+    /** 저장 단추로 포커스가 옮겨 가며 친 글을 받지 않았다(D-98, 친 채 저장). */
+    private boolean rejectedBySave;
 
     public TypedField(JSpinner spinner, Function<String, Typed.Read> reader, Runnable relayout) {
         this.relayout = relayout;
+        field = ((JSpinner.DefaultEditor) spinner.getEditor()).getTextField();
         notice.setFont(Theme.font(12));
         notice.setVerticalAlignment(JLabel.TOP);
         notice.setVisible(false);
-        JFormattedTextField field = ((JSpinner.DefaultEditor) spinner.getEditor()).getTextField();
         DocumentFilter filter = new DocumentFilter() {
             @Override
             public void replace(FilterBypass fb, int off, int len, String text, AttributeSet a) throws BadLocationException {
@@ -91,6 +98,9 @@ public final class TypedField {
                         undo = null;
                         typed = true;
                         Typed.Read r = reader.apply(text);
+                        // 실제 창에서는 저장을 누르면 포커스가 칸에서 저장 단추로 옮겨 가며 먼저 이 읽기가 돈다. 누르지 않고 포커스만
+                        // 옮기면(Tab 포함, 저장 단추로도) 빨간 글만 띄우고, 그 뒤의 저장은 보이는 이전 값으로 한다(D-98).
+                        rejectedBySave = r.rejected() && toSave;
                         show(r.notice(), r.rejected() ? Theme.SUNDAY : Theme.INK_DIM, r.rejected() ? now : r.value());
                         if (r.rejected()) {
                             throw new ParseException(text, 0);
@@ -111,6 +121,41 @@ public final class TypedField {
                     }
                 }));
         spinner.addChangeListener(e -> edited(spinner.getValue(), false));
+        field.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusGained(java.awt.event.FocusEvent e) {
+                toSave = false;
+            }
+
+            @Override
+            public void focusLost(java.awt.event.FocusEvent e) {
+                toSave = save != null && !e.isTemporary() && e.getOppositeComponent() == save && save.getModel().isPressed();
+            }
+        });
+    }
+
+    /** 창의 저장 단추를 알린다. 누름이 끝나면(저장을 부른 뒤나 단추 밖에서 뗌) 표시를 꺼서 그 뒤의 저장은 보이는 이전 값으로 한다(D-98). */
+    public void saveWith(AbstractButton b) {
+        save = b;
+        b.getModel().addChangeListener(e -> rejectedBySave &= b.getModel().isPressed());
+    }
+
+    /**
+     * 저장 전에 부른다. 받을 수 없는 글을 친 채 저장을 누르면 true를 돌려 저장을 막고, 빨간 글을 보이고 커서를 이 칸에 둔다(D-98).
+     * 빨간 글이 이미 뜨고 칸이 이전 값으로 돌아간 뒤 저장을 누르면 막지 않고 그 값으로 저장한다(D-98).
+     */
+    public boolean blocks() {
+        boolean bad = rejectedBySave;
+        rejectedBySave = false;
+        try {
+            field.commitEdit();
+        } catch (ParseException x) {
+            bad = true;
+        }
+        if (bad) {
+            field.requestFocusInWindow();
+        }
+        return bad;
     }
 
     /** 칸 아래 글을 지운다(칸이 꺼질 때). */

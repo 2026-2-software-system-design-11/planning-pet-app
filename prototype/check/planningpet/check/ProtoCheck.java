@@ -161,6 +161,7 @@ public final class ProtoCheck {
         eq("D-98, D-101 밤 4시 뒤", "2026-11-19 / 2026-11-18 없음 / 2026-11-18 흐린 5분 단위로 맞췄어요(22:05) / 2026-11-18 245 없음 / 2026-11-19 / 2026-11-18 없음", nightAfter());
         Typed.Read r30 = Typed.start("밤 4시", java.time.LocalDate.of(2026, 11, 30));
         Typed.Read due = Typed.start("밤 4시", java.time.LocalDate.of(2026, 11, 18), java.time.LocalDate.of(2026, 11, 18));
+        eq("D-98 칸이 친 채 저장을 가름", "true false true false false false", typedBlocks());
         eq("D-98 이후 반복 모두의 밤 4시", "2026-11-19 240 2026-11-26 240 2026-12-03 240", nightSeries());
         eq("T-TYPE-12", "04:00 1 12월 1일(화) 04:00으로 읽었어요 / 03:55(다음 날) 0 마감(18일) 안에 두려고 03:55로 맞췄어요",
                 r30.value() + " " + r30.days() + " " + r30.notice() + " / " + due.value() + " " + due.days() + " " + due.notice());
@@ -482,6 +483,53 @@ public final class ProtoCheck {
                 java.time.LocalDateTime.of(2026, 11, 14, 15, 23)).start.getEditor()).getTextField();
         field.setText("1");
         return field.getText() + " " + field.getSelectedText();
+    }
+
+    /** 저장 단추를 누른 채 칸의 글을 두고 포커스가 단추로 옮겨 간 뒤 떼는 것과 같다(실제 창의 저장 누름). 떼면 단추의 동작이 돈다. */
+    static void pressSave(javax.swing.JSpinner s, String text, javax.swing.AbstractButton save) {
+        save.getModel().setArmed(true);
+        save.getModel().setPressed(true);
+        leave(s, text, save);
+        save.getModel().setPressed(false);
+        save.getModel().setArmed(false);
+    }
+
+    /** 칸에 글을 치고 포커스를 to로 옮긴 것과 같다. JFormattedTextField처럼 포커스 리스너를 부른 뒤 글을 확정하고, 받지 않으면 이전 값으로 돌린다. */
+    static void leave(javax.swing.JSpinner s, String text, java.awt.Component to) {
+        var field = ((javax.swing.JSpinner.DefaultEditor) s.getEditor()).getTextField();
+        field.setText(text);
+        var lost = new java.awt.event.FocusEvent(field, java.awt.event.FocusEvent.FOCUS_LOST, false, to);
+        for (var l : field.getFocusListeners()) {
+            l.focusLost(lost);
+        }
+        try {
+            field.commitEdit();
+        } catch (java.text.ParseException x) {
+            field.setValue(field.getValue());
+        }
+    }
+
+    /** 칸 하나에 받을 수 없는 글을 친 채 저장 단추를 누르거나 칸을 벗어나지 않고 저장하면 막고, 체크박스나 저장 단추로 포커스만 옮기거나 눌렀다 밖에서 뗀 뒤, 막힌 뒤 다시 저장하면 막지 않는다(D-98). */
+    private static String typedBlocks() {
+        StringBuilder out = new StringBuilder();
+        for (int i = 0; i < 5; i++) {
+            javax.swing.JSpinner s = Ui.minutes(60);
+            TypedField typed = new TypedField(s, Typed::minutes, () -> { });
+            javax.swing.JButton save = new javax.swing.JButton("저장");
+            typed.saveWith(save);
+            if (i == 0) {
+                save.addActionListener(x -> out.append(typed.blocks()).append(" "));
+                pressSave(s, "30abc", save);
+            } else if (i == 1) {
+                ((javax.swing.JSpinner.DefaultEditor) s.getEditor()).getTextField().setText("30abc");
+            } else {
+                save.getModel().setPressed(i == 4);
+                leave(s, "30abc", i == 2 ? new javax.swing.JCheckBox() : save);
+                save.getModel().setPressed(false);
+            }
+            out.append(typed.blocks()).append(" ");
+        }
+        return out.toString().trim();
     }
 
     /** 수요일 22:00 요일 반복 사본에 "밤 4시"를 넣고 이후 반복 모두를 고르면 모든 사본이 각자 다음 날 04:00이다. */
