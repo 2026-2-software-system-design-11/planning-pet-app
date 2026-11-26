@@ -645,9 +645,10 @@ final class PeriodCheck {
         ns.move(d("11-09"));
         now.store.changed();
         String lastWeek = rows(ns.untimed);
+        String nextWeek = week(now.store, "11-23");
         now.store.now = d("11-19").atTime(9, 0);
-        eq("T-EDIT-46", "11/18 P, 11/18 빨래, 11/20 S, 11/22 S / 11/18 빨래, 11/19 P, 11/20 S, 11/22 S / 11/15 P 30분 ~11/27까지",
-                first + " / " + week(now.store, "11-16") + " / " + lastWeek);
+        eq("T-EDIT-46", "11/18 P, 11/18 빨래, 11/20 S, 11/22 S / 11/18 빨래, 11/19 P, 11/20 S, 11/22 S / 11/15 P 30분 ~11/27까지"
+                + " / 11/23 P, 11/27 P", first + " / " + week(now.store, "11-16") + " / " + lastWeek + " / " + nextWeek);
         App ga = Main.create(at("11-17T09:00"));
         Store g = ga.store;
         g.book.add(Task.Kind.TASK, "끝냄", d("11-17"), null, 30, "", null).get(0).done = true;
@@ -937,13 +938,13 @@ final class PeriodCheck {
         return null;
     }
 
-    /** 목록의 줄마다 글(라벨)을 화면 순서대로 잇는다. 줄 사이는 " / ". */
     /** untimedOfWeek의 줄을 "11/17 P, 11/20 P"로. */
     static String week(Store s, String weekStart) {
         return s.book.untimedOfWeek(d(weekStart)).stream()
                 .map(x -> x.day().getMonthValue() + "/" + x.day().getDayOfMonth() + " " + x.task().title).collect(Collectors.joining(", "));
     }
 
+    /** 목록의 줄마다 글(라벨)을 화면 순서대로 잇는다. 줄 사이는 " / ". */
     static String rows(java.awt.Container list) {
         return java.util.Arrays.stream(list.getComponents()).map(row -> String.join(" ", labels(row, new java.util.ArrayList<>())))
                 .collect(Collectors.joining(" / "));

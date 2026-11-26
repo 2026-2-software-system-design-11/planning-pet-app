@@ -187,7 +187,7 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
         tasks.forEach(t -> add(row(t, "", null, day)));
     }
 
-    /** 일정관리 오른쪽 목록: 줄의 날짜(그 주에서 보이는 첫날, 기간 할 일의 마감 날 줄은 마감 날, D-65, D-93)를 붙인다. */
+    /** 일정관리 오른쪽 목록: 줄의 날짜(TaskBook.rowDay, 기간 할 일의 마감 날 줄은 마감 날, D-65, D-93, D-105)를 붙인다. */
     public void show(List<TaskBook.WeekRow> rows) {
         removeAll();
         if (rows.isEmpty()) {
