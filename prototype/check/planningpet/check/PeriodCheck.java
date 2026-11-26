@@ -251,6 +251,17 @@ final class PeriodCheck {
         TaskForm f = new TaskForm(done, done.date, app.store.now);
         Ui.setDate(f.due, d("11-17"));
         eq("D-66 끝낸 할 일도 마감 검사", "마감: 마감일이 시작일보다 앞이에요", msgs(f.problems()));
+        // T-VAL-22(D-99, #272): 시각을 정해 둔 기간 할 일의 마감을 정해 둔 날보다 앞으로 당기면 막는다.
+        Task plan = period(app.store, "계획", "11-17", "11-20", 30);
+        app.store.book.setTime(plan, 600, 30, d("11-19"), false);
+        TaskForm g = new TaskForm(plan, plan.date, app.store.now);
+        Ui.setDate(g.due, d("11-18"));
+        String pulled = g.errorText() + " / " + msgs(g.problems());
+        Ui.setDate(g.due, d("11-19"));
+        pulled += " / " + msgs(g.problems());
+        Ui.setDate(g.due, d("11-16"));
+        eq("T-VAL-22", "마감일이 시각을 정해 둔 11/19(목)보다 앞이에요 / 마감: 마감일이 시각을 정해 둔 11/19(목)보다 앞이에요 / 오류 없음"
+                + " / 마감: 마감일이 시작일보다 앞이에요 / 2026-11-19 10:00", pulled + " / " + msgs(g.problems()) + " / " + plan.date + " " + plan.start);
         eq("D-65 기간 할 일은 반복하지 않는다", "반복: 기간 안에 하는 할 일은 반복할 수 없어요",
                 msgs(TaskCheck.check(task.withDue(d("11-22")).withRepeat(Repeat.DAILY, d("11-22")), false)));
         eq("D-65 기간은 할 일만", "마감: 기간은 할 일만 정할 수 있어요",
