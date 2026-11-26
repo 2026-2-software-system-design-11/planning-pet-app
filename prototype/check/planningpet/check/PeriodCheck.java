@@ -96,8 +96,13 @@ final class PeriodCheck {
         f.days[3].doClick();
         f.repeat.setSelectedIndex(1);
         f.repeat.setSelectedIndex(2);
-        eq("T-DEF-19", "수 / 목 / 화, 목 / 화, 목 / 화, 목 / 없음 반복: 요일을 하나 이상 골라 주세요",
-                seen + " / " + picked(f) + " " + msgs(f.problems()));
+        TaskForm once = new TaskForm(null, d("11-18"), at("11-17T09:00").now);
+        once.repeat.setSelectedIndex(2);
+        once.days[2].doClick();
+        once.days[2].doClick();
+        Ui.setDate(once.date, d("11-19"));
+        eq("T-DEF-19", "수 / 목 / 화, 목 / 화, 목 / 화, 목 / 없음 반복: 요일을 하나 이상 골라 주세요 / 수",
+                seen + " / " + picked(f) + " " + msgs(f.problems()) + " / " + picked(once));
         TaskForm k = new TaskForm(null, d("11-18"), at("11-17T09:00").now);
         k.fixed.doClick();
         k.task.doClick();
