@@ -339,7 +339,8 @@ public final class TaskRows extends JPanel implements javax.swing.Scrollable {
         };
         label.addMouseListener(mouse);
         row.addMouseListener(mouse);
-        if (withDate && !t.done && dropOn != null) {
+        // D-99: 끝낸 줄과 마감이 지난 기간 할 일(#272)은 끌리지 않는다.
+        if (withDate && !t.done && !t.pastDue(control.today()) && dropOn != null) {
             draggable(t, row, label);
         }
         // 줄 위에 마우스가 있는 동안(줄 안 버튼 위 포함) 줄 바탕을 칠한다.

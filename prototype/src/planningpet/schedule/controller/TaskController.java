@@ -225,6 +225,10 @@ public final class TaskController {
 
     /** D-99: 일정관리 목록의 줄을 시간표의 그 날, 앱 하루의 분 minute에 놓는다. 겹침(D-87)과 반복 범위(D-42)를 묻는다. */
     public Drop drop(Task t, LocalDate day, int minute) {
+        // #272: 마감이 지난 기간 할 일은 받지 않는 일이라 끝낸 일처럼 아무것도 바꾸지 않는다.
+        if (t.pastDue(app.store.today())) {
+            return new Drop(null, null);
+        }
         String why = blocked(t, day);
         if (why != null) {
             LocalDate[] range = app.store.book.dropRange(t);
