@@ -196,18 +196,27 @@ final class ListCheck {
 
     /** T-EDIT-50~53(S158, S147, S148): 블록 양쪽에 글 상자가 들지 않으면 블록 바로 아래(왼쪽 끝 맞춤, 넘치면 밂), 아래 자리가 없으면 바로 위. */
     static void noteBelow() {
-        eq("T-EDIT-50", "2026-11-18 22:00~00:30(다음 날) 아래 맞춤 false true true", noteSpot("11-16", 150, 2, false));
+        String end = noteSpot("11-16", 150, 2, false, 0);
+        // 아래 자리는 시간표 전체가 아니라 보이는 아래 끝으로 잰다. 딱 맞으면 아래, 1px 모자라면 위.
+        int edge = (22 * 60 + 150) * TimetablePanel.HOUR / 60 + 2 + noteHeight + 2;
+        String wed = "2026-11-18 22:00~00:30(다음 날) ";
+        eq("T-EDIT-50", wed + "아래 맞춤 false true true / " + wed + "위 맞춤 false true true true / " + wed + "아래 맞춤 false true true true / " + wed
+                + "위 맞춤 false true true true", end + " / " + noteSpot("11-16", 150, 2, false, (23 * 60 + 30) * TimetablePanel.HOUR / 60) + " / "
+                + noteSpot("11-16", 150, 2, false, edge) + " / " + noteSpot("11-16", 150, 2, false, edge - 1));
         eq("T-EDIT-51", "2026-11-19 22:00~00:30(다음 날) 아래 밂 false true true / 2026-11-18 22:00~00:30(다음 날) 아래 밂 false true true",
-                noteSpot("11-16", 150, 3, false) + " / " + noteSpot("11-16", 150, 2, true));
-        eq("T-EDIT-52", "2026-11-18 16:00~04:00(다음 날) 위 밂 false true true", noteSpot("11-16", 720, 2, false));
-        eq("T-EDIT-53", "2026-11-17 22:00~00:30(다음 날) 아래 맞춤 false true true", noteSpot("11-15", 150, 2, false));
+                noteSpot("11-16", 150, 3, false, 0) + " / " + noteSpot("11-16", 150, 2, true, 0));
+        eq("T-EDIT-52", "2026-11-18 16:00~04:00(다음 날) 위 밂 false true true", noteSpot("11-16", 720, 2, false, 0));
+        eq("T-EDIT-53", "2026-11-17 22:00~00:30(다음 날) 아래 맞춤 false true true", noteSpot("11-15", 150, 2, false, 0));
     }
 
+    /** noteSpot이 마지막으로 띄운 글 상자의 높이. */
+    static int noteHeight;
+
     /**
-     * 창 1000x680, 오늘 today(11-15면 일요일 시작 주), 시간표를 맨 아래로 굴린 채 시각 없는 할 일 minutes분을 col번째 날 칸 22:00에
+     * 창 1000x680, 오늘 today(11-15면 일요일 시작 주), 시간표를 맨 아래로(bottom이 0이 아니면 보이는 아래 끝이 bottom px이 되게) 굴린 채 시각 없는 할 일 minutes분을 col번째 날 칸 22:00에
      * (600분이 넘으면 보이는 아래 끝 바로 위에) 놓고 글 상자 자리를 그려진 블록과 견준다. fixed면 그 칸에 고정 일정 22:00~02:00을 두고 "넣기".
      */
-    static String noteSpot(String today, int minutes, int col, boolean fixed) {
+    static String noteSpot(String today, int minutes, int col, boolean fixed, int bottom) {
         planningpet.app.model.Store s = at(today + "T09:00");
         s.weekStart = today.equals("11-15") ? java.time.DayOfWeek.SUNDAY : java.time.DayOfWeek.MONDAY;
         App app = Main.create(s);
@@ -222,8 +231,12 @@ final class ListCheck {
         PeriodCheck.layout(app.root);
         ScheduleScreen sched = ProtoCheck.find(app.root, ScheduleScreen.class);
         TimetablePanel table = ProtoCheck.find(app.root, TimetablePanel.class);
-        sched.scrollTo(28 * 60);
+        sched.scrollTo(bottom == 0 ? 28 * 60 : 0);
         PeriodCheck.layout(app.root);
+        if (bottom != 0) {
+            table.scrollRectToVisible(new java.awt.Rectangle(0, bottom - 1, 1, 1));
+            PeriodCheck.layout(app.root);
+        }
         int w = (table.getWidth() - TimetablePanel.GUTTER) / 7;
         java.awt.Rectangle seen = table.getVisibleRect();
         dropAt(sched, table, t, new java.awt.Point(TimetablePanel.GUTTER + col * w + w / 2,
@@ -231,11 +244,13 @@ final class ListCheck {
         table.paint(new java.awt.image.BufferedImage(table.getWidth(), table.getHeight(), java.awt.image.BufferedImage.TYPE_INT_ARGB).createGraphics());
         java.awt.Rectangle b = table.blockAreas().entrySet().stream().filter(e -> e.getValue() == t).findFirst().get().getKey();
         java.awt.Rectangle n = table.note.getBounds();
+        noteHeight = n.height;
         java.awt.Rectangle now = table.getVisibleRect();
         String side = n.y == b.y + b.height + 2 ? "아래" : n.y + n.height + 2 == b.y ? "위" : "옆";
         String x = n.x == b.x ? "맞춤" : n.x + n.width == table.getWidth() - 2 ? "밂" : n.x + "";
         return t.date + " " + planningpet.schedule.model.TaskBook.timeText(t) + " " + side + " " + x + " " + n.intersects(b) + " "
-                + (n.x >= 0 && n.x + n.width <= table.getWidth()) + " " + (now.contains(n) && now.y <= b.y);
+                + (n.x >= 0 && n.x + n.width <= table.getWidth()) + " " + (now.contains(n) && now.y <= b.y)
+                + (bottom == 0 ? "" : " " + (seen.y + seen.height == bottom));
     }
 
     /** 일정관리 목록의 줄 t를 잡아 시간표 좌표 p에 놓는다. */
