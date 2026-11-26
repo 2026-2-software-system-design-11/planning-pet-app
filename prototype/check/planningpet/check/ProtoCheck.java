@@ -145,6 +145,7 @@ public final class ProtoCheck {
                 timeEditorNotice());
         eq("T-TYPE-15", "빨간 14:00처럼 적어 주세요 true / 빨간 " + Typed.MINUTES_BAD + " true / 빨간 14:00처럼 적어 주세요 true / 빨간 "
                 + Typed.MINUTES_BAD + " true", redOneLine());
+        eq("T-TYPE-16", "0", parenWrap());
         eq("T-TYPE-5", "09:05 5분 단위로 맞췄어요(09:05) / 23:55 5분 단위로 맞췄어요(23:55) / 09:00 null", starts("09:03", "23:58", "09:00"));
         eq("T-TYPE-6", "03:55(다음 날) 하루는 새벽 4시에 끝나서 03:55(다음 날)로 맞췄어요", starts("04:10(다음 날)"));
         eq("T-TYPE-11", "19:30 19:30으로 읽었어요 / 19:30 19:30으로 읽었어요 / 07:30 null / 14:30 null / 14:30 null / 14:00 오전을 빼고 14:00으로 읽었어요"
@@ -415,6 +416,30 @@ public final class ProtoCheck {
                     .append(!l.getText().contains("<br>") && l.getPreferredSize().width <= room);
         }
         return out.toString();
+    }
+
+    /** S162: 어느 폭에서 접어도 괄호 안에서 줄이 바뀌지 않고, 줄은 폭 안에 들며, 이으면 원래 글이다. 어긋난 폭의 수. */
+    private static int parenWrap() {
+        int bad = 0;
+        for (java.awt.Font font : new java.awt.Font[] {planningpet.common.view.Theme.font(12), new javax.swing.JLabel().getFont()}) {
+            javax.swing.JLabel l = new javax.swing.JLabel();
+            l.setFont(font);
+            var fm = l.getFontMetrics(font);
+            for (String text : new String[] {"하루는 새벽 4시에 끝나서 03:55(다음 날)로 맞췄어요", "오전 12시는 밤 자정, 00:00(다음 날)로 읽었어요",
+                    "최대 720분(12시간)까지 넣을 수 있어요", "다음 날 04:00까지 끝나야 해요. 5분 단위로 정해 주세요. 걸리는 시간 25분이면 03:35(다음 날)이 맞아요"}) {
+                // 가장 넓은 괄호 묶음("03:55(다음 날)로")의 폭부터 잰다. 그보다 좁으면 묶음을 끊을 수밖에 없다.
+                int from = java.util.regex.Pattern.compile("\\S*\\([^)]*\\)\\S*").matcher(text).results()
+                        .mapToInt(m -> fm.stringWidth(m.group())).max().orElse(0);
+                for (int room = from; room <= fm.stringWidth(text); room++) {
+                    String[] lines = Ui.wrap(text, l, room).replaceAll("</?(html|font)[^>]*>", "").split("<br>");
+                    for (String line : lines) {
+                        bad += fm.stringWidth(line) > room || line.chars().filter(c -> c == '(').count() != line.chars().filter(c -> c == ')').count() ? 1 : 0;
+                    }
+                    bad += String.join(" ", lines).equals(text) ? 0 : 1;
+                }
+            }
+        }
+        return bad;
     }
 
     /** 라벨을 흰 바탕에 그려 가장 진한 점이 본문 글색(INK)보다 한참 밝으면 참이다. 두 줄로 접은 흐린 글도 흐리게 그려지는가. */
