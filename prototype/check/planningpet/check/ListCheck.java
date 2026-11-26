@@ -9,6 +9,7 @@ import planningpet.app.view.App;
 import planningpet.schedule.model.Task;
 import planningpet.schedule.view.ScheduleScreen;
 import planningpet.schedule.view.DragCursors;
+import planningpet.schedule.view.DropNote;
 import planningpet.schedule.view.TaskRows;
 import planningpet.schedule.view.TimetablePanel;
 import java.awt.event.MouseEvent;
@@ -68,6 +69,28 @@ final class ListCheck {
         mouse(title, MouseEvent.MOUSE_RELEASED, javax.swing.SwingUtilities.convertPoint(table, wed, title));
         eq("T-EDIT-24", "false 2026-11-17 null / true true true / [] [2026-11-16] 2026-11-17 null / 2026-11-18 14:00 []",
                 byBox + " / " + open + " " + no + " " + grab + " / " + outside + " / " + work.date + " " + work.start + " " + table.dimmed());
+        DropNote note = table.note;
+        String placed = note(note, TimetablePanel.GUTTER + 3 * w);
+        mouse(note, MouseEvent.MOUSE_ENTERED, new java.awt.Point(2, 2));
+        String held = note.timer.isRunning() + "";
+        note.undo.doClick();
+        String undone = work.date + " " + work.start + " " + note.isVisible();
+        title = title(sched.untimed, work);
+        mouse(title, MouseEvent.MOUSE_PRESSED, new java.awt.Point(5, 5));
+        mouse(title, MouseEvent.MOUSE_DRAGGED, javax.swing.SwingUtilities.convertPoint(table, mon, title));
+        mouse(title, MouseEvent.MOUSE_RELEASED, javax.swing.SwingUtilities.convertPoint(table, mon, title));
+        String why = note(note, mon.x);
+        mouse(title, MouseEvent.MOUSE_PRESSED, new java.awt.Point(5, 5));
+        mouse(title, MouseEvent.MOUSE_DRAGGED, javax.swing.SwingUtilities.convertPoint(table, wed, title));
+        eq("T-EDIT-25", "true 11/18 14:00~14:30에 놓았어요 true 5000 오른쪽 / false / 2026-11-17 null false"
+                + " / true 지난 날에는 놓을 수 없어요 false 3000 오른쪽 / false",
+                placed + " / " + held + " / " + undone + " / " + why + " / " + note.isVisible());
+    }
+
+    /** 글 상자가 보이는지, 글, 되돌리기가 보이는지, 머무는 시간, 시간표 좌표 x의 오른쪽에 있는지. */
+    static String note(DropNote n, int x) {
+        return n.isVisible() + " " + n.text.getText() + " " + n.undo.isVisible() + " " + n.timer.getInitialDelay() + " "
+                + (n.getX() >= x ? "오른쪽" : "왼쪽");
     }
 
     static void mouse(java.awt.Component c, int id, java.awt.Point p) {

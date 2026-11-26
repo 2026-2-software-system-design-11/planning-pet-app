@@ -140,6 +140,7 @@ public final class ScheduleScreen extends JPanel {
     public void move(LocalDate newStart) {
         start = newStart;
         showHint = true;
+        table.note.close();
         scrollPending = true;
         app.redraw();
     }
@@ -190,6 +191,8 @@ public final class ScheduleScreen extends JPanel {
         }
         if (visible) {
             scrollPending = false;
+        } else {
+            table.note.close();
         }
         wasVisible = visible;
         if (text != null) {

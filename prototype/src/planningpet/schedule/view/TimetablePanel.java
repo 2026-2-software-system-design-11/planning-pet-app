@@ -42,6 +42,8 @@ public final class TimetablePanel extends JComponent {
     private Task dragging;
     private Spot dragSpot;
     private final TaskController control;
+    /** D-99: 놓은 자리 옆 글 상자. */
+    public final DropNote note = new DropNote();
 
     /** 시간표의 한 자리: 날짜와 앱 하루의 분(D-77). */
     public record Spot(LocalDate day, int minute) { }
@@ -49,6 +51,7 @@ public final class TimetablePanel extends JComponent {
     public TimetablePanel(Store store, TaskController control) {
         this.store = store;
         this.control = control;
+        add(note);
         setPreferredSize(new Dimension(300, HOUR * HOURS));
         setToolTipText("");
         addMouseListener(new MouseAdapter() {
@@ -100,6 +103,9 @@ public final class TimetablePanel extends JComponent {
     public void drag(Task t) {
         dragging = t;
         dragSpot = null;
+        if (t != null) {
+            note.close();
+        }
         repaint();
     }
 
@@ -118,6 +124,17 @@ public final class TimetablePanel extends JComponent {
         String why = control.blocked(dragging, dragSpot.day());
         int start = TaskBook.dropStart(dragSpot.minute(), dragging.minutes);
         return why != null ? why : TaskBook.spanText(start, start + dragging.minutes);
+    }
+
+    /** D-99: 놓은 결과 글을 놓인 블록의 날 칸 옆에, 놓지 못했으면 손을 놓은 자리 at 옆에 보인다. 물음에서 취소했으면 없다. */
+    void dropped(TaskController.Drop r, Task t, java.awt.Point at) {
+        int day = (getWidth() - GUTTER) / 7;
+        int x = GUTTER + (int) (t.date.toEpochDay() - monday.toEpochDay()) * day;
+        if (r.text() != null && r.undo() == null) {
+            note.open(r.text(), null, at.x + 12, at.y + 12, at.x - 12);
+        } else if (r.text() != null) {
+            note.open(r.text(), r.undo(), x + day + 2, t.startMinute() * HOUR / 60, x - 2);
+        }
     }
 
     /** 끄는 동안 흐리게 그리는 날(놓을 수 없는 날). */
