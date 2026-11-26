@@ -73,7 +73,7 @@ final class PeriodCheck {
         return out.isEmpty() ? "없음" : String.join(", ", out);
     }
 
-    /** T-DEF-19(D-101): 입력 창은 사용자가 고른 값을 지키고 앱이 고른 값은 맥락을 따른다. */
+    /** T-DEF-19, T-DEF-20(D-101): 입력 창은 사용자가 고른 값을 지키고 앱이 고른 값은 맥락을 따른다. */
     static void formKeeps() {
         TaskForm f = new TaskForm(null, d("11-18"), at("11-17T09:00").now);
         f.title.setText("운동");
@@ -98,6 +98,23 @@ final class PeriodCheck {
         f.repeat.setSelectedIndex(2);
         eq("T-DEF-19", "수 / 목 / 화, 목 / 화, 목 / 화, 목 / 없음 반복: 요일을 하나 이상 골라 주세요",
                 seen + " / " + picked(f) + " " + msgs(f.problems()));
+        TaskForm k = new TaskForm(null, d("11-18"), at("11-17T09:00").now);
+        k.fixed.doClick();
+        k.task.doClick();
+        String kinds = k.timed.isSelected() + " " + k.timed.isEnabled();
+        k.timed.doClick();
+        k.start.setValue("10:00");
+        k.fixed.doClick();
+        k.start.setValue("11:00");
+        k.task.doClick();
+        kinds += " / " + k.timed.isSelected() + " " + k.start.getValue();
+        k.timed.doClick();
+        k.period.doClick();
+        Ui.setDate(k.due, d("11-25"));
+        k.fixed.doClick();
+        k.task.doClick();
+        eq("T-DEF-20", "false true / true 11:00 / true 2026-11-25 false false", kinds + " / " + k.period.isSelected() + " "
+                + Ui.dateOf(k.due) + " " + k.timed.isSelected() + " " + k.timed.isEnabled());
     }
 
     /** D-69: 지난 반복 사본은 밀린 일로 보이지 않는다. */
@@ -224,7 +241,6 @@ final class PeriodCheck {
             }
             k.fixed.doClick();
             k.task.doClick();
-            k.period.doClick();
             kept += Ui.dateOf(k.due) + " ";
         }
         Ui.setDate(keep.date, d("12-12"));

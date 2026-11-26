@@ -58,6 +58,10 @@ public final class TaskForm {
     private boolean daysShown;
     /** D-101: 앱이 골라 준 요일. 사용자가 요일 단추를 누르면 null이 되고 날짜를 따라가지 않는다. */
     private java.time.DayOfWeek autoDay;
+    /** D-101: 고정 일정으로 가기 앞의 시작 시각 정하기, 기간 안에 하기, 마감. 할 일로 돌아오면 되돌리고 null이 된다. */
+    private Boolean timedBefore;
+    private boolean periodBefore;
+    private LocalDate dueBefore;
     /** 오류 글이 늘거나 줄면 창 크기를 다시 맞춘다. 창 없이 만들 때는 아무것도 하지 않는다. */
     Runnable relayout = () -> { };
     private int row;
@@ -199,6 +203,17 @@ public final class TaskForm {
         task.setEnabled(!editing);
         fixed.setEnabled(!editing);
         boolean isFixed = fixed.isSelected();
+        // D-101: 고정 일정이라서 앱이 바꾼 칸은 할 일로 돌아오면 사용자가 둔 값으로 되돌린다.
+        if (isFixed && !editing && timedBefore == null) {
+            timedBefore = timed.isSelected();
+            periodBefore = period.isSelected();
+            dueBefore = Ui.dateOf(due);
+        } else if (!isFixed && timedBefore != null) {
+            timed.setSelected(timedBefore);
+            period.setSelected(periodBefore);
+            Ui.setDate(due, dueBefore);
+            timedBefore = null;
+        }
         if (isFixed) {
             timed.setSelected(true);
         }
