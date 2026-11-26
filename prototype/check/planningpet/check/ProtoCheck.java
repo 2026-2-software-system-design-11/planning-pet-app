@@ -237,6 +237,8 @@ public final class ProtoCheck {
         eq("D-43 오류 글 다시 검사, 30분 안내", "다음 날 04:00까지 끝나야 해요 / true false", recheck());
         eq("D-42 반복 끝 밖으로 옮겨 저장, 반복 표시", "true true 2026-12-29", moveLastCopy());
         eq("D-42 시각 창의 이후 반복 모두는 시각만", "11:00 보강 11:00", timeOnly());
+        eq("T-EDIT-43", "21:00 22:00 21:00 22:00 22:00 / 21:00 null 21:00 null null / 영어 단어 영어 단어 복습 영어 단어 영어 단어 복습 영어 단어 복습 / 30개 30개 30개",
+                doneCopies());
         newRules();
         PeriodCheck.run();
         DayCheck.run();
@@ -294,6 +296,25 @@ public final class ProtoCheck {
         app.schedule.chooser = (title, message, options) -> 1;
         TimeEditor.save(app, copies.get(0), e);
         return copies.get(0).start + " " + copies.get(1).title + " " + copies.get(1).start;
+    }
+
+    /** T-EDIT-43(D-42, S157): 이후 반복 모두는 끝낸 사본(11-18)의 시각, 제목, 메모를 바꾸지 않는다. */
+    private static String doneCopies() {
+        Store s = MockData.empty();
+        java.util.List<Task> c = s.book.add(new planningpet.schedule.model.TaskDraft(Task.Kind.TASK, "영어 단어",
+                java.time.LocalDate.of(2026, 11, 16), java.time.LocalTime.of(21, 0), 30, "")
+                .withRepeat(planningpet.schedule.model.Repeat.DAILY, java.time.LocalDate.of(2026, 11, 20)));
+        c.get(2).done = true;
+        Task t = c.get(1);
+        s.book.setTime(t, java.time.LocalTime.of(22, 0), 30, t.date, true);
+        String set = c.stream().map(x -> String.valueOf(x.start)).collect(java.util.stream.Collectors.joining(" "));
+        s.book.clearTime(t, true);
+        String cleared = c.stream().map(x -> String.valueOf(x.start)).collect(java.util.stream.Collectors.joining(" "));
+        t.title = "영어 단어 복습";
+        t.memo = "30개";
+        s.book.applyToSeries(t, t.date);
+        return set + " / " + cleared + " / " + c.stream().map(x -> x.title).collect(java.util.stream.Collectors.joining(" ")) + " / "
+                + c.stream().map(x -> x.memo).filter(m -> !m.isEmpty()).collect(java.util.stream.Collectors.joining(" "));
     }
 
     /** 일정 입력 창 날짜 칸의 위 화살표가 바꿀 값. DateEditor가 아니라서 커서 자리와 관계없이 하루다. */
