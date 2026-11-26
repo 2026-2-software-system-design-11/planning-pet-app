@@ -35,7 +35,7 @@ final class FlowsPeriod {
                 Flows345.repeat(f) + " / " + f.repeatHint.isVisible() + " " + f.repeatHint.getText());
         q.step("3", "마감을 2026-11-15로 바꿔 저장한다");
         Ui.setDate(f.due, QaDrive.d("2026-11-15"));
-        q.eq("저장, 마감 칸 아래", "false 마감일이 시작일보다 앞이에요 true", q.save(f, null) + " " + f.error("마감")
+        q.eq("저장, 마감 칸 아래", "false 마감일이 시작일보다 전이에요 true", q.save(f, null) + " " + f.error("마감")
                 + " " + f.errors.get("마감").isVisible());
         q.step("4", "마감을 2026-11-22로 바꿔 저장한다");
         Ui.setDate(f.due, QaDrive.d("2026-11-22"));

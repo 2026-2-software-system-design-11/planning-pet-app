@@ -58,6 +58,8 @@ public final class TaskForm {
     /** D-43: 추가 창에서 걸리는 시간이 30일 때만 보인다. */
     public final JLabel minutesHint = Ui.hint("안 바꾸면 30분으로 들어가요");
     private final boolean editing;
+    /** 수정하는 기간 할 일에 시각을 정해 둔 날. 마감은 이 날보다 앞일 수 없다(D-99, #272). 아니면 null. */
+    private final LocalDate placed;
     /** 반복 사본을 고치는 중(기간 칸은 꺼진 채 비활성, D-65). */
     private final boolean copy;
     /** sync 안에서 칸 값을 바꿀 때 다시 sync하지 않는다. */
@@ -103,6 +105,7 @@ public final class TaskForm {
         // D-101: 수정 창에서 저장해 둔 시각은 사용자 값이다. 시각 없는 일정의 시작 칸은 앱이 채운 값이라 날짜를 따라간다.
         startTouched = t != null && t.timed();
         editing = t != null;
+        placed = t != null && t.period() && t.timed() ? t.date : null;
         copy = t != null && t.seriesId != null;
         Ui.limit(title, 100);
         Ui.limit(memo, 1000);
@@ -336,7 +339,7 @@ public final class TaskForm {
         endLabel.setText(s == null ? "" : Times.endHint(s, (int) minutes.getValue()));
         realTime.setText(s == null ? "" : Times.real(day, s));
         // S102, S128(D-101): 마감 칸은 저장 전에도 값이 바뀔 때마다 바로 검사한다. 다른 칸은 저장 뒤다(D-43).
-        boolean dueLate = period.isSelected() && Ui.dateOf(due).isBefore(day);
+        boolean dueLate = period.isSelected() && (Ui.dateOf(due).isBefore(day) || placed != null && Ui.dateOf(due).isBefore(placed));
         syncing = false;
         JLabel dueError = errors.get("마감");
         if (checked) {
@@ -374,7 +377,7 @@ public final class TaskForm {
 
     /** 06의 2번 검사. */
     public java.util.List<String[]> problems() {
-        return TaskCheck.check(draft(), editing);
+        return TaskCheck.check(draft(), editing, placed);
     }
 
     public boolean editing() {

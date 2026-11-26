@@ -18,6 +18,11 @@ public final class TaskCheck {
     public static final String END_PROBLEM = "다음 날 04:00까지 끝나야 해요";
 
     public static List<String[]> check(TaskDraft f, boolean editing) {
+        return check(f, editing, null);
+    }
+
+    /** placed는 수정하는 기간 할 일에 시각을 정해 둔 날(아니면 null). 마감은 그 날보다 앞일 수 없다(D-99, #272). */
+    public static List<String[]> check(TaskDraft f, boolean editing, LocalDate placed) {
         List<String[]> out = new ArrayList<>();
         if (f.title().isBlank()) {
             out.add(new String[] {"제목", "제목을 써 주세요"});
@@ -28,7 +33,10 @@ public final class TaskCheck {
             if (f.kind() == Task.Kind.FIXED) {
                 out.add(new String[] {"마감", "기간은 할 일만 정할 수 있어요"});
             } else if (f.dueDate().isBefore(f.date())) {
-                out.add(new String[] {"마감", "마감일이 시작일보다 앞이에요"});
+                out.add(new String[] {"마감", "마감일이 시작일보다 전이에요"});
+            } else if (placed != null && f.dueDate().isBefore(placed)) {
+                out.add(new String[] {"마감", "마감일이 시각을 정해 둔 " + placed.getMonthValue() + "/" + placed.getDayOfMonth() + "("
+                        + "월화수목금토일".charAt(placed.getDayOfWeek().getValue() - 1) + ")보다 전이에요"});
             }
         }
         Integer start = f.startMinute();
@@ -90,7 +98,7 @@ public final class TaskCheck {
             return "요일을 하나 이상 골라 주세요";
         }
         if (to.isBefore(from)) {
-            return "반복 끝나는 날이 날짜보다 앞이에요";
+            return "반복 끝나는 날이 날짜보다 전이에요";
         }
         int copies = how.dates(from, to, Repeat.MAX_COPIES).size();
         if (copies == 0) {

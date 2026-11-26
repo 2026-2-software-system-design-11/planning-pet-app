@@ -75,6 +75,11 @@ public final class Task {
         return period() && !done && timed() && date.isBefore(today) && date.isBefore(dueDate);
     }
 
+    /** 마감이 지나도 끝내지 못한 기간 할 일인가. 받지 않는 일이라 어느 날로도 옮기지 않는다(D-99, #272). */
+    public boolean pastDue(LocalDate today) {
+        return period() && !done && dueDate.isBefore(today);
+    }
+
     /**
      * 지난 반복 사본인가(D-69): 끝내지 않은 할 일 반복 사본이고 날짜가 오늘보다 앞이다. 놓친 습관 날은 밀린 일이 아니라서
      * "지난 날", 달력 칸의 진한 색, 브리핑의 어제 못 끝낸 일에 넣지 않는다. 통계에는 센다.
@@ -97,8 +102,8 @@ public final class Task {
             return doneOn().equals(day);
         }
         if (period() && dueDate.isBefore(today)) {
-            // D-67 5번: 마감이 지나도 못 끝낸 기간 할 일은 보통 할 일처럼 마감 날에만 보인다. 마감 뒤 날에 끌어 놓았으면 그 날이다(D-99).
-            return (timed() && date.isAfter(dueDate) ? date : dueDate).equals(day);
+            // D-67 5번: 마감이 지나도 못 끝낸 기간 할 일은 보통 할 일처럼 마감 날에만 보인다.
+            return dueDate.equals(day);
         }
         if (missed(today)) {
             return day.isAfter(date) && !day.isAfter(dueDate);

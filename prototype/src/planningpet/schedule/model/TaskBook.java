@@ -127,10 +127,10 @@ public final class TaskBook {
 
     /**
      * D-99: 놓을 수 있는 첫날(앱의 오늘부터, 기간 할 일은 기간 첫날부터)과 끝날(기간 할 일의 마감, 아니면 null). 마감이 지난 기간 할 일은
-     * 보통 할 일처럼 오늘부터 끝이 없다(S59).
+     * 첫날이 끝날보다 뒤라 놓을 날이 없다(#272).
      */
     public LocalDate[] dropRange(Task task) {
-        boolean period = task.period() && !task.dueDate.isBefore(today());
+        boolean period = task.period();
         LocalDate from = period && task.startDay.isAfter(today()) ? task.startDay : today();
         return new LocalDate[] {from, period ? task.dueDate : null};
     }

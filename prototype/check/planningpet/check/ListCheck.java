@@ -26,6 +26,7 @@ final class ListCheck {
     static void run() {
         rowClick();
         places();
+        pastDue();
         drops();
         preview();
         grab();
@@ -285,7 +286,7 @@ final class ListCheck {
         table.paint(new java.awt.image.BufferedImage(800, 400, java.awt.image.BufferedImage.TYPE_INT_ARGB).createGraphics());
     }
 
-    /** D-99 놓을 자리(06의 4번 dropStart, dropRange)와 T-EDIT-21의 보이는 날. */
+    /** D-99 놓을 자리(06의 4번 dropStart, dropRange). 마감이 지난 기간 할 일은 놓을 날이 없다(#272). */
     static void places() {
         App app = Main.create(at("11-18T09:00"));
         Task q = PeriodCheck.period(app.store, "Q", "11-10", "11-16", 30);
@@ -294,12 +295,28 @@ final class ListCheck {
         String ranges = java.util.Arrays.toString(book.dropRange(q)) + " " + java.util.Arrays.toString(book.dropRange(p));
         String starts = planningpet.schedule.model.TaskBook.dropStart(14 * 60 + 7, 30) + " "
                 + planningpet.schedule.model.TaskBook.dropStart(27 * 60 + 40, 60);
-        Runnable undo = book.keep(q, false);
-        book.placeAt(q, d("11-19"), 600, false);
-        String placed = q.date + " " + q.dueDate + " " + book.dayPlan(d("11-19")).timed().stream().map(t -> t.title).toList() + " " + q.shownOn(d("11-16"), d("11-18"));
-        undo.run();
-        eq("D-99 놓을 자리, T-EDIT-21", "[2026-11-18, null] [2026-11-20, 2026-11-22] 840 1620 2026-11-19 2026-11-16 [Q] false / 2026-11-10 null",
-                ranges + " " + starts + " " + placed + " / " + q.date + " " + q.start);
+        eq("D-99 놓을 자리", "[2026-11-18, 2026-11-16] [2026-11-20, 2026-11-22] 840 1620", ranges + " " + starts);
+    }
+
+    /** T-EDIT-21(D-99, #272): 마감이 지난 기간 할 일은 끌리지 않고, 오늘이나 내일에 놓아도 그대로다. */
+    static void pastDue() {
+        App app = Main.create(at("11-18T09:00"));
+        Task q = PeriodCheck.period(app.store, "Q", "11-10", "11-16", 30);
+        app.show("일정관리");
+        app.store.changed();
+        app.root.setSize(1000, 680);
+        PeriodCheck.layout(app.root);
+        ScheduleScreen sched = ProtoCheck.find(app.root, ScheduleScreen.class);
+        TimetablePanel table = ProtoCheck.find(app.root, TimetablePanel.class);
+        TaskRows.TitleLabel title = title(sched.untimed, q);
+        String open = (title.getCursor() == DragCursors.OPEN) + "";
+        mouse(title, MouseEvent.MOUSE_PRESSED, new java.awt.Point(5, 5));
+        mouse(title, MouseEvent.MOUSE_DRAGGED, new java.awt.Point(30, 5));
+        String drag = open + " " + table.dimmed();
+        mouse(title, MouseEvent.MOUSE_RELEASED, new java.awt.Point(30, 5));
+        eq("T-EDIT-21", "false [] / null 2026-11-10 시각 없음 / null 2026-11-10 시각 없음 / 2026-11-16 [2026-11-16]",
+                drag + " / " + dropped(app, q, "11-18", 600) + " / " + dropped(app, q, "11-19", 600) + " / " + q.dueDate + " "
+                        + java.util.stream.Stream.of("11-16", "11-17", "11-18", "11-19").map(x -> d(x)).filter(x -> q.shownOn(x, d("11-18"))).toList());
     }
 
     /** T-EDIT-16(D-99): 일정관리 목록 줄을 한 번 누르면 시각 고치기 창, 두 번 눌러도 창 하나, 끝낸 줄은 없다. */
@@ -347,11 +364,6 @@ final class ListCheck {
                 dropped(app, review, "11-17", 27 * 60 + 40));
         Task wash = app.store.book.add(Task.Kind.TASK, "빨래", d("11-17"), null, 30, "", null).get(0);
         Task p = PeriodCheck.period(app.store, "P", "11-16", "11-20", 30);
-        Task q = PeriodCheck.period(app.store, "Q", "11-10", "11-16", 30);
-        app.store.now = java.time.LocalDateTime.parse("2026-11-18T09:00");
-        eq("T-EDIT-21", "지난 날에는 놓을 수 없어요 2026-11-10 시각 없음 / 11/19 10:00~10:30에 놓았어요 2026-11-19 10:00~10:30",
-                dropped(app, q, "11-17", 600) + " / " + dropped(app, q, "11-19", 600));
-        app.store.now = java.time.LocalDateTime.parse("2026-11-17T09:00");
         eq("T-EDIT-19", "지난 날 지난 날 11/17~11/20만 돼요 null / 지난 날에는 놓을 수 없어요 2026-11-17 시각 없음"
                 + " / 11/17부터 11/20까지 놓을 수 있어요 2026-11-16 시각 없음 / 11/18 09:00~09:30에 놓았어요 2026-11-18 09:00~09:30",
                 app.schedule.blocked(wash, d("11-16")) + " " + app.schedule.blocked(p, d("11-16")) + " "
