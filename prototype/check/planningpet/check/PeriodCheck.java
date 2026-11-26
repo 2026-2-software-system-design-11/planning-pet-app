@@ -270,7 +270,23 @@ final class PeriodCheck {
         TaskForm open = TaskDialog.form(app, null, d("11-17"));
         app.store.now = java.time.LocalDateTime.parse("2026-11-17T14:41");
         open.timed.doClick();
-        eq("T-DEF-23", "14:15 09:00 14:15 15:00 / 10:00 10:00 / 09:00 14:15 / 14:15 14:45 / 14:45", starts + " / " + open.start.getValue());
+        starts += " / " + open.start.getValue();
+        // S144: 켠 칸은 다른 칸을 고쳐도 그대로, 고정 일정이나 기간 끄기로 칸이 열리는 순간은 다시 잰다.
+        app.store.now = java.time.LocalDateTime.parse("2026-11-17T14:12");
+        TaskForm typing = TaskDialog.form(app, null, d("11-17"));
+        TaskForm fixing = TaskDialog.form(app, null, d("11-17"));
+        TaskForm ranged = TaskDialog.form(app, null, d("11-17"));
+        typing.timed.doClick();
+        ranged.timed.doClick();
+        ranged.period.doClick();
+        app.store.now = java.time.LocalDateTime.parse("2026-11-17T14:41");
+        typing.title.setText("운동");
+        fixing.fixed.doClick();
+        ranged.period.doClick();
+        starts += " / " + typing.start.getValue() + " / " + fixing.start.isEnabled() + " " + fixing.start.getValue()
+                + " / " + ranged.timed.isSelected() + " " + ranged.start.getValue();
+        eq("T-DEF-23", "14:15 09:00 14:15 15:00 / 10:00 10:00 / 09:00 14:15 / 14:15 14:45 / 14:45 / 14:15 / true 14:45 / true 14:45",
+                starts);
     }
 
     /** D-69: 지난 반복 사본은 밀린 일로 보이지 않는다. */
