@@ -125,23 +125,39 @@ public final class ProtoCheck {
         eq("D-38 5분 단위", "30 null 75", fiveMinute());
         eq("T-TYPE-1", "25 5분 단위로 맞췄어요(25분) / 75 null", typed("27") + " / " + typed("75"));
         eq("T-TYPE-2", "720 최대 720분(12시간)까지 넣을 수 있어요 / 10 최소 10분부터 넣을 수 있어요", typed("730") + " / " + typed("5"));
-        eq("T-TYPE-3", "null 숫자(분)로 넣어 주세요(예: 30) / null 숫자(분)로 넣어 주세요(예: 30) / 30 null",
-                typed("반시간") + " / " + typed("30abc") + " / " + typed("30분"));
+        eq("T-TYPE-3", "null 숫자(분)로 넣어 주세요(예: 30) / null 숫자(분)로 넣어 주세요(예: 30) / 30 null / 30 30분으로 읽었어요",
+                typed("30abc") + " / " + typed("점심") + " / " + typed("30분") + " / " + typed("반시간"));
         eq("T-TYPE-4", "60 90 90 90 150", String.join(" ", java.util.stream.Stream.of("1시간", "1시간 30분", "1시간 반", "1.5시간", "2시간 반")
                 .map(w -> String.valueOf(Typed.minutes(w).value())).toList()));
         eq("D-98 칸 아래 글", "25 흐린 5분 단위로 맞췄어요(25분) / 25 빨간 " + Typed.MINUTES_BAD, typedField());
         eq("D-98 입력 창 걸리는 시간 칸 아래 글", "흐린 5분 단위로 맞췄어요(25분) / 없음 / 없음", typedForm());
-        eq("D-98 시각 고치기 창 칸 아래 글", "720 흐린 최대 720분(12시간)까지 넣을 수 있어요 true true 최대 720분(12시간)까지 넣을<br>수 있어요",
+        eq("D-98 시각 고치기 창 칸 아래 글", "720 흐린 최대 720분(12시간)까지 넣을 수 있어요 true true 최대 720분(12시간)까지 넣을<br>수 있어요 true",
                 timeEditorNotice());
         eq("T-TYPE-5", "09:05 5분 단위로 맞췄어요(09:05) / 23:55 5분 단위로 맞췄어요(23:55) / 09:00 null", starts("09:03", "23:58", "09:00"));
-        eq("T-TYPE-6", "03:55(다음 날) 하루는 새벽 4시에 넘어가요. 03:55(다음 날)로 맞췄어요", starts("04:10(다음 날)"));
-        eq("T-TYPE-7", "14:00 null / 09:00 null / 14:30 null / 09:30 null", starts("14", "9", "1430", "930"));
+        eq("T-TYPE-6", "03:55(다음 날) 하루는 새벽 4시에 끝나서 03:55(다음 날)로 맞췄어요", starts("04:10(다음 날)"));
+        eq("T-TYPE-11", "19:30 19:30으로 읽었어요 / 19:30 19:30으로 읽었어요 / 07:30 null / 14:30 null / 14:30 null / 14:00 오전을 빼고 14:00으로 읽었어요"
+                + " / 12:00 null / 00:05(다음 날) 오전 12시는 밤 자정이라 00:05(다음 날)로 읽었어요 / 03:55(다음 날) 하루는 새벽 4시에 끝나서 03:55(다음 날)로 맞췄어요",
+                starts("730", "7:30", "0730", "오후 2:30", "2시 30", "오전 14시", "아침 12시", "오전 12시 3분", "03:58(다음 날)"));
+        eq("T-TYPE-7", "14:00 null / 09:00 null / 14:30 null / 09:30 null / 13:00 null / 19:00 null", starts("14", "9", "1430", "930", "1", "7"));
+        eq("T-TYPE-10", "04:00 19일(목) 04:00으로 읽었어요 / 05:00 19일(목) 05:00으로 읽었어요 / 00:00(다음 날) 오전 12시는 밤 자정, "
+                + "00:00(다음 날)로 읽었어요 / 14:00 null 1 1 0", starts("밤 4시", "밤 5시", "오전 12시", "오후 14시") + " "
+                + Typed.start("밤 4시", java.time.LocalDate.of(2026, 11, 18)).days() + " " + Typed.start("밤 5시", java.time.LocalDate.of(2026, 11, 18)).days()
+                + " " + Typed.start("오전 12시", java.time.LocalDate.of(2026, 11, 18)).days());
+        eq("D-98 한 글자씩 친 시작 시각", "21:30 20:00 22:30 14:30 19:30 17:00 13:00 13:00 / 21:30 20:00 17:00", keyed());
+        eq("D-98 한 글자를 채워 보인다", "13:00 3:00", oneDigitFill());
+        eq("D-98 밤 4시", "2026-11-19 04:00 흐린 19일(목) 04:00으로 읽었어요 / 2026-11-19 240", nightForm());
+        eq("D-98, D-101 밤 4시 뒤", "2026-11-19 / 2026-11-18 없음 / 2026-11-18 흐린 5분 단위로 맞췄어요(22:05) / 2026-11-18 245 없음 / 2026-11-19 / 2026-11-18 없음", nightAfter());
+        Typed.Read r30 = Typed.start("밤 4시", java.time.LocalDate.of(2026, 11, 30));
+        Typed.Read due = Typed.start("밤 4시", java.time.LocalDate.of(2026, 11, 18), java.time.LocalDate.of(2026, 11, 18));
+        eq("D-98 이후 반복 모두의 밤 4시", "2026-11-19 240 2026-11-26 240 2026-12-03 240", nightSeries());
+        eq("T-TYPE-12", "04:00 1 12월 1일(화) 04:00으로 읽었어요 / 03:55(다음 날) 0 마감(18일) 안에 두려고 03:55로 맞췄어요",
+                r30.value() + " " + r30.days() + " " + r30.notice() + " / " + due.value() + " " + due.days() + " " + due.notice());
         eq("T-TYPE-8", "14:00 14:00 20:00 09:00 12:00 14:30 14:30 07:00 19:00 21:00 12:00 11:00 01:00(다음 날) 02:00(다음 날) 00:00(다음 날) 05:00",
                 starts("오후 2시", "2시", "8시", "9시", "12시", "오후 2시 반", "2시 30분", "아침 7시", "저녁 7시", "밤 9시", "낮 12시", "낮 11시",
                         "새벽 1시", "밤 2시", "밤 12시", "새벽 5시").replace(" null", "").replace(" /", ""));
         eq("T-TYPE-9", "null 14:00처럼 적어 주세요 / null 14:00처럼 적어 주세요 / null 14:00처럼 적어 주세요", starts("25:00", "09:75", "점심"));
         eq("D-98 다음 날 값 뒤 23:58의 글은 좁아진 칸 묶음 안", "23:55 true", nextThen2358());
-        eq("D-98 시작 시각 칸 아래 글", "09:05 흐린 5분 단위로 맞췄어요(09:05) / 14:00 / 흐린 하루는 새벽 4시에 넘어가요. 03:55(다음 날)로 맞췄어요"
+        eq("D-98 시작 시각 칸 아래 글", "09:05 흐린 5분 단위로 맞췄어요(09:05) / 14:00 / 흐린 하루는 새벽 4시에 끝나서 03:55(다음 날)로 맞췄어요"
                 + " / 흐린 최대 720분(12시간)까지 넣을 수 있어요 true", startTyped());
         eq("D-98 입력 창 칸 아래 글 자리", "true true true", formNoticeRows());
         eq("D-98 칸 아래 글이 뜨면 창 크기를 다시 맞춤", "true true true true", relayouts());
@@ -327,11 +343,11 @@ public final class ProtoCheck {
         return r.value() + " " + r.notice();
     }
 
-    /** 27은 25와 흐린 글, "반시간"은 이전 값과 빨간 글(D-98). */
+    /** 27은 25와 흐린 글, "30abc"는 이전 값과 빨간 글(D-98). */
     private static String typedField() {
         javax.swing.JSpinner s = Ui.minutes(30);
         javax.swing.JLabel l = new TypedField(s, Typed::minutes, () -> { }).notice;
-        return type(s, "27") + " " + notice(l) + " / " + type(s, "반시간") + " " + notice(l);
+        return type(s, "27") + " " + notice(l) + " / " + type(s, "30abc") + " " + notice(l);
     }
 
     /** 입력 창의 칸 아래 글은 다른 칸을 고쳐도 남고, 그 칸에 쳐 넣기 시작하거나 화살표를 누르면 사라진다. */
@@ -355,12 +371,32 @@ public final class ProtoCheck {
         String got = type(e.minutes, "730") + " " + notice(l);
         int group = l.getParent().getComponent(0).getPreferredSize().width;
         return got + " " + (l.getPreferredSize().width <= group) + " "
-                + (l.getPreferredSize().height > l.getFontMetrics(l.getFont()).getHeight() * 1.5) + " " + l.getText().replaceAll("</?html>", "");
+                + (l.getPreferredSize().height > l.getFontMetrics(l.getFont()).getHeight() * 1.5) + " " + l.getText().replaceAll("</?(html|font)[^>]*>", "") + " " + dim(l);
+    }
+
+    /** 라벨을 흰 바탕에 그려 가장 진한 점이 본문 글색(INK)보다 한참 밝으면 참이다. 두 줄로 접은 흐린 글도 흐리게 그려지는가. */
+    static boolean dim(javax.swing.JLabel l) {
+        l.setSize(l.getPreferredSize());
+        var img = new java.awt.image.BufferedImage(l.getWidth(), l.getHeight(), java.awt.image.BufferedImage.TYPE_INT_RGB);
+        var g = img.createGraphics();
+        g.setColor(java.awt.Color.WHITE);
+        g.fillRect(0, 0, l.getWidth(), l.getHeight());
+        l.paint(g);
+        g.dispose();
+        int darkest = 765;
+        for (int y = 0; y < img.getHeight(); y++) {
+            for (int x = 0; x < img.getWidth(); x++) {
+                int p = img.getRGB(x, y);
+                darkest = Math.min(darkest, (p >> 16 & 255) + (p >> 8 & 255) + (p & 255));
+            }
+        }
+        java.awt.Color ink = planningpet.common.view.Theme.INK;
+        return darkest > ink.getRed() + ink.getGreen() + ink.getBlue() + 200;
     }
 
     /** 시작 시각 칸에 쳐 넣은 글마다 읽은 값과 칸 아래 글(06의 32번). */
     private static String starts(String... texts) {
-        return String.join(" / ", java.util.Arrays.stream(texts).map(Typed::start).map(r -> r.value() + " " + r.notice()).toList());
+        return String.join(" / ", java.util.Arrays.stream(texts).map(x -> Typed.start(x, java.time.LocalDate.of(2026, 11, 18))).map(r -> r.value() + " " + r.notice()).toList());
     }
 
     /** 입력 창 시작 시각은 09:03을 맞추고 "14"를 14:00으로 채운다. 시각 고치기 창의 두 글은 각자 칸 묶음 아래에 함께 뜬다. */
@@ -426,6 +462,117 @@ public final class ProtoCheck {
         Object v = type(e.start, "23:58");
         javax.swing.JLabel l = e.startNotice;
         return v + " " + (l.isVisible() && l.getPreferredSize().width <= l.getParent().getComponent(0).getPreferredSize().width);
+    }
+
+    /** 시작 시각 칸에 "1"을 치면 쳐 넣는 동안 "13:00"이고 뒤 "3:00"이 골라져 있다. */
+    private static String oneDigitFill() {
+        var field = ((javax.swing.JSpinner.DefaultEditor) new TimeEditor(MockData.sample().tasks.get(0),
+                java.time.LocalDateTime.of(2026, 11, 14, 15, 23)).start.getEditor()).getTextField();
+        field.setText("1");
+        return field.getText() + " " + field.getSelectedText();
+    }
+
+    /** 수요일 22:00 요일 반복 사본에 "밤 4시"를 넣고 이후 반복 모두를 고르면 모든 사본이 각자 다음 날 04:00이다. */
+    private static String nightSeries() {
+        App app = Main.create(MockData.empty());
+        java.util.List<Task> copies = app.store.book.add(Task.Kind.TASK, "야간 과제", java.time.LocalDate.of(2026, 11, 18),
+                java.time.LocalTime.of(22, 0), 60, "", java.time.LocalDate.of(2026, 12, 2));
+        TimeEditor e = new TimeEditor(copies.get(0), app.store.now);
+        type(e.start, "밤 4시");
+        app.schedule.chooser = (title, message, options) -> 1;
+        TimeEditor.save(app, copies.get(0), e);
+        return String.join(" ", copies.stream().map(c -> c.date + " " + c.startMinute()).toList());
+    }
+
+    /** 다시 친 "밤 4시"는 19일 그대로, "정하기"를 끄거나 다른 값으로 바꾸면 18일로 돌아간다. 시각 고치기 창은 화살표 뒤 원래 날이다. */
+    private static String nightAfter() {
+        TaskForm f = new TaskForm(null, java.time.LocalDate.of(2026, 11, 18), java.time.LocalDateTime.of(2026, 11, 18, 9, 0));
+        f.timed.setSelected(true);
+        f.sync();
+        type(f.start, "밤 4시");
+        type(f.start, "밤 4시");
+        String again = Ui.dateOf(f.date).toString();
+        f.timed.setSelected(false);
+        f.sync();
+        String off = Ui.dateOf(f.date) + " " + notice(f.startNotice);
+        f.timed.setSelected(true);
+        f.sync();
+        type(f.start, "밤 4시");
+        type(f.start, "22:03");
+        String other = Ui.dateOf(f.date) + " " + notice(f.startNotice);
+        // 날짜를 손으로 20일로 바꿨다가 19일로 돌려 놓으면 사용자가 고른 날이라 정하기를 꺼도 그대로다.
+        type(f.start, "밤 4시");
+        Ui.setDate(f.date, java.time.LocalDate.of(2026, 11, 20));
+        Ui.setDate(f.date, java.time.LocalDate.of(2026, 11, 19));
+        f.timed.setSelected(false);
+        f.sync();
+        String hand = Ui.dateOf(f.date).toString();
+        App app = Main.create(MockData.empty());
+        Task t = app.store.book.add(Task.Kind.TASK, "야간 과제", java.time.LocalDate.of(2026, 11, 18), java.time.LocalTime.of(22, 0), 60, "", null).get(0);
+        TimeEditor e = new TimeEditor(t, app.store.now);
+        type(e.start, "밤 4시");
+        e.start.setValue(e.start.getNextValue());
+        String arrowed = notice(e.startNotice);
+        TimeEditor.save(app, t, e);
+        // 기간 안에 하기를 켜면 정하기가 꺼지므로 그 순간 원래 날로 돌아가고 글도 지운다(D-98).
+        TaskForm g = new TaskForm(null, java.time.LocalDate.of(2026, 11, 18), java.time.LocalDateTime.of(2026, 11, 18, 9, 0));
+        g.timed.setSelected(true);
+        g.sync();
+        type(g.start, "밤 4시");
+        g.period.setSelected(true);
+        g.sync();
+        String period = Ui.dateOf(g.date) + " " + notice(g.startNotice);
+        return again + " / " + off + " / " + other + " / " + t.date + " " + t.startMinute() + " " + arrowed + " / " + hand + " / " + period;
+    }
+
+    /** "밤 4시"는 입력 창 날짜를 하루 뒤로 옮기고, 시각 고치기 창은 저장할 때 그 일을 다음 날로 옮긴다. */
+    private static String nightForm() {
+        TaskForm f = new TaskForm(null, java.time.LocalDate.of(2026, 11, 18), java.time.LocalDateTime.of(2026, 11, 18, 9, 0));
+        f.timed.setSelected(true);
+        f.sync();
+        type(f.start, "밤 4시");
+        String form = Ui.dateOf(f.date) + " " + f.start.getValue() + " " + notice(f.startNotice);
+        App app = Main.create(MockData.empty());
+        Task t = app.store.book.add(Task.Kind.TASK, "야간 과제", java.time.LocalDate.of(2026, 11, 18), java.time.LocalTime.of(22, 0), 60, "", null).get(0);
+        TimeEditor e = new TimeEditor(t, app.store.now);
+        type(e.start, "밤 4시");
+        TimeEditor.save(app, t, e);
+        return form + " / " + t.date + " " + t.startMinute();
+    }
+
+    /** 두 창의 시작 시각 칸에 키보드로 한 글자씩 친 값. 채워 보인 값이 아니라 친 글 뒤에 다음 글자가 붙는다(D-98). */
+    private static String keyed() {
+        TaskForm f = new TaskForm(null, java.time.LocalDate.of(2026, 11, 18), java.time.LocalDateTime.of(2026, 11, 18, 9, 0));
+        f.timed.setSelected(true);
+        f.sync();
+        TimeEditor e = new TimeEditor(MockData.sample().tasks.get(0), java.time.LocalDateTime.of(2026, 11, 14, 15, 23));
+        return keys(f.start, "21:30") + " " + keys(f.start, "20") + " " + keys(f.start, "2230") + " " + keys(f.start, "1430") + " " + keys(f.start, "730") + " "
+                + keys(f.start, "2\b5") + " " + keys(f.start, "8\b1") + " " + keys(f.start, "14\b") + " / "
+                + keys(e.start, "21:30") + " " + keys(e.start, "20") + " " + keys(e.start, "2\b5");
+    }
+
+    /** 칸의 글을 모두 고르고 EDT에서 한 글자씩 친 뒤(실제 키 입력과 같은 길, "\b"는 Backspace) 칸을 벗어난 것과 같다. */
+    static Object keys(javax.swing.JSpinner s, String keys) {
+        var field = ((javax.swing.JSpinner.DefaultEditor) s.getEditor()).getTextField();
+        try {
+            javax.swing.SwingUtilities.invokeAndWait(() -> {
+                field.selectAll();
+                for (char c : keys.toCharArray()) {
+                    if (c == '\b') {
+                        field.getActionMap().get(javax.swing.text.DefaultEditorKit.deletePrevCharAction).actionPerformed(new java.awt.event.ActionEvent(field, 0, ""));
+                    } else {
+                        field.replaceSelection(String.valueOf(c));
+                    }
+                }
+                try {
+                    field.commitEdit();
+                } catch (java.text.ParseException ignored) {
+                }
+            });
+        } catch (Exception x) {
+            throw new IllegalStateException(x);
+        }
+        return s.getValue();
     }
 
     /** 칸에 글을 쳐 넣고 칸을 벗어난 것과 같다. 받지 않으면 이전 값이다. */

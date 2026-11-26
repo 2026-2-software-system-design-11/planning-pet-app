@@ -183,15 +183,30 @@ public final class TaskController {
 
     /** 시각 고치기 창의 저장(D-32, D-42). 반복 사본이면 범위를 묻고, 취소하면 false. day는 창을 연 목록의 날이다(D-65). */
     public boolean saveTime(Task t, int start, int minutes, LocalDate day) {
-        // 기간 할 일에 시각을 정하면 창을 연 목록의 날로 옮겨지므로 그 날과 잰다(D-65).
-        if (!overlapOk(app.store.book.overlap(t.period() ? day : t.date, start, minutes, t))) {
+        return saveTime(t, start, minutes, day, false);
+    }
+
+    /** 시각 고치기 창의 저장. move면 보통 할 일도 day로 옮긴다("밤 4시", D-98). */
+    public boolean saveTime(Task t, int start, int minutes, LocalDate day, boolean move) {
+        // 기간 할 일에 시각을 정하면 창을 연 목록의 날로, move면("밤 4시", D-98) day로 옮겨지므로 그 날과 잰다(D-65).
+        if (!overlapOk(app.store.book.overlap(t.period() || move ? day : t.date, start, minutes, t))) {
             return false;
         }
         int scope = editScope(t);
         if (scope < 0) {
             return false;
         }
-        app.control.change(() -> app.store.book.setTime(t, start, minutes, day, scope == 1));
+        app.control.change(() -> {
+            app.store.book.setTime(t, start, minutes, day, scope == 1);
+            if (move) {
+                // D-98: 이후 반복 모두면 뒤 사본도 각자 다음 날로 옮긴다(18일은 19일, 25일은 26일).
+                if (scope == 1 && t.seriesId != null) {
+                    app.store.tasks.stream().filter(c -> c != t && t.seriesId.equals(c.seriesId) && c.date.isAfter(t.date))
+                            .forEach(c -> c.date = c.date.plusDays(1));
+                }
+                t.date = day;
+            }
+        });
         return true;
     }
 

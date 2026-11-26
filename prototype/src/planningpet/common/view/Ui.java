@@ -60,10 +60,12 @@ public final class Ui {
     }
 
     /**
-     * room 폭을 넘는 글은 그 폭에서 줄을 바꿔 잘리지 않게 한다. 줄은 빈칸에서 바꾸고, 빈칸 없이 폭을 넘는 낱말만 글자에서 끊는다(D-98).
-     * #202의 입력 창 오류 글과 같은 방식이다. 폭 안이면 글 그대로다.
+     * room 폭을 넘는 글은 그 폭에서 줄을 바꿔 잘리지 않게 한다. 줄은 빈칸에서 바꾸고, 빈칸 없이 폭을 넘는 낱말만 글자에서 끊는다.
+     * 입력 창 오류 글(D-100)과 칸 아래 글(D-98)이 같이 쓴다. 폭은 라벨 글꼴로 재므로 테마와 상관없이 폭 안에 든다. 폭 안이면 글 그대로다.
+     * Swing HTML은 글자색의 알파를 버리므로, 접은 글은 라벨 글자색을 흰 바탕에 섞은 불투명 색으로 적어 흐린 글(INK_DIM)도 흐리게 보인다.
      */
-    public static String wrap(String text, java.awt.FontMetrics fm, int room) {
+    public static String wrap(String text, JLabel label, int room) {
+        java.awt.FontMetrics fm = label.getFontMetrics(label.getFont());
         if (fm.stringWidth(text) <= room) {
             return text;
         }
@@ -89,7 +91,10 @@ public final class Ui {
             }
         }
         lines.add(line);
-        return "<html>" + String.join("<br>", lines.stream().map(Ui::esc).toList()) + "</html>";
+        Color c = label.getForeground();
+        int a = c.getAlpha();
+        int rgb = (c.getRed() * a / 255 + 255 - a) << 16 | (c.getGreen() * a / 255 + 255 - a) << 8 | (c.getBlue() * a / 255 + 255 - a);
+        return String.format("<html><font color='#%06x'>", rgb) + String.join("<br>", lines.stream().map(Ui::esc).toList()) + "</font></html>";
     }
 
     public static JLabel hint(String text) {

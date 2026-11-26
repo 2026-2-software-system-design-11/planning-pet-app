@@ -23,7 +23,12 @@ public final class TaskForm {
     public final JLabel realTime = new JLabel();
     public final JSpinner minutes = Ui.minutes(30);
     /** 시작 시각 칸에 쳐 넣은 값을 맞췄거나 받지 않았을 때 칸 아래 글(D-98). */
-    public final JLabel startNotice = new TypedField(start, Typed::start, () -> this.relayout.run()).notice;
+    private final TypedField startTyped = new TypedField(start, x -> moved(Typed.start(x, night() != null ? this.nightFrom : Ui.dateOf(date))),
+            () -> this.relayout.run());
+    public final JLabel startNotice = startTyped.notice;
+    /** "밤 4시"로 날짜를 옮기기 전의 날(D-98). moving은 그 날짜를 옮기는 동안이다. */
+    private LocalDate nightFrom;
+    private boolean moving;
     /** 걸리는 시간 칸에 쳐 넣은 값을 맞췄거나 받지 않았을 때 칸 아래 글(D-98). 쳐 넣은 뒤에는 30분 안내를 숨긴다. */
     private final TypedField minutesTyped = new TypedField(minutes, Typed::minutes, () -> { sync(); this.relayout.run(); });
     public final JLabel minutesNotice = minutesTyped.notice;
@@ -217,7 +222,13 @@ public final class TaskForm {
             }
             sync();
         });
-        date.addChangeListener(e -> sync());
+        date.addChangeListener(e -> {
+            // D-98: 사용자가 날짜 칸을 손으로 바꾸면 그 뒤로는 옮긴 날로 다시 돌려 놓아도 사용자가 고른 날이다.
+            if (!moving && !syncing) {
+                nightFrom = null;
+            }
+            sync();
+        });
         sync();
     }
 
@@ -270,6 +281,15 @@ public final class TaskForm {
         }
         if (isFixed) {
             timed.setSelected(true);
+        }
+        // D-98, D-101: "밤 4시"로 옮긴 날짜는 "정하기"를 끄거나 시작 칸을 다른 값으로 바꾸면 원래 날로 돌아간다.
+        // 기간 안에 하기를 켜서 앱이 정하기를 끈 것도 끈 것이라 기간과 고정 일정을 다룬 뒤에 본다(D-98).
+        if (!moving && night() != null && (!timed.isSelected() || startTyped.days(start.getValue()) == 0)) {
+            Ui.setDate(date, nightFrom);
+            nightFrom = null;
+            if (!timed.isSelected()) {
+                startTyped.clear();
+            }
         }
         timed.setEnabled(!isFixed && !period.isSelected());
         timed.setToolTipText(period.isSelected() ? "기간 할 일의 시각은 목록에서 정해요" : null);
@@ -335,6 +355,23 @@ public final class TaskForm {
         }
     }
 
+    /** "밤 4시"처럼 다음 날 시각으로 읽으면 날짜 칸을 그만큼 뒤로 옮긴다(D-98). */
+    private Typed.Read moved(Typed.Read r) {
+        if (r.days() > 0) {
+            // D-98: 다시 쳐도 처음 옮긴 날 그대로다.
+            nightFrom = night() != null ? nightFrom : Ui.dateOf(date);
+            moving = true;
+            Ui.setDate(date, nightFrom.plusDays(r.days()));
+            moving = false;
+        }
+        return r;
+    }
+
+    /** "밤 4시"로 옮긴 날짜가 그대로면 옮기기 전의 날, 아니면(사용자가 날짜를 바꾼 적이 있음) null. */
+    private LocalDate night() {
+        return nightFrom != null && Ui.dateOf(date).equals(nightFrom.plusDays(1)) ? nightFrom : null;
+    }
+
     /** 06의 2번 검사. */
     public java.util.List<String[]> problems() {
         return TaskCheck.check(draft(), editing);
@@ -391,42 +428,9 @@ public final class TaskForm {
     private void fill(JLabel l, String text) {
         // 보이는 제목 칸 폭이다. 창에 놓이기 전(창 없는 검사)에는 선호 폭을 쓴다.
         int room = title.getWidth() > 0 ? title.getWidth() : title.getPreferredSize().width;
-        l.setText(text.isEmpty() ? "" : wrap(text, l.getFontMetrics(l.getFont()), room));
+        l.setText(text.isEmpty() ? "" : Ui.wrap(text, l, room));
         l.putClientProperty("plain", text);
         l.setVisible(!text.isEmpty());
-    }
-
-    /**
-     * 보이는 제목 칸 폭을 넘는 글은 그 폭에서 줄을 바꿔 잘리지 않게 한다(D-100). 줄은 빈칸에서 바꾸고, 빈칸 없이 폭을 넘는 낱말만
-     * 글자에서 끊는다. 폭은 라벨 글꼴로 재므로 테마와 상관없이 칸 폭 안에 든다.
-     */
-    private static String wrap(String text, java.awt.FontMetrics fm, int room) {
-        if (fm.stringWidth(text) <= room) {
-            return text;
-        }
-        java.util.List<String> lines = new java.util.ArrayList<>();
-        String line = "";
-        for (String word : text.split(" ")) {
-            String next = line.isEmpty() ? word : line + " " + word;
-            if (fm.stringWidth(next) <= room) {
-                line = next;
-                continue;
-            }
-            if (!line.isEmpty()) {
-                lines.add(line);
-            }
-            line = word;
-            while (fm.stringWidth(line) > room && line.length() > 1) {
-                int cut = line.length() - 1;
-                while (cut > 1 && fm.stringWidth(line.substring(0, cut)) > room) {
-                    cut--;
-                }
-                lines.add(line.substring(0, cut));
-                line = line.substring(cut);
-            }
-        }
-        lines.add(line);
-        return "<html>" + String.join("<br>", lines.stream().map(Ui::esc).toList()) + "</html>";
     }
 
     /** 보이는 오류 글을 칸 순서대로 " / "로 잇는다. */
