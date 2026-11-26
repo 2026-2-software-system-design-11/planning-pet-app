@@ -214,6 +214,12 @@ public final class TaskForm {
             Ui.setDate(due, dueBefore);
             timedBefore = null;
         }
+        boolean repeating = repeat.getSelectedIndex() != 0;
+        boolean periodAllowed = !isFixed && !copy && !repeating;
+        // 기간을 먼저 끈다. 기간 할 일에서 고정 일정으로 가도 정하기가 켜진다(05 일정 입력 창 4번).
+        if (!periodAllowed) {
+            period.setSelected(false);
+        }
         if (isFixed) {
             timed.setSelected(true);
         }
@@ -224,11 +230,6 @@ public final class TaskForm {
         timed.setEnabled(!isFixed && !period.isSelected());
         timed.setToolTipText(period.isSelected() ? "기간 할 일의 시각은 목록에서 정해요" : null);
         start.setEnabled(timed.isSelected());
-        boolean repeating = repeat.getSelectedIndex() != 0;
-        boolean periodAllowed = !isFixed && !copy && !repeating;
-        if (!periodAllowed) {
-            period.setSelected(false);
-        }
         period.setEnabled(periodAllowed);
         period.setToolTipText(isFixed ? "기간은 할 일만 정할 수 있어요" : null);
         periodHint.setVisible(repeating && !isFixed && !copy);

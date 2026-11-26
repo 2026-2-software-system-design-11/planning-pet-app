@@ -117,8 +117,9 @@ final class PeriodCheck {
         k.period.doClick();
         Ui.setDate(k.due, d("11-25"));
         k.fixed.doClick();
+        String moment = k.timed.isSelected() + " " + k.timed.isEnabled() + " " + k.start.isEnabled();
         k.task.doClick();
-        eq("T-DEF-20", "false true / true 11:00 / true 2026-11-25 false false", kinds + " / " + k.period.isSelected() + " "
+        eq("T-DEF-20", "false true / true 11:00 / true false true / true 2026-11-25 false false", kinds + " / " + moment + " / " + k.period.isSelected() + " "
                 + Ui.dateOf(k.due) + " " + k.timed.isSelected() + " " + k.timed.isEnabled());
     }
 
