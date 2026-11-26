@@ -40,8 +40,10 @@ public final class TaskCheck {
             } else if (today != null && f.dueDate().isBefore(today)) {
                 out.add(new String[] {"마감", "마감일이 오늘보다 전이에요"});
             } else if (placed != null && f.dueDate().isBefore(placed)) {
-                out.add(new String[] {"마감", "마감일이 시각을 정해 둔 " + placed.getMonthValue() + "/" + placed.getDayOfMonth() + "("
-                        + "월화수목금토일".charAt(placed.getDayOfWeek().getValue() - 1) + ")보다 전이에요"});
+                out.add(new String[] {"마감", "마감일이 시각을 정해 둔 " + day(placed) + "보다 전이에요"});
+            } else if (placed != null && f.date().isAfter(placed)) {
+                // #277: 정해 둔 날이 기간 밖이 되지 않게 시작일도 그 날 후로 옮기지 못한다. 마감 글이 먼저다.
+                out.add(new String[] {"마감", "시작일이 시각을 정해 둔 " + day(placed) + "보다 후예요"});
             }
         }
         Integer start = f.startMinute();
@@ -89,6 +91,11 @@ public final class TaskCheck {
             return time + Rules.josa(sound, "이면", "면") + " 둘 다 맞아요";
         }
         return "걸리는 시간 " + fixed + "분이면 " + time + Rules.josa(sound, "이", "가") + " 맞아요";
+    }
+
+    /** "11/19(목)". */
+    private static String day(LocalDate d) {
+        return d.getMonthValue() + "/" + d.getDayOfMonth() + "(" + "월화수목금토일".charAt(d.getDayOfWeek().getValue() - 1) + ")";
     }
 
     /** 반복 칸의 문장(D-64, D-65). 맞으면 null. */

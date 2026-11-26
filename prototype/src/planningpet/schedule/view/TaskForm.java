@@ -356,6 +356,7 @@ public final class TaskForm {
         // S102, S128(D-101): 마감 칸은 저장 전에도 값이 바뀔 때마다 바로 검사한다. 다른 칸은 저장 뒤다(D-43).
         LocalDate floor = today();
         boolean dueLate = period.isSelected() && (Ui.dateOf(due).isBefore(day) || placed != null && Ui.dateOf(due).isBefore(placed)
+                || placed != null && day.isAfter(placed)
                 || floor != null && Ui.dateOf(due).isBefore(floor));
         syncing = false;
         JLabel dueError = errors.get("마감");

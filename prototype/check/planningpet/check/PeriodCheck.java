@@ -63,6 +63,7 @@ final class PeriodCheck {
         formKeeps();
         pastDueForm();
         dueBeforeToday();
+        startAfterPlaced();
     }
 
     /** T-EDIT-41(D-99, #277): 마감이 지난 기간 할 일의 수정 창은 날짜, 기간 안에 하기, 마감일을 막고 까닭을 보인다. */
@@ -110,6 +111,22 @@ final class PeriodCheck {
         eq("T-VAL-23", "마감일이 오늘보다 전이에요 false / 마감: 마감일이 시작일보다 전이에요 / 오류 없음 / 마감일이 오늘보다 전이에요 "
                 + "/ 마감일이 오늘보다 전이에요 / true 끝2 2026-11-16", added + " / " + g.errorText() + " / " + h.errorText() + " / "
                         + TaskDialog.trySave(app, k, done) + " " + done.title + " " + done.dueDate);
+    }
+
+    /** T-VAL-24(D-99, #277): 시각을 정해 둔 기간 할 일의 시작일을 정해 둔 날 후로 옮기면 막는다. */
+    static void startAfterPlaced() {
+        App app = Main.create(at("11-18T09:00"));
+        Task plan = period(app.store, "계획", "11-17", "11-22", 30);
+        app.store.book.setTime(plan, 600, 30, d("11-19"), false);
+        TaskForm f = TaskDialog.form(app, plan, plan.startDay);
+        Ui.setDate(f.date, d("11-20"));
+        String moved = f.errorText() + " " + TaskDialog.trySave(app, f, plan);
+        Ui.setDate(f.due, d("11-18"));
+        moved += " / " + msgs(f.problems());
+        Ui.setDate(f.due, d("11-22"));
+        Ui.setDate(f.date, d("11-19"));
+        eq("T-VAL-24", "시작일이 시각을 정해 둔 11/19(목)보다 후예요 false / 마감: 마감일이 시작일보다 전이에요 / 오류 없음 / 2026-11-17 2026-11-19 10:00",
+                moved + " / " + msgs(f.problems()) + " / " + plan.startDay + " " + plan.date + " " + plan.start);
     }
 
     /** 패널 안에 그 글의 보이는 라벨이 있는가. */
