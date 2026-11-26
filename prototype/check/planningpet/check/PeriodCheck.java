@@ -138,13 +138,20 @@ final class PeriodCheck {
                 msgs(TaskCheck.check(TaskDraft.at(Task.Kind.TASK, "일", d("11-16"), 27 * 60 + 53, 27), false)));
         eq("T-VAL-21 730분", both + "걸리는 시간 720분이면 16:00이 맞아요 / " + span,
                 msgs(TaskCheck.check(TaskDraft.at(Task.Kind.TASK, "일", d("11-16"), 27 * 60 + 53, 730), false)));
-        // D-100: 칸 폭을 넘는 오류 글은 빈칸에서 줄을 바꿔 제목 칸 폭 안에 들고, 글은 그대로 남는다. 테마 글꼴과 상관없어야 하므로
-        // 라벨 글꼴을 바꿔 가며 본다.
+        // D-100: 보이는 제목 칸 폭을 넘는 오류 글만 빈칸에서 줄을 바꿔 그 폭 안에 들고, 글은 그대로 남는다. 창처럼 패널을 놓은 뒤
+        // 보고, 테마 글꼴과 상관없어야 하므로 라벨 글꼴을 바꿔 가며 본다. 칸 안에 드는 반복 오류는 한 줄 그대로다.
         List<String[]> longest = TaskCheck.check(TaskDraft.at(Task.Kind.TASK, "일", d("11-16"), 27 * 60 + 53, 27), false);
         TaskForm wrap = new TaskForm(null, d("11-16"), at("11-16T09:00").now);
         javax.swing.JLabel label = wrap.errors.get("시작 시각");
         int wide = wrap.panel.getPreferredSize().width;
-        int room = wrap.title.getPreferredSize().width;
+        wrap.panel.setSize(wrap.panel.getPreferredSize());
+        wrap.panel.doLayout();
+        int room = wrap.title.getWidth();
+        wrap.showErrors(TaskCheck.check(TaskDraft.at(Task.Kind.TASK, "운동", d("11-16"), null, 30)
+                .withRepeat(Repeat.DAILY, LocalDate.of(2027, 6, 1)), false));
+        javax.swing.JLabel many = wrap.errors.get("반복");
+        eq("D-100 칸 안에 드는 오류 글은 한 줄", "true 반복이 너무 많아요. 반복 끝나는 날을 앞당겨 주세요",
+                (room > wrap.title.getPreferredSize().width) + " " + many.getText());
         StringBuilder fits = new StringBuilder();
         for (java.awt.Font font : new java.awt.Font[] {label.getFont(), new java.awt.Font(java.awt.Font.DIALOG, java.awt.Font.PLAIN, 12),
                 new java.awt.Font(java.awt.Font.DIALOG, java.awt.Font.BOLD, 16)}) {

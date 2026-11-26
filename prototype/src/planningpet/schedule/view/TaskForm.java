@@ -290,7 +290,8 @@ public final class TaskForm {
             l.putClientProperty("plain", "");
             l.setVisible(false);
         });
-        int room = title.getPreferredSize().width;
+        // 보이는 제목 칸 폭이다. 창에 놓이기 전(창 없는 검사)에는 선호 폭을 쓴다.
+        int room = title.getWidth() > 0 ? title.getWidth() : title.getPreferredSize().width;
         for (String[] p : problems) {
             JLabel l = errors.get(p[0]);
             l.setText(wrap(p[1], l.getFontMetrics(l.getFont()), room));
@@ -301,7 +302,7 @@ public final class TaskForm {
     }
 
     /**
-     * 칸 폭(제목 칸)을 넘는 글은 그 폭에서 줄을 바꿔 잘리지 않게 한다(D-100). 줄은 빈칸에서 바꾸고, 빈칸 없이 폭을 넘는 낱말만
+     * 보이는 제목 칸 폭을 넘는 글은 그 폭에서 줄을 바꿔 잘리지 않게 한다(D-100). 줄은 빈칸에서 바꾸고, 빈칸 없이 폭을 넘는 낱말만
      * 글자에서 끊는다. 폭은 라벨 글꼴로 재므로 테마와 상관없이 칸 폭 안에 든다.
      */
     private static String wrap(String text, java.awt.FontMetrics fm, int room) {
