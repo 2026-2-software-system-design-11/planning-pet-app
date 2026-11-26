@@ -8,6 +8,7 @@ import planningpet.app.Main;
 import planningpet.app.view.App;
 import planningpet.common.view.Theme;
 import planningpet.schedule.model.Task;
+import planningpet.schedule.model.TaskDraft;
 import planningpet.schedule.view.ScheduleScreen;
 import planningpet.schedule.view.DragCursors;
 import planningpet.schedule.view.DragReturn;
@@ -302,6 +303,7 @@ final class ListCheck {
     static void pastDue() {
         App app = Main.create(at("11-18T09:00"));
         Task q = PeriodCheck.period(app.store, "Q", "11-10", "11-16", 30);
+        Task r = app.store.book.add(new TaskDraft(Task.Kind.TASK, "R", d("11-10"), null, 30, "초안").withDue(d("11-16"))).get(0);
         app.show("일정관리");
         app.store.changed();
         app.root.setSize(1000, 680);
@@ -309,13 +311,17 @@ final class ListCheck {
         ScheduleScreen sched = ProtoCheck.find(app.root, ScheduleScreen.class);
         TimetablePanel table = ProtoCheck.find(app.root, TimetablePanel.class);
         TaskRows.TitleLabel title = title(sched.untimed, q);
+        // #277: 끌 수 없는 까닭을 툴팁으로 보이고, 메모가 있으면 그 아래에 잇는다.
+        String why = "마감이 지난 일은 옮길 수 없어요";
+        String rTip = String.valueOf(title(sched.untimed, r).getToolTipText());
+        String tips = why.equals(title.getToolTipText()) + " " + (rTip.indexOf(why) >= 0 && rTip.indexOf(why) < rTip.indexOf("초안")) + " / ";
         String open = (title.getCursor() == DragCursors.OPEN) + "";
         mouse(title, MouseEvent.MOUSE_PRESSED, new java.awt.Point(5, 5));
         mouse(title, MouseEvent.MOUSE_DRAGGED, new java.awt.Point(30, 5));
         String drag = open + " " + table.dimmed();
         mouse(title, MouseEvent.MOUSE_RELEASED, new java.awt.Point(30, 5));
-        eq("T-EDIT-21", "false [] / null 2026-11-10 시각 없음 / null 2026-11-10 시각 없음 / 2026-11-16 [2026-11-16]",
-                drag + " / " + dropped(app, q, "11-18", 600) + " / " + dropped(app, q, "11-19", 600) + " / " + q.dueDate + " "
+        eq("T-EDIT-21", "true true / false [] / null 2026-11-10 시각 없음 / null 2026-11-10 시각 없음 / 2026-11-16 [2026-11-16]",
+                tips + drag + " / " + dropped(app, q, "11-18", 600) + " / " + dropped(app, q, "11-19", 600) + " / " + q.dueDate + " "
                         + java.util.stream.Stream.of("11-16", "11-17", "11-18", "11-19").map(x -> d(x)).filter(x -> q.shownOn(x, d("11-18"))).toList());
     }
 
