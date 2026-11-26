@@ -138,6 +138,24 @@ final class PeriodCheck {
         r.period.doClick();
         eq("T-DEF-21", "true 10:00 / false false / true 2026-11-25 false false / true 10:00",
                 back + " / " + r.timed.isSelected() + " " + r.start.getValue());
+        String warned = "";
+        for (boolean chosen : new boolean[] {true, false}) {
+            TaskForm w = new TaskForm(null, d("11-18"), at("11-17T09:00").now);
+            w.title.setText("보고서");
+            w.period.doClick();
+            if (chosen) {
+                Ui.setDate(w.due, d("11-25"));
+            }
+            w.fixed.doClick();
+            Ui.setDate(w.date, d("11-30"));
+            w.task.doClick();
+            warned += Ui.dateOf(w.due) + " " + w.errorText() + " / ";
+            if (chosen) {
+                Ui.setDate(w.due, d("12-01"));
+                warned += "[" + w.errorText() + "] / ";
+            }
+        }
+        eq("T-DEF-22", "2026-11-25 마감일이 시작일보다 앞이에요 / [] / 2026-12-06  / ", warned);
     }
 
     /** D-69: 지난 반복 사본은 밀린 일로 보이지 않는다. */
