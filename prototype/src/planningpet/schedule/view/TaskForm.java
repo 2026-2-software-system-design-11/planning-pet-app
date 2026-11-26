@@ -290,16 +290,47 @@ public final class TaskForm {
             l.putClientProperty("plain", "");
             l.setVisible(false);
         });
-        // 칸 폭(제목 칸)을 넘는 글은 그 폭에서 줄을 바꿔 잘리지 않게 한다(D-100).
         int room = title.getPreferredSize().width;
         for (String[] p : problems) {
             JLabel l = errors.get(p[0]);
-            boolean wide = l.getFontMetrics(l.getFont()).stringWidth(p[1]) > room;
-            l.setText(wide ? "<html><div style='width:" + room + "px'>" + Ui.esc(p[1]) + "</div></html>" : p[1]);
+            l.setText(wrap(p[1], l.getFontMetrics(l.getFont()), room));
             l.putClientProperty("plain", p[1]);
             l.setVisible(true);
         }
         relayout.run();
+    }
+
+    /**
+     * 칸 폭(제목 칸)을 넘는 글은 그 폭에서 줄을 바꿔 잘리지 않게 한다(D-100). 줄은 빈칸에서 바꾸고, 빈칸 없이 폭을 넘는 낱말만
+     * 글자에서 끊는다. 폭은 라벨 글꼴로 재므로 테마와 상관없이 칸 폭 안에 든다.
+     */
+    private static String wrap(String text, java.awt.FontMetrics fm, int room) {
+        if (fm.stringWidth(text) <= room) {
+            return text;
+        }
+        java.util.List<String> lines = new java.util.ArrayList<>();
+        String line = "";
+        for (String word : text.split(" ")) {
+            String next = line.isEmpty() ? word : line + " " + word;
+            if (fm.stringWidth(next) <= room) {
+                line = next;
+                continue;
+            }
+            if (!line.isEmpty()) {
+                lines.add(line);
+            }
+            line = word;
+            while (fm.stringWidth(line) > room && line.length() > 1) {
+                int cut = line.length() - 1;
+                while (cut > 1 && fm.stringWidth(line.substring(0, cut)) > room) {
+                    cut--;
+                }
+                lines.add(line.substring(0, cut));
+                line = line.substring(cut);
+            }
+        }
+        lines.add(line);
+        return "<html>" + String.join("<br>", lines.stream().map(Ui::esc).toList()) + "</html>";
     }
 
     /** 보이는 오류 글을 칸 순서대로 " / "로 잇는다. */
