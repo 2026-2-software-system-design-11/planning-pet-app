@@ -120,6 +120,50 @@ public final class TaskBook {
         }
     }
 
+    /** D-99: 끌어 놓을 시작. 30분 단위로 내리고, 끝이 다음 날 04:00을 넘으면 끝이 04:00인 가장 늦은 자리로 당긴다. */
+    public static int dropStart(int minute, int minutes) {
+        return Math.min(Math.max(0, minute) / 30 * 30, Task.DAY_END - minutes);
+    }
+
+    /**
+     * D-99: 놓을 수 있는 첫날(앱의 오늘부터, 기간 할 일은 기간 첫날부터)과 끝날(기간 할 일의 마감, 아니면 null). 마감이 지난 기간 할 일은
+     * 보통 할 일처럼 오늘부터 끝이 없다(S59).
+     */
+    public LocalDate[] dropRange(Task task) {
+        boolean period = task.period() && !task.dueDate.isBefore(today());
+        LocalDate from = period && task.startDay.isAfter(today()) ? task.startDay : today();
+        return new LocalDate[] {from, period ? task.dueDate : null};
+    }
+
+    /** D-99 되돌리기: 놓기 전 날짜, 시작 시각, 걸리는 시간을 적어 둔다. series면 같은 반복의 같거나 뒤 날짜 사본도. */
+    public Runnable keep(Task task, boolean series) {
+        List<Task> kept = series && task.seriesId != null
+                ? tasks.stream().filter(t -> task.seriesId.equals(t.seriesId) && !t.date.isBefore(task.date)).toList()
+                : List.of(task);
+        record Was(Task t, LocalDate date, LocalTime start, boolean nextDay, int minutes) {
+        }
+        List<Was> was = kept.stream().map(t -> new Was(t, t.date, t.start, t.nextDay, t.minutes)).toList();
+        return () -> was.forEach(w -> {
+            w.t().date = w.date();
+            w.t().start = w.start();
+            w.t().nextDay = w.nextDay();
+            w.t().minutes = w.minutes();
+        });
+    }
+
+    /**
+     * 06의 4번 끌어 놓기(D-99). 일정관리 목록의 줄을 시간표에 놓으면 날짜를 놓은 날로 옮기고 시작 시각을 넣는다. 걸리는 시간과 기간은
+     * 그대로다. thisAndAfter면 시작 시각만 같은 반복의 원래 날짜와 같거나 뒤인 사본에 넣고, 날짜는 이 사본 하나만 옮긴다(D-42).
+     */
+    public void placeAt(Task task, LocalDate day, int startMinute, boolean thisAndAfter) {
+        LocalDate originalDate = task.date;
+        task.date = day;
+        task.setStart(startMinute);
+        if (thisAndAfter) {
+            applyToSeries(task, originalDate, true);
+        }
+    }
+
     /**
      * 시각 고치기 창의 시각 빼기(D-72). thisAndAfter면 같은 반복의 같거나 뒤 날짜 사본의 시각도 뺀다. 기간 할 일은 계획한 날에서
      * 빠져 오늘(첫날이 뒤면 첫날, 마감이 지났으면 마감)부터 보이도록 날짜를 옮긴다. startDay와 마감은 그대로다.

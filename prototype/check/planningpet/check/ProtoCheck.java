@@ -180,6 +180,7 @@ public final class ProtoCheck {
         DayCheck.run();
         HomeCheck.run();
         looks();
+        ListCheck.run();
         System.out.println(failed == 0 ? "모두 통과" : failed + "개 실패");
         System.exit(failed == 0 ? 0 : 1);
     }
