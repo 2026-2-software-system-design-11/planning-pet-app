@@ -35,6 +35,8 @@ public final class Typed {
         } else if (h.matches()) {
             n = Double.parseDouble(h.group(1)) * 60 + (h.group(2) != null ? 30 : 0)
                     + (h.group(3) != null ? Integer.parseInt(h.group(3)) : 0);
+        } else if (text.replace(" ", "").equals("반시간")) {
+            return new Read(30, "30분으로 읽었어요");
         } else {
             return new Read(null, MINUTES_BAD);
         }

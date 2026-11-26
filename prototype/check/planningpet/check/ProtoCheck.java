@@ -125,8 +125,8 @@ public final class ProtoCheck {
         eq("D-38 5분 단위", "30 null 75", fiveMinute());
         eq("T-TYPE-1", "25 5분 단위로 맞췄어요(25분) / 75 null", typed("27") + " / " + typed("75"));
         eq("T-TYPE-2", "720 최대 720분(12시간)까지 넣을 수 있어요 / 10 최소 10분부터 넣을 수 있어요", typed("730") + " / " + typed("5"));
-        eq("T-TYPE-3", "null 숫자(분)로 넣어 주세요(예: 30) / null 숫자(분)로 넣어 주세요(예: 30) / 30 null",
-                typed("반시간") + " / " + typed("30abc") + " / " + typed("30분"));
+        eq("T-TYPE-3", "null 숫자(분)로 넣어 주세요(예: 30) / null 숫자(분)로 넣어 주세요(예: 30) / 30 null / 30 30분으로 읽었어요",
+                typed("30abc") + " / " + typed("점심") + " / " + typed("30분") + " / " + typed("반시간"));
         eq("T-TYPE-4", "60 90 90 90 150", String.join(" ", java.util.stream.Stream.of("1시간", "1시간 30분", "1시간 반", "1.5시간", "2시간 반")
                 .map(w -> String.valueOf(Typed.minutes(w).value())).toList()));
         eq("D-98 칸 아래 글", "25 흐린 5분 단위로 맞췄어요(25분) / 25 빨간 " + Typed.MINUTES_BAD, typedField());
@@ -343,11 +343,11 @@ public final class ProtoCheck {
         return r.value() + " " + r.notice();
     }
 
-    /** 27은 25와 흐린 글, "반시간"은 이전 값과 빨간 글(D-98). */
+    /** 27은 25와 흐린 글, "30abc"는 이전 값과 빨간 글(D-98). */
     private static String typedField() {
         javax.swing.JSpinner s = Ui.minutes(30);
         javax.swing.JLabel l = new TypedField(s, Typed::minutes, () -> { }).notice;
-        return type(s, "27") + " " + notice(l) + " / " + type(s, "반시간") + " " + notice(l);
+        return type(s, "27") + " " + notice(l) + " / " + type(s, "30abc") + " " + notice(l);
     }
 
     /** 입력 창의 칸 아래 글은 다른 칸을 고쳐도 남고, 그 칸에 쳐 넣기 시작하거나 화살표를 누르면 사라진다. */
