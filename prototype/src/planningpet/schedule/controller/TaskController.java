@@ -199,6 +199,11 @@ public final class TaskController {
         app.control.change(() -> {
             app.store.book.setTime(t, start, minutes, day, scope == 1);
             if (move) {
+                // S111: 이후 반복 모두면 뒤 사본도 각자 다음 날로 옮긴다(18일은 19일, 25일은 26일).
+                if (scope == 1 && t.seriesId != null) {
+                    app.store.tasks.stream().filter(c -> c != t && t.seriesId.equals(c.seriesId) && c.date.isAfter(t.date))
+                            .forEach(c -> c.date = c.date.plusDays(1));
+                }
                 t.date = day;
             }
         });

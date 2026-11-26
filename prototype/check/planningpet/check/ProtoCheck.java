@@ -149,6 +149,7 @@ public final class ProtoCheck {
         eq("S99, S101, S114, D-101 밤 4시 뒤", "2026-11-19 / 2026-11-18 없음 / 2026-11-18 흐린 5분 단위로 맞췄어요(22:05) / 2026-11-18 245 없음", nightAfter());
         Typed.Read r30 = Typed.start("밤 4시", java.time.LocalDate.of(2026, 11, 30));
         Typed.Read due = Typed.start("밤 4시", java.time.LocalDate.of(2026, 11, 18), java.time.LocalDate.of(2026, 11, 18));
+        eq("S111 이후 반복 모두의 밤 4시", "2026-11-19 240 2026-11-26 240 2026-12-03 240", nightSeries());
         eq("T-TYPE-12", "04:00 1 12월 1일(화) 04:00으로 읽었어요 / 03:55(다음 날) 0 마감(18일) 안에 두려고 03:55로 맞췄어요",
                 r30.value() + " " + r30.days() + " " + r30.notice() + " / " + due.value() + " " + due.days() + " " + due.notice());
         eq("T-TYPE-8", "14:00 14:00 20:00 09:00 12:00 14:30 14:30 07:00 19:00 21:00 12:00 11:00 01:00(다음 날) 02:00(다음 날) 00:00(다음 날) 05:00",
@@ -449,6 +450,18 @@ public final class ProtoCheck {
                 java.time.LocalDateTime.of(2026, 11, 14, 15, 23)).start.getEditor()).getTextField();
         field.setText("1");
         return field.getText() + " " + field.getSelectedText();
+    }
+
+    /** 수요일 22:00 요일 반복 사본에 "밤 4시"를 넣고 이후 반복 모두를 고르면 모든 사본이 각자 다음 날 04:00이다. */
+    private static String nightSeries() {
+        App app = Main.create(MockData.empty());
+        java.util.List<Task> copies = app.store.book.add(Task.Kind.TASK, "야간 과제", java.time.LocalDate.of(2026, 11, 18),
+                java.time.LocalTime.of(22, 0), 60, "", java.time.LocalDate.of(2026, 12, 2));
+        TimeEditor e = new TimeEditor(copies.get(0), app.store.now);
+        type(e.start, "밤 4시");
+        app.schedule.chooser = (title, message, options) -> 1;
+        TimeEditor.save(app, copies.get(0), e);
+        return String.join(" ", copies.stream().map(c -> c.date + " " + c.startMinute()).toList());
     }
 
     /** 다시 친 "밤 4시"는 19일 그대로, "정하기"를 끄거나 다른 값으로 바꾸면 18일로 돌아간다. 시각 고치기 창은 화살표 뒤 원래 날이다. */
