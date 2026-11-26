@@ -143,6 +143,21 @@ public final class TimetablePanel extends JComponent {
         }
     }
 
+    /** D-99: 끄는 동안 보이는 칸의 위, 아래 끝 30px 안이면 그쪽으로 굴릴 양(px). 끝에 가까울수록(넘으면 더) 빠르다. */
+    public static int rollStep(int y, int height) {
+        int d = y < 30 ? y - 30 : y > height - 30 ? y - (height - 30) : 0;
+        return d == 0 ? 0 : Integer.signum(d) * Math.min(24, Math.abs(d) / 2 + 2);
+    }
+
+    /** 끄는 동안 마우스가 보이는 칸 좌표 inView에 있으면 한 번 굴리고, 그 자리의 시간표 좌표(보이는 칸 밖이면 null)를 돌려준다. */
+    public java.awt.Point roll(java.awt.Point inView) {
+        javax.swing.JViewport view = (javax.swing.JViewport) getParent();
+        int y = view.getViewPosition().y + rollStep(inView.y, view.getHeight());
+        view.setViewPosition(new java.awt.Point(0, Math.max(0, Math.min(getHeight() - view.getHeight(), y))));
+        java.awt.Point p = new java.awt.Point(inView.x + view.getViewPosition().x, inView.y + view.getViewPosition().y);
+        return getVisibleRect().contains(p) ? p : null;
+    }
+
     /** 끄는 동안 흐리게 그리는 날(놓을 수 없는 날). */
     public java.util.List<LocalDate> dimmed() {
         return dragging == null ? java.util.List.of()

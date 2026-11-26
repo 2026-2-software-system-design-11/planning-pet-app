@@ -30,6 +30,28 @@ final class ListCheck {
         grab();
         notePlace();
         escape();
+        rollEdge();
+    }
+
+    /** T-EDIT-27(D-99): 끄는 동안 보이는 칸 끝에 닿으면 굴러가고, 끝에 가까울수록 많이 굴러간다. */
+    static void rollEdge() {
+        App app = Main.create(at("11-17T09:00"));
+        app.show("일정관리");
+        app.store.changed();
+        app.root.setSize(1000, 680);
+        PeriodCheck.layout(app.root);
+        ScheduleScreen sched = ProtoCheck.find(app.root, ScheduleScreen.class);
+        sched.scrollTo(13 * 60);
+        TimetablePanel table = ProtoCheck.find(app.root, TimetablePanel.class);
+        int h = table.getParent().getHeight();
+        int top = sched.topMinute();
+        table.roll(new java.awt.Point(100, h - 20));
+        int near = sched.topMinute();
+        table.roll(new java.awt.Point(100, h - 3));
+        int nearer = sched.topMinute();
+        table.roll(new java.awt.Point(100, h / 2));
+        eq("T-EDIT-27", "true true true 0", (near > top) + " " + (nearer - near > near - top) + " "
+                + (TimetablePanel.rollStep(5, h) < 0) + " " + (sched.topMinute() - nearer));
     }
 
     /** T-EDIT-26(D-99): 끄는 동안 줄은 흐리고, Esc를 누르면 끌기를 그만둔다. */
