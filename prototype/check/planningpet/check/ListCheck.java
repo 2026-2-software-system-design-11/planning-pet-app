@@ -368,7 +368,7 @@ final class ListCheck {
                 + " / 11/18 발표 60분 오늘 마감 / 11/19 토익 30분 ~10/20까지 / 11/20 지원서 60분 마감", String.join(", ", got) + " / " + PeriodCheck.rows(sched.untimed));
     }
 
-    /** T-EDIT-43(05 시각 고치기 창): 창은 단추 바로 아래이고, 앱 창 오른쪽 밖으로 나가면 왼쪽으로 밀려 앱 창 안에 든다. */
+    /** T-EDIT-45(05 시각 고치기 창): 창은 단추 바로 아래이고, 앱 창 오른쪽 밖으로 나가면 왼쪽으로 밀려 앱 창 안에 든다. */
     static void editorSpot() {
         App app = Main.create(at("11-17T09:00"));
         Task work = app.store.book.add(Task.Kind.TASK, "과제", d("11-18"), null, 30, "", null).get(0);
@@ -389,7 +389,7 @@ final class ListCheck {
         }
         app.root.setSize(size.width - 50, 680);
         got.add("좁은 창 " + TimeEditor.spot(app.root, size, app.root).x);
-        eq("T-EDIT-43", "일정관리 true true true, 홈 true true true, 좁은 창 0", String.join(", ", got));
+        eq("T-EDIT-45", "일정관리 true true true, 홈 true true true, 좁은 창 0", String.join(", ", got));
     }
 
     /** T-EDIT-42(D-102): 마감이 지난 기간 할 일 줄의 시각 단추는 흐리고, 단추의 동작을 불러도 컨트롤러가 막는다. */
