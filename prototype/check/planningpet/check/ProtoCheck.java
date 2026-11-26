@@ -131,7 +131,8 @@ public final class ProtoCheck {
                 .map(w -> String.valueOf(Typed.minutes(w).value())).toList()));
         eq("D-98 칸 아래 글", "25 흐린 5분 단위로 맞췄어요(25분) / 25 빨간 " + Typed.MINUTES_BAD, typedField());
         eq("D-98 입력 창 걸리는 시간 칸 아래 글", "흐린 5분 단위로 맞췄어요(25분) / 없음 / 없음", typedForm());
-        eq("D-98 시각 고치기 창 칸 아래 글", "720 흐린 최대 720분(12시간)까지 넣을 수 있어요 true true", timeEditorNotice());
+        eq("D-98 시각 고치기 창 칸 아래 글", "720 흐린 최대 720분(12시간)까지 넣을 수 있어요 true true 최대 720분(12시간)까지 넣을<br>수 있어요",
+                timeEditorNotice());
         eq("T-TYPE-5", "09:05 5분 단위로 맞췄어요(09:05) / 23:55 5분 단위로 맞췄어요(23:55) / 09:00 null", starts("09:03", "23:58", "09:00"));
         eq("T-TYPE-6", "03:55(다음 날) 하루는 새벽 4시에 넘어가요. 03:55(다음 날)로 맞췄어요", starts("04:10(다음 날)"));
         eq("T-TYPE-7", "14:00 null / 09:00 null / 14:30 null / 09:30 null", starts("14", "9", "1430", "930"));
@@ -351,7 +352,7 @@ public final class ProtoCheck {
         String got = type(e.minutes, "730") + " " + notice(l);
         int group = l.getParent().getComponent(0).getPreferredSize().width;
         return got + " " + (l.getPreferredSize().width <= group) + " "
-                + (l.getPreferredSize().height > l.getFontMetrics(l.getFont()).getHeight() * 1.5);
+                + (l.getPreferredSize().height > l.getFontMetrics(l.getFont()).getHeight() * 1.5) + " " + l.getText().replaceAll("</?html>", "");
     }
 
     /** 시작 시각 칸에 쳐 넣은 글마다 읽은 값과 칸 아래 글(06의 32번). */
@@ -396,7 +397,7 @@ public final class ProtoCheck {
     /** 칸 아래 글. 안 보이면 "없음". */
     static String notice(javax.swing.JLabel l) {
         return !l.isVisible() ? "없음" : (planningpet.common.view.Theme.SUNDAY.equals(l.getForeground()) ? "빨간 " : "흐린 ")
-                + l.getText().replaceAll("<[^>]*>", "");
+                + l.getText().replace("<br>", " ").replaceAll("<[^>]*>", "");
     }
 
     /** 검사 문장을 칸 순서대로 " / "로 잇는다. 통과면 null. */

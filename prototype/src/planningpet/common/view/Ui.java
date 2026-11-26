@@ -59,6 +59,39 @@ public final class Ui {
         s.setEditor(editor);
     }
 
+    /**
+     * room 폭을 넘는 글은 그 폭에서 줄을 바꿔 잘리지 않게 한다. 줄은 빈칸에서 바꾸고, 빈칸 없이 폭을 넘는 낱말만 글자에서 끊는다(D-98).
+     * #202의 입력 창 오류 글과 같은 방식이다. 폭 안이면 글 그대로다.
+     */
+    public static String wrap(String text, java.awt.FontMetrics fm, int room) {
+        if (fm.stringWidth(text) <= room) {
+            return text;
+        }
+        java.util.List<String> lines = new java.util.ArrayList<>();
+        String line = "";
+        for (String word : text.split(" ")) {
+            String next = line.isEmpty() ? word : line + " " + word;
+            if (fm.stringWidth(next) <= room) {
+                line = next;
+                continue;
+            }
+            if (!line.isEmpty()) {
+                lines.add(line);
+            }
+            line = word;
+            while (fm.stringWidth(line) > room && line.length() > 1) {
+                int cut = line.length() - 1;
+                while (cut > 1 && fm.stringWidth(line.substring(0, cut)) > room) {
+                    cut--;
+                }
+                lines.add(line.substring(0, cut));
+                line = line.substring(cut);
+            }
+        }
+        lines.add(line);
+        return "<html>" + String.join("<br>", lines.stream().map(Ui::esc).toList()) + "</html>";
+    }
+
     public static JLabel hint(String text) {
         JLabel l = new JLabel(text);
         l.setForeground(Theme.INK_DIM);

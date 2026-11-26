@@ -1,6 +1,7 @@
 package planningpet.schedule.view;
 
 import planningpet.common.view.Theme;
+import planningpet.common.view.Ui;
 import java.text.ParseException;
 import java.util.function.Function;
 import javax.swing.*;
@@ -13,7 +14,7 @@ public final class TypedField {
     private Object about; // 글이 말하는 칸 값
     /** 칸에 글을 쳐 넣어 읽은 적이 있는가. 일정 입력 창은 그 뒤 30분 안내를 숨긴다(S83). */
     public boolean typed;
-    /** 0보다 크면 글을 이 너비(px) 안에서 접는다(시각 고치기 창, D-98). */
+    /** 0보다 크면 글을 이 너비(px) 안에서 낱말 사이로 접는다(시각 고치기 창, D-98). */
     public java.util.function.IntSupplier wrap = () -> 0;
 
     public TypedField(JSpinner spinner, Function<String, Typed.Read> reader, Runnable relayout) {
@@ -85,13 +86,7 @@ public final class TypedField {
     private void show(String text, java.awt.Color color, Object value) {
         about = text == null ? null : value;
         int w = wrap.getAsInt();
-        notice.setText(text == null ? "" : w > 0 ? "<html>" + text + "</html>" : text);
-        notice.setPreferredSize(null);
-        if (text != null && w > 0) {
-            View v = (View) notice.getClientProperty(javax.swing.plaf.basic.BasicHTML.propertyKey);
-            v.setSize(w, 0);
-            notice.setPreferredSize(new java.awt.Dimension(w, (int) Math.ceil(v.getPreferredSpan(View.Y_AXIS))));
-        }
+        notice.setText(text == null ? "" : w > 0 ? Ui.wrap(text, notice.getFontMetrics(notice.getFont()), w) : text);
         notice.setForeground(color);
         notice.setVisible(text != null);
         relayout.run();
