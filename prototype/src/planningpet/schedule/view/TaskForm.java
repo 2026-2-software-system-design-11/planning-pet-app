@@ -66,8 +66,6 @@ public final class TaskForm {
     private Boolean timedBeforePeriod;
     /** D-101: 반복 때문에 앱이 끈 기간 할 일의 마감. 반복을 안 함으로 되돌리면 기간과 함께 되돌리고 null이 된다. */
     private LocalDate dueBeforeRepeat;
-    /** S102(D-101): 고정 일정을 거쳐 되돌린 마감이 날짜보다 앞이면 저장 전에도 마감 오류 글을 보인다. 고치면 지운다. */
-    private boolean dueWarned;
     /** 오류 글이 늘거나 줄면 창 크기를 다시 맞춘다. 창 없이 만들 때는 아무것도 하지 않는다. */
     Runnable relayout = () -> { };
     private int row;
@@ -215,7 +213,6 @@ public final class TaskForm {
             periodBefore = period.isSelected();
             dueBefore = Ui.dateOf(due);
         } else if (!isFixed && timedBefore != null) {
-            dueWarned = periodBefore;
             timed.setSelected(timedBefore);
             period.setSelected(periodBefore);
             Ui.setDate(due, dueBefore);
@@ -285,13 +282,14 @@ public final class TaskForm {
         Integer s = startTime();
         endLabel.setText(s == null ? "" : Times.endHint(s, (int) minutes.getValue()));
         realTime.setText(s == null ? "" : Times.real(day, s));
-        dueWarned &= period.isSelected() && Ui.dateOf(due).isBefore(day);
+        // S102, S128(D-101): 마감 칸은 저장 전에도 값이 바뀔 때마다 바로 검사한다. 다른 칸은 저장 뒤다(D-43).
+        boolean dueLate = period.isSelected() && Ui.dateOf(due).isBefore(day);
         syncing = false;
         JLabel dueError = errors.get("마감");
         if (checked) {
             showErrors(problems());
-        } else if (dueWarned || dueError.isVisible()) {
-            fill(dueError, problems().stream().filter(p -> dueWarned && p[0].equals("마감")).map(p -> p[1]).findFirst().orElse(""));
+        } else if (dueLate || dueError.isVisible()) {
+            fill(dueError, problems().stream().filter(p -> dueLate && p[0].equals("마감")).map(p -> p[1]).findFirst().orElse(""));
             relayout.run();
         } else if (dueShown != due.isVisible()) {
             relayout.run();

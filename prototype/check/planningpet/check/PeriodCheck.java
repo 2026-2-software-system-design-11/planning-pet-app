@@ -152,10 +152,18 @@ final class PeriodCheck {
             warned += Ui.dateOf(w.due) + " " + w.errorText() + " / ";
             if (chosen) {
                 Ui.setDate(w.due, d("12-01"));
-                warned += "[" + w.errorText() + "] / ";
+                warned += "[" + w.errorText() + "] " + w.errors.get("마감").isVisible() + " / ";
+                Ui.setDate(w.date, d("12-02"));
+                warned += w.errorText() + " / ";
             }
         }
-        eq("T-DEF-22", "2026-11-25 마감일이 시작일보다 앞이에요 / [] / 2026-12-06  / ", warned);
+        TaskForm only = new TaskForm(null, d("11-18"), at("11-17T09:00").now);
+        only.title.setText("보고서");
+        only.period.doClick();
+        Ui.setDate(only.due, d("11-20"));
+        Ui.setDate(only.date, d("11-23"));
+        eq("T-DEF-22", "2026-11-25 마감일이 시작일보다 앞이에요 / [] false / 마감일이 시작일보다 앞이에요 / 2026-12-06  / "
+                + "마감일이 시작일보다 앞이에요", warned + only.errorText());
     }
 
     /** D-69: 지난 반복 사본은 밀린 일로 보이지 않는다. */
