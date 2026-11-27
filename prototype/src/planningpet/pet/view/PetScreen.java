@@ -77,7 +77,7 @@ public final class PetScreen extends JPanel {
         character = new CharacterScreen(app);
         characterOpener = dress -> CharacterDialog.open(app, character, dress);
         room.add(chips);
-        adopt.addActionListener(e -> PickDialog.adopt(app));
+        adopt.addActionListener(e -> AdoptDialog.show(app));
         Card roomCard = new Card(new BorderLayout(), Theme.CARD_RADIUS) {
             @Override
             public void doLayout() {
