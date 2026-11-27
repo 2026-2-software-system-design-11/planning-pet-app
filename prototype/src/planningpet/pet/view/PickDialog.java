@@ -10,9 +10,9 @@ import planningpet.pet.controller.PetController;
 import planningpet.pet.model.Talk;
 import planningpet.common.view.Card;
 import planningpet.common.view.Icons;
+import planningpet.common.view.RoundField;
 import planningpet.common.view.Theme;
 import java.awt.BorderLayout;
-import java.awt.GridLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.FontMetrics;
@@ -21,6 +21,8 @@ import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JComponent;
 import javax.swing.SwingConstants;
 import javax.swing.ButtonGroup;
@@ -31,7 +33,11 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 
-/** 반려동물 고르기 창(05, UC-17). 첫 실행 때 메인 창보다 먼저 뜬다. */
+/**
+ * 반려동물 고르기 창(05, UC-17). 첫 실행 때 메인 창보다 먼저 뜬다.
+ * 모양은 2026-11-23 고르기 예시를 옮겼다(디자인 시스템 10절 "고르기 창"): 하늘 언덕 장면 위에 로고, 리본 제목, 동물 카드 둘,
+ * 이름 줄 카드, 큰 알약 버튼을 가운데 한 줄로 둔다. 부품 종류, 글, 기본값, Enter, 닫기는 05 그대로다.
+ */
 public final class PickDialog {
     /** 리본 아래 부제(05, 11-23 예시 글). 비우면 줄을 그리지 않는다. */
     static final String SUBTITLE = "선택한 친구와 함께 일정을 관리하고,\n계획을 실천하며 성장할 수 있어요!";
@@ -42,43 +48,61 @@ public final class PickDialog {
     /** 줄 폭: 카드 둘과 사이. 이름 줄 카드와 버튼 줄도 이 폭이다. */
     private static final int ROW = PickCard.W * 2 + 20;
 
-
-    public final JRadioButton cat = new JRadioButton("고양이", true);
-    public final JRadioButton dog = new JRadioButton("강아지");
-    public final JTextField name = new JTextField(12);
+    public final JRadioButton cat = new PickCard("고양이", "CAT", true, "조용하고 편안한 성격으로\n언제나 곁에서 응원해요!");
+    public final JRadioButton dog = new PickCard("강아지", "DOG", false, "활발하고 다정한 성격으로\n항상 힘이 되어줘요!");
+    public final JTextField name = new RoundField(null, "예시) 모찌, 코코, 하루").count(10);
     /** D-74: 펫을 고른 다음 예시로 둘러볼지 바로 시작할지 고른다. 바로 시작이 주 행동이고 Enter와 같다. */
     public final JButton examples = new JButton("예시로 둘러보기");
     public final JButton start = new JButton("바로 시작");
-    public final JPanel panel = new JPanel(new BorderLayout(0, 10));
+    public final JPanel panel = new Backdrop();
 
     public PickDialog() {
         Ui.limit(name, 10);
         ButtonGroup group = new ButtonGroup();
         group.add(cat);
         group.add(dog);
-        JPanel animals = new JPanel(new GridLayout(2, 2, 16, 4));
-        animals.add(new PetView(MockData.look("CAT"), 2));
-        animals.add(new PetView(MockData.look("DOG"), 2));
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBorder(BorderFactory.createEmptyBorder(16, 0, 22, 0));
+        // 창을 키우면 위아래 빈 곳만 늘고 내용은 가운데에 모여 있다.
+        panel.add(Box.createVerticalGlue());
+        panel.add(new Logo());
+        panel.add(Box.createVerticalStrut(4));
+        panel.add(new Ribbon("함께할 반려동물을 골라 주세요"));
+        if (!SUBTITLE.isEmpty()) {
+            JLabel sub = new JLabel("<html><div style='text-align:center'>" + SUBTITLE.replace("\n", "<br>") + "</div></html>",
+                    SwingConstants.CENTER);
+            sub.setFont(Theme.font(16));
+            sub.setForeground(Theme.INK_SUB);
+            panel.add(Box.createVerticalStrut(2));
+            panel.add(center(sub));
+        }
+        panel.add(Box.createVerticalStrut(12));
+        JPanel animals = clear(new FlowLayout(FlowLayout.CENTER, 20, 0));
         animals.add(cat);
         animals.add(dog);
-        panel.setBorder(BorderFactory.createEmptyBorder(14, 16, 14, 16));
-        panel.add(new JLabel("<html><b>함께할 반려동물을 골라 주세요</b></html>"), BorderLayout.NORTH);
-        panel.add(animals, BorderLayout.CENTER);
-        JPanel bottom = new JPanel(new BorderLayout(0, 2));
-        bottom.add(Ui.flow(new JLabel("이름"), name), BorderLayout.NORTH);
-        JLabel hint = Ui.hint("비워 두면 나비, 바둑이로 불러요");
-        hint.setBorder(BorderFactory.createEmptyBorder(0, 44, 0, 0));
-        bottom.add(hint, BorderLayout.CENTER);
+        animals.setMaximumSize(new Dimension(Integer.MAX_VALUE, PickCard.H));
+        panel.add(animals);
+        panel.add(Box.createVerticalStrut(12));
+        panel.add(center(nameBar()));
+        panel.add(Box.createVerticalStrut(10));
+        JLabel later = Ui.hint("예시는 나중에 '예시 지우기'로 한 번에 지울 수 있어요");
+        JPanel choose = clear(new BorderLayout(0, 6));
+        later.setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 6));
+        later.setHorizontalAlignment(BUTTONS_CENTER ? SwingConstants.CENTER : SwingConstants.RIGHT);
+        choose.add(later, BorderLayout.NORTH);
+        JPanel buttons = clear(new FlowLayout(BUTTONS_CENTER ? FlowLayout.CENTER : FlowLayout.RIGHT, 10, 0));
+        big(examples);
+        big(start);
         start.putClientProperty(planningpet.common.view.RoundButtonUI.PRIMARY, Boolean.TRUE);
-        JPanel choose = new JPanel(new BorderLayout(0, 4));
-        choose.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
-        choose.add(Ui.hint("예시는 나중에 '예시 지우기'로 한 번에 지울 수 있어요"), BorderLayout.NORTH);
-        JPanel buttons = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 6, 0));
+        start.setIcon(Icons.icon(Icons.Kind.PAW, 18, java.awt.Color.WHITE));
+        start.setIconTextGap(8);
         buttons.add(examples);
         buttons.add(start);
-        choose.add(buttons, BorderLayout.SOUTH);
-        bottom.add(choose, BorderLayout.SOUTH);
-        panel.add(bottom, BorderLayout.SOUTH);
+        choose.add(buttons, BorderLayout.CENTER);
+        choose.setMaximumSize(new Dimension(ROW, Integer.MAX_VALUE));
+        choose.setPreferredSize(new Dimension(ROW, choose.getPreferredSize().height));
+        panel.add(center(choose));
+        panel.add(Box.createVerticalGlue());
     }
 
     /** 이름 줄 카드: 연필, 라벨, 둥근 이름 칸, 칸 아래 안내(05). */
