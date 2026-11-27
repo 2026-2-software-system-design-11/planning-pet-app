@@ -164,4 +164,52 @@ class AutoPlacerTest {
         task("B", 20, 60);
         assertEquals("A 11-18 09:00, B 11-20 09:00 / 못 놓음  / 대상 2", text(run(16, 18, "09:00")));
     }
+
+    @Test
+    void E_AUTO_1_seconds() {
+        task("A", 16, 30);
+        assertEquals("A 11-16 15:25 / 못 놓음  / 대상 1", text(run(day(16), LocalDateTime.of(2026, 11, 16, 15, 20, 30))));
+        assertEquals("A 11-16 15:25 / 못 놓음  / 대상 1", text(run(16, 16, "15:25")));
+    }
+
+    @Test
+    void E_AUTO_2_aroundNine() {
+        task("A", 16, 30);
+        assertEquals("A 11-16 09:00 / 못 놓음  / 대상 1", text(run(16, 16, "08:59")));
+        assertEquals("A 11-16 09:05 / 못 놓음  / 대상 1", text(run(16, 16, "09:01")));
+    }
+
+    @Test
+    void E_AUTO_3_endsAtMidnight() {
+        task("A", 16, 60);
+        task("B", 17, 65);
+        assertEquals("A 11-16 23:00, B 11-17 09:00 / 못 놓음  / 대상 2", text(run(16, 16, "23:00")));
+        tasks.clear();
+        task("A", 16, 65);
+        assertEquals(" / 못 놓음 A / 대상 1", text(run(16, 16, "23:00")));
+    }
+
+    @Test
+    void E_AUTO_4_longest() {
+        task("A", 16, 720);
+        assertEquals("A 11-16 12:00 / 못 놓음  / 대상 1", text(run(16, 16, "12:00")));
+        assertEquals(" / 못 놓음 A / 대상 1", text(run(16, 16, "12:01")));
+    }
+
+    @Test
+    void E_AUTO_5_shortestInGap() {
+        fixed("수업", 16, "09:00", 60);
+        fixed("실습", 16, "10:10", 50);
+        task("A", 16, 10);
+        task("B", 16, 15);
+        assertEquals("B 11-16 11:00, A 11-16 10:00 / 못 놓음  / 대상 2", text(run(16, 16, "08:00")));
+    }
+
+    @Test
+    void E_AUTO_6_weekEdges() {
+        task("L", 22, 30);
+        task("N", 23, 30);
+        task("O", 15, 30);
+        assertEquals("L 11-22 09:00 / 못 놓음  / 대상 1", text(run(16, 16, "08:00")));
+    }
 }
