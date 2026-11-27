@@ -11,6 +11,7 @@ public record Repeat(boolean daily, Set<DayOfWeek> days) {
     public static final Repeat DAILY = new Repeat(true, Set.of());
     /** 사본 수 한도(D-64). */
     public static final int MAX_COPIES = 120;
+    private static final String NAMES = "월화수목금토일";
 
     public Repeat {
         days = Set.copyOf(days);
@@ -35,5 +36,17 @@ public record Repeat(boolean daily, Set<DayOfWeek> days) {
             }
         }
         return out;
+    }
+
+    /** 화면 글: 고른 요일을 한 주 시작 요일부터 "일, 화"처럼 잇는다(D-91, D-94). */
+    public String text(DayOfWeek weekStart) {
+        List<String> names = new ArrayList<>();
+        for (int k = 0; k < 7; k++) {
+            DayOfWeek d = weekStart.plus(k);
+            if (days.contains(d)) {
+                names.add(String.valueOf(NAMES.charAt(d.getValue() - 1)));
+            }
+        }
+        return String.join(", ", names);
     }
 }

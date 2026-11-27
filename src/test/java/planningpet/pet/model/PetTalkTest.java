@@ -1,13 +1,26 @@
 package planningpet.pet.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static planningpet.pet.model.Situation.ADOPTED;
+import static planningpet.pet.model.Situation.ATTENDED;
+import static planningpet.pet.model.Situation.ADDED;
 import static planningpet.pet.model.Situation.BRIEFING;
+import static planningpet.pet.model.Situation.COMPLETED;
 import static planningpet.pet.model.Situation.FIRST_RUN;
 import static planningpet.pet.model.Situation.OTHER_DATE;
+import static planningpet.pet.model.Situation.PET_ROOM;
+import static planningpet.pet.model.Situation.RENAMED;
+import static planningpet.pet.model.Situation.SAMPLES_CLEARED;
+import static planningpet.pet.model.Situation.SCHEDULE_HINT;
+import static planningpet.pet.model.Situation.SELECTED;
+import static planningpet.pet.model.Situation.UNCOMPLETED;
 import static planningpet.pet.model.Situation.USUAL;
+import static planningpet.pet.model.Situation.WEEKLY_ADDED;
 import static planningpet.pet.model.Situation.WELCOME_BACK;
 
 import java.time.Clock;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -17,10 +30,14 @@ import java.util.Map;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import planningpet.app.model.AppData;
+import planningpet.reward.model.Level;
+import planningpet.reward.model.Rewards;
 import planningpet.schedule.model.Category;
 import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Repeat;
 import planningpet.schedule.model.Task;
+import planningpet.schedule.model.TaskDraft;
+import planningpet.shop.model.ItemId;
 
 /** 06 16번과 docs/porting/pet-talk.md 2절. at은 시계("11-16"이면 10:00)와 일정, 고른 고양이(이름 petName)를 정한다. 날 32는 12-02다. */
 class PetTalkTest {
@@ -67,6 +84,29 @@ class PetTalkTest {
     private static Task done(Task task, int day) {
         task.finish(d(day), 0, 0, null);
         return task;
+    }
+
+    /** 반복 일정을 넣고(06 3번) 첫 사본을 돌려준다. */
+    private Task repeat(Kind kind, String title, LocalDate first, Integer hour, Repeat how, LocalDate end) {
+        return data.getBook().add(new TaskDraft(kind, title, Category.OTHER, first, null,
+                hour == null ? null : LocalTime.of(hour, 0), 30, "", how, end, false, null, data.today(), false)).get(0);
+    }
+
+    private String say(Situation situation, Task task) {
+        return new PetTalk(data).say(situation, task);
+    }
+
+    /** 완료하고 펫 말을 돌려준다. 끝내기는 Rewards.complete로 한다. */
+    private String complete(Task task) {
+        return new PetTalk(data).say(COMPLETED, new Rewards(data).complete(task, data.today()), task);
+    }
+
+    /** 완료를 취소하고 펫 말을 돌려준다. 빠질 포인트와 전후 레벨은 controller가 넘길 값이다. */
+    private String uncomplete(Task task) {
+        int points = task.getRewardPoints();
+        Level before = Level.of(data.activePet().getExp());
+        new Rewards(data).uncomplete(task, data.today());
+        return new PetTalk(data).say(UNCOMPLETED, points, before, Level.of(data.activePet().getExp()));
     }
 
     private String say(Situation situation) {
@@ -260,5 +300,223 @@ class PetTalkTest {
         at("11-18", planned(title, 16, 22, 17, 9), task(title, 19));
         assertEquals("오늘은 할 일이 없어. 어제 하기로 한 '2026 하반기 공채 자기…'을 못 했어. 마감은 22일이야. 내일 '2026 하반기 공채 자기…'이 있어.",
                 say(BRIEFING));
+    }
+
+    @Test
+    void T_TALK_5_stageUp() {
+        at("11-16", task("가", 16));
+        data.activePet().setExp(230);
+        assertEquals("잘했어! 레벨이 올랐어. 이제 Lv.4, 나 좀 자란 것 같아.", complete(data.getBook().getTasks().get(0)));
+    }
+
+    @Test
+    void T_TALK_6_allDone() {
+        at("11-16", task("가", 16));
+        assertEquals("오늘 할 일을 다 끝냈어! 푹 쉬어.", complete(data.getBook().getTasks().get(0)));
+    }
+
+    @Test
+    void T_TALK_7_uncompleteLevelDown() {
+        at("11-16", task("가", 16));
+        data.activePet().setExp(45);
+        complete(data.getBook().getTasks().get(0));
+        assertEquals("체크를 풀었어. -10P, 이제 Lv.1", uncomplete(data.getBook().getTasks().get(0)));
+    }
+
+    @Test
+    void T_TALK_8_uncompleteCapped() {
+        at("11-16", task("가", 16), task("나", 16));
+        data.setRewardCount(d(16), 20);
+        complete(data.getBook().getTasks().get(0));
+        assertEquals("체크를 풀었어.", uncomplete(data.getBook().getTasks().get(0)));
+    }
+
+    @Test
+    void T_TALK_16_allDoneWithPeriod() {
+        Task laundry = task("빨래", 18);
+        at("11-18", done(task("과제", 18), 18), laundry, period("E사 지원서", 16, 22));
+        assertEquals("오늘 할 일 다 끝냈어! E사 지원서는 22일까지야, 4일 남았어.", complete(laundry));
+    }
+
+    @Test
+    void E_TALK_15_levelUp() {
+        Task first = task("가", 16);
+        at("11-16", first, task("나", 16));
+        data.activePet().setExp(40);
+        assertEquals("잘했어! 레벨이 올랐어. 이제 Lv.2", complete(first));
+    }
+
+    @Test
+    void E_TALK_16_capped() {
+        Task first = task("가", 16);
+        at("11-16", first, task("나", 16));
+        data.setRewardCount(d(16), 20);
+        assertEquals("잘했어! 오늘 보상은 다 받았지만 체크는 계속 돼.", complete(first));
+    }
+
+    @Test
+    void E_TALK_17_cappedBeforeAllDone() {
+        Task only = task("가", 16);
+        at("11-16", only);
+        data.setRewardCount(d(16), 20);
+        assertEquals("잘했어! 오늘 보상은 다 받았지만 체크는 계속 돼.", complete(only));
+    }
+
+    @Test
+    void E_TALK_18_completed() {
+        Task first = task("가", 16);
+        at("11-16", first, task("나", 16));
+        assertEquals("잘했어! +10P", complete(first));
+    }
+
+    @Test
+    void E_TALK_19_yesterdayAfterAllDone() {
+        Task yesterday = task("어제", 15);
+        at("11-16", done(task("가", 16), 16), yesterday);
+        assertEquals("잘했어! +10P", complete(yesterday));
+    }
+
+    @Test
+    void E_TALK_20_fixedLast() {
+        Task fixed = fixed("실습", 16, 9);
+        at("11-16", fixed);
+        assertEquals("오늘 할 일을 다 끝냈어! 푹 쉬어.", complete(fixed));
+    }
+
+    @Test
+    void E_TALK_21_uncompleteSameLevel() {
+        Task first = task("가", 16);
+        at("11-16", first);
+        complete(first);
+        assertEquals("체크를 풀었어. -10P", uncomplete(first));
+    }
+
+    @Test
+    void T_TALK_21_weeklyAdded() {
+        at("11-16");
+        Task first = repeat(Kind.FIXED, "편의점 알바", d(16), 18, Repeat.weekly(DayOfWeek.TUESDAY, DayOfWeek.THURSDAY), d(26));
+        assertEquals("17일(화)부터 화, 목마다 넣었어요", say(WEEKLY_ADDED, first));
+    }
+
+    @Test
+    void T_TALK_23_addedTodayAndOtherDays() {
+        Task report = task("통계 레포트", 16);
+        Task bank = task("은행 서류", 20);
+        Task gym = task("운동", 17);
+        at("11-16", task("과제", 16), report, bank, gym);
+        assertEquals("'통계 레포트' 넣었구나! 오늘 남은 일 2개야. '은행 서류' 11/20에 넣었어. '운동' 11/17에 넣었어.",
+                say(ADDED, report) + " " + say(ADDED, bank) + " " + say(ADDED, gym));
+    }
+
+    @Test
+    void T_TALK_25_fixedAddedToday() {
+        Task lecture = fixed("자료구조", 16, 9);
+        at("11-16", lecture);
+        assertEquals("'자료구조' 넣었구나! 오늘 남은 일 1개야.", say(ADDED, lecture));
+    }
+
+    @Test
+    void T_TALK_26_periodAdded() {
+        Task apply = period("E사 지원서", 18, 22);
+        at("11-18", apply);
+        assertEquals("'E사 지원서' 넣었구나! 22일까지야.", say(ADDED, apply));
+    }
+
+    @Test
+    void T_TALK_28_weekStartSunday() {
+        at("11-16");
+        data.setWeekStart(DayOfWeek.SUNDAY);
+        Task first = repeat(Kind.TASK, "운동", d(16), null, Repeat.weekly(DayOfWeek.TUESDAY, DayOfWeek.SUNDAY), d(30));
+        assertEquals("17일(화)부터 일, 화마다 넣었어요", say(WEEKLY_ADDED, first));
+    }
+
+    @Test
+    void T_TALK_29_otherMonth() {
+        at("11-30");
+        Task first = repeat(Kind.TASK, "운동", d(30), null, Repeat.weekly(DayOfWeek.TUESDAY), LocalDate.of(2026, 12, 28));
+        assertEquals("12월 1일(화)부터 화마다 넣었어요", say(WEEKLY_ADDED, first));
+    }
+
+    @Test
+    void E_TALK_22_periodOtherDay() {
+        Task later = period("가", 20, 25);
+        at("11-16", later);
+        assertEquals("'가' 넣었구나! 25일까지야.", say(ADDED, later));
+    }
+
+    @Test
+    void E_TALK_23_longTitle() {
+        Task item = task("2026 하반기 공채 자기소개서 1번 문항", 16);
+        at("11-16", item);
+        assertEquals("'2026 하반기 공채 자기…' 넣었구나! 오늘 남은 일 1개야.", say(ADDED, item));
+    }
+
+    @Test
+    void E_TALK_24_nextMonth() {
+        Task item = task("가", 31);
+        at("11-30", item);
+        assertEquals("'가' 12/1에 넣었어.", say(ADDED, item));
+    }
+
+    @Test
+    void E_TALK_25_dailyRepeat() {
+        at("11-16");
+        assertEquals("'물 마시기' 넣었구나! 오늘 남은 일 1개야.", say(ADDED, repeat(Kind.TASK, "물 마시기", d(16), null,
+                Repeat.DAILY, d(20))));
+    }
+
+    @Test
+    void E_TALK_26_nextYear() {
+        at("12-28");
+        Task first = repeat(Kind.TASK, "운동", LocalDate.of(2026, 12, 28), null, Repeat.weekly(DayOfWeek.FRIDAY),
+                LocalDate.of(2027, 1, 15));
+        assertEquals("1월 1일(금)부터 금마다 넣었어요", say(WEEKLY_ADDED, first));
+    }
+
+    @Test
+    void T_TALK_13_adopted() {
+        at("11-16");
+        assertEquals("안녕, 나는 바둑이야. 이제 경험치는 내가 받을게!",
+                new PetTalk(data).say(ADOPTED, new PetState(PetKind.DOG, "바둑이")));
+    }
+
+    @Test
+    void E_TALK_27_renamedDigit() {
+        petName = "펫1";
+        at("11-16");
+        assertEquals("이제 내 이름은 펫1이야.", new PetTalk(data).say(RENAMED, data.activePet()));
+    }
+
+    @Test
+    void E_TALK_28_selected() {
+        at("11-16", task("가", 16), task("나", 16));
+        assertEquals("이제 경험치는 내가 받을게! 오늘 할 일 2개 남았어.", say(SELECTED));
+    }
+
+    @Test
+    void E_TALK_29_fixedLines() {
+        at("11-16");
+        assertEquals("출석했어! +20P|예시를 지웠어. 수업부터 넣어 볼까?|", say(ATTENDED) + "|" + say(SAMPLES_CLEARED) + "|"
+                + say(PET_ROOM));
+    }
+
+    @Test
+    void E_TALK_30_bought() {
+        at("11-16");
+        assertEquals("털실 공 고마워!", new PetTalk(data).say(Situation.BOUGHT, ItemId.YARN_BALL));
+    }
+
+    @Test
+    void E_TALK_31_scheduleHint() {
+        at("11-16");
+        assertEquals("이번 주 남은 날의 시각 없는 할 일이 3개 있어. 자동 배치를 눌러 볼래? 지금 자동 배치할 할 일은 없어.",
+                new PetTalk(data).say(SCHEDULE_HINT, 3) + " " + new PetTalk(data).say(SCHEDULE_HINT, 0));
+    }
+
+    @Test
+    void E_TALK_32_wrongArguments() {
+        at("11-16", task("가", 16));
+        assertThrows(IllegalArgumentException.class, () -> say(COMPLETED));
+        assertThrows(IllegalArgumentException.class, () -> say(BRIEFING, data.getBook().getTasks().get(0)));
     }
 }

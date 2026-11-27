@@ -7,9 +7,12 @@ import java.util.List;
 import java.util.stream.Stream;
 import planningpet.app.model.AppData;
 import planningpet.common.model.Words;
+import planningpet.reward.model.Level;
+import planningpet.reward.model.RewardResult;
 import planningpet.schedule.model.DayPlan;
 import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Task;
+import planningpet.shop.model.ItemId;
 
 /** 펫 말풍선의 문장(06 16번). 무엇을 말할지는 부르는 controller가 고르고, 이 클래스는 그 상황의 문장을 만든다. */
 public final class PetTalk {
@@ -26,6 +29,10 @@ public final class PetTalk {
             case WELCOME_BACK -> welcomeBack();
             case BRIEFING -> briefing();
             case USUAL -> usual();
+            case ATTENDED -> "출석했어! +20P";
+            case SAMPLES_CLEARED -> "예시를 지웠어. 수업부터 넣어 볼까?";
+            case SELECTED -> "이제 경험치는 내가 받을게! " + usual();
+            case PET_ROOM -> ""; // D-56: 글 없이 하트 하나
             default -> throw new IllegalArgumentException("인자가 더 필요한 상황: " + situation);
         };
     }
@@ -43,6 +50,93 @@ public final class PetTalk {
         // D-94: 기간 할 일만 있는 날은 목록에 보이는 기간 할 일 수를 덧붙인다.
         int period = data.getBook().dayPlan(day).period().size();
         return date + "은 할 일이 없어." + (period > 0 ? " 기간 할 일 " + period + "개가 있어." : "");
+    }
+
+    /** COMPLETED: 완료 하나가 여러 상황에 들면 STAGE_UP, LEVEL_UP, CAPPED, ALL_DONE, COMPLETED 순으로 앞의 것 하나를 말한다. */
+    public String say(Situation situation, RewardResult result, Task task) {
+        require(situation, Situation.COMPLETED);
+        if (result.stageUp()) {
+            return "잘했어! 레벨이 올랐어. 이제 Lv." + result.after().getLevel() + ", 나 좀 자란 것 같아.";
+        }
+        if (result.levelUp()) {
+            return "잘했어! 레벨이 올랐어. 이제 Lv." + result.after().getLevel();
+        }
+        if (result.outcome() == RewardResult.Outcome.CAPPED) {
+            return "잘했어! 오늘 보상은 다 받았지만 체크는 계속 돼.";
+        }
+        LocalDate today = data.today();
+        if (!task.countDay().equals(today) || !checkables(today).stream().allMatch(Task::isDone)) {
+            return "잘했어! +10P";
+        }
+        // D-70: 기간 안에 할 일이 남았으면 가장 가까운 마감을 함께 말한다.
+        String period = periodLine(null);
+        return period != null ? "오늘 할 일 다 끝냈어! " + period : "오늘 할 일을 다 끝냈어! 푹 쉬어.";
+    }
+
+    /** UNCOMPLETED: 빠진 포인트와 레벨이 내려갔으면 바뀐 레벨을 말한다(D-36). */
+    public String say(Situation situation, int points, Level before, Level after) {
+        require(situation, Situation.UNCOMPLETED);
+        if (points == 0) {
+            return "체크를 풀었어.";
+        }
+        return "체크를 풀었어. -" + points + "P" + (after.getLevel() < before.getLevel() ? ", 이제 Lv." + after.getLevel() : "");
+    }
+
+    /** ADDED와 WEEKLY_ADDED: 넣은 일정(반복이면 첫 사본)을 말한다. */
+    public String say(Situation situation, Task task) {
+        require(situation, Situation.ADDED, Situation.WEEKLY_ADDED);
+        return situation == Situation.ADDED ? added(task) : weeklyAdded(task);
+    }
+
+    /** D-90, D-94: 기간 할 일은 마감, 오늘 넣은 일은 오늘 남은 수, 다른 날은 그 날짜. */
+    private String added(Task task) {
+        String title = "'" + Words.shortTitle(task.getTitle()) + "'";
+        if (task.period()) {
+            return title + " 넣었구나! " + task.getDueDate().getDayOfMonth() + "일까지야.";
+        }
+        LocalDate day = task.getDate();
+        if (!day.equals(data.today())) {
+            return title + " " + day.getMonthValue() + "/" + day.getDayOfMonth() + "에 넣었어.";
+        }
+        long left = checkables(day).stream().filter(t -> !t.isDone()).count();
+        return title + " 넣었구나! 오늘 남은 일 " + left + "개야.";
+    }
+
+    /** D-75, D-94: "17일(화)부터 화, 목마다 넣었어요". 첫 사본이 오늘과 다른 달이면 달을 붙인다. */
+    private String weeklyAdded(Task first) {
+        LocalDate day = first.getDate();
+        LocalDate today = data.today();
+        String month = day.getMonth() == today.getMonth() && day.getYear() == today.getYear() ? ""
+                : day.getMonthValue() + "월 ";
+        return month + day.getDayOfMonth() + "일(" + "월화수목금토일".charAt(day.getDayOfWeek().getValue() - 1) + ")부터 "
+                + first.getRepeat().text(data.getWeekStart()) + "마다 넣었어요";
+    }
+
+    /** ADOPTED와 RENAMED: 그 펫이 제 이름으로 말한다(D-62). */
+    public String say(Situation situation, PetState pet) {
+        require(situation, Situation.ADOPTED, Situation.RENAMED);
+        String name = pet.getName() + Words.iya(pet.getName());
+        return situation == Situation.ADOPTED ? "안녕, 나는 " + name + ". 이제 경험치는 내가 받을게!"
+                : "이제 내 이름은 " + name + ".";
+    }
+
+    /** BOUGHT: 산 아이템에 고마워한다(D-56). */
+    public String say(Situation situation, ItemId item) {
+        require(situation, Situation.BOUGHT);
+        return item.label() + " 고마워!";
+    }
+
+    /** SCHEDULE_HINT: targets는 06 18번 자동 배치의 대상 수다(D-44). */
+    public String say(Situation situation, int targets) {
+        require(situation, Situation.SCHEDULE_HINT);
+        return targets > 0 ? "이번 주 남은 날의 시각 없는 할 일이 " + targets + "개 있어. 자동 배치를 눌러 볼래?"
+                : "지금 자동 배치할 할 일은 없어.";
+    }
+
+    private static void require(Situation given, Situation... allowed) {
+        if (!List.of(allowed).contains(given)) {
+            throw new IllegalArgumentException("이 인자를 받지 않는 상황: " + given);
+        }
     }
 
     /** D-74: 처음 만난 인사. 바로 시작이면 수업부터 넣자고 이끌고, 예시로 둘러보기면 예시를 넣어 뒀다고 말한다. */
