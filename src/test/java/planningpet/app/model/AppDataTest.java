@@ -1,7 +1,9 @@
 package planningpet.app.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Clock;
 import java.time.DayOfWeek;
@@ -26,6 +28,36 @@ class AppDataTest {
     private static AppData at(String time) {
         ZoneId zone = ZoneId.systemDefault();
         return new AppData(Clock.fixed(LocalDateTime.parse(time).atZone(zone).toInstant(), zone));
+    }
+
+    @Test
+    void E_APP_1_rewardAndVisitStartEmpty() {
+        assertEquals(0, data.getPoints());
+        assertNull(data.getRewardCountDay());
+        assertEquals(0, data.getRewardCount());
+        assertNull(data.getAttendanceDay());
+        assertTrue(data.getAttendDays().isEmpty());
+        assertNull(data.getLastOpenDay());
+        assertEquals(0, data.getStreak());
+    }
+
+    @Test
+    void E_APP_2_itemsAndSettingsStartOff() {
+        assertTrue(data.getOwnedItems().isEmpty());
+        assertTrue(data.getPlacedItems().isEmpty());
+        assertFalse(data.isTrayNoticeShown());
+        assertFalse(data.isCalendarFixed());
+        assertFalse(data.isListClickTime());
+        assertEquals(DayOfWeek.MONDAY, data.getWeekStart());
+    }
+
+    @Test
+    void E_APP_3_samplesAndTasksStartEmpty() {
+        assertTrue(data.getSampleIds().isEmpty());
+        assertTrue(data.getSampleLooks().isEmpty());
+        assertTrue(data.getBook().getTasks().isEmpty());
+        assertTrue(data.getBook().getDeletedRewarded().isEmpty());
+        assertEquals(1, data.getNextSeq());
     }
 
     @Test
