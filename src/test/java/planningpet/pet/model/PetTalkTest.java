@@ -307,4 +307,64 @@ class PetTalkTest {
         complete(data.getBook().getTasks().get(0));
         assertEquals("체크를 풀었어.", uncomplete(data.getBook().getTasks().get(0)));
     }
+
+    @Test
+    void T_TALK_16_allDoneWithPeriod() {
+        Task laundry = task("빨래", 18);
+        at("11-18", done(task("과제", 18), 18), laundry, period("E사 지원서", 16, 22));
+        assertEquals("오늘 할 일 다 끝냈어! E사 지원서는 22일까지야, 4일 남았어.", complete(laundry));
+    }
+
+    @Test
+    void E_TALK_15_levelUp() {
+        Task first = task("가", 16);
+        at("11-16", first, task("나", 16));
+        data.activePet().setExp(40);
+        assertEquals("잘했어! 레벨이 올랐어. 이제 Lv.2", complete(first));
+    }
+
+    @Test
+    void E_TALK_16_capped() {
+        Task first = task("가", 16);
+        at("11-16", first, task("나", 16));
+        data.setRewardCount(d(16), 20);
+        assertEquals("잘했어! 오늘 보상은 다 받았지만 체크는 계속 돼.", complete(first));
+    }
+
+    @Test
+    void E_TALK_17_cappedBeforeAllDone() {
+        Task only = task("가", 16);
+        at("11-16", only);
+        data.setRewardCount(d(16), 20);
+        assertEquals("잘했어! 오늘 보상은 다 받았지만 체크는 계속 돼.", complete(only));
+    }
+
+    @Test
+    void E_TALK_18_completed() {
+        Task first = task("가", 16);
+        at("11-16", first, task("나", 16));
+        assertEquals("잘했어! +10P", complete(first));
+    }
+
+    @Test
+    void E_TALK_19_yesterdayAfterAllDone() {
+        Task yesterday = task("어제", 15);
+        at("11-16", done(task("가", 16), 16), yesterday);
+        assertEquals("잘했어! +10P", complete(yesterday));
+    }
+
+    @Test
+    void E_TALK_20_fixedLast() {
+        Task fixed = fixed("실습", 16, 9);
+        at("11-16", fixed);
+        assertEquals("오늘 할 일을 다 끝냈어! 푹 쉬어.", complete(fixed));
+    }
+
+    @Test
+    void E_TALK_21_uncompleteSameLevel() {
+        Task first = task("가", 16);
+        at("11-16", first);
+        complete(first);
+        assertEquals("체크를 풀었어. -10P", uncomplete(first));
+    }
 }
