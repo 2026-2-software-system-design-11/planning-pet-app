@@ -11,6 +11,14 @@ import planningpet.pet.model.PetKind;
 public final class Task {
     /** 하루 칸의 분(24:00). */
     public static final int DAY = 24 * 60;
+    /** 하루 칸의 끝(D-77): 다음 날 04:00, 곧 28:00. */
+    public static final int DAY_END = 28 * 60;
+
+    /** 분을 "HH:mm"으로. 24시간을 넘으면 다음 날 시각이다. */
+    public static String hhmm(int minute) {
+        int m = minute % DAY;
+        return String.format("%02d:%02d", m / 60, m % 60);
+    }
 
     private final String id;
     private final long seq;
