@@ -2,6 +2,7 @@ package planningpet.schedule.model;
 
 import static java.time.DayOfWeek.MONDAY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
@@ -255,5 +256,47 @@ class TaskBookEditTest {
         assertEquals(List.of(Category.OTHER, Category.OTHER, Category.STUDY, Category.STUDY, Category.STUDY),
                 each(Task::getCategory));
         doneKept();
+    }
+
+    @Test
+    void E_EDIT_1_kindDiffers() {
+        Task t = put("과제", day(11, 16), null, null, null, null);
+        TaskDraft fixed = new TaskDraft(Kind.FIXED, "바꿈", Category.OTHER, day(11, 17), null, LocalTime.of(10, 0), 60,
+                "", null, null, false, null, null, true);
+        assertThrows(IllegalArgumentException.class, () -> book().update(t, fixed, EditScope.ONLY_THIS));
+        assertEquals(List.of("과제", day(11, 16), 30), List.of(t.getTitle(), t.getDate(), t.getDurationMinutes()));
+    }
+
+    @Test
+    void E_EDIT_2_titleCategoryMemo() {
+        Task t = put("과제", day(11, 16), null, null, null, null);
+        book().update(t, draft(t, "  과제2  ", Category.EXERCISE, "준비물"), EditScope.ONLY_THIS);
+        assertEquals(List.of("과제2", Category.EXERCISE, "준비물"), List.of(t.getTitle(), t.getCategory(), t.getMemo()));
+    }
+
+    @Test
+    void E_EDIT_3_notCopyAfter() {
+        Task t = put("과제", day(11, 16), null, null, null, null);
+        put("과제", day(11, 17), null, null, null, null);
+        book().update(t, draft(t, "새", Category.OTHER, ""), EditScope.THIS_AND_AFTER);
+        assertEquals(List.of("새", "과제"), each(Task::getTitle));
+    }
+
+    @Test
+    void E_EDIT_9_nextDayStartAfter() {
+        weekly();
+        Task t = at(day(11, 30));
+        LocalTime one = LocalTime.of(1, 0);
+        book.update(t, new TaskDraft(Kind.FIXED, "대학수학", Category.OTHER, day(11, 30), null, one, 75, "",
+                t.getRepeat(), null, true, null, null, true), EditScope.THIS_AND_AFTER);
+        assertEquals(List.of(T1030, T1030, one, one, one, one, one), each(Task::getStartTime));
+        assertEquals(List.of(false, false, true, true, true, true, true), each(Task::isNextDay));
+    }
+
+    @Test
+    void E_EDIT_12_notChecked() {
+        Task t = put("과제", day(11, 16), null, null, null, null);
+        book().update(t, draft(t, "  ", day(11, 16), null, null, 5), EditScope.ONLY_THIS);
+        assertEquals(List.of("", 5), List.of(t.getTitle(), t.getDurationMinutes()));
     }
 }
