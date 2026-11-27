@@ -9,13 +9,21 @@ import planningpet.common.model.Words;
 /**
  * 일정 입력 창에 쓴 값(06 2번 입력). 기간 안에 하기를 켜지 않았으면 dueDate는 null이다. placed는 수정하는 기간 할 일에 시각을
  * 정해 둔 날, today는 앱의 오늘이고 없으면 null이다(D-99). 반복하지 않으면 repeat와 repeatEnd는 null이다. editing은 수정
- * 창의 값인지다(D-42).
+ * 창의 값인지다(D-42). timeOnly는 시각 고치기 창의 값인지이고, 그 창의 값의 날짜는 옮겨 갈 날이다(06 4번, D-32, D-98).
  */
 public record TaskDraft(Kind kind, String title, Category category, LocalDate date, LocalDate dueDate,
         LocalTime startTime, int durationMinutes, String memo, Repeat repeat, LocalDate repeatEnd, boolean nextDay,
-        LocalDate placed, LocalDate today, boolean editing) {
+        LocalDate placed, LocalDate today, boolean editing, boolean timeOnly) {
     /** 끝이 다음 날 04:00을 넘을 때의 문장(D-77). 자정을 넘는 것은 막지 않는다. */
     public static final String END_PROBLEM = "다음 날 04:00까지 끝나야 해요";
+
+    /** 추가 창과 수정 창의 값. timeOnly는 false다. */
+    public TaskDraft(Kind kind, String title, Category category, LocalDate date, LocalDate dueDate,
+            LocalTime startTime, int durationMinutes, String memo, Repeat repeat, LocalDate repeatEnd, boolean nextDay,
+            LocalDate placed, LocalDate today, boolean editing) {
+        this(kind, title, category, date, dueDate, startTime, durationMinutes, memo, repeat, repeatEnd, nextDay, placed,
+                today, editing, false);
+    }
 
     /** 앱 하루의 시작 분(D-77). 시각이 없으면 null. */
     public Integer startMinute() {

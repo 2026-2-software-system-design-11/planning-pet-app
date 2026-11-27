@@ -88,6 +88,13 @@ class TaskBookEditTest {
                 null, false, null, null, true);
     }
 
+    /** 시각 고치기 창의 값. 날짜는 day이고 minute은 앱 하루의 시작 분(D-77)이다. 나머지 칸은 t의 값이다. */
+    private static TaskDraft time(Task t, LocalDate day, int minute, int minutes) {
+        return new TaskDraft(t.getKind(), t.getTitle(), t.getCategory(), day, t.getDueDate(),
+                LocalTime.of(minute % Task.DAY / 60, minute % 60), minutes, t.getMemo(), t.getRepeat(), null,
+                minute >= Task.DAY, null, null, true, true);
+    }
+
     @Test
     void T_EDIT_3_seqStays() {
         put("a", day(11, 16), null, null, null, null);
@@ -298,5 +305,50 @@ class TaskBookEditTest {
         Task t = put("과제", day(11, 16), null, null, null, null);
         book().update(t, draft(t, "  ", day(11, 16), null, null, 5), EditScope.ONLY_THIS);
         assertEquals(List.of("", 5), List.of(t.getTitle(), t.getDurationMinutes()));
+    }
+
+    @Test
+    void T_EDIT_4_setTime() {
+        Task t = put("과제", day(11, 18), null, null, null, null);
+        book().update(t, time(t, day(11, 18), 14 * 60, 60), EditScope.ONLY_THIS);
+        assertEquals(List.of(LocalTime.of(14, 0), 60), List.of(t.getStartTime(), t.getDurationMinutes()));
+        assertEquals(List.of(t), book.dayPlan(day(11, 18)).timed());
+    }
+
+    @Test
+    void T_EDIT_9_periodMovesToListDay() {
+        Task t = put("P", day(11, 16), null, day(11, 16), day(11, 22), null);
+        book().update(t, time(t, day(11, 18), 14 * 60, 30), EditScope.ONLY_THIS);
+        assertEquals(List.of(day(11, 18), LocalTime.of(14, 0), day(11, 16), day(11, 22)),
+                List.of(t.getDate(), t.getStartTime(), t.getStartDay(), t.getDueDate()));
+        assertEquals(List.of(t), book.dayPlan(day(11, 18)).timed());
+        assertTrue(book.dayPlan(day(11, 17)).isEmpty() && book.dayPlan(day(11, 19)).isEmpty());
+    }
+
+    @Test
+    void T_EDIT_22_pastRowOpensToday() {
+        Task t = put("지원서", day(11, 12), null, day(11, 12), day(11, 20), null);
+        book().update(t, time(t, day(11, 18), 14 * 60, 30), EditScope.ONLY_THIS);
+        assertEquals(List.of(day(11, 18), LocalTime.of(14, 0), day(11, 20)),
+                List.of(t.getDate(), t.getStartTime(), t.getDueDate()));
+    }
+
+    @Test
+    void E_EDIT_18_nextDayStart() {
+        Task t = put("과제", day(11, 18), null, null, null, null);
+        book().update(t, time(t, day(11, 18), 25 * 60, 30), EditScope.ONLY_THIS);
+        assertEquals(List.of(LocalTime.of(1, 0), true), List.of(t.getStartTime(), t.isNextDay()));
+    }
+
+    @Test
+    void T_EDIT_48_night4MovesLaterCopies() {
+        english();
+        Task t = at(day(11, 17));
+        book.update(t, time(t, day(11, 18), 4 * 60, 30), EditScope.THIS_AND_AFTER);
+        LocalTime nine = LocalTime.of(21, 0);
+        LocalTime four = LocalTime.of(4, 0);
+        assertEquals(List.of(day(11, 16), day(11, 18), day(11, 18), day(11, 20), day(11, 21)), each(Task::getDate));
+        assertEquals(List.of(nine, four, nine, four, four), each(Task::getStartTime));
+        assertEquals(List.of(false, false, true, false, false), each(Task::isDone));
     }
 }
