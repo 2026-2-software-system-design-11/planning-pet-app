@@ -122,6 +122,15 @@
 - 3a, 3c, 3d는 `Rewards.uncomplete` 안에서 나뉘어 메시지가 같으므로 그 메시지의 노트에 적었다.
 - `uncomplete`는 돌려주는 값이 없다(06 9번). 펫 말의 ", 이제 Lv.{레벨}"(3b)을 고르려고 controller가 바꾸기 전과 뒤에 `Level.of`를 부른다.
 
+### UC-13 일정 시작 알림 받기
+
+![UC-13](diagrams/seq-uc13.png)
+
+- 30초 타이머와 운영체제 알림은 `Tray`가 맡는다(07 "30초 타이머는 `app.view.Tray`에 둔다"). 이미 보낸 알림 `sent`는 `AppController`의 필드이고 저장하지 않는다(06 17번).
+- 1a와 1b는 `Reminders.due` 안에서 나뉘어 그 메시지의 노트에 적었다.
+- 알림을 누르면 그 날짜를 고르고(UC-09의 `pick`) 나서 창이 보일 때의 `onWindowShown`을 부른다. 그날 처음 연 것이면 브리핑이 고른 날짜의 말보다 나중이라 브리핑이 남는다.
+- 운영체제 알림을 누른 것을 Java가 받는지는 운영체제마다 다를 수 있다(05 "확인하지 않은 것").
+
 ## 다시 그리기
 
 원본은 [diagrams/](diagrams/) 아래 `seq-*.puml`이고 공통 꾸밈은 `seq-common.iuml`이다. PlantUML로 그린다.
