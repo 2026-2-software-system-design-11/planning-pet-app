@@ -151,4 +151,39 @@ class TaskTest {
     void E_TASK_21_notCopyYesterday() {
         assertFalse(full(Kind.TASK, day(17), null, null, null, false, null).pastCopy(TODAY));
     }
+
+    @Test
+    void E_TASK_22_plainPastTimed() {
+        assertTrue(full(Kind.TASK, day(17), TEN, null, null, false, null).onTimetable(TODAY));
+    }
+
+    @Test
+    void E_TASK_23_untimed() {
+        assertFalse(full(Kind.TASK, day(18), null, null, null, false, null).onTimetable(TODAY));
+    }
+
+    @Test
+    void E_TASK_24_plannedLater() {
+        assertTrue(period(day(19), TEN, day(20)).onTimetable(TODAY));
+    }
+
+    @Test
+    void E_TASK_25_missedPlan() {
+        assertFalse(period(day(17), TEN, day(20)).onTimetable(TODAY));
+    }
+
+    @Test
+    void E_TASK_26_donePeriod() {
+        assertFalse(finished(day(19), TEN, day(20), day(18)).onTimetable(TODAY));
+    }
+
+    @Test
+    void E_TASK_27_oldPlanPastDue() {
+        assertFalse(period(day(16), TEN, day(17)).onTimetable(TODAY));
+    }
+
+    @Test
+    void E_TASK_28_plannedOnPastDueDay() {
+        assertTrue(period(day(17), TEN, day(17)).onTimetable(TODAY));
+    }
 }

@@ -123,6 +123,14 @@ public final class Task {
         return period() && !done && timed() && date.isBefore(today) && date.isBefore(dueDate);
     }
 
+    /**
+     * 시간표와 목록의 시각 있는 칸에 놓이는가. 끝낸 기간 할 일(D-66), 못 끝낸 계획(D-67), 마감이 지난 옛 계획은 정한 칸에서 빠진다.
+     * 07은 인자를 day로 적었지만 앱의 오늘이다.
+     */
+    public boolean onTimetable(LocalDate today) {
+        return timed() && !(period() && done) && !leftPlan(today);
+    }
+
     /** 마감이 지나도 끝내지 못한 기간 할 일인가(D-67, D-99). */
     public boolean pastDue(LocalDate today) {
         return period() && !done && dueDate.isBefore(today);
