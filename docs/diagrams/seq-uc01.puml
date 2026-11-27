@@ -36,7 +36,7 @@ alt 1b --autostart
 else 기본 흐름
   AppWindow -> AppController : onWindowShown()
 end
-note right of AppWindow : 3 메인 화면. 달력은 오늘,\n할 일 목록은 오늘의 하루 시간표
+note right of AppWindow : 메인 화면. 달력은 오늘,\n할 일 목록은 오늘의 하루 시간표
 alt 5b lastOpenDay가 오늘이다
   AppController -> PetTalk : say(USUAL, ...)
   AppController -> AppController : say(line, today)
@@ -44,9 +44,9 @@ else 그날 처음이다
   AppController -> AppController : change(what, edit)
   note right of AppController : 아래 둘이 edit 안이다
   AppController -> Visits : recordOpen(today)
-  note right of Visits : 4 연속 접속 일수
+  note right of Visits : 연속 접속 일수를 갱신한다
   AppController -> PetTalk : say(BRIEFING, ...)
-  note right of PetTalk : 5 오늘 남은 일, 어제 못 끝낸 일, 마감.\n5a 오늘 할 일이 없으면 기간 할 일이나\n"아래 칸에 하나 적어 볼까?".\n5c 8일 이상 만이면 WELCOME_BACK.\n2a 첫 실행이면 FIRST_RUN
+  note right of PetTalk : 오늘 남은 일, 어제 못 끝낸 일, 마감.\n5a 오늘 할 일이 없으면 기간 할 일이나\n"아래 칸에 하나 적어 볼까?".\n5c 8일 이상 만이면 WELCOME_BACK.\n2a 첫 실행이면 FIRST_RUN
   AppController -> AppController : say(line, today)
   ref over AppController, AppData : 저장과 되돌리기
 end

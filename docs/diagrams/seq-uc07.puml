@@ -31,7 +31,7 @@ note right of PetTalk : "잘했어! +10P".\n3a CAPPED, 3b LEVEL_UP이나 STAGE_U
 RewardController -> AppController : say(line, day)
 ref over RewardController, Rewards : 저장과 되돌리기. 4a 저장 실패면 완료와 보상을 되돌린다
 PetCard -> DailyProgress : of(book, today)
-note right of PetCard : 5 "오늘 끝낸 일" 막대와 보유 포인트.\n3b 바뀐 레벨과 모습 단계의 크기
+note right of PetCard : "오늘 끝낸 일" 막대와 보유 포인트.\n3b 바뀐 레벨과 모습 단계의 크기
 alt 5a 홈 목록에서 체크했다
   note right of TaskRows : 체크한 자리에 1.5초 머문 뒤\n맨 아래 "끝낸 일" 묶음으로 내려간다
 else 2a 다른 날 목록에서 기간 할 일을 체크했다
