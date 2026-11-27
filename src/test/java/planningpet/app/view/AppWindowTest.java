@@ -1,11 +1,13 @@
 package planningpet.app.view;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Rectangle;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.time.Clock;
 import java.time.Instant;
@@ -15,6 +17,9 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.AbstractButton;
+import javax.swing.Icon;
+import javax.swing.JPanel;
+import javax.swing.JToggleButton;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
@@ -25,6 +30,7 @@ import planningpet.app.controller.AppController;
 import planningpet.app.model.AppData;
 import planningpet.app.model.DataStore;
 import planningpet.app.model.LoadResult;
+import planningpet.common.view.Icons;
 import planningpet.common.view.RoundButtonUI;
 import planningpet.common.view.Snap;
 import planningpet.common.view.Theme;
@@ -224,6 +230,36 @@ class AppWindowTest {
                 List.of(en.getText(), en.getFont(), en.getForeground(), en.getHorizontalAlignment()));
         assertEquals(List.of(Boolean.TRUE, Theme.bold(13), new java.awt.Insets(7, 14, 9, 14)),
                 List.of(w.attend.getClientProperty(RoundButtonUI.PRIMARY), w.attend.getFont(), w.attend.getInsets()));
+    }
+
+    /** 05 창 구조의 메뉴 다섯에 아이콘 표에 없는 이름 하나를 더한 창. */
+    private AppWindow withScreens() {
+        AppWindow w = window();
+        for (String name : List.of("홈", "일정관리", "나의 방", "통계", "설정", "모름")) {
+            w.addScreen(name, "", new JPanel());
+        }
+        return w;
+    }
+
+    private static int[] pixels(Icon icon) {
+        BufferedImage img = new BufferedImage(icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+        icon.paintIcon(null, img.getGraphics(), 0, 0);
+        return img.getRGB(0, 0, img.getWidth(), img.getHeight(), null, 0, img.getWidth());
+    }
+
+    @Test
+    void eWin13AddScreens() {
+        AppWindow w = withScreens();
+        Component[] nav = ((Container) at(w.root(), 0, 1, 0)).getComponents();
+        assertEquals(6, nav.length);
+        for (int i = 0; i < nav.length; i++) {
+            JToggleButton b = (JToggleButton) nav[i];
+            assertEquals(List.of(i == 0, Theme.bold(17), 10, 22), List.of(b.isSelected(), b.getFont(), b.getIconTextGap(),
+                    b.getIcon().getIconWidth()), b.getText());
+        }
+        assertEquals("홈", w.current());
+        assertArrayEquals(pixels(Icons.icon(Icons.Kind.GEAR, 22, Theme.ICON)), pixels(((JToggleButton) nav[4]).getIcon()));
+        assertArrayEquals(pixels(Icons.icon(Icons.Kind.PAW, 22, Theme.ICON)), pixels(((JToggleButton) nav[5]).getIcon()));
     }
 
     @Test

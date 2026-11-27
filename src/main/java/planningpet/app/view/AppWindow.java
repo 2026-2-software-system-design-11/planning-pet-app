@@ -9,12 +9,15 @@ import java.awt.GridLayout;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
 import planningpet.app.controller.AppController;
 import planningpet.app.model.AppData;
@@ -34,6 +37,9 @@ public final class AppWindow {
     /** 05 창 구조의 창 제목. */
     public static final String TITLE = "플래닝펫 (Planning Pet)";
     private static final String COMMON = "공통";
+    /** 메뉴와 화면 머리의 아이콘(디자인 시스템 9절). 표에 없는 이름은 발자국이다. */
+    private static final Map<String, Icons.Kind> ICONS = Map.of("홈", Icons.Kind.HOME, "일정관리", Icons.Kind.CALENDAR,
+            "나의 방", Icons.Kind.ROOM, "통계", Icons.Kind.CHART, "설정", Icons.Kind.GEAR);
     private final AppData data;
     private final JPanel nav = new JPanel(new GridLayout(0, 1, 0, 6));
     private final Card navWrap = new Card(new BorderLayout(), 22).filled(Theme.SIDE);
@@ -48,6 +54,8 @@ public final class AppWindow {
     final StatCard.Value points = new StatCard.Value();
     final JButton attend = new JButton();
     private final List<Runnable> views = new ArrayList<>();
+    private final ButtonGroup navGroup = new ButtonGroup();
+    private String current = "";
 
     public AppWindow(AppData data, AppController app) {
         this.data = data;
@@ -84,6 +92,47 @@ public final class AppWindow {
     /** 화면 전환이나 주 옮기기처럼 model을 바꾸지 않을 때 화면을 다시 그린다(D-46). */
     public void redraw() {
         views.forEach(Runnable::run);
+    }
+
+    /** 지금 보이는 화면의 이름. */
+    public String current() {
+        return current;
+    }
+
+    /** 메뉴 단추와 화면을 함께 넣는다. 화면 위에 아이콘, 제목, 부제를 둔다(D-33). 처음 넣은 화면을 고른다. */
+    public void addScreen(String name, String subtitle, JComponent screen) {
+        Icons.Kind kind = ICONS.getOrDefault(name, Icons.Kind.PAW);
+        JToggleButton b = new JToggleButton(name);
+        b.putClientProperty(RoundButtonUI.NAV, Boolean.TRUE);
+        b.setFont(Theme.bold(17));
+        b.setHorizontalAlignment(SwingConstants.LEFT);
+        b.setIcon(Icons.icon(kind, 22, Theme.ICON));
+        b.setDisabledIcon(Icons.icon(kind, 22, Theme.INK_DIM));
+        b.setIconTextGap(10);
+        b.setBorder(BorderFactory.createEmptyBorder(11, 12, 13, 8));
+        navGroup.add(b);
+        nav.add(b);
+        JLabel icon = new JLabel(Icons.icon(kind, 40, Theme.ICON));
+        JLabel title = new JLabel(name);
+        title.setFont(Theme.heavy(26));
+        JLabel sub = new JLabel(subtitle, Icons.icon(Icons.Kind.PAW, 13, Theme.ICON), SwingConstants.LEFT);
+        sub.setHorizontalTextPosition(SwingConstants.LEFT);
+        sub.setIconTextGap(6);
+        sub.setFont(Theme.font(13));
+        sub.setForeground(Theme.INK_SUB);
+        JPanel words = new JPanel(new BorderLayout(0, 2));
+        words.add(title, BorderLayout.NORTH);
+        words.add(sub, BorderLayout.SOUTH);
+        JPanel head = new JPanel(new BorderLayout(10, 0));
+        head.setBorder(BorderFactory.createEmptyBorder(6, 4, 0, 0));
+        head.add(icon, BorderLayout.WEST);
+        head.add(words, BorderLayout.CENTER);
+        heads.add(head, name);
+        center.add(screen, name);
+        if (navGroup.getButtonCount() == 1) {
+            b.setSelected(true);
+            current = name;
+        }
     }
 
     /** 사이드바 위의 로고(05 창 구조의 앱 이름). 얼굴 자리는 S2가 고양이 얼굴(PetArt)을 그린다. */
