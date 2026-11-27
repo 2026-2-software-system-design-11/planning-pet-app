@@ -47,6 +47,7 @@
 | | `done` | 끝냈는지 |
 | | `doneDay` | 끝낸 앱 날짜. 끝내지 않았으면 `null`이다(D-66) |
 | | `rewardPoints`, `rewardExp`, `rewardDay`, `rewardPet` | 이 할 일로 받은 포인트와 경험치, 받은 앱 날짜, 경험치를 받은 펫의 종류(D-48). 받지 않았으면 0, 0, `null`, `null` |
+| `TaskBook` | `deletedRewarded` | 보상을 받은 뒤 지운 일정. 지워도 친밀도(27번)와 통계 포인트(29번)가 줄지 않게 남긴다(5번, D-19). 처음은 비어 있다 |
 | `AppData` | `points` | 보유 포인트(음수가 될 수 있다, D-19). 펫 둘이 함께 쓴다(D-48) |
 | | `rewardCountDay`, `rewardCount` | 보상을 받은 완료 횟수와 그 앱 날짜(하루 상한, D-18) |
 | | `attendanceDay`, `attendDays` | 마지막으로 출석한 앱 날짜와 출석한 앱 날짜 모두(29번의 출석 포인트, D-55) |
