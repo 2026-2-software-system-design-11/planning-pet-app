@@ -1,9 +1,17 @@
 package planningpet.common.view;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
+
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import javax.swing.Icon;
 import org.junit.jupiter.api.Test;
 
 /** 디자인 시스템 9절의 선 아이콘. 번호는 docs/porting/icons.md 2절. 기준 그림은 종마다 proto/icon-종-*.png. */
@@ -49,5 +57,50 @@ class IconsTest {
         for (Icons.Kind k : Icons.Kind.values()) {
             Snap.assertLooksLikePrototype("icon-" + k + "-small", row(k, new int[] {0, 1, 7}, c, c, c));
         }
+    }
+
+    @Test
+    void eIcon4NegativeSize() throws IOException {
+        BufferedImage img = new BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = img.createGraphics();
+        Icons.draw(g, Icons.Kind.HOME, 32, 32, -24, Theme.ICON);
+        g.dispose();
+        Snap.assertLooksLikePrototype("icon-home-neg24", img);
+        assertEquals(-24, Icons.icon(Icons.Kind.HOME, -24, Theme.ICON).getIconWidth());
+    }
+
+    @Test
+    void eIcon5IconSizeAndPlace() {
+        Icon zero = Icons.icon(Icons.Kind.HOME, 0, Theme.ICON);
+        assertEquals(0, zero.getIconWidth());
+        assertEquals(0, zero.getIconHeight());
+        Icon coin = Icons.icon(Icons.Kind.COIN, 30, Theme.COIN);
+        assertEquals(30, coin.getIconWidth());
+        assertEquals(30, coin.getIconHeight());
+        BufferedImage painted = new BufferedImage(40, 40, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = painted.createGraphics();
+        coin.paintIcon(null, g, 5, 3);
+        g.dispose();
+        BufferedImage drawn = new BufferedImage(40, 40, BufferedImage.TYPE_INT_ARGB);
+        g = drawn.createGraphics();
+        Icons.draw(g, Icons.Kind.COIN, 5, 3, 30, Theme.COIN);
+        g.dispose();
+        assertArrayEquals(drawn.getRGB(0, 0, 40, 40, null, 0, 40), painted.getRGB(0, 0, 40, 40, null, 0, 40));
+    }
+
+    @Test
+    void eIcon6CallerStateKept() {
+        Graphics2D g = new BufferedImage(40, 40, BufferedImage.TYPE_INT_ARGB).createGraphics();
+        g.setColor(Color.RED);
+        g.setStroke(new BasicStroke(5f));
+        g.translate(3, 4);
+        AffineTransform before = g.getTransform();
+        Object aa = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+        Icons.draw(g, Icons.Kind.GEAR, 1, 1, 30, Theme.ICON);
+        assertEquals(Color.RED, g.getColor());
+        assertEquals(5f, ((BasicStroke) g.getStroke()).getLineWidth());
+        assertEquals(before, g.getTransform());
+        assertSame(aa, g.getRenderingHint(RenderingHints.KEY_ANTIALIASING));
+        g.dispose();
     }
 }
