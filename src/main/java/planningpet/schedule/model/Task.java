@@ -9,6 +9,9 @@ import planningpet.pet.model.PetKind;
  * 반복 방식(repeat)은 Repeat과 함께 M3에서 더한다.
  */
 public final class Task {
+    /** 하루 칸의 분(24:00). */
+    public static final int DAY = 24 * 60;
+
     private final String id;
     private final long seq;
     private Kind kind;
@@ -80,4 +83,17 @@ public final class Task {
     public LocalDate getRewardDay() { return rewardDay; }
     /** 경험치를 받은 펫의 종류(D-48). 받지 않았으면 null. */
     public PetKind getRewardPet() { return rewardPet; }
+
+    public boolean timed() {
+        return startTime != null;
+    }
+
+    /** 앱 하루의 시각(D-77): date 00:00부터 잰 분. nextDay면 24시간을 더한다. */
+    public int startMinute() {
+        return (nextDay ? DAY : 0) + startTime.getHour() * 60 + startTime.getMinute();
+    }
+
+    public int endMinute() {
+        return startMinute() + durationMinutes;
+    }
 }
