@@ -89,6 +89,37 @@ public final class TaskBook {
     }
 
     /**
+     * 06 4번의 수정 창 저장. 제목, 유형, 날짜, 마감, 시작 시각, 걸리는 시간, 메모만 바꾸고 id, seq, 반복, 끝냄, 보상은 그대로 둔다(D-18).
+     * 기간 할 일이면 입력의 날짜는 기간 첫날이고, 시각을 정해 둔 자리(날짜와 시작 시각)는 그대로 둔다(D-68, D-93). 반복 사본은 기간
+     * 할 일이 되지 않는다(D-65). 종류가 다르면 IllegalArgumentException.
+     */
+    public void update(Task task, TaskDraft draft, EditScope scope) {
+        if (task.getKind() != draft.kind()) {
+            throw new IllegalArgumentException("종류는 바꿀 수 없다");
+        }
+        task.setTitle(draft.title().strip());
+        task.setCategory(draft.category());
+        boolean period = task.getKind() == Kind.TASK && task.getSeriesId() == null && draft.dueDate() != null;
+        if (period) {
+            if (!(task.period() && task.timed())) {
+                task.setDate(draft.date());
+                task.setStart(null, false);
+            }
+            task.setStartDay(draft.date());
+            task.setDueDate(draft.dueDate());
+        } else {
+            task.setDate(draft.date());
+            task.setStart(draft.startTime(), draft.nextDay());
+            if (task.getSeriesId() == null) {
+                task.setStartDay(null);
+                task.setDueDate(null);
+            }
+        }
+        task.setDurationMinutes(draft.durationMinutes());
+        task.setMemo(draft.memo());
+    }
+
+    /**
      * 06 6번. date의 시간표 일정은 앱 하루의 시각 순(같으면 넣은 순)으로 timed에 둔다. 그날 보이는(Task.shownOn) 그 밖의 할 일은 넣은
      * 순으로, 끝내지 않은 기간 할 일 가운데 마감이 그날이면 dueToday, 뒤면 period, 나머지는 untimed다(D-70).
      */
