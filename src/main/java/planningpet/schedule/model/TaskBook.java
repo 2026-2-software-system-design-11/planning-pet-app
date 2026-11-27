@@ -33,6 +33,11 @@ public final class TaskBook {
         this.today = today;
     }
 
+    /** 앱의 오늘(D-15). 생성자가 받은 today를 읽는다. */
+    public LocalDate today() {
+        return today.get();
+    }
+
     /** 넣은 일정 모두. 바꿀 수 없는 목록이다. */
     public List<Task> getTasks() {
         return Collections.unmodifiableList(tasks);
