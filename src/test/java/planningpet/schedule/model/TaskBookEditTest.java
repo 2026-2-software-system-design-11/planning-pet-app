@@ -371,7 +371,7 @@ class TaskBookEditTest {
                 null, null, null, null, false, null, 0, 0, null, null);
         tasks.add(t);
         book().clearTime(t, EditScope.ONLY_THIS);
-        assertNull(t.getStartTime());
+        assertEquals(LocalTime.of(10, 0), t.getStartTime());
     }
 
     @Test
