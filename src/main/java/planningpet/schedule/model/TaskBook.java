@@ -157,6 +157,22 @@ public final class TaskBook {
         }
     }
 
+    /**
+     * 06 4번의 시각 빼기(D-72). 시작 시각을 뺀다. THIS_AND_AFTER면 같은 반복에서 날짜가 같거나 뒤인 끝내지 않은 사본의 시작 시각도
+     * 뺀다(D-42). 기간 할 일은 계획한 날에서 빠져 오늘(첫날이 뒤면 첫날, 마감이 지났으면 마감)로 날짜를 옮기고 첫날과 마감은 둔다.
+     */
+    public void clearTime(Task task, EditScope scope) {
+        if (scope == EditScope.THIS_AND_AFTER) {
+            laterCopies(task, task.getDate()).forEach(t -> t.setStart(null, false));
+        }
+        task.setStart(null, false);
+        if (task.period()) {
+            LocalDate now = today.get();
+            LocalDate from = now.isBefore(task.getStartDay()) ? task.getStartDay() : now;
+            task.setDate(from.isAfter(task.getDueDate()) ? task.getDueDate() : from);
+        }
+    }
+
     /** task와 같은 반복에서 날짜가 from과 같거나 뒤인 끝내지 않은 다른 사본(D-42). 반복 사본이 아니면 없다. */
     private List<Task> laterCopies(Task task, LocalDate from) {
         String series = task.getSeriesId();
