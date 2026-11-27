@@ -109,6 +109,17 @@ public final class TaskBook {
     }
 
     /**
+     * 펫 카드 막대 아래 글 "기간 할 일 {수}개 (~{월}/{일})"(06 13번, D-70). today의 기간 안에 할 일 수와 그 가운데 가장 가까운
+     * 마감이다. 없으면 null.
+     */
+    public String periodNote(LocalDate today) {
+        List<Task> list = dayPlan(today).period();
+        return list.stream().map(Task::getDueDate).min(LocalDate::compareTo)
+                .map(d -> "기간 할 일 " + list.size() + "개 (~" + d.getMonthValue() + "/" + d.getDayOfMonth() + ")")
+                .orElse(null);
+    }
+
+    /**
      * 06 6번의 시각 글 "10:00~11:00". 자정에 끝나면 "24:00", 넘으면 "23:30~01:00(다음 날)", 자정 넘어 시작하면
      * "01:30~02:00(다음 날)"이다(D-77).
      */

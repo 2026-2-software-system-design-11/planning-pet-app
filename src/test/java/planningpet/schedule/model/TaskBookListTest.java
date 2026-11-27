@@ -206,4 +206,28 @@ class TaskBookListTest {
                 "03:55~04:00(다음 날)"), List.of(time(0, 30), time(22 * 60, 360), time(Task.DAY + 180, 60),
                 time(23 * 60, 60), time(Task.DAY + 235, 5)));
     }
+
+    /** 오늘(today)을 넘긴 periodNote. */
+    private String note() {
+        return new TaskBook(tasks, () -> 0, () -> today).periodNote(today);
+    }
+
+    @Test
+    void E_LIST_11_periodNote() {
+        today = day(11, 17);
+        List<String> notes = new ArrayList<>();
+        notes.add(note());
+        plan(day(11, 16), day(11, 22), day(11, 16), null);
+        notes.add(note());
+        plan(day(11, 10), day(11, 20), day(11, 10), null);
+        notes.add(note());
+        tasks.clear();
+        today = day(11, 30);
+        plan(today, day(12, 1), today, null);
+        notes.add(note());
+        today = day(12, 1);
+        notes.add(note());
+        assertEquals(Arrays.asList(null, "기간 할 일 1개 (~11/22)", "기간 할 일 2개 (~11/20)", "기간 할 일 1개 (~12/1)", null),
+                notes);
+    }
 }
