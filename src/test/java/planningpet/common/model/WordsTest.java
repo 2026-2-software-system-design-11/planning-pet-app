@@ -70,4 +70,37 @@ class WordsTest {
     void E_WORD_12_rieulBatchim() {
         assertEquals("으로", Words.josa("1일", "으로", "로"));
     }
+
+    private static final String HANGUL_15 = "가나다라마바사아자차카타파하가";
+    private static final String SMILE = "\uD83D\uDE00";
+
+    @Test
+    void E_WORD_13_fifteen() {
+        assertEquals(HANGUL_15, Words.shortTitle(HANGUL_15));
+    }
+
+    @Test
+    void E_WORD_14_sixteen() {
+        assertEquals("가나다라마바사아자차카타파하…", Words.shortTitle(HANGUL_15 + "나"));
+    }
+
+    @Test
+    void E_WORD_15_talk4Title() {
+        assertEquals("2026 하반기 공채 자기…", Words.shortTitle("2026 하반기 공채 자기소개서 1번 문항"));
+    }
+
+    @Test
+    void E_WORD_16_empty() {
+        assertEquals("", Words.shortTitle(""));
+    }
+
+    @Test
+    void E_WORD_17_emoji() {
+        assertEquals(SMILE.repeat(7) + "…", Words.shortTitle(SMILE.repeat(15)));
+    }
+
+    @Test
+    void E_WORD_18_emojiCut() {
+        assertEquals("가".repeat(13) + "\uD83D…", Words.shortTitle("가".repeat(13) + SMILE + "나"));
+    }
 }

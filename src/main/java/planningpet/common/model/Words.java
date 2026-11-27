@@ -1,6 +1,6 @@
 package planningpet.common.model;
 
-/** 여러 도메인이 쓰는 글자 규칙(06 16번 "하는 일"의 받침과 조사). */
+/** 여러 도메인이 쓰는 글자 규칙(06 16번 "하는 일"의 받침, 조사, 제목 줄임). */
 public final class Words {
     private Words() {
     }
@@ -22,5 +22,10 @@ public final class Words {
     /** 마지막 글자에 받침이 있으면 withBatchim, 없으면 without. */
     public static String josa(String word, String withBatchim, String without) {
         return hasBatchim(word) ? withBatchim : without;
+    }
+
+    /** 15자를 넘으면 앞 14자 뒤에 "…". */
+    public static String shortTitle(String title) {
+        return title.length() > 15 ? title.substring(0, 14) + "…" : title;
     }
 }
