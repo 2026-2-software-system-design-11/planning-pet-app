@@ -25,7 +25,7 @@
 | M2b | 일정 입력 검사 | `TaskDraft`, `FieldError` | 2번(반복 칸 빼고) | [docs/porting/task-check.md](porting/task-check.md) |
 | M3 | 반복 | `Repeat`, `TaskDraft.validate`의 반복 칸 | 데이터 절 `repeat`, 2번 T-VAL-11~13, 15, 16, 18 | [docs/porting/repeat.md](porting/repeat.md) |
 | M4 | 일정 넣기와 겹침 | `TaskBook.add`, `overlap` | 3번 | [docs/porting/task-add.md](porting/task-add.md) |
-| M5 | 그날 목록과 주의 목록 | `TaskBook.dayPlan`, `untimedOfWeek`, `timeText`, `dueText`, `periodNote`, `Task.shownOn`, 겹침 물음 글(`Overlap`) | 6번, 7번, 데이터 절 "보이는 날", 3번의 겹침 물음 글 | `docs/porting/task-lists.md` |
+| M5 | 그날 목록과 주의 목록 | `TaskBook.dayPlan`, `untimedOfWeek`, `timeText`, `dueText`, `periodNote`, `Task.shownOn`, 겹침 물음 글(`Overlap`) | 6번, 7번, 데이터 절 "보이는 날", 3번의 겹침 물음 글 | [docs/porting/task-lists.md](porting/task-lists.md) |
 | M6 | 일정 고치기와 지우기 | `TaskBook.update`, `clearTime`, `delete` | 4번(끌어 놓기 빼고), 5번 | `docs/porting/task-edit.md` |
 | M7 | 앱 데이터 | `AppData`, `PetState`, `Pose`, `WearId`, `ItemId` | 데이터 절 `AppData`, `PetState` | `docs/porting/app-data.md` |
 | M8 | 저장 | `DataStore`, `SqliteDataStore`, `Schema`, `AppController.change` | 21번, 22번(프로토타입 기준 없음) | `docs/porting/store.md` |
