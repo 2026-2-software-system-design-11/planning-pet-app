@@ -4,8 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import planningpet.app.model.AppData;
@@ -22,7 +24,8 @@ class RewardsTest {
     /** 기간 할 일. p는 시각 없이 11-16에 보이기 시작하고, q는 11-18 09:00으로 정해 두었다. */
     private final Task p = make(Kind.TASK, "P", d(16), null, d(22));
     private final Task q = make(Kind.TASK, "Q", d(18), LocalTime.of(9, 0), d(22));
-    private final AppData data = new AppData(Clock.systemDefaultZone(), List.of(a, p, q), List.of());
+    private final AppData data = new AppData(Clock.fixed(Instant.parse("2026-11-16T10:00:00Z"), ZoneOffset.UTC),
+            List.of(a, p, q), List.of());
 
     RewardsTest() {
         data.addPet(new PetState(PetKind.CAT, "나비"));
@@ -198,5 +201,45 @@ class RewardsTest {
         complete(a, d(16));
         assertEquals("0P 45 2026-11-16 0", undo(a, d(16)));
         assertEquals(1, Level.of(data.pet(PetKind.CAT).getExp()).getLevel());
+    }
+
+    @Test
+    void T_UNDO_5_completeAgain() {
+        T_UNDO_1_rewardOfToday();
+        assertEquals("REWARDED 10 10, 30P 30 2026-11-16 3", complete(a, d(16)));
+    }
+
+    @Test
+    void T_UNDO_6_fromPetThatGotIt() {
+        data.addPet(new PetState(PetKind.DOG, "바둑이"));
+        data.setActiveKind(PetKind.DOG);
+        complete(a, d(16));
+        data.setActiveKind(PetKind.CAT);
+        assertEquals("0P 0 2026-11-16 0", undo(a, d(16)));
+        assertEquals("0 null", data.pet(PetKind.DOG).getExp() + " " + a.getRewardPet());
+    }
+
+    @Test
+    void E_UNDO_1_oldDataWithoutPet() {
+        data.addPet(new PetState(PetKind.DOG, "바둑이"));
+        data.setActiveKind(PetKind.DOG);
+        data.pet(PetKind.DOG).setExp(10);
+        data.setPoints(10);
+        Task old = new Task("old", 2, Kind.TASK, "옛 일", d(15), null, 30, "", false, Category.OTHER, null, null, null,
+                null, true, d(15), 10, 10, d(15), null);
+        assertEquals("0P 0 null 0", undo(old, d(16)));
+        assertEquals(0, data.pet(PetKind.DOG).getExp());
+    }
+
+    @Test
+    void T_UNDO_7_periodBackToPlan() {
+        complete(p, d(17));
+        undo(p, d(17));
+        assertEquals("2026-11-16 null 2026-11-22", p.getDate() + " " + p.getDoneDay() + " " + p.getDueDate());
+        assertEquals(List.of("period", "period", "period", "period", "period", "period", "due"),
+                List.of(16, 17, 18, 19, 20, 21, 22).stream().map(day -> where(p, day)).toList());
+        complete(q, d(16));
+        undo(q, d(16));
+        assertEquals(",timed", where(q, 16) + "," + where(q, 18));
     }
 }
