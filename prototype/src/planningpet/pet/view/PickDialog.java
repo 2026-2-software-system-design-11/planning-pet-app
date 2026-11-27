@@ -8,8 +8,15 @@ import planningpet.app.model.Store;
 import planningpet.common.view.Ui;
 import planningpet.pet.controller.PetController;
 import planningpet.pet.model.Talk;
+import planningpet.common.view.Icons;
+import planningpet.common.view.Theme;
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -57,6 +64,68 @@ public final class PickDialog {
         choose.add(buttons, BorderLayout.SOUTH);
         bottom.add(choose, BorderLayout.SOUTH);
         panel.add(bottom, BorderLayout.SOUTH);
+    }
+
+    /** 창 바탕(PickScene.backdrop). 폭은 800 이상이다. */
+    private static final class Backdrop extends JPanel {
+        Backdrop() {
+            setOpaque(true);
+        }
+
+        @Override
+        public Dimension getPreferredSize() {
+            Dimension d = super.getPreferredSize();
+            return new Dimension(Math.max(800, d.width), d.height);
+        }
+
+        @Override
+        protected void paintComponent(Graphics graphics) {
+            Graphics2D g = (Graphics2D) graphics.create();
+            PickScene.backdrop(g, getWidth(), getHeight());
+            g.dispose();
+        }
+    }
+
+    /** 로고: 사이드바와 같은 PetArt 고양이 얼굴, 아주 굵은 "플래닝펫", "Planning Pet", 양옆 강조선. */
+    private static final class Logo extends JLabel {
+        Logo() {
+            super("플래닝펫 Planning Pet");
+            setAlignmentX(0.5f);
+            setPreferredSize(new Dimension(800, 60));
+            setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
+        }
+
+        @Override
+        protected void paintComponent(Graphics graphics) {
+            Graphics2D g = (Graphics2D) graphics.create();
+            PickScene.hints(g);
+            int faceW = 74;
+            int faceH = 51;
+            g.setFont(Theme.heavy(30));
+            FontMetrics big = g.getFontMetrics();
+            String word = "플래닝펫";
+            int wordW = big.stringWidth(word);
+            int gap = 10;
+            int total = faceW + gap + wordW;
+            int x = (getWidth() - total) / 2;
+            int y = (getHeight() - faceH) / 2;
+            PetArt.drawLogo(g, x, y, faceW, faceH);
+            int tx = x + faceW + gap;
+            g.setColor(Theme.INK);
+            g.drawString(word, tx, y + big.getAscent() - 4);
+            g.setFont(Theme.bold(14));
+            FontMetrics small = g.getFontMetrics();
+            g.setColor(Theme.INK_SUB);
+            g.drawString("Planning Pet", tx + (wordW - small.stringWidth("Planning Pet")) / 2, y + faceH);
+            int s = 24;
+            Graphics2D left = (Graphics2D) g.create();
+            left.translate(x - 14, 0);
+            left.scale(-1, 1);
+            Icons.draw(left, Icons.Kind.SPARK, 0, y + 2, s, Theme.SPARK);
+            left.dispose();
+            Icons.draw(g, Icons.Kind.SPARK, tx + wordW + 12, y + 2, s, Theme.SPARK);
+            g.dispose();
+        }
     }
 
     /** 바로 시작 버튼과 같다. 고른 동물과 이름(비우면 나비, 바둑이)을 넣는다. */
