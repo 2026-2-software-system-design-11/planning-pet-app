@@ -36,6 +36,9 @@ import planningpet.schedule.model.TaskDraft;
 class SqliteDataStoreTest {
     private static final ZoneId ZONE = ZoneId.systemDefault();
     private static final Clock CLOCK = Clock.fixed(LocalDateTime.parse("2026-11-18T10:00").atZone(ZONE).toInstant(), ZONE);
+    /** 검사만 쓰는 형식 2. app 표에 처음 값이 calm인 열 mood를 더한다. */
+    private static final List<Schema.Step> TO_2 =
+            List.of(db -> db.createStatement().execute("ALTER TABLE app ADD COLUMN mood TEXT NOT NULL DEFAULT 'calm'"));
     @TempDir
     Path folder;
 
@@ -171,6 +174,29 @@ class SqliteDataStoreTest {
     void E_STORE_10_otherSqliteFileUntouched() throws Exception {
         sql("CREATE TABLE note (body)");
         assertUnreadable(LoadResult.Reason.NOT_DATA_FILE);
+    }
+
+    @Test
+    void T_STORE_7_olderVersionUpgradesWithCopy() throws Exception {
+        AppData data = Filled.data(CLOCK);
+        store().save(data);
+        byte[] v1 = Files.readAllBytes(file());
+        for (int i = 0; i < 2; i++) {
+            assertEquals(Filled.values(data), Filled.values(new SqliteDataStore(folder, CLOCK, TO_2).load().data()));
+        }
+        assertEquals("2 calm", value("SELECT (SELECT user_version FROM pragma_user_version) || ' ' || mood FROM app"));
+        assertArrayEquals(v1, Files.readAllBytes(copyV1()));
+    }
+
+    private Path copyV1() {
+        return folder.resolve("planningpet.v1.db");
+    }
+
+    /** 데이터 파일에 물은 값 하나. */
+    private String value(String query) throws SQLException {
+        try (Connection db = DriverManager.getConnection("jdbc:sqlite:" + file())) {
+            return db.createStatement().executeQuery(query).getString(1);
+        }
     }
 
     private Path file() {
