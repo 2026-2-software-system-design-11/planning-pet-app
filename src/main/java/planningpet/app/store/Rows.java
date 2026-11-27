@@ -2,23 +2,33 @@ package planningpet.app.store;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.time.Clock;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import planningpet.app.model.AppData;
 import planningpet.app.model.SampleLook;
+import planningpet.pet.model.PetKind;
 import planningpet.pet.model.PetState;
+import planningpet.schedule.model.Category;
+import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Repeat;
 import planningpet.schedule.model.Task;
 
 /**
- * 앱 데이터를 07 저장 형식의 표 행으로 바꾼다. 날짜는 2026-11-16, 시각은 14:30, 반복은 DAILY나 MON,WED, 값 목록은 이름, 참거짓은
- * 1과 0이고, 값이 없으면 null이다.
+ * 앱 데이터와 07 저장 형식의 표 행 사이를 바꾸고, 표를 읽어 앱 데이터를 만든다. 날짜는 2026-11-16, 시각은 14:30, 반복은
+ * DAILY나 MON,WED, 값 목록은 이름, 참거짓은 1과 0이고, 값이 없으면 null이다.
  */
 final class Rows {
     static final DateTimeFormatter HHMM = DateTimeFormatter.ofPattern("HH:mm");
@@ -84,6 +94,18 @@ final class Rows {
         return v == null ? null : v.toString();
     }
 
+    /** 표의 반복 글을 반복 방식으로. */
+    static Repeat repeat(String s) {
+        if (s == null || s.equals("DAILY")) {
+            return s == null ? null : Repeat.DAILY;
+        }
+        return new Repeat(false, Arrays.stream(s.split(",")).map(Rows::day).collect(Collectors.toSet()));
+    }
+
+    private static DayOfWeek day(String three) {
+        return Arrays.stream(DayOfWeek.values()).filter(d -> d.name().startsWith(three)).findFirst().orElseThrow();
+    }
+
     /** before에 있고 달라졌거나 없어진 행을 지우고, 새로 생기거나 달라진 행을 넣는다. 달라진 행 수를 돌려준다. */
     static int write(Connection db, Map<String, Map<List<Object>, List<Object>>> before,
             Map<String, Map<List<Object>, List<Object>>> after) throws SQLException {
@@ -115,5 +137,61 @@ final class Rows {
             s.setObject(i + 1, values.get(i));
         }
         s.executeUpdate();
+    }
+
+    private interface Row {
+        void read(ResultSet r) throws SQLException;
+    }
+
+    /** 표를 읽어 앱 데이터를 만든다. 일정과 지운 보상 기록은 넣은 순이다. */
+    static AppData read(Connection db, Clock clock) throws SQLException {
+        List<Task> tasks = new ArrayList<>();
+        List<Task> deleted = new ArrayList<>();
+        each(db, "task ORDER BY seq", r -> (r.getInt("deleted") == 1 ? deleted : tasks).add(task(r)));
+        AppData d = new AppData(clock, tasks, deleted);
+        each(db, "app", r -> {
+            d.setPoints(r.getInt("points"));
+            d.setRewardCount(date(r, "reward_count_day"), r.getInt("reward_count"));
+            d.setAttendanceDay(date(r, "attendance_day"));
+            d.setLastOpenDay(date(r, "last_open_day"));
+            d.setStreak(r.getInt("streak"));
+            String active = r.getString("active_kind");
+            d.setActiveKind(active == null ? null : PetKind.valueOf(active));
+            d.setTrayNoticeShown(r.getInt("tray_notice_shown") == 1);
+            d.setCalendarFixed(r.getInt("calendar_fixed") == 1);
+            d.setListClickTime(r.getInt("list_click_time") == 1);
+            d.setWeekStart(DayOfWeek.valueOf(r.getString("week_start")));
+            d.setNextSeq(r.getLong("next_seq"));
+        });
+        return d;
+    }
+
+    private static Task task(ResultSet r) throws SQLException {
+        String pet = r.getString("reward_pet");
+        return new Task(r.getString("id"), r.getLong("seq"), Kind.valueOf(r.getString("kind")), r.getString("title"),
+                date(r, "date"), time(r, "start_time"), r.getInt("duration_minutes"), r.getString("memo"),
+                r.getInt("next_day") == 1, Category.valueOf(r.getString("category")), r.getString("series_id"),
+                repeat(r.getString("repeat")), date(r, "due_date"), date(r, "start_day"), r.getInt("done") == 1,
+                date(r, "done_day"), r.getInt("reward_points"), r.getInt("reward_exp"), date(r, "reward_day"),
+                pet == null ? null : PetKind.valueOf(pet));
+    }
+
+    /** 표의 행마다 row를 부른다. from은 표 이름과 그 뒤의 ORDER BY다. */
+    private static void each(Connection db, String from, Row row) throws SQLException {
+        try (Statement s = db.createStatement(); ResultSet r = s.executeQuery("SELECT * FROM " + from)) {
+            while (r.next()) {
+                row.read(r);
+            }
+        }
+    }
+
+    private static LocalDate date(ResultSet r, String column) throws SQLException {
+        String s = r.getString(column);
+        return s == null ? null : LocalDate.parse(s);
+    }
+
+    private static LocalTime time(ResultSet r, String column) throws SQLException {
+        String s = r.getString(column);
+        return s == null ? null : LocalTime.parse(s, HHMM);
     }
 }
