@@ -1,0 +1,17 @@
+skinparam defaultFontName "Apple SD Gothic Neo"
+skinparam defaultFontSize 12
+skinparam dpi 130
+skinparam shadowing false
+skinparam style strictuml
+skinparam ArrowColor #4A5568
+skinparam ParticipantBackgroundColor #F7F9FC
+skinparam ParticipantBorderColor #4A5568
+skinparam SequenceLifeLineBorderColor #4A5568
+skinparam NoteBackgroundColor #FFFBEA
+skinparam NoteBorderColor #4A5568
+hide footbox
+autonumber
+!procedure $obj($n)
+!$u = "__" + $n + "__"
+participant "$u" as $n
+!endprocedure

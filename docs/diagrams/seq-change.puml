@@ -1,0 +1,25 @@
+@startuml seq-change
+!include seq-common.iuml
+$obj(TaskController)
+$obj(AppController)
+$obj(AppData)
+$obj(DataStore)
+$obj(PetTalk)
+$obj(Bubble)
+TaskController -> AppController : change(what, edit)
+AppController -> AppData : copy()
+AppController -> TaskController : edit()
+note right of TaskController : 유스케이스 그림의\n바꾸는 메시지
+AppController -> DataStore : save(data)
+alt 저장 실패
+  AppController -> AppData : restore(copy)
+  AppController -> AppController : errors(what)
+  note right : 창 "저장하지 못했어요"\n"{what} 저장에 실패해서\n바꾸기 전으로 돌렸어요."
+end
+AppController -> AppData : changed()
+note right of AppData : 데이터 변경 알림.\n데이터를 보이는 부품이\n다시 그린다
+opt 새 펫 말이 없고 말풍선이 말하던 날의 목록이 바뀌었다 (D-106)
+  AppController -> PetTalk : say(situation, ...)
+  AppController -> Bubble : retell(line)
+end
+@enduml

@@ -7,7 +7,7 @@
 | 01 | [개요와 요구사항](01-requirements.md) | CHARACTERISTICS, REQUIREMENT LISTS |
 | 02 | [유스케이스](02-usecases.md) | USECASES |
 | 03 | [유스케이스 다이어그램](03-usecase-diagram.md) | USECASE DIAGRAM |
-| 04 | 시퀀스 다이어그램 | SEQUENCE DIAGRAM |
+| 04 | [시퀀스 다이어그램](04-sequence-diagram.md) | SEQUENCE DIAGRAM |
 | 05 | [화면 설계](05-ui-design.md) | USER INTERFACE DESIGNS |
 | 06 | [함수 명세와 검사 표](06-functions.md) | FUNCTION SPECIFICATION |
 | 07 | [클래스 다이어그램](07-class-diagram.md) | 개인과제 CP4 |
