@@ -13,8 +13,9 @@ import javax.swing.JComponent;
 /**
  * 부품을 창 없이 w x h로 두고 (w+4) x (h+4) 그림에 그려, 프로토타입이 같은 방법으로 그린 기준 그림
  * (src/test/resources의 proto/이름.png)과 픽셀이 모두 같은지 본다. docs/porting/theme.md 2절.
+ * 창 틀(app.view)의 기준 그림도 같은 폴더에 frame-이름으로 둔다.
  */
-final class Snap {
+public final class Snap {
     private Snap() {
     }
 
@@ -32,7 +33,7 @@ final class Snap {
     }
 
     /** 창 없이는 배치가 돌지 않아 자식까지 배치한 뒤 기준 그림과 맞춘다(자식이 든 부품). */
-    static void assertLaidOutLooksLikePrototype(String name, JComponent c, int w, int h) throws IOException {
+    public static void assertLaidOutLooksLikePrototype(String name, JComponent c, int w, int h) throws IOException {
         c.setSize(w, h);
         layOut(c);
         assertLooksLikePrototype(name, c, w, h);
@@ -48,7 +49,7 @@ final class Snap {
     }
 
     /** 이미 그린 그림을 기준 그림과 맞춘다(아이콘처럼 부품이 아닌 것). */
-    static void assertLooksLikePrototype(String name, BufferedImage got) throws IOException {
+    public static void assertLooksLikePrototype(String name, BufferedImage got) throws IOException {
         BufferedImage want = ImageIO.read(Snap.class.getResource("proto/" + name + ".png"));
         assertEquals(want.getWidth() + "x" + want.getHeight(), got.getWidth() + "x" + got.getHeight(), name);
         int differ = 0;
