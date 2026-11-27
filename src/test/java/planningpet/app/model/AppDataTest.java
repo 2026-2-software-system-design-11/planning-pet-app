@@ -61,10 +61,16 @@ class AppDataTest {
     }
 
     @Test
-    void E_APP_4_firstPet() {
-        assertEquals(1, data.getPets().size());
-        assertEquals("나비", data.activePet().getName());
-        assertEquals(PetKind.CAT, data.getActiveKind());
+    void E_APP_4_firstRunHasNoPet() {
+        assertTrue(data.getPets().isEmpty());
+        assertNull(data.getActiveKind());
+    }
+
+    @Test
+    void E_APP_5_noPetToChoose() {
+        assertNull(data.activePet());
+        data.setActiveKind(PetKind.CAT);
+        assertNull(data.activePet());
     }
 
     @Test
@@ -94,6 +100,7 @@ class AppDataTest {
 
     @Test
     void E_APP_11_activePet() {
+        data.addPet(new PetState(PetKind.CAT, "나비"));
         data.addPet(new PetState(PetKind.DOG, "바둑이"));
         data.setActiveKind(PetKind.DOG);
         assertEquals("바둑이", data.activePet().getName());
@@ -102,6 +109,7 @@ class AppDataTest {
 
     @Test
     void E_APP_12_activeKindWithoutPet() {
+        data.addPet(new PetState(PetKind.CAT, "나비"));
         data.setActiveKind(PetKind.DOG);
         assertEquals("나비", data.activePet().getName());
         assertNull(data.pet(PetKind.DOG));

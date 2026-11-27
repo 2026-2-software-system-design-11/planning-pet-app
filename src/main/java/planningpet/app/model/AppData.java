@@ -29,8 +29,9 @@ public final class AppData {
     private final Set<LocalDate> attendDays = new LinkedHashSet<>();
     private LocalDate lastOpenDay;
     private int streak;
-    private final List<PetState> pets = new ArrayList<>(List.of(new PetState(PetKind.CAT, "나비")));
-    private PetKind activeKind = PetKind.CAT;
+    /** 첫 실행이면 펫이 없고 반려동물 고르기 창(06 30번 choose)이 넣는다(07 seq-uc01). */
+    private final List<PetState> pets = new ArrayList<>();
+    private PetKind activeKind;
     private final Set<ItemId> ownedItems = new LinkedHashSet<>();
     private final Set<ItemId> placedItems = new LinkedHashSet<>();
     private boolean trayNoticeShown;
@@ -83,10 +84,10 @@ public final class AppData {
         return pets.stream().filter(p -> p.getKind() == kind).findFirst().orElse(null);
     }
 
-    /** 고른 펫(D-48). 고른 종류의 펫이 없으면 첫 펫이다. */
+    /** 고른 펫(D-48). 고른 종류의 펫이 없으면 첫 펫이고, 펫이 없으면 null이다. */
     public PetState activePet() {
         PetState chosen = pet(activeKind);
-        return chosen != null ? chosen : pets.get(0);
+        return chosen != null || pets.isEmpty() ? chosen : pets.get(0);
     }
 
     /** 데이터 변경 알림을 받을 곳을 넣는다(06 22번). */
