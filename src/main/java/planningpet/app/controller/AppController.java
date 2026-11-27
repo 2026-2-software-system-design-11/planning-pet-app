@@ -2,12 +2,15 @@ package planningpet.app.controller;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import planningpet.app.model.AppData;
 import planningpet.app.model.DataStore;
+import planningpet.app.model.Visits;
 import planningpet.pet.model.Bubble;
 import planningpet.pet.model.PetTalk;
+import planningpet.pet.model.Situation;
 
 /** 앱 하나의 controller. 도메인 controller의 변경을 저장과 함께 감싼다(06 22번, 07). */
 public final class AppController {
@@ -20,6 +23,8 @@ public final class AppController {
     /** 메인 달력에서 고른 날(D-106). S3의 달력이 잇는다. */
     private Supplier<LocalDate> homeDay;
     private boolean changing;
+    /** 창이 보이는 중인지. onWindowShown이 true로 둔다. 숨기는 길(onClose)은 S11이다(docs/porting/app-window.md). */
+    private boolean windowVisible;
 
     public AppController(AppData data, DataStore store, Consumer<String> errors) {
         this.data = data;
@@ -30,6 +35,7 @@ public final class AppController {
     }
 
     public Bubble getBubble() { return bubble; }
+    public boolean isWindowVisible() { return windowVisible; }
     public void setHomeDay(Supplier<LocalDate> homeDay) { this.homeDay = homeDay; }
 
     /**
@@ -92,5 +98,34 @@ public final class AppController {
     /** 나의 방 말풍선에 한 번 보일 말(BOUGHT, ADOPTED). change 안에서 부르고 다음 change가 비운다(D-56, 07). */
     public void sayInRoom(String line) {
         bubble.setRoomLine(line);
+    }
+
+    /** 06 15번. 그날 처음이면 연속 접속을 세고(12번) 말한다. BRIEFING과 WELCOME_BACK은 오늘 목록을 따라 다시 센다(D-106). */
+    public void onWindowShown() {
+        windowVisible = true;
+        LocalDate today = data.today();
+        LocalDate before = data.getLastOpenDay();
+        if (today.equals(before)) {
+            say(talk.say(Situation.USUAL), today);
+            return;
+        }
+        Situation situation = before == null ? Situation.FIRST_RUN
+                : ChronoUnit.DAYS.between(before, today) >= 8 ? Situation.WELCOME_BACK : Situation.BRIEFING;
+        Supplier<String> how = situation == Situation.FIRST_RUN ? null : talk.recount(situation);
+        String line = how != null ? how.get() : talk.say(situation);
+        Runnable speak = () -> {
+            bubble.say(line);
+            if (how != null) {
+                bubble.follow(today, how);
+            }
+        };
+        change("연속 접속", () -> {
+            new Visits(data).recordOpen(today);
+            speak.run();
+        });
+        if (!today.equals(data.getLastOpenDay())) { // 저장에 실패해 되돌렸어도 브리핑은 보인다(02 UC-01 4a).
+            speak.run();
+            data.changed();
+        }
     }
 }
