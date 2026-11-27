@@ -36,7 +36,8 @@ else 기본 흐름
     ShopController -> Shop : buy(item)
     note right of Shop : BOUGHT. 가격만큼 포인트를 빼고\nownedItems와 placedItems에 넣는다
     ShopController -> PetTalk : say(BOUGHT, ...)
-    note right of PetTalk : "{아이템} 고마워!"를\n나의 방 말풍선에만 한 번
+    ShopController -> AppController : sayInRoom(line)
+    note right of AppController : "{아이템} 고마워!"를 Bubble의 roomLine에 둔다.\n나의 방 말풍선에만 보이고 다음 change가 비운다
     ref over ShopController, Shop : 저장과 되돌리기. 7a 저장 실패면 포인트와 보유 목록을 되돌린다
     note right of ShopPanel : 보유 포인트, 방 꾸미기 만족도, 배치 아이템이 바뀌고\n카드의 가격 자리가 "보유 중"이 된다
   end

@@ -19,7 +19,7 @@ else 3b 펫이 둘이다
   note right of RoomView : 고양이는 왼쪽, 강아지는 오른쪽.\n펫 칩이 둘이고 "+"는 없다
 end
 opt 3c 아이템을 사거나 펫을 데려온 직후다
-  note right of RoomView : 말풍선이 하트 대신 그때 한 말을 한 번 보이고\n다음 데이터 변경 때 하트로 돌아간다
+  note right of RoomView : 하트 대신 Bubble의 roomLine(그때 한 말)을\n그린다. 다음 change가 roomLine을 비우면\n하트로 돌아간다
 end
 loop 펫 칩과 펫 탭마다
   PetScreen -> Level : of(exp)

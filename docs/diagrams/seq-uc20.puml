@@ -18,7 +18,8 @@ else 기본 흐름
   note right of PetController : 경험치 0, 앉기 자세, 기본 목걸이인 펫을\n만들어 pets에 넣고 activeKind로.\n3b 이름을 비웠으면 고양이는 "나비",\n강아지는 "바둑이"
   PetController -> PetTalk : say(ADOPTED, ...)
   PetController -> AppController : say(line, day)
-  note right of AppController : "안녕, 나는 {이름}{이야/야}.\n이제 경험치는 내가 받을게!"\n메인 말풍선에 남고 나의 방 말풍선에 한 번
+  PetController -> AppController : sayInRoom(line)
+  note right of AppController : "안녕, 나는 {이름}{이야/야}.\n이제 경험치는 내가 받을게!"\n메인 말풍선에 남고, roomLine으로\n나의 방 말풍선에 한 번
   ref over PetController, AppController : 저장과 되돌리기. 4a 저장 실패면 새 펫과 고른 펫을 되돌린다
   note right of PetScreen : 창을 닫는다. 방에 두 펫이 함께 보이고\n펫 칩이 둘이 되며 "+"가 사라진다
 end
