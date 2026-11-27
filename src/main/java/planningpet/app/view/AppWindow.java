@@ -3,10 +3,12 @@ package planningpet.app.view;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.image.BufferedImage;
 import javax.swing.BorderFactory;
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -15,6 +17,8 @@ import javax.swing.SwingConstants;
 import planningpet.common.view.Backdrop;
 import planningpet.common.view.Card;
 import planningpet.common.view.Icons;
+import planningpet.common.view.RoundButtonUI;
+import planningpet.common.view.StatCard;
 import planningpet.common.view.Theme;
 
 /**
@@ -24,11 +28,19 @@ import planningpet.common.view.Theme;
 public final class AppWindow {
     /** 05 창 구조의 창 제목. */
     public static final String TITLE = "플래닝펫 (Planning Pet)";
+    private static final String COMMON = "공통";
     private final JPanel nav = new JPanel(new GridLayout(0, 1, 0, 6));
     private final Card navWrap = new Card(new BorderLayout(), 22).filled(Theme.SIDE);
     private final Backdrop root = new Backdrop(new BorderLayout(Theme.GAP, 0), navWrap);
     private final Card main = new Card(new BorderLayout(0, 10), 24).filled(Theme.PANEL);
     private final JPanel center = new JPanel(new CardLayout());
+    /** 화면마다 다른 머리(아이콘, 제목, 부제). 화면과 함께 바뀐다. */
+    private final JPanel heads = new JPanel(new CardLayout());
+    /** 화면 머리 오른쪽 카드(D-47). 화면과 함께 바뀐다. */
+    private final JPanel rights = new JPanel(new CardLayout());
+    final StatCard.Value streak = new StatCard.Value();
+    final StatCard.Value points = new StatCard.Value();
+    final JButton attend = new JButton();
 
     public AppWindow() {
         navWrap.setBorder(BorderFactory.createEmptyBorder(18, 8, 12, 8));
@@ -41,6 +53,7 @@ public final class AppWindow {
         root.add(navWrap, BorderLayout.WEST);
         root.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         main.setBorder(BorderFactory.createEmptyBorder(10, 12, 14, 12));
+        main.add(topRow(), BorderLayout.NORTH);
         main.add(center, BorderLayout.CENTER);
         root.add(main, BorderLayout.CENTER);
         root.setPreferredSize(new Dimension(1000, 680));
@@ -68,6 +81,21 @@ public final class AppWindow {
         p.add(face, BorderLayout.NORTH);
         p.add(words, BorderLayout.CENTER);
         return p;
+    }
+
+    /** 본문 위 줄: 왼쪽은 화면 머리, 오른쪽은 홈, 일정관리, 설정에 같은 연속 접속, 출석, 보유 포인트(05 창 구조). */
+    private JPanel topRow() {
+        JPanel row = new JPanel(new BorderLayout(Theme.GAP, 0));
+        row.add(heads, BorderLayout.CENTER);
+        attend.putClientProperty(RoundButtonUI.PRIMARY, Boolean.TRUE);
+        attend.setFont(Theme.bold(13));
+        attend.setBorder(BorderFactory.createEmptyBorder(7, 14, 9, 14));
+        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        right.add(StatCard.of(Icons.Kind.FLAME, streak, attend));
+        right.add(StatCard.of(Icons.Kind.COIN, points, null));
+        rights.add(right, COMMON);
+        row.add(rights, BorderLayout.EAST);
+        return row;
     }
 
     /** 창(05 창 구조, D-47). 창을 띄우는 일은 Main이 한다. 25번(트레이에 남기)은 S11이라 그때까지는 닫으면 끝난다. */
