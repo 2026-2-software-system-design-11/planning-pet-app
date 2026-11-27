@@ -500,4 +500,37 @@ class TaskBookEditTest {
         assertEquals(List.of(day(11, 18), LocalTime.of(14, 0), false), List.of(t.getDate(), t.getStartTime(), t.missed(today)));
         assertEquals(List.of(t), book.dayPlan(day(11, 18)).timed());
     }
+
+    @Test
+    void T_DEL_1_rewardKept() {
+        Task t = put("과제", day(11, 18), null, null, null, null, day(11, 18));
+        book().delete(t, DeleteScope.ONLY_THIS);
+        assertTrue(book.getTasks().isEmpty());
+        assertEquals(List.of(t), book.getDeletedRewarded());
+        assertEquals(List.of(t), book.rewardHistory());
+        assertEquals(List.of(10, 10, day(11, 18)), List.of(t.getRewardPoints(), t.getRewardExp(), t.getRewardDay()));
+    }
+
+    @Test
+    void T_DEL_2_onlyThisCopy() {
+        weekly();
+        book.delete(at(day(12, 7)), DeleteScope.ONLY_THIS);
+        assertEquals(List.of(day(11, 16), day(11, 23), day(11, 30), day(12, 14), day(12, 21), day(12, 28)),
+                each(Task::getDate));
+    }
+
+    @Test
+    void T_DEL_3_thisAndAfter() {
+        weekly();
+        book.delete(at(day(12, 7)), DeleteScope.THIS_AND_AFTER);
+        assertEquals(List.of(day(11, 16), day(11, 23), day(11, 30)), each(Task::getDate));
+    }
+
+    @Test
+    void T_DEL_4_dailyAfter() {
+        book().add(new TaskDraft(Kind.TASK, "운동", Category.OTHER, day(11, 16), null, null, 30, "", Repeat.DAILY,
+                day(11, 22), false, null, null, false));
+        book.delete(at(day(11, 19)), DeleteScope.THIS_AND_AFTER);
+        assertEquals(List.of(day(11, 16), day(11, 17), day(11, 18)), each(Task::getDate));
+    }
 }
