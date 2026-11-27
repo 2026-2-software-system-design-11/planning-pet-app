@@ -16,14 +16,14 @@ class TaskTest {
 
     private static Task make(Kind kind, LocalDate date, LocalTime start, boolean nextDay, int minutes) {
         return new Task("id", 1, kind, "일", date, start, minutes, "", nextDay, Category.OTHER, null, null, null,
-                false, null, 0, 0, null, null);
+                null, false, null, 0, 0, null, null);
     }
 
-    /** 30분짜리 할 일이나 고정 일정. due가 있으면 기간 첫날이 date인 기간 할 일이다. */
+    /** 30분짜리 할 일이나 고정 일정. seriesId가 있으면 매일 반복 사본, due가 있으면 기간 첫날이 date인 기간 할 일이다. */
     private static Task full(Kind kind, LocalDate date, LocalTime start, String seriesId, LocalDate due,
             boolean done, LocalDate doneDay) {
-        return new Task("id", 1, kind, "일", date, start, 30, "", false, Category.OTHER, seriesId, due,
-                due == null ? null : date, done, doneDay, 0, 0, null, null);
+        return new Task("id", 1, kind, "일", date, start, 30, "", false, Category.OTHER, seriesId,
+                seriesId == null ? null : Repeat.DAILY, due, due == null ? null : date, done, doneDay, 0, 0, null, null);
     }
 
     private static Task period(LocalDate date, LocalTime start, LocalDate due) {
