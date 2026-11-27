@@ -2,17 +2,19 @@ package planningpet.pet.view;
 
 import planningpet.common.view.Images;
 import planningpet.common.view.Theme;
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.GradientPaint;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
 import java.awt.image.BufferedImage;
 
 /**
  * 반려동물 고르기 창의 그림 도구(2026-11-23 고르기 예시, 디자인 시스템 10절 "고르기 창").
- * 하늘 언덕 장면을 도형으로 그린다. 도형이라 2배 화면에서도 흐려지지 않는다.
+ * 하늘 언덕 장면, 데이지, 반짝이 별, 풀 덤불을 도형으로 그린다. 도형이라 2배 화면에서도 흐려지지 않는다.
  */
 final class PickScene {
     private PickScene() {
@@ -25,7 +27,7 @@ final class PickScene {
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
     }
 
-    /** 창 바탕: 하늘, 구름, 먼 산, 언덕, 풀 띠. 글과 카드가 놓이는 가운데는 비워 둔다. */
+    /** 창 바탕: 하늘, 구름, 먼 산, 언덕, 바닥 꽃밭, 반짝이 별. 글과 카드가 놓이는 가운데는 비워 둔다. */
     static void backdrop(Graphics2D g, int w, int h) {
         hints(g);
         g.setPaint(new GradientPaint(0, 0, Theme.SKY_TOP, 0, h * 0.62f, Theme.SKY_BOTTOM));
@@ -70,6 +72,29 @@ final class PickScene {
         near.closePath();
         g.setPaint(new GradientPaint(0, h * 0.78f, Theme.GRASS, 0, h, mix(Theme.GRASS, Theme.GRASS_DEEP, 0.5)));
         g.fill(near);
+        double u = h / 600.0;
+        // 양 아래 모서리 덤불과 꽃. 바깥 모서리가 두껍고 가운데로 갈수록 작아진다.
+        for (int side = 0; side < 2; side++) {
+            boolean right = side == 1;
+            double x0 = right ? w : 0;
+            double dir = right ? -1 : 1;
+            bush(g, x0 + dir * 20 * u, h - 70 * u, 74 * u);
+            bush(g, x0 + dir * 62 * u, h - 28 * u, 80 * u);
+            bush(g, x0 + dir * 128 * u, h - 6 * u, 60 * u);
+            daisy(g, x0 + dir * 24 * u, h - 118 * u, 13 * u, -0.2 * dir);
+            daisy(g, x0 + dir * 58 * u, h - 86 * u, 12 * u, 0.3 * dir);
+            daisy(g, x0 + dir * 22 * u, h - 52 * u, 14 * u, 0.1);
+            daisy(g, x0 + dir * 92 * u, h - 46 * u, 11 * u, -0.4);
+            daisy(g, x0 + dir * 60 * u, h - 16 * u, 12 * u, 0.2);
+            daisy(g, x0 + dir * 140 * u, h - 30 * u, 9 * u, 0.5);
+            daisy(g, x0 + dir * 196 * u, h - 12 * u, 8 * u, -0.2);
+            bud(g, x0 + dir * 96 * u, h - 96 * u, 6 * u);
+            bud(g, x0 + dir * 118 * u, h - 66 * u, 5 * u);
+            bud(g, x0 + dir * 170 * u, h - 20 * u, 5 * u);
+            bud(g, x0 + dir * 236 * u, h - 8 * u, 4 * u);
+        }
+        star(g, w * 0.14, h * 0.75, 12 * u);
+        star(g, w * 0.86, h * 0.74, 12 * u);
     }
 
     /** 구름: (x, y)가 왼쪽 위, 폭 cw. 그림이 있으면 예시 구름 그림, 없으면 도형. */
@@ -83,6 +108,70 @@ final class PickScene {
         g.setColor(new Color(255, 255, 255, 220));
         g.fill(new Ellipse2D.Double(x, y + cw * 0.15, cw, cw * 0.3));
         g.fill(new Ellipse2D.Double(x + cw * 0.25, y, cw * 0.45, cw * 0.4));
+    }
+
+    /** 풀 덤불: 아래 가운데 (cx, bottom), 폭 s. 둥근 잎 뭉치 여섯을 세 가지 초록으로 겹친다. */
+    static void bush(Graphics2D g, double cx, double bottom, double s) {
+        // 뒤 잎은 진하게, 앞 잎은 밝게. 예시 덤불처럼 둥근 잎 뭉치가 겹친다.
+        double[][] puffs = {{-0.36, 0.48, 0.46, 0}, {0.30, 0.52, 0.48, 0}, {-0.10, 0.80, 0.56, 1}, {0.16, 0.62, 0.50, 1},
+            {-0.30, 0.34, 0.40, 2}, {0.36, 0.30, 0.38, 2}};
+        Color[] tones = {mix(Theme.GRASS_DEEP, Theme.ICON, 0.18), Theme.GRASS_DEEP, mix(Theme.GRASS_DEEP, Theme.GRASS, 0.45)};
+        for (double[] p : puffs) {
+            double r = p[2] * s / 2;
+            double px = cx + p[0] * s;
+            double top = bottom - p[1] * s;
+            g.setColor(tones[(int) p[3]]);
+            g.fill(new Ellipse2D.Double(px - r, top, r * 2, bottom - top + r));
+        }
+        g.setColor(alpha(Color.WHITE, 70));
+        g.fill(new Ellipse2D.Double(cx - s * 0.16, bottom - s * 0.74, s * 0.16, s * 0.09));
+    }
+
+    /** 데이지: 가운데 (cx, cy), 꽃잎 반지름 r, 기울기 turn(라디안). 꽃잎 여섯, 노란 가운데, 옅은 그림자 한 단. */
+    static void daisy(Graphics2D g0, double cx, double cy, double r, double turn) {
+        Graphics2D g = (Graphics2D) g0.create();
+        g.translate(cx, cy);
+        g.rotate(turn);
+        Color line = mix(Theme.DAISY, Theme.INK_SUB, 0.16);
+        for (int i = 0; i < 6; i++) {
+            AffineTransform keep = g.getTransform();
+            g.rotate(Math.PI * 2 * i / 6);
+            Ellipse2D petal = new Ellipse2D.Double(-r * 0.30, -r, r * 0.60, r * 0.95);
+            g.setColor(Theme.DAISY);
+            g.fill(petal);
+            g.setColor(line);
+            g.setStroke(new BasicStroke((float) Math.max(0.6, r / 14)));
+            g.draw(petal);
+            g.setTransform(keep);
+        }
+        g.setColor(Theme.DAISY_HEART);
+        g.fill(new Ellipse2D.Double(-r * 0.32, -r * 0.32, r * 0.64, r * 0.64));
+        g.setColor(mix(Theme.DAISY_HEART, Theme.COIN_RIM, 0.5));
+        g.fill(new Ellipse2D.Double(-r * 0.12, r * 0.02, r * 0.30, r * 0.22));
+        g.dispose();
+    }
+
+    /** 노란 꽃봉오리. */
+    private static void bud(Graphics2D g, double cx, double cy, double r) {
+        g.setColor(Theme.DAISY_HEART);
+        g.fill(new Ellipse2D.Double(cx - r, cy - r, r * 2, r * 2));
+        g.setColor(alpha(Color.WHITE, 140));
+        g.fill(new Ellipse2D.Double(cx - r * 0.5, cy - r * 0.6, r * 0.7, r * 0.5));
+    }
+
+    /** 네 갈래 반짝이 별: 가운데 (cx, cy), 반지름 r. 흰 별에 노란 빛. */
+    static void star(Graphics2D g, double cx, double cy, double r) {
+        g.setColor(alpha(Theme.DAISY_HEART, 70));
+        g.fill(new Ellipse2D.Double(cx - r * 0.7, cy - r * 0.7, r * 1.4, r * 1.4));
+        Path2D s = new Path2D.Double();
+        s.moveTo(cx, cy - r);
+        s.curveTo(cx + r * 0.12, cy - r * 0.12, cx + r * 0.12, cy - r * 0.12, cx + r, cy);
+        s.curveTo(cx + r * 0.12, cy + r * 0.12, cx + r * 0.12, cy + r * 0.12, cx, cy + r);
+        s.curveTo(cx - r * 0.12, cy + r * 0.12, cx - r * 0.12, cy + r * 0.12, cx - r, cy);
+        s.curveTo(cx - r * 0.12, cy - r * 0.12, cx - r * 0.12, cy - r * 0.12, cx, cy - r);
+        s.closePath();
+        g.setColor(Color.WHITE);
+        g.fill(s);
     }
 
     static Color alpha(Color c, int a) {
