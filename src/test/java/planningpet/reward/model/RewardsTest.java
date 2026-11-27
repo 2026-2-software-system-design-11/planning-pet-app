@@ -242,4 +242,13 @@ class RewardsTest {
         undo(q, d(16));
         assertEquals(",timed", where(q, 16) + "," + where(q, 18));
     }
+
+    /** 프로토타입과 일부러 다름: 프로토타입은 알리지 않고 아무것도 바꾸지 않는다. */
+    @Test
+    void E_UNDO_2_notDone() {
+        data.setPoints(10);
+        assertThrows(IllegalStateException.class, () -> undo(a, d(16)));
+        assertEquals("10P 0 null 0 false", data.getPoints() + "P " + data.pet(PetKind.CAT).getExp() + " "
+                + data.getRewardCountDay() + " " + data.getRewardCount() + " " + a.isDone());
+    }
 }

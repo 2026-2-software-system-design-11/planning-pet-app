@@ -43,6 +43,9 @@ public final class Rewards {
      * 받았으면 고른 펫에서 뺀다(D-48). 오늘 받은 보상이면 오늘 횟수를 하나 줄인다.
      */
     public void uncomplete(Task task, LocalDate today) {
+        if (!task.isDone()) {
+            throw new IllegalStateException("끝내지 않은 일정"); // 06 9번 오류(E-UNDO-2).
+        }
         data.setPoints(data.getPoints() - task.getRewardPoints());
         PetState pet = task.getRewardPet() != null ? data.pet(task.getRewardPet())
                 : task.getRewardExp() > 0 ? data.activePet() : null;
