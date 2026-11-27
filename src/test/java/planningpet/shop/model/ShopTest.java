@@ -23,6 +23,36 @@ class ShopTest {
         return shop.find(category, query, ownedOnly).stream().map(i -> i.id().label()).toList();
     }
 
+    /** points로 시작해 item을 산 결과, 그 뒤의 포인트, 보유, 놓임. */
+    private String buy(int points, ItemId item) {
+        data.setPoints(points);
+        BuyResult r = shop.buy(item);
+        return r.outcome() + " " + r.lack() + ", " + data.getPoints() + "P " + data.getOwnedItems() + " "
+                + data.getPlacedItems();
+    }
+
+    @Test
+    void T_SHOP_1_buyPlacesItem() {
+        assertEquals("BOUGHT 0, 70P [CUSHION] [CUSHION]", buy(120, CUSHION));
+    }
+
+    @Test
+    void T_SHOP_2_notEnough() {
+        assertEquals("NOT_ENOUGH 10, 40P [] []", buy(40, CUSHION));
+    }
+
+    @Test
+    void T_SHOP_3_negativePoints() {
+        assertEquals("NOT_ENOUGH 70, -20P [] []", buy(-20, CUSHION));
+    }
+
+    @Test
+    void T_SHOP_4_alreadyOwned() {
+        data.setOwnedItems(Set.of(CUSHION));
+        data.setPlacedItems(Set.of(CUSHION));
+        assertEquals("ALREADY_OWNED 0, 200P [CUSHION] [CUSHION]", buy(200, CUSHION));
+    }
+
     @Test
     void T_SHOP_7_thirteenItemsSum2210() {
         List<Item> all = shop.find("전체", "", false);
@@ -45,6 +75,22 @@ class ShopTest {
     void T_SHOP_10_ownedOnly() {
         data.setOwnedItems(Set.of(CUSHION));
         assertEquals(List.of("쿠션"), find("전체", "", true));
+    }
+
+    @Test
+    void E_SHOP_2_pointsEqualPrice() {
+        assertEquals("BOUGHT 0, 0P [CUSHION] [CUSHION]", buy(50, CUSHION));
+    }
+
+    @Test
+    void E_SHOP_3_oneShort() {
+        assertEquals("NOT_ENOUGH 1, 49P [] []", buy(49, CUSHION));
+    }
+
+    @Test
+    void E_SHOP_4_ownedButPutAwayStaysAway() {
+        data.setOwnedItems(Set.of(CUSHION));
+        assertEquals("ALREADY_OWNED 0, 0P [CUSHION] []", buy(0, CUSHION));
     }
 
     @Test
