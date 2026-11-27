@@ -8,6 +8,7 @@ package planningpet.app {
   }
   class SingleInstance {
     - folder : Path
+    - onSignal : Runnable
     + acquire() : boolean
   }
 }
@@ -94,6 +95,10 @@ AppController --> "1" DataStore
 AppController --> "1" planningpet.pet.model.Bubble
 AppController ..> Visits
 AppController ..> planningpet.pet.model.PetTalk
+AppController ..> planningpet.schedule.model.Reminders
+AppWindow ..> planningpet.reward.controller.RewardController
+Tray ..> planningpet.home.view.MainScreen
+DayWatcher ..> AppData
 DayWatcher --> "1" AppController
 SqliteDataStore ..|> DataStore
 SqliteDataStore ..> AppData

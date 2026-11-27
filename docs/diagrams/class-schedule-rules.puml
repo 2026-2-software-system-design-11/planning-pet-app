@@ -71,6 +71,8 @@ ScheduleScreen ..> planningpet.common.model.Rules
 TaskRows ..> TaskBook
 TaskRows ..> TaskController
 TimetablePanel ..> Task
+TaskRows ..> planningpet.reward.controller.RewardController
+TimetablePanel ..> planningpet.reward.controller.RewardController
 AutoPlacer ..> TaskBook
 Reminders ..> TaskBook
 CalendarCell ..> TaskBook

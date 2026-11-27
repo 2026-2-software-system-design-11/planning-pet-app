@@ -53,6 +53,7 @@ CalendarPanel ..> planningpet.schedule.model.CalendarCell
 PetCard ..> planningpet.reward.model.DailyProgress
 HomeController --> "1" planningpet.app.controller.AppController
 SettingsScreen ..> SettingsController
+SettingsScreen ..> Autostart
 SettingsController --> "1" Autostart
 SettingsController --> "1" planningpet.app.controller.AppController
 OsAutostart ..|> Autostart
