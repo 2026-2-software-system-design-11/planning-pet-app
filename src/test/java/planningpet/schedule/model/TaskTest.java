@@ -34,6 +34,11 @@ class TaskTest {
         return full(Kind.TASK, date, start, null, due, true, doneDay);
     }
 
+    /** 반복 사본. 고정 일정이면 10:00에 시작한다. */
+    private static Task copy(Kind kind, LocalDate date, boolean done) {
+        return full(kind, date, kind == Kind.FIXED ? TEN : null, "s", null, done, done ? date : null);
+    }
+
     private static LocalDate day(int d) {
         return LocalDate.of(2026, 11, d);
     }
@@ -120,5 +125,30 @@ class TaskTest {
     @Test
     void E_TASK_16_doneIsNotPastDue() {
         assertFalse(finished(day(16), null, day(17), day(16)).pastDue(TODAY));
+    }
+
+    @Test
+    void E_TASK_17_taskCopyYesterday() {
+        assertTrue(copy(Kind.TASK, day(17), false).pastCopy(TODAY));
+    }
+
+    @Test
+    void E_TASK_18_taskCopyToday() {
+        assertFalse(copy(Kind.TASK, day(18), false).pastCopy(TODAY));
+    }
+
+    @Test
+    void E_TASK_19_fixedCopyYesterday() {
+        assertFalse(copy(Kind.FIXED, day(17), false).pastCopy(TODAY));
+    }
+
+    @Test
+    void E_TASK_20_doneCopyYesterday() {
+        assertFalse(copy(Kind.TASK, day(17), true).pastCopy(TODAY));
+    }
+
+    @Test
+    void E_TASK_21_notCopyYesterday() {
+        assertFalse(full(Kind.TASK, day(17), null, null, null, false, null).pastCopy(TODAY));
     }
 }

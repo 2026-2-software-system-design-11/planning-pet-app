@@ -128,6 +128,13 @@ public final class Task {
         return period() && !done && dueDate.isBefore(today);
     }
 
+    /**
+     * 지난 반복 사본인가(D-69): 끝내지 않은 할 일 반복 사본이고 날짜가 오늘보다 앞이다. 놓친 습관 날은 밀린 일이 아니다.
+     */
+    public boolean pastCopy(LocalDate today) {
+        return kind == Kind.TASK && seriesId != null && !done && date.isBefore(today);
+    }
+
     /** 끝낸 날. doneDay가 없으면(끝낸 채로 만든 값) 날짜다. */
     private LocalDate doneOn() {
         return doneDay != null ? doneDay : date;
