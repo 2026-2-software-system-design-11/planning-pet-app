@@ -34,6 +34,26 @@ class TaskBookListTest {
         return put(kind, title, date, minute, 30, null, null, null);
     }
 
+    /** 첫날 from, 마감 due인 기간 할 일 "P"를 date의 minute에 정해 둔 것. minute이 null이면 시각을 정하지 않았다. */
+    private Task plan(LocalDate from, LocalDate due, LocalDate date, Integer minute) {
+        return put(Kind.TASK, "P", date, minute, 30, from, due, null);
+    }
+
+    /** 11월 from일부터 to일까지 날마다 일정이 든 묶음(마감, 시각, 없음, 기간). 아무 묶음에도 없으면 "-". */
+    private String spots(int from, int to) {
+        List<String> names = List.of("마감", "시각", "없음", "기간");
+        StringBuilder b = new StringBuilder();
+        for (int d = from; d <= to; d++) {
+            List<List<String>> gs = groups(day(11, d));
+            int i = 0;
+            while (i < 4 && gs.get(i).isEmpty()) {
+                i++;
+            }
+            b.append(b.isEmpty() ? "" : " ").append(d).append(i < 4 ? names.get(i) : "-");
+        }
+        return b.toString();
+    }
+
     /** date의 그날 목록을 마감, 시각, 시각 없음, 기간 묶음 순의 제목 목록으로. */
     private List<List<String>> groups(LocalDate date) {
         DayPlan p = new TaskBook(tasks, () -> 0, () -> today).dayPlan(date);
@@ -70,5 +90,85 @@ class TaskBookListTest {
         assertTrue(book.dayPlan(day(11, 10)).isEmpty());
         assertEquals(today, book.dayPlan(today).date());
         assertFalse(book.dayPlan(today).isEmpty());
+    }
+
+    @Test
+    void T_LIST_5_missedPlan() {
+        plan(day(11, 16), day(11, 22), day(11, 17), 9 * 60);
+        assertEquals("17- 18기간 19기간 20기간 21기간 22마감", spots(17, 22));
+        today = day(11, 23);
+        assertEquals("17- 18- 19- 20- 21- 22마감", spots(17, 22));
+        today = day(11, 18);
+        tasks.clear();
+        plan(day(11, 16), day(11, 22), today, 14 * 60);
+        assertEquals("17- 18시각 19- 20- 21- 22-", spots(17, 22));
+    }
+
+    @Test
+    void T_LIST_6_plannedTodayCounts() {
+        put(Kind.TASK, "과제", today, null, 30, null, null, today);
+        put(Kind.TASK, "빨래", today, null);
+        plan(day(11, 16), day(11, 22), day(11, 16), null);
+        assertEquals(g(List.of(), List.of(), List.of("과제", "빨래"), List.of("P")), groups(today));
+        tasks.remove(2);
+        plan(day(11, 16), day(11, 22), today, 14 * 60);
+        assertEquals(g(List.of(), List.of("P"), List.of("과제", "빨래"), List.of()), groups(today));
+    }
+
+    @Test
+    void T_LIST_7_afterMidnightLast() {
+        today = day(11, 20);
+        put(Kind.TASK, "A", today, 23 * 60 + 40);
+        put(Kind.TASK, "B", today, 8 * 60, 60, null, null, null);
+        put(Kind.TASK, "C", today, null);
+        put(Kind.TASK, "복습", today, Task.DAY + 90);
+        assertEquals(g(List.of(), List.of("B", "A", "복습"), List.of("C"), List.of()), groups(today));
+        assertTrue(new TaskBook(tasks, () -> 0, () -> today).dayPlan(day(11, 21)).isEmpty());
+    }
+
+    @Test
+    void E_LIST_2_plannedLaterThenDone() {
+        put(Kind.TASK, "P", day(11, 19), 10 * 60, 30, day(11, 16), day(11, 20), today);
+        assertEquals("18없음 19- 20-", spots(18, 20));
+    }
+
+    @Test
+    void E_LIST_3_pastDue() {
+        plan(day(11, 15), day(11, 17), day(11, 15), null);
+        assertEquals("15- 16- 17마감 18-", spots(15, 18));
+    }
+
+    @Test
+    void E_LIST_4_plannedOnDueDay() {
+        plan(day(11, 16), day(11, 20), day(11, 20), 10 * 60);
+        assertEquals("19- 20시각", spots(19, 20));
+    }
+
+    @Test
+    void E_LIST_5_midnightAndNextDay() {
+        put(Kind.TASK, "다음 날 00:00", today, Task.DAY);
+        put(Kind.TASK, "23:30", today, 23 * 60 + 30);
+        put(Kind.TASK, "00:00", today, 0);
+        put(Kind.TASK, "다음 날 03:55", today, Task.DAY + 235, 5, null, null, null);
+        assertEquals(List.of("00:00", "23:30", "다음 날 00:00", "다음 날 03:55"), groups(today).get(1));
+    }
+
+    @Test
+    void E_LIST_6_dueBeforeDate() {
+        plan(day(11, 20), day(11, 19), day(11, 20), null);
+        assertEquals("19- 20없음", spots(19, 20));
+    }
+
+    @Test
+    void E_LIST_7_missedPlanDueToday() {
+        plan(day(11, 16), day(11, 18), day(11, 17), 9 * 60);
+        assertEquals("17- 18마감", spots(17, 18));
+    }
+
+    @Test
+    void E_LIST_8_pastRepeatCopy() {
+        tasks.add(new Task("s", 1, Kind.TASK, "운동", day(11, 17), null, 30, "", false, Category.OTHER, "s", Repeat.DAILY,
+                null, null, false, null, 0, 0, null, null));
+        assertEquals(g(List.of(), List.of(), List.of("운동"), List.of()), groups(day(11, 17)));
     }
 }
