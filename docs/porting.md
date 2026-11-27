@@ -29,7 +29,7 @@
 | M6 | 일정 고치기와 지우기 | `TaskBook.update`, `clearTime`, `delete` | 4번(끌어 놓기 빼고), 5번 | [docs/porting/task-edit.md](porting/task-edit.md) |
 | M7 | 앱 데이터 | `AppData`(`copy`, `restore` 빼고), `PetState`, `Pose`, `Slot`, `WearId`, `ItemId`, `SampleLook` | 데이터 절 `AppData`, `PetState` | [docs/porting/app-data.md](porting/app-data.md) |
 | M8 | 저장 | `DataStore`, `SqliteDataStore`, `Schema`, `AppController.change`, `AppData.copy`, `restore` | 21번, 22번(프로토타입 기준 없음) | [docs/porting/store.md](porting/store.md) |
-| M9 | 보상 | `Rewards`, `Level`, `DailyProgress`, `Visits`, `Task.finish`, `unfinish` | 8~13번 | `docs/porting/rewards.md` |
+| M9 | 보상 | `Rewards`, `Level`, `DailyProgress`, `Visits`, `Task.finish`, `unfinish` | 8~13번 | [docs/porting/rewards.md](porting/rewards.md) |
 | M10 | 펫 말 | `PetTalk`, `Bubble` | 16번 | `docs/porting/pet-talk.md` |
 | M11 | 화면이 쓰는 일정 계산 | `DefaultDates`, `CalendarCell`, `TimetableLayout` | 14번, 19번, 26번 | `docs/porting/screen-calc.md` |
 | M12 | 자동 배치 | `AutoPlacer` | 18번 | `docs/porting/auto-place.md` |
@@ -110,3 +110,4 @@
 | M6 시각 고치기 창 | 고정 일정의 시각 빼기를 화면 밖 길로 부른다(화면에는 단추가 없다) | 시작 시각이 빠진 고정 일정이 된다 | 고정 일정은 시작 시각이 있어야 해서 바뀌지 않는다. 코드를 고침: `clearTime`이 아무것도 바꾸지 않는다 | 06 4번 T-EDIT-6, [task-edit.md](porting/task-edit.md) T-EDIT-6 |
 | M6 시각 고치기 창 | 일정관리 목록의 마감이 지난 기간 할 일이나 홈 지난 날 목록의 기간 할 일에서 시각 단추의 동작을 화면 밖 길로 부른다 | 지난 날의 그 시각으로 정해진다 | 창을 연 목록의 날이 오늘보다 앞이면 정하지 않고 이 함수가 막는다. 코드를 고침: `update`가 아무것도 바꾸지 않는다 | 06 4번, D-99, [task-edit.md](porting/task-edit.md) T-EDIT-42, E-EDIT-15 |
 | M7 앱 데이터 | 빈 폴더로 앱을 열어 반려동물 고르기 창에서 강아지를 고르고 바로 시작을 누른다 | 고르기 창 전에도 앱 데이터에 고양이 "나비"가 있고, 고르기 창이 펫 목록을 비우고 강아지를 넣는다 | 첫 실행은 빈 앱 데이터이고 고르기 창의 `choose`가 펫을 만들어 넣는다. 코드를 고침: 앱 데이터가 펫 없이 시작하고 그때 고른 펫은 `null`이다 | 07 seq-uc01, 06 30번, [app-data.md](porting/app-data.md) E-APP-4, 5 |
+| M9 보상 | 끝낸 할 일의 완료를 화면 밖 길로 다시 부른다(화면의 체크박스는 끝낸 일을 누르면 체크 풀기다) | 보상을 또 받는다. 10P, 경험치 10, 오늘 횟수 하나가 더 붙는다 | 이미 끝낸 일정이면 `IllegalStateException`. 코드를 고침: `complete`가 예외를 던지고 아무것도 바꾸지 않는다 | 06 8번 "오류", [rewards.md](porting/rewards.md) E-RWD-2 |
