@@ -1,11 +1,19 @@
 package planningpet.pet.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static planningpet.pet.model.Situation.ADOPTED;
+import static planningpet.pet.model.Situation.ATTENDED;
 import static planningpet.pet.model.Situation.ADDED;
 import static planningpet.pet.model.Situation.BRIEFING;
 import static planningpet.pet.model.Situation.COMPLETED;
 import static planningpet.pet.model.Situation.FIRST_RUN;
 import static planningpet.pet.model.Situation.OTHER_DATE;
+import static planningpet.pet.model.Situation.PET_ROOM;
+import static planningpet.pet.model.Situation.RENAMED;
+import static planningpet.pet.model.Situation.SAMPLES_CLEARED;
+import static planningpet.pet.model.Situation.SCHEDULE_HINT;
+import static planningpet.pet.model.Situation.SELECTED;
 import static planningpet.pet.model.Situation.UNCOMPLETED;
 import static planningpet.pet.model.Situation.USUAL;
 import static planningpet.pet.model.Situation.WEEKLY_ADDED;
@@ -29,6 +37,7 @@ import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Repeat;
 import planningpet.schedule.model.Task;
 import planningpet.schedule.model.TaskDraft;
+import planningpet.shop.model.ItemId;
 
 /** 06 16번과 docs/porting/pet-talk.md 2절. at은 시계("11-16"이면 10:00)와 일정, 고른 고양이(이름 petName)를 정한다. 날 32는 12-02다. */
 class PetTalkTest {
@@ -462,5 +471,52 @@ class PetTalkTest {
         Task first = repeat(Kind.TASK, "운동", LocalDate.of(2026, 12, 28), null, Repeat.weekly(DayOfWeek.FRIDAY),
                 LocalDate.of(2027, 1, 15));
         assertEquals("1월 1일(금)부터 금마다 넣었어요", say(WEEKLY_ADDED, first));
+    }
+
+    @Test
+    void T_TALK_13_adopted() {
+        at("11-16");
+        assertEquals("안녕, 나는 바둑이야. 이제 경험치는 내가 받을게!",
+                new PetTalk(data).say(ADOPTED, new PetState(PetKind.DOG, "바둑이")));
+    }
+
+    @Test
+    void E_TALK_27_renamedDigit() {
+        petName = "펫1";
+        at("11-16");
+        assertEquals("이제 내 이름은 펫1이야.", new PetTalk(data).say(RENAMED, data.activePet()));
+    }
+
+    @Test
+    void E_TALK_28_selected() {
+        at("11-16", task("가", 16), task("나", 16));
+        assertEquals("이제 경험치는 내가 받을게! 오늘 할 일 2개 남았어.", say(SELECTED));
+    }
+
+    @Test
+    void E_TALK_29_fixedLines() {
+        at("11-16");
+        assertEquals("출석했어! +20P|예시를 지웠어. 수업부터 넣어 볼까?|", say(ATTENDED) + "|" + say(SAMPLES_CLEARED) + "|"
+                + say(PET_ROOM));
+    }
+
+    @Test
+    void E_TALK_30_bought() {
+        at("11-16");
+        assertEquals("털실 공 고마워!", new PetTalk(data).say(Situation.BOUGHT, ItemId.YARN_BALL));
+    }
+
+    @Test
+    void E_TALK_31_scheduleHint() {
+        at("11-16");
+        assertEquals("이번 주 남은 날의 시각 없는 할 일이 3개 있어. 자동 배치를 눌러 볼래? 지금 자동 배치할 할 일은 없어.",
+                new PetTalk(data).say(SCHEDULE_HINT, 3) + " " + new PetTalk(data).say(SCHEDULE_HINT, 0));
+    }
+
+    @Test
+    void E_TALK_32_wrongArguments() {
+        at("11-16", task("가", 16));
+        assertThrows(IllegalArgumentException.class, () -> say(COMPLETED));
+        assertThrows(IllegalArgumentException.class, () -> say(BRIEFING, data.getBook().getTasks().get(0)));
     }
 }

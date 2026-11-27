@@ -19,5 +19,21 @@ public enum Situation {
     /** 홈에서 빠른 추가나 일정 입력 창으로 새 일정을 넣음(D-90). */
     ADDED,
     /** 요일 반복을 새로 넣음(D-75). */
-    WEEKLY_ADDED
+    WEEKLY_ADDED,
+    /** 출석. */
+    ATTENDED,
+    /** 예시 일정을 지움(D-74). */
+    SAMPLES_CLEARED,
+    /** 펫을 데려옴(D-62). */
+    ADOPTED,
+    /** 고른 펫을 바꿈(D-62). */
+    SELECTED,
+    /** 펫 이름을 바꿈(D-62). */
+    RENAMED,
+    /** 아이템을 삼(D-56). */
+    BOUGHT,
+    /** 나의 방의 고른 펫 말풍선, 평소(D-56). */
+    PET_ROOM,
+    /** 일정관리를 열거나 주를 옮김(D-39, D-44). */
+    SCHEDULE_HINT
 }

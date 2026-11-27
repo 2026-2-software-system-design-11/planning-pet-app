@@ -12,6 +12,7 @@ import planningpet.reward.model.RewardResult;
 import planningpet.schedule.model.DayPlan;
 import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Task;
+import planningpet.shop.model.ItemId;
 
 /** 펫 말풍선의 문장(06 16번). 무엇을 말할지는 부르는 controller가 고르고, 이 클래스는 그 상황의 문장을 만든다. */
 public final class PetTalk {
@@ -28,6 +29,10 @@ public final class PetTalk {
             case WELCOME_BACK -> welcomeBack();
             case BRIEFING -> briefing();
             case USUAL -> usual();
+            case ATTENDED -> "출석했어! +20P";
+            case SAMPLES_CLEARED -> "예시를 지웠어. 수업부터 넣어 볼까?";
+            case SELECTED -> "이제 경험치는 내가 받을게! " + usual();
+            case PET_ROOM -> ""; // D-56: 글 없이 하트 하나
             default -> throw new IllegalArgumentException("인자가 더 필요한 상황: " + situation);
         };
     }
@@ -105,6 +110,27 @@ public final class PetTalk {
                 : day.getMonthValue() + "월 ";
         return month + day.getDayOfMonth() + "일(" + "월화수목금토일".charAt(day.getDayOfWeek().getValue() - 1) + ")부터 "
                 + first.getRepeat().text(data.getWeekStart()) + "마다 넣었어요";
+    }
+
+    /** ADOPTED와 RENAMED: 그 펫이 제 이름으로 말한다(D-62). */
+    public String say(Situation situation, PetState pet) {
+        require(situation, Situation.ADOPTED, Situation.RENAMED);
+        String name = pet.getName() + Words.iya(pet.getName());
+        return situation == Situation.ADOPTED ? "안녕, 나는 " + name + ". 이제 경험치는 내가 받을게!"
+                : "이제 내 이름은 " + name + ".";
+    }
+
+    /** BOUGHT: 산 아이템에 고마워한다(D-56). */
+    public String say(Situation situation, ItemId item) {
+        require(situation, Situation.BOUGHT);
+        return item.label() + " 고마워!";
+    }
+
+    /** SCHEDULE_HINT: targets는 06 18번 자동 배치의 대상 수다(D-44). */
+    public String say(Situation situation, int targets) {
+        require(situation, Situation.SCHEDULE_HINT);
+        return targets > 0 ? "이번 주 남은 날의 시각 없는 할 일이 " + targets + "개 있어. 자동 배치를 눌러 볼래?"
+                : "지금 자동 배치할 할 일은 없어.";
     }
 
     private static void require(Situation given, Situation... allowed) {
