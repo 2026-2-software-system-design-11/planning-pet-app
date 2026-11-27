@@ -318,6 +318,33 @@ class AppWindowTest {
     }
 
     @Test
+    void eWin16SubtitleWidth() {
+        String text = "나만의 공간을 꾸미고, 반려동물과 함께 시간을 보내요!";
+        String two = "<html>나만의 공간을 꾸미고,<br>반려동물과 함께 시간을 보내요!</html>";
+        AppWindow w = window();
+        w.addScreen("나의 방", text, new JPanel());
+        JLabel sub = (JLabel) at(w.root(), 1, 0, 0, 0, 1, 1);
+        int full = sub.getFontMetrics(Theme.font(13)).stringWidth(text) + 6 + 13;
+        int small = sub.getFontMetrics(Theme.font(12)).stringWidth(text);
+        Object[][] want = {{full, text, 13, true}, {full - 1, text, 12, false}, {small, text, 12, false},
+            {small - 1, two, 12, false}, {0, two, 12, false}, {full, text, 13, true}};
+        for (Object[] row : want) {
+            sub.setBounds(0, 0, (int) row[0], 20);
+            assertEquals(List.of(row[1], row[2], row[3]), List.of(sub.getText(), sub.getFont().getSize(), sub.getIcon() != null),
+                    "폭 " + row[0]);
+        }
+    }
+
+    @Test
+    void eWin17TwoLines() {
+        String[][] want = {{"", ""}, {"가", "가"}, {"가 나", "<html>가<br>나</html>"}, {"띄어쓰기없는부제", "띄어쓰기없는부제"},
+            {" 앞", "<html><br>앞</html>"}, {"뒤 ", "<html>뒤<br></html>"}, {"가 나 다 라", "<html>가 나<br>다 라</html>"}};
+        for (String[] row : want) {
+            assertEquals(row[1], AppWindow.twoLines(row[0]), row[0]);
+        }
+    }
+
+    @Test
     void eWin11WindowIcon() throws IOException {
         Snap.assertLooksLikePrototype("frame-icon", AppWindow.icon());
     }
