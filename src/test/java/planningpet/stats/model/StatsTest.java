@@ -32,6 +32,10 @@ class StatsTest {
 
     private Task task(int day, boolean done) { return put(Kind.TASK, d(day), Category.OTHER, done, null, null); }
 
+    private Task period(int from, int due, Integer doneDay) {
+        return put(Kind.TASK, d(from), Category.OTHER, doneDay != null, d(due), doneDay == null ? null : d(doneDay));
+    }
+
     /** 넣은 일정으로 시각 now의 앱 데이터를 만든다. */
     private void open(LocalDateTime now) {
         data = new AppData(Clock.fixed(now.toInstant(ZoneOffset.UTC), ZoneOffset.UTC), tasks, List.of());
@@ -60,5 +64,43 @@ class StatsTest {
     void T_STAT_6_noTasks() {
         open();
         assertEquals(new Rate(0, 0), stats.rate(week()));
+    }
+
+    @Test
+    void T_STAT_8_todayOnlyDone() {
+        task(17, true);
+        Task open = task(17, false);
+        open();
+        assertEquals(new Rate(1, 1), stats.rate(week()));
+        open.finish(d(17), 0, 0, null);
+        assertEquals(new Rate(2, 2), stats.rate(week()));
+    }
+
+    @Test
+    void T_STAT_9_periodTaskCountsOnDueDay() {
+        period(9, 16, null);
+        period(16, 22, null);
+        period(10, 20, 16);
+        open();
+        assertEquals(new Rate(1, 2), stats.rate(week()));
+        assertEquals(new Rate(0, 0), stats.rate(week().step(-1)));
+    }
+
+    @Test
+    void E_STAT_5_appDayEndsAt4() {
+        task(17, false);
+        open(LocalDateTime.of(2026, 11, 18, 3, 59));
+        assertEquals(new Rate(0, 0), stats.rate(week()));
+        open(LocalDateTime.of(2026, 11, 18, 4, 0));
+        assertEquals(new Rate(0, 1), stats.rate(week()));
+    }
+
+    @Test
+    void E_STAT_11_periodTaskDoneAfterDue() {
+        period(9, 12, 16);
+        period(9, 12, null);
+        open();
+        assertEquals(new Rate(1, 1), stats.rate(week()));
+        assertEquals(new Rate(0, 1), stats.rate(week().step(-1)));
     }
 }
