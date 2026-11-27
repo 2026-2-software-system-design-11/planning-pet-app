@@ -28,6 +28,10 @@ class TaskDraftTest {
         return draft(Kind.TASK, "과제", day(11, 16), null, null, 30, memo, null, null);
     }
 
+    private static TaskDraft timed(Kind kind, Integer minute, int minutes) {
+        return draft(kind, "과제", day(11, 16), null, minute, minutes, "", null, null);
+    }
+
     private static LocalDate day(int month, int d) {
         return LocalDate.of(2026, month, d);
     }
@@ -96,5 +100,79 @@ class TaskDraftTest {
     @Test
     void E_VAL_7_thousandEmojiMemo() {
         assertEquals(List.of("메모: 메모는 1000자까지예요"), errors(memo(EMOJI.repeat(1000))));
+    }
+
+    @Test
+    void T_VAL_4_taskWithoutStart() {
+        assertEquals(List.of(), errors(timed(Kind.TASK, null, 30)));
+    }
+
+    @Test
+    void T_VAL_5_fixedWithoutStart() {
+        assertEquals(List.of("시작 시각: 고정 일정은 시작 시각이 있어야 해요"), errors(timed(Kind.FIXED, null, 30)));
+    }
+
+    @Test
+    void T_VAL_6_offStep() {
+        assertEquals(List.of("시작 시각: 5분 단위로 정해 주세요"), errors(timed(Kind.TASK, 9 * 60 + 3, 30)));
+    }
+
+    @Test
+    void T_VAL_7_endsAtMidnight() {
+        assertEquals(List.of(), errors(timed(Kind.TASK, 23 * 60 + 30, 30)));
+    }
+
+    @Test
+    void T_VAL_8_endsAfterFour() {
+        assertEquals(List.of("시작 시각: 다음 날 04:00까지 끝나야 해요"), errors(timed(Kind.TASK, 27 * 60 + 30, 40)));
+        assertEquals(List.of(), errors(timed(Kind.TASK, 27 * 60 + 30, 30)));
+    }
+
+    @Test
+    void T_VAL_20_pastMidnight() {
+        assertEquals(List.of(), errors(timed(Kind.TASK, 23 * 60 + 30, 40)));
+        assertEquals(List.of(), errors(timed(Kind.TASK, 23 * 60 + 30, 90)));
+    }
+
+    @Test
+    void T_VAL_9_duration() {
+        for (int bad : new int[] {0, 27, 730}) {
+            assertEquals(List.of("걸리는 시간: 10분부터 720분까지, 5분 단위예요"), errors(timed(Kind.TASK, null, bad)));
+        }
+        for (int ok : new int[] {10, 75, 720}) {
+            assertEquals(List.of(), errors(timed(Kind.TASK, null, ok)));
+        }
+    }
+
+    @Test
+    void E_VAL_8_firstMinute() {
+        assertEquals(List.of(), errors(timed(Kind.TASK, 0, 30)));
+    }
+
+    @Test
+    void E_VAL_9_endsExactlyAtFour() {
+        assertEquals(List.of(), errors(timed(Kind.TASK, 27 * 60 + 50, 10)));
+    }
+
+    @Test
+    void E_VAL_10_latestStart() {
+        assertEquals(List.of("시작 시각: 다음 날 04:00까지 끝나야 해요"), errors(timed(Kind.TASK, 27 * 60 + 55, 10)));
+    }
+
+    @Test
+    void E_VAL_11_longestEndsAtFour() {
+        assertEquals(List.of(), errors(timed(Kind.TASK, 16 * 60, 720)));
+    }
+
+    @Test
+    void E_VAL_12_longestFiveLate() {
+        assertEquals(List.of("시작 시각: 다음 날 04:00까지 끝나야 해요"), errors(timed(Kind.TASK, 16 * 60 + 5, 720)));
+    }
+
+    @Test
+    void E_VAL_15_durationEdges() {
+        assertEquals(List.of("걸리는 시간: 10분부터 720분까지, 5분 단위예요"), errors(timed(Kind.TASK, null, 5)));
+        assertEquals(List.of(), errors(timed(Kind.TASK, null, 715)));
+        assertEquals(List.of("걸리는 시간: 10분부터 720분까지, 5분 단위예요"), errors(timed(Kind.TASK, null, -5)));
     }
 }
