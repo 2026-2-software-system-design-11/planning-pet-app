@@ -1,6 +1,6 @@
 # 단위 M4. 일정 넣기와 겹침
 
-[본 구현으로 옮기기](../porting.md) 1절 표의 단위 M4다. 07의 `TaskBook`을 `planningpet.schedule.model`에 두고 일정 넣기(`add`)와 겹침 묻기(`overlap`)를 옮긴다. 기준은 06 3번과 그 검사 줄, 프로토타입 `schedule/model/TaskBook`의 넣기와 겹침 부분이다. 겹칠 때 묻는 창은 S4 일정 입력 창 단위가 옮긴다.
+[본 구현으로 옮기기](../porting.md) 1절 표의 단위 M4다. 07의 `TaskBook`을 `planningpet.schedule.model`에 두고 일정 넣기(`add`)와 겹침 묻기(`overlap`)를 옮긴다. 기준은 06 3번과 그 검사 줄, 프로토타입 `schedule/model/TaskBook`의 넣기와 겹침 부분이다. 겹칠 때 묻는 창은 S4 일정 입력 창 단위가 옮긴다. PR 하나의 크기 한도(1절) 때문에 넣기(T-ADD, E-ADD 줄)는 #331, 겹침(T-OVL, E-OVL 줄)은 #332로 나눠 옮겼다.
 
 07 안에서 정한 것과 그 까닭:
 

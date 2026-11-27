@@ -19,10 +19,11 @@ import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 import org.junit.jupiter.api.Test;
 
-/** 06 3번과 docs/porting/task-add.md 2절의 경계. */
+/** 06 3번과 docs/porting/task-add.md 2절의 경계. 오늘은 11-18(수)이다. */
 class TaskBookTest {
+    private static final LocalDate TODAY = LocalDate.of(2026, 11, 18);
     private long next = 1;
-    private final TaskBook book = new TaskBook(List.of(), () -> next++);
+    private final TaskBook book = new TaskBook(List.of(), () -> next++, () -> TODAY);
 
     private static LocalDate day(int month, int d) {
         return LocalDate.of(2026, month, d);
@@ -201,5 +202,147 @@ class TaskBookTest {
                 LocalDate.of(2027, 3, 16), false, null, null, true);
         assertThrows(IllegalArgumentException.class, () -> book.add(d));
         assertEquals(List.of(List.of(), 1L), List.of(book.getTasks(), next));
+    }
+
+    /** title인 할 일이나 고정 일정 하나를 넣는다. minute은 앱 하루의 시작 분이다. */
+    private Task put(Kind kind, String title, LocalDate date, int minute, int minutes) {
+        return book.add(draft(kind, title, date, null, minute, minutes)).get(0);
+    }
+
+    /** 11-16에 새 할 일 "새 일"을 minute부터 minutes분 넣을 때의 겹침. */
+    private Overlap at(int minute, int minutes) {
+        return book.overlap(draft(Kind.TASK, "새 일", day(11, 16), null, minute, minutes), null);
+    }
+
+    @Test
+    void T_OVL_1_overlaps() {
+        Task essay = put(Kind.TASK, "자소서 초안", day(11, 16), 14 * 60, 60);
+        assertEquals(new Overlap(essay, 30, true), at(14 * 60 + 30, 60));
+    }
+
+    @Test
+    void T_OVL_2_noOverlap() {
+        put(Kind.TASK, "자소서 초안", day(11, 16), 14 * 60, 60);
+        assertEquals(Arrays.asList(null, null), Arrays.asList(at(15 * 60, 30), at(13 * 60, 60)));
+        assertNull(book.overlap(draft(Kind.TASK, "새 일", day(11, 16), null, null, 60), null));
+    }
+
+    @Test
+    void T_OVL_3_earliestStart() {
+        Task lab = put(Kind.FIXED, "실습", day(11, 16), 8 * 60, 480);
+        put(Kind.TASK, "과제", day(11, 16), 8 * 60 + 30, 30);
+        assertEquals(new Overlap(lab, 60, true), at(8 * 60, 60));
+    }
+
+    @Test
+    void T_OVL_4_repeatAndEdit() {
+        Task homework = put(Kind.TASK, "과제", day(11, 17), 18 * 60 + 30, 60);
+        Task report = put(Kind.TASK, "보고서", day(11, 16), 10 * 60, 30);
+        TaskDraft job = repeat(Kind.FIXED, day(11, 16), 18 * 60, 240, Repeat.weekly(TUESDAY), day(11, 30));
+        assertEquals(new Overlap(homework, 60, true), book.overlap(job, null));
+        Task jobOn17 = book.add(job).get(0);
+        assertNull(book.overlap(draft(Kind.TASK, "보고서", day(11, 16), null, 10 * 60 + 15, 30), report));
+        assertEquals(new Overlap(jobOn17, 60, true),
+                book.overlap(draft(Kind.TASK, "과제", day(11, 17), null, 19 * 60, 60), homework));
+    }
+
+    @Test
+    void E_OVL_6_sameStart() {
+        Task first = put(Kind.TASK, "먼저", day(11, 16), 10 * 60, 60);
+        put(Kind.TASK, "나중", day(11, 16), 10 * 60, 60);
+        assertEquals(new Overlap(first, 60, true), at(10 * 60, 60));
+    }
+
+    @Test
+    void E_OVL_7_inside() {
+        Task lab = put(Kind.FIXED, "실습", day(11, 16), 8 * 60, 480);
+        assertEquals(new Overlap(lab, 30, true), at(8 * 60 + 30, 30));
+    }
+
+    /** from부터 due까지인 기간 할 일 "계획"을 date 10:00, 60분에 정해 둔 것. done이면 date에 끝냈다. */
+    private static Task planned(LocalDate from, LocalDate due, LocalDate date, boolean done) {
+        return new Task("p", 1, Kind.TASK, "계획", date, LocalTime.of(10, 0), 60, "", false, Category.OTHER, null, null,
+                due, from, done, done ? date : null, 0, 0, null, null);
+    }
+
+    /** 일정 other 하나만 있을 때 date의 minute부터 60분인 새 할 일의 겹침. */
+    private static Overlap with(Task other, LocalDate date, int minute) {
+        TaskBook only = new TaskBook(List.of(other), () -> 2, () -> TODAY);
+        return only.overlap(draft(Kind.TASK, "새 일", date, null, minute, 60), null);
+    }
+
+    @Test
+    void E_OVL_1_periodDraft() {
+        put(Kind.TASK, "과제", TODAY, 10 * 60, 60);
+        assertNull(book.overlap(draft(Kind.TASK, "기간", TODAY, day(11, 22), 10 * 60, 60), null));
+    }
+
+    @Test
+    void E_OVL_2_doneTask() {
+        Task done = new Task("d", 1, Kind.TASK, "끝낸 일", TODAY, LocalTime.of(10, 0), 60, "", false, Category.OTHER, null,
+                null, null, null, true, TODAY, 0, 0, null, null);
+        assertEquals(new Overlap(done, 30, true), with(done, TODAY, 10 * 60 + 30));
+    }
+
+    @Test
+    void E_OVL_3_donePeriod() {
+        assertNull(with(planned(TODAY, day(11, 22), TODAY, true), TODAY, 10 * 60));
+    }
+
+    @Test
+    void E_OVL_4_missedPlan() {
+        assertNull(with(planned(day(11, 16), day(11, 22), day(11, 17), false), day(11, 17), 10 * 60));
+    }
+
+    @Test
+    void E_OVL_5_laterPlan() {
+        Task plan = planned(day(11, 16), day(11, 22), day(11, 19), false);
+        assertEquals(new Overlap(plan, 60, true), with(plan, day(11, 19), 10 * 60));
+    }
+
+    @Test
+    void E_OVL_10_editingRepeat() {
+        Task self = put(Kind.TASK, "자기", day(11, 16), 10 * 60, 60);
+        put(Kind.TASK, "목요 일", day(11, 19), 10 * 60, 60);
+        assertNull(book.overlap(repeat(Kind.TASK, day(11, 16), 10 * 60, 60, Repeat.DAILY, day(11, 22)), self));
+    }
+
+    /** date에 새 할 일 "새 일"을 minute부터 minutes분 넣을 때의 겹침. */
+    private Overlap on(LocalDate date, int minute, int minutes) {
+        return book.overlap(draft(Kind.TASK, "새 일", date, null, minute, minutes), null);
+    }
+
+    @Test
+    void T_OVL_5_realTime() {
+        Task meeting = put(Kind.TASK, "회의", day(11, 20), 23 * 60, 120);
+        Task review = put(Kind.TASK, "복습", day(11, 20), Task.DAY + 90, 30);
+        assertEquals(new Overlap(meeting, 30, false), on(day(11, 21), 30, 60));
+        assertEquals(new Overlap(review, 30, false), on(day(11, 21), 90, 30));
+        assertEquals(new Overlap(meeting, 30, true), on(day(11, 20), 23 * 60 + 30, 30));
+    }
+
+    @Test
+    void E_OVL_8_nextDayDawn() {
+        Task dawn = put(Kind.TASK, "새벽 일", day(11, 21), 0, 60);
+        assertEquals(new Overlap(dawn, 30, false), on(day(11, 20), Task.DAY + 30, 60));
+    }
+
+    @Test
+    void E_OVL_9_newYear() {
+        Task eve = put(Kind.TASK, "해넘이", day(12, 31), 23 * 60, 120);
+        assertEquals(new Overlap(eve, 30, false), on(LocalDate.of(2027, 1, 1), 30, 60));
+    }
+
+    @Test
+    void E_OVL_11_endsAtMidnight() {
+        put(Kind.TASK, "앞날 밤", day(11, 17), 23 * 60, 60);
+        assertNull(on(TODAY, 0, 30));
+    }
+
+    @Test
+    void E_OVL_12_earlierRealStart() {
+        put(Kind.TASK, "같은 날", day(11, 21), 60, 120);
+        Task night = put(Kind.TASK, "앞날 밤", day(11, 20), 23 * 60, 180);
+        assertEquals(new Overlap(night, 30, false), on(day(11, 21), 90, 30));
     }
 }
