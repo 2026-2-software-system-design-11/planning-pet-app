@@ -52,7 +52,7 @@ else 그날 처음이다
   AppController -> PetTalk : say(BRIEFING, ...)
   note right of PetTalk : 오늘 남은 일, 어제 못 끝낸 일, 마감.\n5a 오늘 할 일이 없으면 기간 할 일이나\n"아래 칸에 하나 적어 볼까?".\n5c 8일 이상 만이면 WELCOME_BACK.\n2a 첫 실행이면 FIRST_RUN
   AppController -> AppController : say(line, today)
-  ref over AppController, AppData : 저장과 되돌리기
+  ref over AppController, AppData : 저장과 되돌리기. 4a 저장 실패면 연속 접속 일수를 되돌린다
 end
 opt 5d 창을 켜 둔 채 새벽 4시가 지나 앱 날짜가 바뀌었다
   Tray -> DayWatcher : tick(now)

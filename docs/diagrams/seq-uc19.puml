@@ -16,7 +16,7 @@ else 기본 흐름
   opt 1a 설치 뒤 처음 닫았다(trayNoticeShown이 false)
     AppController -> AppController : change(what, edit)
     note right of AppController : edit 안에서 trayNoticeShown을 true로
-    ref over AppController, AppData : 저장과 되돌리기
+    ref over AppController, AppData : 저장과 되돌리기. 1c 저장 실패면 trayNoticeShown을 되돌린다
     Tray -> 운영체제 : 알림 "플래닝펫은 트레이에서 계속 알림을 보내요"
   end
   alt 기본 흐름
