@@ -15,13 +15,15 @@ public final class RoundField extends JTextField {
     private final Icons.Kind kind;
     private final String placeholder;
     private boolean over;
+    /** 0이 아니면 칸 안 오른쪽에 "글자 수 / count"를 보인다. */
+    private int count;
 
     public RoundField(Icons.Kind kind, String placeholder) {
         this.kind = kind;
         this.placeholder = placeholder;
         setOpaque(false);
         setFont(Theme.font(14));
-        setBorder(BorderFactory.createEmptyBorder(8, 40, 8, 16));
+        setBorder(BorderFactory.createEmptyBorder(8, kind == null ? 18 : 40, 8, 16));
         addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseEntered(java.awt.event.MouseEvent e) {
@@ -48,6 +50,32 @@ public final class RoundField extends JTextField {
         });
     }
 
+    /** 칸 안 오른쪽에 친 글자 수와 최대("3 / 10")를 보인다(반려동물 이름 칸). 글을 칠 때마다 다시 센다. */
+    public RoundField count(int max) {
+        count = max;
+        java.awt.Insets in = getBorder().getBorderInsets(this);
+        setBorder(BorderFactory.createEmptyBorder(in.top, in.left, in.bottom, 16 + 52));
+        getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            public void insertUpdate(javax.swing.event.DocumentEvent e) {
+                repaint();
+            }
+
+            public void removeUpdate(javax.swing.event.DocumentEvent e) {
+                repaint();
+            }
+
+            public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                repaint();
+            }
+        });
+        return this;
+    }
+
+    /** 칸 안 글자 수 표시. 세지 않는 칸이면 빈 글이다. */
+    public String countText() {
+        return count == 0 ? "" : getText().length() + " / " + count;
+    }
+
     @Override
     public Dimension getPreferredSize() {
         Dimension d = super.getPreferredSize();
@@ -69,7 +97,16 @@ public final class RoundField extends JTextField {
         g.setStroke(new java.awt.BasicStroke(focus ? 2f : 1f));
         g.drawRoundRect(focus ? 1 : 0, focus ? 1 : 0, w - (focus ? 2 : 0), h - (focus ? 2 : 0), h, h);
         int s = 18;
-        Icons.draw(g, kind, 15, (h - s) / 2, s, focus ? Theme.ICON : Theme.INK_SUB);
+        if (kind != null) {
+            Icons.draw(g, kind, 15, (h - s) / 2, s, focus ? Theme.ICON : Theme.INK_SUB);
+        }
+        if (count > 0) {
+            g.setColor(Theme.INK_SUB);
+            g.setFont(Theme.font(13));
+            java.awt.FontMetrics cm = g.getFontMetrics();
+            String c = countText();
+            g.drawString(c, w - 16 - cm.stringWidth(c), (h + cm.getAscent() - cm.getDescent()) / 2);
+        }
         if (getText().isEmpty() && placeholder != null) {
             g.setColor(Theme.INK_DIM);
             g.setFont(getFont());
