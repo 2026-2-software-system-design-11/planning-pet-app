@@ -1,5 +1,6 @@
 package planningpet.app.store;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -8,11 +9,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import planningpet.app.model.AppData;
@@ -140,6 +145,40 @@ class SqliteDataStoreTest {
         Files.delete(blocked);
         store.save(data);
         assertEquals(Rows.of(data).values().stream().mapToInt(t -> t.size()).sum(), store.written());
+    }
+
+    @Test
+    void T_STORE_3_notSqliteFileUntouched() throws IOException {
+        Files.writeString(file(), "플래닝펫 파일이 아닌 글");
+        assertUnreadable(LoadResult.Reason.NOT_DATA_FILE);
+    }
+
+    @Test
+    void T_STORE_4_newerVersionUntouched() throws Exception {
+        store().save(Filled.data(CLOCK));
+        sql("PRAGMA user_version = " + (Schema.VERSION + 1));
+        assertUnreadable(LoadResult.Reason.NEWER_VERSION);
+    }
+
+    private Path file() {
+        return folder.resolve(SqliteDataStore.FILE);
+    }
+
+    /** 데이터 파일에 sql 한 줄을 쓴다. */
+    private void sql(String line) throws SQLException {
+        try (Connection db = DriverManager.getConnection("jdbc:sqlite:" + file())) {
+            db.createStatement().execute(line);
+        }
+    }
+
+    /** load가 그 이유로 UNREADABLE이고 폴더의 파일과 바이트가 그대로다. */
+    private void assertUnreadable(LoadResult.Reason reason) throws IOException {
+        byte[] before = Files.readAllBytes(file());
+        assertEquals(LoadResult.unreadable(reason), store().load());
+        assertArrayEquals(before, Files.readAllBytes(file()));
+        try (Stream<Path> files = Files.list(folder)) {
+            assertEquals(List.of(file()), files.toList());
+        }
     }
 
     private static void add(AppData data, String title, String memo) {
