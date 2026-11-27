@@ -5,7 +5,9 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.LongSupplier;
 import java.util.function.Supplier;
@@ -205,6 +207,29 @@ public final class TaskBook {
     /** 지운 일정 가운데 보상을 받았던 것. 바꿀 수 없는 목록이다. */
     public List<Task> getDeletedRewarded() {
         return Collections.unmodifiableList(deletedRewarded);
+    }
+
+    /**
+     * 06 22번의 되돌리기와 사본(07 AppData.copy, restore). 일정과 지운 보상 기록을 from의 값으로 바꾼다. id가 같은 일정이 이 목록이나
+     * 지운 보상 기록에 있으면 그 객체에 값만 넣어, 창이 잡아 둔 일정이 되돌린 뒤에도 목록의 일정이다. 없으면 사본을 넣는다.
+     */
+    public void restore(TaskBook from) {
+        Map<String, Task> mine = new HashMap<>();
+        tasks.forEach(t -> mine.put(t.getId(), t));
+        deletedRewarded.forEach(t -> mine.put(t.getId(), t));
+        tasks.clear();
+        deletedRewarded.clear();
+        from.tasks.forEach(t -> tasks.add(take(mine, t)));
+        from.deletedRewarded.forEach(t -> deletedRewarded.add(take(mine, t)));
+    }
+
+    private static Task take(Map<String, Task> mine, Task from) {
+        Task same = mine.get(from.getId());
+        if (same == null) {
+            return from.copy();
+        }
+        same.setFrom(from);
+        return same;
     }
 
     /** 보상 기록: 지운 일정 가운데 보상을 받았던 것, 이어서 남은 일정 가운데 보상을 받은 것(친밀도 27번, 통계 포인트 29번). */
