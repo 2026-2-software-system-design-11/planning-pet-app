@@ -113,12 +113,19 @@ public final class AppController {
                 : ChronoUnit.DAYS.between(before, today) >= 8 ? Situation.WELCOME_BACK : Situation.BRIEFING;
         Supplier<String> how = situation == Situation.FIRST_RUN ? null : talk.recount(situation);
         String line = how != null ? how.get() : talk.say(situation);
-        change("연속 접속", () -> {
-            new Visits(data).recordOpen(today);
+        Runnable speak = () -> {
             bubble.say(line);
             if (how != null) {
                 bubble.follow(today, how);
             }
+        };
+        change("연속 접속", () -> {
+            new Visits(data).recordOpen(today);
+            speak.run();
         });
+        if (!today.equals(data.getLastOpenDay())) { // 저장에 실패해 되돌렸어도 브리핑은 보인다(02 UC-01 4a).
+            speak.run();
+            data.changed();
+        }
     }
 }

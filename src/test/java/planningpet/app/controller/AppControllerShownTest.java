@@ -3,10 +3,13 @@ package planningpet.app.controller;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
+import java.io.IOException;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import planningpet.app.model.AppData;
 import planningpet.app.model.DataStore;
@@ -24,6 +27,8 @@ class AppControllerShownTest {
     private AppController app;
     private int saves;
     private int heard;
+    private boolean failing;
+    private final List<String> errors = new ArrayList<>();
 
     void at(int day, int hour, LocalDate last, int streak) {
         ZoneId zone = ZoneId.systemDefault();
@@ -35,8 +40,13 @@ class AppControllerShownTest {
         data.onChange(() -> heard++);
         app = new AppController(data, new DataStore() {
             public LoadResult load() { return LoadResult.firstRun(); }
-            public void save(AppData d) { saves++; }
-        }, e -> { });
+            public void save(AppData d) throws IOException {
+                if (failing) {
+                    throw new IOException("디스크가 찼다");
+                }
+                saves++;
+            }
+        }, errors::add);
     }
 
     static LocalDate d(int day) { return LocalDate.of(2026, 11, day); }
@@ -137,5 +147,14 @@ class AppControllerShownTest {
         shown("오늘 할 일 1개 남았어. 내일 '빨래'가 있어.", d(16), 6);
         app.change("일정 삭제", () -> data.getBook().delete(data.getBook().getTasks().get(0), DeleteScope.ONLY_THIS));
         assertEquals("오늘은 할 일이 없어. 내일 '빨래'가 있어.", app.getBubble().getLine());
+    }
+
+    @Test
+    void E_BRF_5_saveFailsKeepsBrief() {
+        at(16, 10, d(15), 5);
+        failing = true;
+        shown("오늘은 할 일이 없어. 아래 칸에 하나 적어 볼까?", d(15), 5);
+        assertEquals(List.of("연속 접속 저장에 실패해서 바꾸기 전으로 돌렸어요."), errors);
+        assertEquals(2, heard);
     }
 }
