@@ -108,6 +108,29 @@ public final class TaskBook {
         return new DayPlan(date, due, timed, untimed, period);
     }
 
+    /**
+     * 06 6번의 시각 글 "10:00~11:00". 자정에 끝나면 "24:00", 넘으면 "23:30~01:00(다음 날)", 자정 넘어 시작하면
+     * "01:30~02:00(다음 날)"이다(D-77).
+     */
+    public String timeText(Task task) {
+        return span(task.startMinute(), task.endMinute());
+    }
+
+    /** 06 6번의 마감 글 "~11/22까지". 마감이 없으면 null. */
+    public String dueText(Task task) {
+        LocalDate due = task.getDueDate();
+        return due == null ? null : "~" + due.getMonthValue() + "/" + due.getDayOfMonth() + "까지";
+    }
+
+    /** 앱 하루의 분 start부터 end까지의 시각 글(timeText의 꼴). 겹침 물음 글(Overlap)도 쓴다. */
+    static String span(int start, int end) {
+        if (start >= Task.DAY) {
+            return Task.hhmm(start) + "~" + Task.hhmm(end) + "(다음 날)";
+        }
+        String last = end == Task.DAY ? "24:00" : Task.hhmm(end) + (end > Task.DAY ? "(다음 날)" : "");
+        return Task.hhmm(start) + "~" + last;
+    }
+
     /** 그날 시간표에 놓인 일정. 끝낸 기간 할 일(D-66)과 못 끝낸 계획(D-67)은 빠진다. */
     private List<Task> timedOn(LocalDate date) {
         LocalDate now = today.get();

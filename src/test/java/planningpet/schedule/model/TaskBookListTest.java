@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -170,5 +171,39 @@ class TaskBookListTest {
         tasks.add(new Task("s", 1, Kind.TASK, "운동", day(11, 17), null, 30, "", false, Category.OTHER, "s", Repeat.DAILY,
                 null, null, false, null, 0, 0, null, null));
         assertEquals(g(List.of(), List.of(), List.of("운동"), List.of()), groups(day(11, 17)));
+    }
+
+    /** 그날 시작 minute분부터 minutes분인 할 일의 시각 글. */
+    private String time(int minute, int minutes) {
+        return new TaskBook(tasks, () -> 0, () -> today).timeText(put(Kind.TASK, "일", today, minute, minutes, null, null, null));
+    }
+
+    @Test
+    void T_LIST_2_timeText() {
+        assertEquals(List.of("09:00~09:30", "23:30~24:00", "23:30~01:00(다음 날)", "01:30~02:00(다음 날)"),
+                List.of(time(9 * 60, 30), time(23 * 60 + 30, 30), time(23 * 60 + 30, 90), time(Task.DAY + 90, 30)));
+    }
+
+    @Test
+    void T_LIST_4_periodEveryDay() {
+        today = day(11, 16);
+        Task p = plan(today, day(11, 18), today, null);
+        assertEquals("15- 16기간 17기간 18마감 19-", spots(15, 19));
+        assertEquals("~11/18까지", new TaskBook(tasks, () -> 0, () -> today).dueText(p));
+    }
+
+    @Test
+    void E_LIST_9_dueTextYearAndNone() {
+        Task p = plan(day(12, 28), LocalDate.of(2027, 1, 5), day(12, 28), null);
+        Task plain = put(Kind.TASK, "일", today, null);
+        TaskBook book = new TaskBook(tasks, () -> 0, () -> today);
+        assertEquals(Arrays.asList("~1/5까지", null), Arrays.asList(book.dueText(p), book.dueText(plain)));
+    }
+
+    @Test
+    void E_LIST_10_timeTextEnds() {
+        assertEquals(List.of("00:00~00:30", "22:00~04:00(다음 날)", "03:00~04:00(다음 날)", "23:00~24:00",
+                "03:55~04:00(다음 날)"), List.of(time(0, 30), time(22 * 60, 360), time(Task.DAY + 180, 60),
+                time(23 * 60, 60), time(Task.DAY + 235, 5)));
     }
 }
