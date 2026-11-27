@@ -1,7 +1,10 @@
 package planningpet.schedule.model;
 
+import static java.time.DayOfWeek.MONDAY;
+import static java.time.DayOfWeek.SUNDAY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
@@ -15,6 +18,10 @@ class DefaultDatesTest {
     /** defaultStart(date, now)의 분. now는 "11-16T15:23"처럼 적고 해가 다르면 "2027-01-01T00:30"이다. */
     private static int start(String date, String now) {
         return DefaultDates.defaultStart(d(date), LocalDateTime.parse(now.startsWith("20") ? now : "2026-" + now));
+    }
+
+    private static void due(String date, DayOfWeek weekStart, String expected) {
+        assertEquals(d(expected), DefaultDates.dueFor(d(date), weekStart));
     }
 
     private static void schedule(String shown, String today, String expected) {
@@ -142,5 +149,48 @@ class DefaultDatesTest {
     @Test
     void E_DEF_13_nightAcrossYear() {
         assertEquals(1470, start("12-31", "2027-01-01T00:30"));
+    }
+
+    @Test
+    void T_DEF_5_fixedRepeatEnd() {
+        assertEquals(d("2027-03-01"), DefaultDates.repeatEndFor(Kind.FIXED, d("11-16")));
+    }
+
+    @Test
+    void T_DEF_10_taskRepeatEnd() {
+        assertEquals(d("12-14"), DefaultDates.repeatEndFor(Kind.TASK, d("11-16")));
+    }
+
+    @Test
+    void E_DEF_14_repeatEndAcrossMonthAndYear() {
+        assertEquals(d("2027-01-28"), DefaultDates.repeatEndFor(Kind.TASK, d("12-31")));
+        assertEquals(d("06-13"), DefaultDates.repeatEndFor(Kind.FIXED, d("02-28")));
+    }
+
+    @Test
+    void T_DEF_11_dueMondayStart() {
+        due("11-18", MONDAY, "11-22");
+        due("11-22", MONDAY, "11-29");
+    }
+
+    @Test
+    void T_DEF_15_dueSundayStart() {
+        due("11-18", SUNDAY, "11-21");
+        due("11-21", SUNDAY, "11-28");
+        due("11-22", SUNDAY, "11-28");
+        schedule("11-22", "11-18", "11-22");
+    }
+
+    @Test
+    void E_DEF_15_dueFromFirstDay() {
+        due("11-16", MONDAY, "11-22");
+        due("11-15", SUNDAY, "11-21");
+    }
+
+    @Test
+    void E_DEF_16_dueAcrossMonthAndYear() {
+        due("12-31", MONDAY, "2027-01-03");
+        due("11-29", MONDAY, "12-06");
+        due("2027-01-02", SUNDAY, "2027-01-09");
     }
 }

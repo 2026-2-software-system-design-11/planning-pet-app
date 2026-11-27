@@ -1,7 +1,9 @@
 package planningpet.schedule.model;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.TemporalAdjusters;
 import planningpet.common.model.AppDay;
 
 /** 06 14번. 일정 입력 창과 빠른 추가, 시각 고치기 창에 미리 채울 값. */
@@ -38,5 +40,18 @@ public final class DefaultDates {
             return Math.min(Task.DAY + m, LAST_START);
         }
         return 9 * 60;
+    }
+
+    /** 반복 끝 날짜의 기본값(D-17, D-64). 고정 일정은 시작 날짜에 15주, 할 일은 4주를 더한다. */
+    public static LocalDate repeatEndFor(Kind kind, LocalDate start) {
+        return start.plusWeeks(kind == Kind.FIXED ? 15 : 4);
+    }
+
+    /**
+     * 마감의 기본값(D-65, D-73, D-91). 그 날짜가 든 주(weekStart부터 7일)의 마지막 날이고, 날짜가 그 마지막 날이면 다음 주 마지막
+     * 날이다. 월요일 시작이면 일요일, 일요일 시작이면 토요일이다.
+     */
+    public static LocalDate dueFor(LocalDate date, DayOfWeek weekStart) {
+        return date.with(TemporalAdjusters.next(weekStart.minus(1)));
     }
 }
