@@ -6,8 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.awt.Component;
-import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Insets;
@@ -56,20 +54,8 @@ class StatCardTest {
         return v;
     }
 
-    /** 창 없이는 배치가 돌지 않아 자식까지 배치한 뒤 기준 그림과 맞춘다. */
     private static void looksLikePrototype(String name, JComponent c, int w, int h) throws IOException {
-        c.setSize(w, h);
-        layOut(c);
-        Snap.assertLooksLikePrototype(name, c, w, h);
-    }
-
-    private static void layOut(Component c) {
-        if (c instanceof Container k) {
-            k.doLayout();
-            for (Component child : k.getComponents()) {
-                layOut(child);
-            }
-        }
+        Snap.assertLaidOutLooksLikePrototype(name, c, w, h);
     }
 
     @Test
