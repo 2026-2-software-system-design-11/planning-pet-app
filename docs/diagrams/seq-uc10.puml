@@ -14,7 +14,7 @@ note right of ScheduleScreen : 오늘이 든 주.\n설정의 한 주 시작부�
 TimetablePanel -> TimetableLayout : top(monday, now)
 loop 보이는 주의 날마다
   loop 일정마다
-    TimetablePanel -> Task : onTimetable(day)
+    TimetablePanel -> Task : onTimetable(today)
   end
   TimetablePanel -> TimetableLayout : of(dayTasks)
 end
