@@ -1,5 +1,6 @@
 package planningpet.pet.view;
 
+import planningpet.common.view.Icons;
 import planningpet.common.view.Images;
 import planningpet.common.view.Theme;
 import java.awt.BasicStroke;
@@ -14,7 +15,7 @@ import java.awt.image.BufferedImage;
 
 /**
  * 반려동물 고르기 창의 그림 도구(2026-11-23 고르기 예시, 디자인 시스템 10절 "고르기 창").
- * 하늘 언덕 장면, 데이지, 반짝이 별, 풀 덤불을 도형으로 그린다. 도형이라 2배 화면에서도 흐려지지 않는다.
+ * 하늘 언덕 장면, 리본, 데이지, 반짝이 별, 풀 덤불을 도형으로 그린다. 도형이라 2배 화면에서도 흐려지지 않는다.
  */
 final class PickScene {
     private PickScene() {
@@ -172,6 +173,62 @@ final class PickScene {
         s.closePath();
         g.setColor(Color.WHITE);
         g.fill(s);
+    }
+
+    /**
+     * 리본: 가운데 띠(x, y, w, h)가 위로 살짝 굽고, 양 끝에서 꼬리가 뒤로 접혀 아래로 나온다.
+     * 띠 아래 옅은 그림자, 띠 위 가장자리에 밝은 선.
+     */
+    static void ribbon(Graphics2D g, double x, double y, double w, double h) {
+        double bend = h * 0.16;
+        double tail = h * 0.95;
+        double drop = h * 0.32;
+        for (int side = 0; side < 2; side++) {
+            double dir = side == 0 ? -1 : 1;
+            double ex = side == 0 ? x : x + w;
+            // 꼬리: 띠 끝 뒤에서 바깥으로 뻗고 끝이 V로 파였다.
+            Path2D t = new Path2D.Double();
+            t.moveTo(ex - dir * h * 0.35, y + drop);
+            t.lineTo(ex + dir * tail, y + drop - h * 0.02);
+            t.lineTo(ex + dir * tail * 0.72, y + drop + h * 0.50);
+            t.lineTo(ex + dir * tail, y + drop + h * 1.0);
+            t.lineTo(ex - dir * h * 0.35, y + drop + h * 1.0);
+            t.closePath();
+            g.setColor(Theme.RIBBON_TAIL);
+            g.fill(t);
+            // 접힌 안쪽: 띠 끝 아래의 진한 삼각형.
+            Path2D fold = new Path2D.Double();
+            fold.moveTo(ex, y + h - bend * 0.2);
+            fold.lineTo(ex - dir * h * 0.35, y + drop + h * 1.0);
+            fold.lineTo(ex - dir * h * 0.35, y + h - bend * 0.2);
+            fold.closePath();
+            g.setColor(Theme.RIBBON_DEEP.darker());
+            g.fill(fold);
+        }
+        Path2D band = new Path2D.Double();
+        band.moveTo(x, y + bend);
+        band.quadTo(x + w / 2, y - bend, x + w, y + bend);
+        band.lineTo(x + w, y + h + bend * 0.2);
+        band.quadTo(x + w / 2, y + h - bend * 1.6, x, y + h + bend * 0.2);
+        band.closePath();
+        g.setColor(alpha(Theme.RIBBON_DEEP, 40));
+        g.fill(AffineTransform.getTranslateInstance(0, h * 0.10).createTransformedShape(band));
+        g.setPaint(new GradientPaint(0, (float) y, Theme.RIBBON_TOP, 0, (float) (y + h), Theme.RIBBON_DEEP));
+        g.fill(band);
+        Path2D shine = new Path2D.Double();
+        shine.moveTo(x + h * 0.3, y + bend + 2);
+        shine.quadTo(x + w / 2, y - bend + 2, x + w - h * 0.3, y + bend + 2);
+        g.setColor(alpha(Color.WHITE, 90));
+        g.setStroke(new BasicStroke((float) Math.max(1, h / 22), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        g.draw(shine);
+    }
+
+    /** 하늘의 발자국 장식. */
+    static void skyPaw(Graphics2D g0, double cx, double cy, int size, double turn) {
+        Graphics2D g = (Graphics2D) g0.create();
+        g.rotate(turn, cx, cy);
+        Icons.draw(g, Icons.Kind.PAW, (int) (cx - size / 2.0), (int) (cy - size / 2.0), size, Theme.SKY_PAW);
+        g.dispose();
     }
 
     static Color alpha(Color c, int a) {
