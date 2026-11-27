@@ -245,7 +245,7 @@ class PetTalkTest {
     @Test
     void E_TALK_10_plannedPeriodTomorrow() {
         at("11-18", planned("E사 지원서", 16, 25, 19, 10));
-        assertEquals("오늘은 할 일이 없어. 내일 'E사 지원서'가 있어.", say(BRIEFING));
+        assertEquals("오늘은 할 일이 없어. 아래 칸에 하나 적어 볼까?", say(BRIEFING));
     }
 
     @Test

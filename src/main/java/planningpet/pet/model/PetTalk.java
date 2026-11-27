@@ -92,10 +92,10 @@ public final class PetTalk {
                     .append(near.getDueDate().getDayOfMonth()).append("일)").append(Words.josa(when, "이야", "야"))
                     .append(", D-").append(n).append(".");
         }
-        // D-71: 내일의 보통 할 일. dayPlan(내일)의 시각 있는 것, 그다음 시각 없는 것 순이다.
+        // D-71: 내일의 보통 할 일. dayPlan(내일)의 시각 있는 것, 그다음 시각 없는 것 순이고 시각을 정한 기간 할 일도 뺀다(E-TALK-10).
         DayPlan next = data.getBook().dayPlan(today.plusDays(1));
         Task tomorrow = Stream.concat(next.timed().stream().filter(t -> t.getKind() == Kind.TASK),
-                next.untimed().stream().filter(t -> !t.period())).filter(t -> !t.isDone()).findFirst().orElse(null);
+                next.untimed().stream()).filter(t -> !t.isDone() && !t.period()).findFirst().orElse(null);
         if (tomorrow != null) {
             b.append(" 내일 '").append(Words.shortTitle(tomorrow.getTitle())).append("'")
                     .append(Words.josa(tomorrow.getTitle(), "이", "가")).append(" 있어.");
