@@ -42,6 +42,49 @@ public final class TaskBook {
         return made;
     }
 
+    /**
+     * 06 3번 겹침 묻기(D-87). 입력이 들어갈 날(반복이면 사본마다)의 시간표 일정(self는 빼고) 가운데 겹치는 것. 날이 가장 이른, 그 안에서
+     * 시작이 가장 이르고 넣은 순이 앞인 하나다. 시작 시각이 없거나 기간 할 일이면 null. 수정 창(self가 있음)은 그 날짜만 본다(D-42).
+     */
+    public Overlap overlap(TaskDraft draft, Task self) {
+        Integer start = draft.startMinute();
+        boolean period = draft.kind() == Kind.TASK && draft.repeat() == null && draft.dueDate() != null;
+        if (start == null || period) {
+            return null;
+        }
+        List<LocalDate> days = draft.repeat() == null || self != null ? List.of(draft.date())
+                : draft.repeat().dates(draft.date(), draft.repeatEnd(), Integer.MAX_VALUE - 1);
+        for (LocalDate day : days) {
+            Overlap o = overlapOn(day, start, draft.durationMinutes(), self);
+            if (o != null) {
+                return o;
+            }
+        }
+        return null;
+    }
+
+    /** 한 날의 겹침. 두 일정은 서로의 끝이 서로의 시작보다 늦을 때만 겹친다(18번과 같다). */
+    private Overlap overlapOn(LocalDate day, int start, int minutes, Task self) {
+        int end = start + minutes;
+        Overlap best = null;
+        int bestStart = Integer.MAX_VALUE;
+        for (Task t : timedOn(day)) {
+            int s = t.startMinute();
+            int e = t.endMinute();
+            boolean earlier = s < bestStart || s == bestStart && t.getSeq() < best.other().getSeq();
+            if (t != self && s < end && start < e && earlier) {
+                best = new Overlap(t, Math.min(end, e) - Math.max(start, s), true);
+                bestStart = s;
+            }
+        }
+        return best;
+    }
+
+    /** 그날 시간표에 놓인 일정. */
+    private List<Task> timedOn(LocalDate date) {
+        return tasks.stream().filter(t -> t.timed() && t.getDate().equals(date)).toList();
+    }
+
     /** 06 데이터 절의 처음 값으로 day의 일정 하나를 만든다. 보상과 끝냄은 없다. */
     private Task make(TaskDraft d, LocalDate day, String series) {
         boolean period = d.kind() == Kind.TASK && d.repeat() == null && d.dueDate() != null;
