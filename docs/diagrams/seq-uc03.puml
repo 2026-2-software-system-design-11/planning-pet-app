@@ -1,0 +1,58 @@
+@startuml seq-uc03
+!include seq-common.iuml
+actor 사용자
+$obj(MainScreen)
+$obj(TaskDialog)
+$obj(DefaultDates)
+$obj(Typed)
+$obj(TaskDraft)
+$obj(TaskController)
+$obj(TaskBook)
+$obj(AppController)
+$obj(PetTalk)
+사용자 -> MainScreen : "일정 추가" 누르기
+note right of MainScreen : 일정관리의 "일정 추가"도 같다.\n"일정 추가" 창을 연다
+TaskDialog -> DefaultDates : forAdd(screen, selected, shownStart, today)
+TaskDialog -> DefaultDates : dueFor(date, weekStart)
+TaskDialog -> DefaultDates : repeatEndFor(kind, start)
+note right of TaskDialog : 할 일, 걸리는 시간 30분,\n시작 시각 비움, 유형 기타
+사용자 -> TaskDialog : 제목을 쓰고 칸을 고치기
+opt 3c 시작 시각이나 걸리는 시간 칸에 쳐 넣는다
+  TaskDialog -> Typed : start(text, day, due)
+  TaskDialog -> Typed : minutes(text)
+  note right of Typed : 맞췄거나 읽지 못하면\n칸 아래에 까닭
+end
+opt 3a, 3b 기간 안에 하기를 켠 채 마감일이 시작일이나 오늘보다 전이다
+  TaskDialog -> TaskDraft : validate()
+  note right of TaskDraft : 저장 전에도\n마감일 칸 아래에 문장
+end
+alt 4a 취소
+  사용자 -> TaskDialog : "취소" 누르기
+  note right of TaskDialog : 아무것도 만들지 않고 닫는다
+else 4b 읽지 못한 글이 칸에 남았다
+  사용자 -> TaskDialog : "저장" 누르기
+  note right of TaskDialog : 저장하지 않고 칸 아래 빨간 글,\n커서를 그 칸에 둔다
+else 기본 흐름
+  사용자 -> TaskDialog : "저장" 누르기
+  TaskDialog -> TaskController : add(draft, ask)
+  TaskController -> TaskDraft : validate()
+  alt 5a 검사를 통과하지 못했다
+    note right of TaskDialog : 저장하지 않고\n칸 아래에 문장
+  else 통과했다
+    TaskController -> TaskBook : overlap(draft, null)
+    opt 5d 다른 일정과 실제 시각이 겹친다
+      TaskController -> TaskDialog : ask(overlap)
+      note right of TaskDialog : 창 "시간이 겹쳐요" 넣기, 취소.\n취소면 저장하지 않고 창이 남는다
+    end
+    TaskController -> AppController : change(what, edit)
+    AppController -> TaskController : edit()
+    TaskController -> TaskBook : add(draft)
+    note right of TaskBook : 5b 반복이면 날마다 사본(120개까지).\n5c 기간 안에 하기면\n마감이 있는 할 일 하나
+    TaskController -> PetTalk : say(ADDED, ...)
+    note right of PetTalk : 7a. 요일 반복이면 WEEKLY_ADDED
+    TaskController -> AppController : say(line, day)
+    ref over TaskController, AppController : 저장과 되돌리기. 6a 저장 실패면 창에 입력값을 남긴다
+    note right of TaskDialog : 창을 닫는다. 달력, 할 일 목록,\n시간표에 새 일정이 보인다
+  end
+end
+@enduml

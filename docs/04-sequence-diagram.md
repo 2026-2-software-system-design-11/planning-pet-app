@@ -32,6 +32,14 @@
 
 ## 일정 유스케이스
 
+### UC-03 일정 추가하기
+
+![UC-03](diagrams/seq-uc03.png)
+
+- 3a와 3b는 마감일 칸의 같은 검사(06 2번)에서 문장만 달라 한 `opt`로 묶었다. 5b와 5c는 `TaskBook.add` 안에서 나뉘어 메시지가 같으므로 그 메시지의 노트에 적었다.
+- 겹침 물음(5d)은 controller가 창을 모르므로 view가 넘긴 `ask`로 묻는다(07). 새 일정이라 `self`는 `null`이다.
+- 펫 말(7a)은 `TaskController`가 `PetTalk.say`로 만들어 `AppController.say`에 넘긴다. 일정관리에서 넣으면 일정관리 말풍선은 그대로이고 홈 말풍선에 남는다(D-94).
+
 ### UC-06 일정 삭제하기
 
 ![UC-06](diagrams/seq-uc06.png)
