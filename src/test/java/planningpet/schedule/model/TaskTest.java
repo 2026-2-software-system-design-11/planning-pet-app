@@ -257,4 +257,15 @@ class TaskTest {
         t.finish(TODAY, 0, 0, null);
         assertEquals("true 2026-11-18 null", t.isDone() + " " + t.getDoneDay() + " " + t.getRewardDay());
     }
+
+    /** 06 9번이 부르는 풀기(docs/porting/rewards.md T-UNDO-7). 기간 할 일의 날짜와 기간은 그대로다(D-66). */
+    @Test
+    void unfinishClearsDoneAndReward() {
+        Task p = period(day(16), null, day(22));
+        p.finish(day(17), 10, 10, PetKind.DOG);
+        p.unfinish();
+        assertEquals("false null 0 0 null null 2026-11-16 2026-11-16 2026-11-22", p.isDone() + " " + p.getDoneDay()
+                + " " + p.getRewardPoints() + " " + p.getRewardExp() + " " + p.getRewardDay() + " " + p.getRewardPet()
+                + " " + p.getDate() + " " + p.getStartDay() + " " + p.getDueDate());
+    }
 }

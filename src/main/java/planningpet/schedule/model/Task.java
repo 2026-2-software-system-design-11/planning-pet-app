@@ -121,6 +121,16 @@ public final class Task {
         rewardPet = pet;
     }
 
+    /** 끝냄을 풀고 끝낸 날과 받은 보상을 지운다(06 9번). Rewards가 부른다(07). 날짜, 시작 시각, 기간은 그대로라 처음 계획으로 돌아간다(D-66). */
+    public void unfinish() {
+        done = false;
+        doneDay = null;
+        rewardPoints = 0;
+        rewardExp = 0;
+        rewardDay = null;
+        rewardPet = null;
+    }
+
     /** 값이 같은 새 일정. TaskBook.restore가 쓴다. */
     Task copy() {
         return new Task(id, seq, kind, title, date, startTime, durationMinutes, memo, nextDay, category, seriesId,
