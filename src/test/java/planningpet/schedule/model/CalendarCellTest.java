@@ -112,4 +112,63 @@ class CalendarCellTest {
         assertEquals("1개 흐림 마감 []", cell(16, true));
         assertEquals("2개 진함 마감 []", cell(19, true));
     }
+
+    @Test
+    void E_CAL_1_emptyDay() {
+        today = day(18);
+        assertEquals("비어 있음", cell(18, false));
+        assertEquals("비어 있음", cell(18, true));
+    }
+
+    @Test
+    void E_CAL_2_twoDueAndDoneDue() {
+        today = day(16);
+        plan("B", 16, 22, 16, null, 0);
+        plan("A", 18, 22, 18, null, 0);
+        plan("C", 16, 22, 16, null, 16);
+        assertEquals("2개 진함 마감 [B, A]", cell(22, false));
+    }
+
+    @Test
+    void E_CAL_3_donePeriod() {
+        today = day(18);
+        plan("P", 16, 22, 16, null, 17);
+        assertEquals("비어 있음", cell(16, false));
+        assertEquals("1개 흐림 마감 []", cell(17, false));
+        assertEquals("비어 있음", cell(22, false));
+    }
+
+    @Test
+    void E_CAL_4_pastDuePeriod() {
+        today = day(25);
+        plan("P", 16, 22, 16, null, 0);
+        assertEquals("비어 있음", cell(16, false));
+        assertEquals("1개 진함 마감 [P]", cell(22, false));
+    }
+
+    @Test
+    void E_CAL_5_pastMidnight() {
+        today = day(21);
+        tasks.add(new Task("r", 1, Kind.TASK, "복습", day(20), LocalTime.of(1, 30), 30, "", true, Category.OTHER, null,
+                null, null, null, false, null, 0, 0, null, null));
+        assertEquals("1개 진함 마감 []", cell(20, false));
+        assertEquals("비어 있음", cell(21, false));
+    }
+
+    @Test
+    void E_CAL_6_fixedToday() {
+        today = day(18);
+        put(Kind.FIXED, "수업", 18, "09:00", 0);
+        assertEquals("1개 진함 마감 []", cell(18, true));
+        assertEquals("비어 있음", cell(18, false));
+    }
+
+    @Test
+    void E_CAL_7_missedPlan() {
+        today = day(18);
+        plan("P", 16, 22, 17, "09:00", 0);
+        assertEquals("비어 있음", cell(17, false));
+        assertEquals("비어 있음", cell(18, false));
+        assertEquals("1개 진함 마감 [P]", cell(22, false));
+    }
 }
