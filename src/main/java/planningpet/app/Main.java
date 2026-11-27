@@ -2,6 +2,7 @@ package planningpet.app;
 
 import java.nio.file.Path;
 import java.util.Map;
+import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import planningpet.app.view.AppWindow;
 
@@ -20,7 +21,8 @@ public final class Main {
             System.exit(2);
         }
         // --autostart는 S11에서 트레이와 함께 창을 띄우지 않게 한다. 지금은 창을 띄운다.
-        SwingUtilities.invokeLater(() -> new AppWindow().setVisible(true));
+        // 창 내용(AppWindow)을 데이터와 잇는 일은 S2다. 그때까지는 빈 창이다(docs/porting/frame.md).
+        SwingUtilities.invokeLater(() -> AppWindow.frame(new JPanel()).setVisible(true));
     }
 
     /** 데이터 폴더. --data-dir 뒤에 경로가 없으면 IllegalArgumentException. 모르는 인자는 무시한다. */

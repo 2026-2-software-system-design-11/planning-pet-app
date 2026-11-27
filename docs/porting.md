@@ -40,7 +40,7 @@
 | S1 | 창이 보일 때와 날 바뀜 | `AppController.onWindowShown`, `say`, `DayWatcher`, `Tray`의 30초 타이머, `RewardController.attend` | 11번, 15번, 23번 | [docs/porting/app-window.md](porting/app-window.md) |
 | S1b | 디자인 시스템 바탕 | `common.view`의 `Theme`, 글꼴 파일, `Card`, `RoundButtonUI` | 없음([디자인 시스템](design-system.md)) | [docs/porting/theme.md](porting/theme.md) |
 | S1c | 아이콘과 수치 카드 | `common.view`의 `Icons`(창 틀이 쓰는 것), `StatCard`, 창 바탕 그림 | 없음([디자인 시스템](design-system.md)) | [docs/porting/icons.md](porting/icons.md) |
-| S1d | 창 틀 | `AppWindow`(05 창 구조의 배치, 화면 머리 오른쪽 카드, 화면 바꾸기, 알림 받아 다시 그리기) | 11번의 출석 단추, 15번의 연속 접속 | `docs/porting/frame.md` |
+| S1d | 창 틀 | `AppWindow`(05 창 구조의 배치, 화면 머리 오른쪽 카드, 화면 바꾸기, 알림 받아 다시 그리기) | 11번의 출석 단추, 15번의 연속 접속 | [docs/porting/frame.md](porting/frame.md) |
 | S2 | 반려동물 고르기 창 | `PickDialog`, `PetController.adopt`, `select`, 사이드바 로고의 `PetArt`, `Main` 잇기(읽기, 못 읽음 창, 첫 실행 갈래, 창과 타이머 잇기) | 30번, 21번의 시작할 때 읽기 | `docs/porting/pick.md` |
 | S3 | 홈 목록 | `MainScreen`, `PetCard`, `CalendarPanel`, `HomeController`, `RewardController.complete`, `uncomplete` | 6번, 8번, 9번, 13번, 16번, 26번 | `docs/porting/home.md` |
 | S4 | 일정 입력 창 | `TaskDialog`, `TaskController.add`, `update`, `delete`, 고르는 칸 `ComboUI`와 그것을 거는 `Theme.install`의 줄([theme.md](porting/theme.md)) | 2~5번, 14번 | `docs/porting/task-dialog.md` |
