@@ -2,6 +2,8 @@
 
 [본 구현으로 옮기기](../porting.md) 1절 표의 단위 M7이다. 07의 `AppData`를 `planningpet.app.model`에, `PetState`와 값 목록 `Pose`, `Slot`, `WearId`를 `planningpet.pet.model`에, 값 목록 `ItemId`를 `planningpet.shop.model`에 둔다. 기준은 06 데이터 절의 `AppData`, `PetState` 값과 처음 값, 프로토타입 `app/model/Store`, `pet/model/PetState`, `Poses`, `Wardrobe`, `shop/model/Shop`의 아이템 목록이다. 값을 바꾸는 규칙(보상 8~11번, 상점 20번, 장신구 28번, 펫 30번)은 그 일을 옮기는 단위(M9, M14, M15)가 옮긴다. 22번의 되돌리기에 쓰는 `copy`와 `restore`는 PR 하나의 크기 한도(1절) 때문에 22번과 함께 M8 저장 단위가 옮긴다.
 
+PR 하나의 크기 한도(1절) 때문에 둘로 나눠 `PetState`와 값 목록 `Pose`, `Slot`, `WearId`, `ItemId`는 #346, `AppData`와 `SampleLook`은 #348로 옮긴다.
+
 07 안에서 정한 것과 그 까닭:
 
 - **값은 private 필드이고 읽는 메서드를 둔다.** 프로토타입 `Store`는 값을 public 필드로 열었다. 본 구현은 D-109대로 메서드로만 바꾼다. 값을 바꾸는 메서드는 M2a의 `Task`처럼 그 일을 옮기는 단위가 더한다. 이 단위는 고른 펫을 정하는 `addPet`, `setActiveKind`만 더한다. 06 30번의 `choose`, `adopt`(S2, M14)와 저장의 읽기(M8)가 쓰고, 이 단위의 고른 펫 검사가 쓴다. 모음 값(`pets`, `attendDays`, `ownedItems` 같은 것)은 바꿀 수 없는 모음으로 읽는다.
