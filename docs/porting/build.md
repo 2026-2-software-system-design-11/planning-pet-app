@@ -20,18 +20,18 @@
 
 입력은 실행 인자와, 인자가 없을 때 데이터 폴더를 정하는 운영체제 값(운영체제 이름, `APPDATA`, 홈 폴더)이다. `Main.dataFolder`가 받는다. 06에 이 함수의 검사 줄이 없어 모두 `E-MAIN` 번호다.
 
-| 번호 | 입력과 경계 | 넣은 값 | 프로토타입 결과 | 본 구현 |
+| 번호 | 입력과 경계 | 넣은 값 | 프로토타입 결과 | 본 구현(`MainTest`) |
 |---|---|---|---|---|
-| E-MAIN-1 | 인자 없음, macOS | `Mac OS X`, 홈 `/Users/a` | 없음 | |
-| E-MAIN-2 | 인자 없음, Windows | `Windows 11`, `APPDATA`=`C:\Users\a\AppData\Roaming` | 없음 | |
-| E-MAIN-3 | 인자 없음, Windows인데 `APPDATA`가 없음 | `Windows 11`, `APPDATA` 없음, 홈 `C:\Users\a` | 없음 | |
-| E-MAIN-4 | 인자 없음, 그 밖의 운영체제 | `Linux`, 홈 `/home/a` | 없음 | |
+| E-MAIN-1 | 인자 없음, macOS | `Mac OS X`, 홈 `/Users/a` | 없음 | `/Users/a/Library/Application Support/PlanningPet` |
+| E-MAIN-2 | 인자 없음, Windows | `Windows 11`, `APPDATA`=`C:\Users\a\AppData\Roaming` | 없음 | `C:\Users\a\AppData\Roaming\PlanningPet` |
+| E-MAIN-3 | 인자 없음, Windows인데 `APPDATA`가 없음 | `Windows 11`, `APPDATA` 없음, 홈 `C:\Users\a` | 없음 | `C:\Users\a\.planningpet` |
+| E-MAIN-4 | 인자 없음, 그 밖의 운영체제 | `Linux`, 홈 `/home/a` | 없음 | `/home/a/.planningpet` |
 | E-MAIN-5 | 데이터 폴더 고르기 | `--data-dir /tmp/demo` | 없음 | |
 | E-MAIN-6 | `--data-dir`가 마지막 인자 | `--data-dir` | 없음 | |
 | E-MAIN-7 | `--data-dir` 뒤가 다른 인자 | `--data-dir --autostart` | 없음 | |
 | E-MAIN-8 | `--data-dir` 뒤가 빈 글 | `--data-dir ""` | 없음 | |
-| E-MAIN-9 | 컴퓨터 켤 때 실행 인자만 | `--autostart`, `Linux`, 홈 `/home/a` | 없음 | |
-| E-MAIN-10 | 모르는 인자 | `--first-run`, `Linux`, 홈 `/home/a` | 없음 | |
+| E-MAIN-9 | 컴퓨터 켤 때 실행 인자만 | `--autostart`, `Linux`, 홈 `/home/a` | 없음 | `/home/a/.planningpet` |
+| E-MAIN-10 | 모르는 인자 | `--first-run`, `Linux`, 홈 `/home/a` | 없음 | `/home/a/.planningpet` |
 
 경계마다 정한 결과와 근거:
 
