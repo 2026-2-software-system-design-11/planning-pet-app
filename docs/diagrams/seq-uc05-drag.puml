@@ -1,0 +1,47 @@
+@startuml seq-uc05-drag
+!include seq-common.iuml
+actor 사용자
+$obj(TaskRows)
+$obj(TaskController)
+$obj(TaskBook)
+$obj(AppController)
+사용자 -> TaskRows : 일정관리 오른쪽 목록의 줄을 누른 채 시간표로 끌기
+alt 1i 끝낸 줄이나 마감이 지난 기간 할 일의 줄이다
+  note right of TaskRows : 끌리지 않는다. 마감이 지난 줄에 마우스를 올리면\n"마감이 지난 일은 옮길 수 없어요"
+else 끌린다
+  TaskRows -> TaskBook : dropRange(task, today)
+  note right of TaskRows : 끄는 동안 놓을 수 없는 날은 흐리다
+  사용자 -> TaskRows : 시간표 칸(예: 수요일 15:00)에 놓기
+  alt 1g 시간표 밖에 놓거나 Esc를 누른다
+    note right of TaskRows : 아무것도 바뀌지 않고 줄은 목록에 남는다
+  else 1c 시간표 칸에 놓는다
+    TaskRows -> TaskBook : dropStart(minute, durationMinutes)
+    note right of TaskBook : 30분 단위로 내린다.\n1e 끝이 다음 날 04:00을 넘으면\n끝이 04:00인 가장 늦은 자리로 당긴다
+    TaskRows -> TaskController : placeAt(task, day, start, ask, chooseScope)
+    alt 1f 지난 날이나 기간 할 일의 기간 밖이다
+      note right of TaskRows : 놓지 않고 줄은 목록에 남는다.\n놓은 자리 옆에 까닭 글
+    else 놓을 수 있다
+      TaskController -> TaskBook : overlap(draft, task)
+      opt 1d 다른 일정과 겹친다
+        TaskController -> TaskRows : ask(overlap)
+      end
+      opt 1d 반복 사본이다
+        TaskController -> TaskRows : chooseScope()
+      end
+      note right of TaskRows : 1d 물음에서 취소하면\n아무것도 바뀌지 않는다
+      TaskController -> AppController : change(what, edit)
+      AppController -> TaskController : edit()
+      TaskController -> TaskBook : placeAt(task, day, start, scope)
+      ref over TaskController, AppController : 저장과 되돌리기
+      note right of TaskRows : 시간표에 블록이 생기고 목록에서 줄이 빠진다.\n블록 옆 글 상자에 놓은 날짜와 시각(1e면 당긴 까닭),\n"되돌리기"
+      opt 1h "되돌리기"를 누른다
+        사용자 -> TaskRows : "되돌리기" 누르기
+        TaskRows -> TaskController : undoPlace()
+        TaskController -> AppController : change(what, edit)
+        ref over TaskController, AppController : 저장과 되돌리기
+        note right of TaskRows : 묻지 않고 놓기 전으로 돌린다
+      end
+    end
+  end
+end
+@enduml
