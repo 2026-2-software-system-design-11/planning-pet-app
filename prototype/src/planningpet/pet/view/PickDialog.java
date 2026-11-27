@@ -8,6 +8,7 @@ import planningpet.app.model.Store;
 import planningpet.common.view.Ui;
 import planningpet.pet.controller.PetController;
 import planningpet.pet.model.Talk;
+import planningpet.common.view.Card;
 import planningpet.common.view.Icons;
 import planningpet.common.view.Theme;
 import java.awt.BorderLayout;
@@ -17,7 +18,10 @@ import java.awt.FlowLayout;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import javax.swing.BorderFactory;
+import javax.swing.JComponent;
 import javax.swing.SwingConstants;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -75,6 +79,76 @@ public final class PickDialog {
         choose.add(buttons, BorderLayout.SOUTH);
         bottom.add(choose, BorderLayout.SOUTH);
         panel.add(bottom, BorderLayout.SOUTH);
+    }
+
+    /** 이름 줄 카드: 연필, 라벨, 둥근 이름 칸, 칸 아래 안내(05). */
+    private JPanel nameBar() {
+        JPanel bar = new JPanel(new GridBagLayout()) {
+            @Override
+            protected void paintComponent(Graphics graphics) {
+                Graphics2D g = (Graphics2D) graphics.create();
+                PickScene.hints(g);
+                int w = getWidth() - 4;
+                int h = getHeight() - 6;
+                Card.shadow(g, 2, 1, w, h, 26);
+                g.setColor(PickScene.alpha(Theme.CARD_TOP, 225));
+                g.fillRoundRect(2, 1, w, h, 26, 26);
+                g.setColor(Theme.CARD_EDGE);
+                g.drawRoundRect(2, 1, w - 1, h - 1, 26, 26);
+                g.dispose();
+            }
+        };
+        bar.setOpaque(false);
+        bar.setBorder(BorderFactory.createEmptyBorder(10, 20, 14, 22));
+        JLabel label = new JLabel(NAME_LABEL, Icons.icon(Icons.Kind.PENCIL, 22, Theme.ICON), SwingConstants.LEFT);
+        label.setFont(Theme.bold(15));
+        label.setIconTextGap(8);
+        label.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 6));
+        label.setLabelFor(name);
+        name.setFont(Theme.font(14));
+        name.setColumns(12);
+        name.getAccessibleContext().setAccessibleName("반려동물 이름");
+        JLabel hint = Ui.hint("비워 두면 나비, 바둑이로 불러요");
+        // 오른쪽 빈 테: 배율이 바뀌면 글 폭이 조금 늘어 끝 글자가 잘린다(2배 그림에서 "불러요"가 잘림).
+        hint.setBorder(BorderFactory.createEmptyBorder(0, 18, 0, 6));
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridx = 0;
+        c.gridy = 0;
+        c.anchor = GridBagConstraints.WEST;
+        c.insets = new java.awt.Insets(0, 0, 0, 16);
+        bar.add(label, c);
+        c.gridx = 1;
+        c.weightx = 1;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.insets = new java.awt.Insets(0, 0, 0, 0);
+        bar.add(name, c);
+        c.gridy = 1;
+        c.fill = GridBagConstraints.NONE;
+        c.insets = new java.awt.Insets(4, 0, 0, 0);
+        bar.add(hint, c);
+        bar.setPreferredSize(new Dimension(ROW, bar.getPreferredSize().height));
+        bar.setMaximumSize(bar.getPreferredSize());
+        return bar;
+    }
+
+    /** 큰 알약 버튼(예시의 시작 버튼 크기를 창 크기에 맞춤). */
+    private static void big(JButton b) {
+        b.setFont(Theme.bold(16));
+        b.setBorder(BorderFactory.createEmptyBorder(12, 26, 13, 26));
+    }
+
+    private static JPanel clear(java.awt.LayoutManager layout) {
+        JPanel p = new JPanel(layout);
+        p.setOpaque(false);
+        p.setAlignmentX(0.5f);
+        return p;
+    }
+
+    private static JPanel center(JComponent c) {
+        JPanel p = clear(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        p.add(c);
+        p.setMaximumSize(new Dimension(Integer.MAX_VALUE, c.getPreferredSize().height));
+        return p;
     }
 
     /** 창 바탕(PickScene.backdrop). 폭은 800 이상이다. */
