@@ -1,6 +1,7 @@
 package planningpet.pet.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static planningpet.pet.model.Situation.BRIEFING;
 import static planningpet.pet.model.Situation.FIRST_RUN;
 import static planningpet.pet.model.Situation.OTHER_DATE;
 import static planningpet.pet.model.Situation.WELCOME_BACK;
@@ -56,6 +57,11 @@ class PetTalkTest {
         return make(Kind.TASK, title, first, null, first, due);
     }
 
+    private static Task done(Task task, int day) {
+        task.finish(d(day), 0, 0, null);
+        return task;
+    }
+
     private String say(Situation situation) {
         return new PetTalk(data).say(situation);
     }
@@ -95,5 +101,12 @@ class PetTalkTest {
     void E_TALK_13_otherDateNextMonthPeriod() {
         at("11-30", period("가", 30, 33), period("나", 30, 35));
         assertEquals("12월 1일은 할 일이 없어. 기간 할 일 2개가 있어.", new PetTalk(data).say(OTHER_DATE, d(31)));
+    }
+
+    @Test
+    void T_TALK_1_briefingOrder() {
+        at("11-16", done(task("T0", 16), 16), task("T1", 16), task("T2", 16), task("T3", 16), task("Y1", 15),
+                task("Y2", 15), task("자소서 초안", 17));
+        assertEquals("오늘 할 일 3개 남았어. 어제 못 끝낸 일 2개는 달력에 남아 있어. 내일 '자소서 초안'이 있어.", say(BRIEFING));
     }
 }
