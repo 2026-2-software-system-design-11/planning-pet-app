@@ -1,15 +1,19 @@
 package planningpet.reward.model;
 
 import java.time.LocalDate;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import planningpet.app.model.AppData;
 import planningpet.pet.model.PetState;
 import planningpet.schedule.model.Task;
 
-/** 할 일 끝내기의 보상과 체크 풀기(06 8번, 9번). 보상을 받는 완료는 앱 날짜 하루에 20번까지이고 하나에 10P와 경험치 10이다(D-18). */
+/** 할 일 끝내기의 보상, 체크 풀기, 출석(06 8번, 9번, 11번). 보상을 받는 완료는 앱 날짜 하루에 20번까지이고 하나에 10P와 경험치 10이다(D-18). */
 public final class Rewards {
     static final int DAILY_CAP = 20;
     static final int TASK_POINTS = 10;
     static final int TASK_EXP = 10;
+    /** 출석은 20P이고 경험치는 없다(D-18). */
+    static final int ATTEND_POINTS = 20;
 
     private final AppData data;
 
@@ -56,5 +60,18 @@ public final class Rewards {
             data.setRewardCount(today, data.getRewardCount() - 1);
         }
         task.unfinish();
+    }
+
+    /** 06 11번. 오늘 처음이면 20P를 주고 출석한 날을 적는다(D-55). 경험치와 하루 상한 횟수는 그대로다. 오늘 이미 했으면 false다. */
+    public boolean attend(LocalDate today) {
+        if (today.equals(data.getAttendanceDay())) {
+            return false;
+        }
+        data.setPoints(data.getPoints() + ATTEND_POINTS);
+        data.setAttendanceDay(today);
+        Set<LocalDate> days = new LinkedHashSet<>(data.getAttendDays());
+        days.add(today);
+        data.setAttendDays(days);
+        return true;
     }
 }

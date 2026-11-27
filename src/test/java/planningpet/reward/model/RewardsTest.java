@@ -9,6 +9,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import planningpet.app.model.AppData;
 import planningpet.pet.model.PetKind;
@@ -18,7 +19,7 @@ import planningpet.schedule.model.DayPlan;
 import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Task;
 
-/** 06 8번, 9번과 docs/porting/rewards.md 2절의 경계. 펫은 고른 고양이 하나이고 complete, undo, done은 값을 한 줄로 잇는다. */
+/** 06 8, 9, 11번과 docs/porting/rewards.md 2절의 경계. 펫은 고른 고양이 하나이고 complete, undo, attend, done은 값을 잇는다. */
 class RewardsTest {
     private final Task a = task("A", d(16));
     /** 기간 할 일. p는 시각 없이 11-16에 보이기 시작하고, q는 11-18 09:00으로 정해 두었다. */
@@ -54,6 +55,11 @@ class RewardsTest {
         new Rewards(data).uncomplete(t, today);
         return data.getPoints() + "P " + data.pet(PetKind.CAT).getExp() + " " + data.getRewardCountDay() + " "
                 + data.getRewardCount();
+    }
+
+    private String attend(LocalDate today) {
+        return new Rewards(data).attend(today) + " " + data.getPoints() + "P " + data.getAttendanceDay() + " "
+                + data.getAttendDays() + " " + data.pet(PetKind.CAT).getExp() + " " + data.getRewardCount();
     }
 
     private static String done(Task t) {
@@ -250,5 +256,29 @@ class RewardsTest {
         assertThrows(IllegalStateException.class, () -> undo(a, d(16)));
         assertEquals("10P 0 null 0 false", data.getPoints() + "P " + data.pet(PetKind.CAT).getExp() + " "
                 + data.getRewardCountDay() + " " + data.getRewardCount() + " " + a.isDone());
+    }
+
+    @Test
+    void T_ATT_1_firstAttend() {
+        assertEquals("true 20P 2026-11-16 [2026-11-16] 0 0", attend(d(16)));
+    }
+
+    @Test
+    void T_ATT_2_twiceOnSameDay() {
+        attend(d(16));
+        assertEquals("false 20P 2026-11-16 [2026-11-16] 0 0", attend(d(16)));
+    }
+
+    @Test
+    void T_ATT_3_nextDay() {
+        data.setAttendanceDay(d(15));
+        data.setAttendDays(Set.of(d(15)));
+        assertEquals("true 20P 2026-11-16 [2026-11-15, 2026-11-16] 0 0", attend(d(16)));
+    }
+
+    @Test
+    void T_ATT_4_fromNegative() {
+        data.setPoints(-10);
+        assertEquals("true 10P 2026-11-16 [2026-11-16] 0 0", attend(d(16)));
     }
 }
