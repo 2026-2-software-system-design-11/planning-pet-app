@@ -30,7 +30,7 @@
 | M7 | 앱 데이터 | `AppData`(`copy`, `restore` 빼고), `PetState`, `Pose`, `Slot`, `WearId`, `ItemId`, `SampleLook` | 데이터 절 `AppData`, `PetState` | [docs/porting/app-data.md](porting/app-data.md) |
 | M8 | 저장 | `DataStore`, `SqliteDataStore`, `Schema`, `AppController.change`, `AppData.copy`, `restore` | 21번, 22번(프로토타입 기준 없음) | [docs/porting/store.md](porting/store.md) |
 | M9 | 보상 | `Rewards`, `Level`, `DailyProgress`, `Visits`, `Task.finish`, `unfinish` | 8~13번 | [docs/porting/rewards.md](porting/rewards.md) |
-| M10 | 펫 말 | `PetTalk`, `Bubble` | 16번 | `docs/porting/pet-talk.md` |
+| M10 | 펫 말 | `PetTalk`, `Bubble` | 16번 | [docs/porting/pet-talk.md](porting/pet-talk.md) |
 | M11 | 화면이 쓰는 일정 계산 | `DefaultDates`, `CalendarCell`, `TimetableLayout` | 14번, 19번, 26번 | `docs/porting/screen-calc.md` |
 | M12 | 자동 배치 | `AutoPlacer` | 18번 | `docs/porting/auto-place.md` |
 | M13 | 알림 고르기 | `Reminders` | 17번(프로토타입 기준 없음) | `docs/porting/reminders.md` |
@@ -112,3 +112,4 @@
 | M7 앱 데이터 | 빈 폴더로 앱을 열어 반려동물 고르기 창에서 강아지를 고르고 바로 시작을 누른다 | 고르기 창 전에도 앱 데이터에 고양이 "나비"가 있고, 고르기 창이 펫 목록을 비우고 강아지를 넣는다 | 첫 실행은 빈 앱 데이터이고 고르기 창의 `choose`가 펫을 만들어 넣는다. 코드를 고침: 앱 데이터가 펫 없이 시작하고 그때 고른 펫은 `null`이다 | 07 seq-uc01, 06 30번, [app-data.md](porting/app-data.md) E-APP-4, 5 |
 | M9 보상 | 끝낸 할 일의 완료를 화면 밖 길로 다시 부른다(화면의 체크박스는 끝낸 일을 누르면 체크 풀기다) | 보상을 또 받는다. 10P, 경험치 10, 오늘 횟수 하나가 더 붙는다 | 이미 끝낸 일정이면 `IllegalStateException`. 코드를 고침: `complete`가 예외를 던지고 아무것도 바꾸지 않는다 | 06 8번 "오류", [rewards.md](porting/rewards.md) E-RWD-2 |
 | M9 보상 | 끝내지 않은 할 일의 체크 풀기를 화면 밖 길로 부른다(화면의 체크박스는 끝내지 않은 일을 누르면 끝내기다) | 아무것도 바뀌지 않고 알리지도 않는다 | 끝내지 않은 할 일이면 `IllegalStateException`. 코드를 고침: `uncomplete`가 예외를 던진다 | 06 9번 "오류", [rewards.md](porting/rewards.md) E-UNDO-2 |
+| M10 펫 말 | 기간 할 일 "E사 지원서"(마감 11/25)의 시각을 내일 10:00으로 정해 두고, 오늘 할 일이 없는 날 그날 처음 앱을 연다 | 브리핑 "오늘은 할 일이 없어. 내일 'E사 지원서'가 있어." | 내일 문장은 내일 날짜의 보통 할 일(`TASK`, 기간 할 일이 아님)만 말한다. 코드를 고침: 시각을 정한 기간 할 일도 빼고 "오늘은 할 일이 없어. 아래 칸에 하나 적어 볼까?" | 06 16번 5번, D-71, [pet-talk.md](porting/pet-talk.md) E-TALK-10 |
