@@ -40,6 +40,12 @@
 - 겹침 물음(5d)은 controller가 창을 모르므로 view가 넘긴 `ask`로 묻는다(07). 새 일정이라 `self`는 `null`이다.
 - 펫 말(7a)은 `TaskController`가 `PetTalk.say`로 만들어 `AppController.say`에 넘긴다. 일정관리에서 넣으면 일정관리 말풍선은 그대로이고 홈 말풍선에 남는다(D-94).
 
+### UC-04 할 일 빠르게 추가하기
+
+![UC-04](diagrams/seq-uc04.png)
+
+- 빠른 추가는 일정 입력 창 없이 UC-03과 같은 `TaskController.add`를 부른다. 시작 시각이 없어 겹침을 묻지 않는다(06 3번은 입력 창과 시각 고치기 창의 저장만 묻는다).
+
 ### UC-06 일정 삭제하기
 
 ![UC-06](diagrams/seq-uc06.png)
