@@ -63,6 +63,9 @@ public final class Snap {
         save(AutoPlaceDialog.content(app.store, monday, Planner.place(app.store, monday), new JButton("취소"),
                 new JButton("적용")), null, new File(dir, "4-autoplace.png"));
         save(new PickDialog().panel, null, new File(dir, "7-pick.png"));
+        // 펫 데려오기 창(05, D-48): 고양이를 가진 사용자가 "+"로 강아지를 데려오는 창이다.
+        save(planningpet.pet.view.AdoptDialog.pane(true, new planningpet.common.view.RoundField(null, null), new JButton("취소"),
+                new JButton("데려오기")), null, new File(dir, "11-adopt.png"));
         Task essay = app.store.book.dayPlan(app.store.today()).timed().get(1);
         save(new TimeEditor(essay, app.store.now).panel, null, new File(dir, "9-time-edit.png"));
         System.out.println("그렸다: " + dir.getPath());

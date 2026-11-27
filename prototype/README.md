@@ -61,5 +61,6 @@ Windows는 `prototype\run.bat`이다.
 | 캐릭터 창(홈 펫 카드, 나의 방의 장신구 칸과 "{이름} 꾸미기"로 연다) | ![캐릭터 창](screenshots/6-character.png) |
 | 통계 | ![통계](screenshots/10-stats.png) |
 | 반려동물 고르기 창 | ![고르기](screenshots/7-pick.png) |
+| 펫 데려오기 창(나의 방의 "+") | ![데려오기](screenshots/11-adopt.png) |
 | 설정 | ![설정](screenshots/8-settings.png) |
 | 시각 고치기 창(메인 시각 칸을 누름) | ![시각 고치기](screenshots/9-time-edit.png) |
