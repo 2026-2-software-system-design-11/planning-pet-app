@@ -96,4 +96,22 @@ public final class Task {
     public int endMinute() {
         return startMinute() + durationMinutes;
     }
+
+    /** 기간 할 일인가(D-65). */
+    public boolean period() {
+        return dueDate != null;
+    }
+
+    /** 06 데이터 절의 세는 날: 기간 할 일은 끝냈으면 끝낸 날, 아니면 마감(D-65, D-66). 그 밖은 날짜. */
+    public LocalDate countDay() {
+        if (!period()) {
+            return date;
+        }
+        return done ? doneOn() : dueDate;
+    }
+
+    /** 끝낸 날. doneDay가 없으면(끝낸 채로 만든 값) 날짜다. */
+    private LocalDate doneOn() {
+        return doneDay != null ? doneDay : date;
+    }
 }

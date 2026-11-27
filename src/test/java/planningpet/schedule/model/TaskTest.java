@@ -15,6 +15,21 @@ class TaskTest {
                 false, null, 0, 0, null, null);
     }
 
+    /** 30분짜리 할 일이나 고정 일정. due가 있으면 기간 첫날이 date인 기간 할 일이다. */
+    private static Task full(Kind kind, LocalDate date, LocalTime start, String seriesId, LocalDate due,
+            boolean done, LocalDate doneDay) {
+        return new Task("id", 1, kind, "일", date, start, 30, "", false, Category.OTHER, seriesId, due,
+                due == null ? null : date, done, doneDay, 0, 0, null, null);
+    }
+
+    private static Task period(LocalDate date, LocalTime start, LocalDate due) {
+        return full(Kind.TASK, date, start, null, due, false, null);
+    }
+
+    private static Task finished(LocalDate date, LocalTime start, LocalDate due, LocalDate doneDay) {
+        return full(Kind.TASK, date, start, null, due, true, doneDay);
+    }
+
     private static LocalDate day(int d) {
         return LocalDate.of(2026, 11, d);
     }
@@ -44,5 +59,25 @@ class TaskTest {
     @Test
     void E_TASK_5_latestEnd() {
         assertEquals(1680, make(Kind.TASK, day(18), LocalTime.of(16, 0), false, 720).endMinute());
+    }
+
+    @Test
+    void E_TASK_6_plainDoneOtherDay() {
+        assertEquals(day(16), finished(day(16), null, null, day(17)).countDay());
+    }
+
+    @Test
+    void E_TASK_7_periodNotDone() {
+        assertEquals(day(20), period(day(16), null, day(20)).countDay());
+    }
+
+    @Test
+    void E_TASK_8_periodDone() {
+        assertEquals(day(17), finished(day(16), null, day(20), day(17)).countDay());
+    }
+
+    @Test
+    void E_TASK_9_periodDoneWithoutDoneDay() {
+        assertEquals(day(16), finished(day(16), null, day(20), null).countDay());
     }
 }
