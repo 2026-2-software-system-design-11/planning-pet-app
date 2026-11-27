@@ -42,5 +42,6 @@ ShopController --> "1" planningpet.app.controller.AppController
 Shop --> "1" planningpet.app.model.AppData
 Shop *-- "13" Item
 StatsScreen ..> Stats
+StatsScreen ..> planningpet.pet.view.PetArt
 Stats --> "1" planningpet.app.model.AppData
 @enduml
