@@ -12,6 +12,8 @@ abstract class PetPaintBase {
     // ---------- 색 (예시 픽셀에서 뽑은 값) ----------
     static final Color CAT_INK = new Color(0x3B3535);
     static final Color CAT_GREY = new Color(0xA9A8AE);
+    static final Color CAT_WHITE = new Color(0xFFFEFC);
+    static final Color CAT_WHITE_SHADE = new Color(0xE8E3E3);
     static final Color CAT_EAR = new Color(0xF6B8B4);
     static final Color BLUSH = new Color(247, 160, 165, 150);
     static final Color NOSE = new Color(0x4A2E28);
@@ -52,6 +54,15 @@ abstract class PetPaintBase {
         g.setColor(c);
         g.setStroke(stroke(w));
         g.draw(s);
+    }
+
+    /** s 안쪽에만 shade를 칠한다(그림자 한 단). */
+    void shadeIn(Shape s, Shape shade, Color c) {
+        Shape old = g.getClip();
+        g.clip(s);
+        g.setColor(c);
+        g.fill(shade);
+        g.setClip(old);
     }
 
     /** 외곽선만 다시 긋는다(안쪽을 칠한 뒤 덮인 선). */
