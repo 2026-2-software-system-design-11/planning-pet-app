@@ -131,6 +131,20 @@
 - 알림을 누르면 그 날짜를 고르고(UC-09의 `pick`) 나서 창이 보일 때의 `onWindowShown`을 부른다. 그날 처음 연 것이면 브리핑이 고른 날짜의 말보다 나중이라 브리핑이 남는다.
 - 운영체제 알림을 누른 것을 Java가 받는지는 운영체제마다 다를 수 있다(05 "확인하지 않은 것").
 
+### UC-18 컴퓨터 켤 때 실행 설정하기
+
+![UC-18](diagrams/seq-uc18.png)
+
+- 등록 상태는 운영체제에 있고 `AppData`에 없어 22번 `change`를 거치지 않는다. 그래서 저장 실패 갈래도 없다.
+- 2a는 체크를 끄는 것만 달라 기본 흐름의 노트에 적었다. 3a의 창은 view가 띄운다(07 "controller는 창을 모른다").
+
+### UC-19 창 닫기와 앱 끝내기
+
+![UC-19](diagrams/seq-uc19.png)
+
+- `onClose`는 트레이 지원 여부를 받아 할 일(`CloseAction`)을 돌려준다(06 25번). 창을 숨기거나 끝내는 일은 view가 한다.
+- 1a의 처음 닫기 안내는 `trayNoticeShown`을 저장해야 해서 22번 `change`로 감쌌다. 운영체제 알림은 `Tray`가 띄운다.
+
 ## 다시 그리기
 
 원본은 [diagrams/](diagrams/) 아래 `seq-*.puml`이고 공통 꾸밈은 `seq-common.iuml`이다. PlantUML로 그린다.
