@@ -108,6 +108,34 @@ public final class Task {
     void setStartDay(LocalDate startDay) { this.startDay = startDay; }
     void setDueDate(LocalDate dueDate) { this.dueDate = dueDate; }
 
+    /** 값이 같은 새 일정. TaskBook.restore가 쓴다. */
+    Task copy() {
+        return new Task(id, seq, kind, title, date, startTime, durationMinutes, memo, nextDay, category, seriesId,
+                repeat, dueDate, startDay, done, doneDay, rewardPoints, rewardExp, rewardDay, rewardPet);
+    }
+
+    /** id가 같은 from의 값을 넣는다(06 22번의 되돌리기). id와 seq는 같은 일정이라 그대로다. */
+    void setFrom(Task from) {
+        kind = from.kind;
+        title = from.title;
+        date = from.date;
+        startTime = from.startTime;
+        durationMinutes = from.durationMinutes;
+        memo = from.memo;
+        nextDay = from.nextDay;
+        category = from.category;
+        seriesId = from.seriesId;
+        repeat = from.repeat;
+        dueDate = from.dueDate;
+        startDay = from.startDay;
+        done = from.done;
+        doneDay = from.doneDay;
+        rewardPoints = from.rewardPoints;
+        rewardExp = from.rewardExp;
+        rewardDay = from.rewardDay;
+        rewardPet = from.rewardPet;
+    }
+
     public boolean timed() {
         return startTime != null;
     }

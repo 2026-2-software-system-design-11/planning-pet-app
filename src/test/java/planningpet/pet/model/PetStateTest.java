@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
-/** 06 데이터 절 PetState와 docs/porting/app-data.md 2절의 펫 경계. */
+/** 06 데이터 절 PetState와 docs/porting/app-data.md 2절, store.md 2절의 펫 경계. */
 class PetStateTest {
     private final PetState dog = new PetState(PetKind.DOG, "바둑이");
 
@@ -30,5 +30,38 @@ class PetStateTest {
     void E_PET_2_posesInOrder() {
         assertEquals(List.of("앉기", "자기", "기지개", "밥 먹기", "노래"),
                 Arrays.stream(Pose.values()).map(Pose::label).toList());
+    }
+
+    /** 이름, 경험치, 자세, 장신구를 처음 값과 다르게 넣은 고양이. */
+    private static PetState nabi() {
+        PetState cat = new PetState(PetKind.CAT, "나비");
+        cat.setExp(120);
+        cat.setPose(Pose.SING);
+        cat.setWear(Map.of(Slot.HAT, WearId.CROWN));
+        return cat;
+    }
+
+    private static List<Object> values(PetState p) {
+        return List.of(p.getKind(), p.getName(), p.getExp(), p.getPose(), Map.copyOf(p.getWear()));
+    }
+
+    @Test
+    void E_PET_3_copyIsSeparate() {
+        PetState cat = nabi();
+        PetState copy = cat.copy();
+        List<Object> before = values(cat);
+        cat.restore(new PetState(PetKind.CAT, "콩"));
+        assertEquals(before, values(copy));
+    }
+
+    @Test
+    void E_PET_4_restoreBringsBackValues() {
+        PetState cat = nabi();
+        PetState copy = cat.copy();
+        cat.setExp(999);
+        cat.setPose(Pose.EAT);
+        cat.setWear(Map.of());
+        cat.restore(copy);
+        assertEquals(values(copy), values(cat));
     }
 }
