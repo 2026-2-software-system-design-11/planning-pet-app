@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
-/** 06 데이터 절 PetState와 docs/porting/app-data.md 2절, store.md 2절의 펫 경계. */
+/** 06 데이터 절 PetState와 docs/porting/app-data.md 2절, store.md 2절, pet.md 2절의 펫 경계. */
 class PetStateTest {
     private final PetState dog = new PetState(PetKind.DOG, "바둑이");
 
@@ -30,6 +30,12 @@ class PetStateTest {
     void E_PET_2_posesInOrder() {
         assertEquals(List.of("앉기", "자기", "기지개", "밥 먹기", "노래"),
                 Arrays.stream(Pose.values()).map(Pose::label).toList());
+    }
+
+    @Test
+    void E_PET_5_patLine() {
+        assertEquals("야옹, 좋아!", new PetState(PetKind.CAT, "나비").pat());
+        assertEquals("멍멍, 좋아!", dog.pat());
     }
 
     /** 이름, 경험치, 자세, 장신구를 처음 값과 다르게 넣은 고양이. */
