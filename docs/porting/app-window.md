@@ -4,6 +4,8 @@
 
 창 틀은 S1b~S1d, `Main` 잇기(읽기, 못 읽음 창, 첫 실행 갈래, 창과 타이머 잇기)는 S2가 한다(porting.md 1절 "창 틀은 부품 다음이다"). 그래서 이 단위가 끝나도 앱 창은 단위 0의 빈 창이고, 여기 옮긴 것은 S1d와 S2가 잇는다.
 
+`RewardController.attend`와 E-ATT-1~4는 #393이 옮긴다.
+
 02와 07이 다른 점: UC-01 4a는 연속 접속 저장에 실패해도 "5의 브리핑은 그대로 보인다"고 적었고, 07 [seq-uc01](../diagrams/seq-uc01.puml)은 브리핑을 `change`의 edit 안에 그렸다. `change`는 저장에 실패하면 말풍선도 되돌리므로([store.md](store.md), [pet-talk.md](pet-talk.md)) 그림대로면 브리핑이 사라진다. 02 UC-01 4a를 따른다.
 
 07 안에서 정한 것과 그 까닭:
