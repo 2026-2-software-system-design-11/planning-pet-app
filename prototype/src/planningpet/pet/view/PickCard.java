@@ -3,7 +3,9 @@ package planningpet.pet.view;
 import planningpet.common.view.Card;
 import planningpet.common.view.Icons;
 import planningpet.common.view.Theme;
+import planningpet.pet.model.PetState;
 import java.awt.BasicStroke;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FontMetrics;
 import java.awt.GradientPaint;
@@ -12,11 +14,13 @@ import java.awt.Graphics2D;
 import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.RoundRectangle2D;
+import java.util.HashSet;
 import javax.swing.JRadioButton;
 
 /**
  * 반려동물 고르기 창의 동물 카드(05 입력 항목 1, 디자인 시스템 10절 "고르기 창"). 부품은 05대로 `JRadioButton`이고 모양만 카드로 그린다.
- * 흰 바깥 테 안에 종류별 바탕(고양이 차가운 하늘빛, 강아지 따뜻한 크림), 발자국과 종류 이름, 설명 두 줄. 고른 카드는 민트 테두리와 체크 배지다.
+ * 흰 바깥 테 안에 종류별 바탕(고양이 차가운 하늘빛, 강아지 따뜻한 크림), 작은 언덕 위의 PetArt 펫, 발자국과 종류 이름.
+ * 고른 카드는 민트 테두리와 체크 배지, 펫 옆 강조선이고 고를 때 펫이 살짝 튄다. 펫은 화면에 보일 때만 숨쉰다.
  */
 public final class PickCard extends JRadioButton {
     /** 1배 크기. 창 폭 800에 두 장과 사이 20이 들어간다. */
@@ -24,13 +28,20 @@ public final class PickCard extends JRadioButton {
     static final int H = 262;
     private static final int RADIUS = 30;
     private final PetKind kind;
+    private final PetState look;
     /** 이름 아래 설명 두 줄(11-23 예시 글, 줄은 \n으로 나눈다). */
     private final String about;
+    private double t;
+    private double since = 99;
+    private long start = System.nanoTime();
+    private long pickedAt;
+    private javax.swing.Timer clock;
 
     public PickCard(String text, String kind, boolean selected, String about) {
         super(text, selected);
         this.about = about;
         this.kind = "DOG".equals(kind) ? PetKind.DOG : PetKind.CAT;
+        this.look = new PetState(kind, PetState.defaultName(kind));
         setOpaque(false);
         setContentAreaFilled(false);
         setBorderPainted(false);
@@ -38,7 +49,12 @@ public final class PickCard extends JRadioButton {
         setRolloverEnabled(true);
         setFont(Theme.heavy(22));
         getAccessibleContext().setAccessibleDescription(about.replace("\n", " "));
-        addItemListener(e -> repaint());
+        addItemListener(e -> {
+            if (isSelected()) {
+                pickedAt = System.nanoTime();
+            }
+            repaint();
+        });
     }
 
     @Override
@@ -54,6 +70,34 @@ public final class PickCard extends JRadioButton {
     @Override
     public Dimension getMaximumSize() {
         return getPreferredSize();
+    }
+
+    @Override
+    public void addNotify() {
+        super.addNotify();
+        if (clock == null) {
+            clock = new javax.swing.Timer(40, e -> {
+                if (isShowing()) {
+                    tick();
+                    repaint();
+                }
+            });
+        }
+        clock.start();
+    }
+
+    @Override
+    public void removeNotify() {
+        if (clock != null) {
+            clock.stop();
+        }
+        super.removeNotify();
+    }
+
+    private void tick() {
+        long now = System.nanoTime();
+        t = (now - start) / 1e9;
+        since = pickedAt == 0 ? 99 : (now - pickedAt) / 1e9;
     }
 
     @Override
@@ -74,7 +118,7 @@ public final class PickCard extends JRadioButton {
         }
         g.setColor(Theme.CARD_TOP);
         g.fill(new RoundRectangle2D.Double(x, y, w, h, RADIUS, RADIUS));
-        // 안: 종류별 바탕.
+        // 안: 종류별 바탕과 언덕, 펫.
         double ring = 5;
         RoundRectangle2D inner = new RoundRectangle2D.Double(x + ring, y + ring, w - ring * 2, h - ring * 2, RADIUS - 8, RADIUS - 8);
         Graphics2D in = (Graphics2D) g.create();
@@ -82,7 +126,24 @@ public final class PickCard extends JRadioButton {
         in.setPaint(new GradientPaint(0, (float) inner.getY(), cat ? Theme.COOL_TOP : Theme.WARM_TOP, 0,
                 (float) inner.getMaxY(), cat ? Theme.COOL_BOTTOM : Theme.WARM_BOTTOM));
         in.fill(inner);
+        double ix = inner.getX();
+        double iw = inner.getWidth();
+        double hillTop = inner.getY() + 120;
+        PickScene.bush(in, ix + iw * 0.10, hillTop + 22, 46);
+        PickScene.bush(in, ix + iw * 0.92, hillTop + 20, 40);
+        Color hill = cat ? Theme.COOL_HILL : Theme.WARM_HILL;
+        in.setPaint(new GradientPaint(0, (float) hillTop, hill, 0, (float) inner.getMaxY(), PickScene.mix(hill, Color.WHITE, 0.45)));
+        in.fill(new Ellipse2D.Double(ix - iw * 0.18, hillTop, iw * 1.36, inner.getHeight()));
+        PickScene.daisy(in, ix + iw * 0.12, hillTop + 6, 7, 0.2);
+        PickScene.daisy(in, ix + iw * 0.88, hillTop + 4, 6.5, -0.3);
         double cx = getWidth() / 2.0;
+        double ground = hillTop + 16;
+        double size = 140;
+        PetArt.drawAt(in, kind, PetPose.SIT, new HashSet<>(look.wear.values()), t, since, cx, ground, size);
+        if (on) {
+            double petTop = ground - size * PetArt.heightRatio(kind, PetPose.SIT);
+            Icons.draw(in, Icons.Kind.SPARK, (int) (cx - size * 0.48), (int) (petTop + 2), 26, Theme.SPARK);
+        }
         // 이름 줄: 발자국과 종류 이름.
         in.setFont(getFont());
         FontMetrics fm = in.getFontMetrics();
