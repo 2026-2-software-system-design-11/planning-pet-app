@@ -7,11 +7,19 @@ import static planningpet.shop.model.ItemId.SOFA;
 import static planningpet.shop.model.ItemId.YARN_BALL;
 
 import java.time.Clock;
+import java.time.LocalDate;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import planningpet.app.model.AppData;
+import planningpet.pet.model.PetKind;
+import planningpet.pet.model.PetState;
+import planningpet.reward.model.Rewards;
+import planningpet.schedule.model.Category;
+import planningpet.schedule.model.Kind;
+import planningpet.schedule.model.Task;
+import planningpet.schedule.model.TaskDraft;
 
 /** 06 20번과 docs/porting/shop.md 2절의 E-SHOP 경계. */
 class ShopTest {
@@ -51,6 +59,24 @@ class ShopTest {
         data.setOwnedItems(Set.of(CUSHION));
         data.setPlacedItems(Set.of(CUSHION));
         assertEquals("ALREADY_OWNED 0, 200P [CUSHION] [CUSHION]", buy(200, CUSHION));
+    }
+
+    @Test
+    void T_SHOP_5_buyUndoRedoGivesNoPoints() {
+        data.addPet(new PetState(PetKind.CAT, "나비"));
+        data.setActiveKind(PetKind.CAT);
+        LocalDate today = data.today();
+        for (int i = 0; i < 5; i++) {
+            data.getBook().add(new TaskDraft(Kind.TASK, "할 일", Category.OTHER, today, null, null, 30, "", null, null,
+                    false, null, today, false));
+        }
+        Rewards rewards = new Rewards(data);
+        List<Task> tasks = data.getBook().getTasks();
+        tasks.forEach(t -> rewards.complete(t, today));
+        BuyResult r = shop.buy(CUSHION);
+        tasks.forEach(t -> rewards.uncomplete(t, today));
+        tasks.forEach(t -> rewards.complete(t, today));
+        assertEquals("BOUGHT 0P [CUSHION]", r.outcome() + " " + data.getPoints() + "P " + data.getOwnedItems());
     }
 
     @Test
