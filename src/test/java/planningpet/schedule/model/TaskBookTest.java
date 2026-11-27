@@ -54,4 +54,52 @@ class TaskBookTest {
         assertEquals(List.of(), book.getTasks());
         assertEquals(1, next);
     }
+
+    @Test
+    void T_ADD_7_period() {
+        Task t = one(day(11, 18), day(11, 22), null);
+        assertEquals(List.of(day(11, 18), day(11, 18), day(11, 22)), List.of(t.getDate(), t.getStartDay(), t.getDueDate()));
+        assertNull(t.getSeriesId());
+    }
+
+    @Test
+    void T_ADD_8_periodHasNoTime() {
+        assertNull(one(day(11, 18), day(11, 22), 600).getStartTime());
+    }
+
+    @Test
+    void E_ADD_2_titleMemoCategory() {
+        Task t = book.add(new TaskDraft(Kind.TASK, "  과제  ", Category.EXERCISE, day(11, 16), null, null, 30, "준비물",
+                null, null, false, null, null, false)).get(0);
+        assertEquals(List.of("과제", "준비물", "운동"), List.of(t.getTitle(), t.getMemo(), t.getCategory().label()));
+    }
+
+    @Test
+    void E_ADD_3_nextDay() {
+        Task t = one(day(11, 16), null, Task.DAY + 90);
+        assertEquals(List.of(LocalTime.of(1, 30), true), List.of(t.getStartTime(), t.isNextDay()));
+    }
+
+    @Test
+    void E_ADD_4_latestStart() {
+        Task t = book.add(draft(Kind.TASK, "과제", day(11, 16), null, 27 * 60 + 50, 10)).get(0);
+        assertEquals(List.of(LocalTime.of(3, 50), true), List.of(t.getStartTime(), t.isNextDay()));
+    }
+
+    @Test
+    void E_ADD_5_midnight() {
+        Task t = one(day(11, 16), null, 0);
+        assertEquals(List.of(LocalTime.MIDNIGHT, false), List.of(t.getStartTime(), t.isNextDay()));
+    }
+
+    @Test
+    void E_ADD_6_periodNextDay() {
+        Task t = one(day(11, 18), day(11, 22), Task.DAY + 90);
+        assertEquals(Arrays.asList(null, false), Arrays.asList(t.getStartTime(), t.isNextDay()));
+    }
+
+    @Test
+    void E_ADD_13_pastDate() {
+        assertEquals(day(11, 10), one(day(11, 10), null, null).getDate());
+    }
 }

@@ -35,8 +35,11 @@ public final class TaskBook {
 
     /** 06 데이터 절의 처음 값으로 day의 일정 하나를 만든다. 보상과 끝냄은 없다. */
     private Task make(TaskDraft d, LocalDate day) {
+        boolean period = d.kind() == Kind.TASK && d.repeat() == null && d.dueDate() != null;
+        // D-68: 기간 할 일의 시각은 목록과 자동 배치로만 정하므로 시각 없이 만든다.
         return new Task(UUID.randomUUID().toString(), nextSeq.getAsLong(), d.kind(), d.title().strip(), day,
-                d.startTime(), d.durationMinutes(), d.memo(), d.startTime() != null && d.nextDay(), d.category(), null,
-                null, null, null, false, null, 0, 0, null, null);
+                period ? null : d.startTime(), d.durationMinutes(), d.memo(),
+                !period && d.startTime() != null && d.nextDay(), d.category(), null, null,
+                period ? d.dueDate() : null, period ? day : null, false, null, 0, 0, null, null);
     }
 }
