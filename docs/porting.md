@@ -30,7 +30,7 @@
 | M7 | 앱 데이터 | `AppData`(`copy`, `restore` 빼고), `PetState`, `Pose`, `Slot`, `WearId`, `ItemId`, `SampleLook` | 데이터 절 `AppData`, `PetState` | [docs/porting/app-data.md](porting/app-data.md) |
 | M8 | 저장 | `DataStore`, `SqliteDataStore`, `Schema`, `AppController.change`, `AppData.copy`, `restore` | 21번, 22번(프로토타입 기준 없음) | [docs/porting/store.md](porting/store.md) |
 | M9 | 보상 | `Rewards`, `Level`, `DailyProgress`, `Visits`, `Task.finish`, `unfinish` | 8~13번 | [docs/porting/rewards.md](porting/rewards.md) |
-| M10 | 펫 말 | `PetTalk`, `Bubble` | 16번 | `docs/porting/pet-talk.md` |
+| M10 | 펫 말 | `PetTalk`, `Bubble` | 16번 | [docs/porting/pet-talk.md](porting/pet-talk.md) |
 | M11 | 화면이 쓰는 일정 계산 | `DefaultDates`, `CalendarCell`, `TimetableLayout` | 14번, 19번, 26번 | `docs/porting/screen-calc.md` |
 | M12 | 자동 배치 | `AutoPlacer` | 18번 | `docs/porting/auto-place.md` |
 | M13 | 알림 고르기 | `Reminders` | 17번(프로토타입 기준 없음) | `docs/porting/reminders.md` |
