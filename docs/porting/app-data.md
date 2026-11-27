@@ -2,6 +2,8 @@
 
 [본 구현으로 옮기기](../porting.md) 1절 표의 단위 M7이다. 07의 `AppData`를 `planningpet.app.model`에, `PetState`와 값 목록 `Pose`, `Slot`, `WearId`를 `planningpet.pet.model`에, 값 목록 `ItemId`를 `planningpet.shop.model`에 둔다. 기준은 06 데이터 절의 `AppData`, `PetState` 값과 처음 값, 프로토타입 `app/model/Store`, `pet/model/PetState`, `Poses`, `Wardrobe`, `shop/model/Shop`의 아이템 목록이다. 값을 바꾸는 규칙(보상 8~11번, 상점 20번, 장신구 28번, 펫 30번)은 그 일을 옮기는 단위(M9, M14, M15)가 옮긴다. 22번의 되돌리기에 쓰는 `copy`와 `restore`는 PR 하나의 크기 한도(1절) 때문에 22번과 함께 M8 저장 단위가 옮긴다.
 
+PR 하나의 크기 한도(1절) 때문에 둘로 나눠 `PetState`와 값 목록 `Pose`, `Slot`, `WearId`, `ItemId`는 #346, `AppData`와 `SampleLook`은 #348로 옮긴다.
+
 07 안에서 정한 것과 그 까닭:
 
 - **값은 private 필드이고 읽는 메서드를 둔다.** 프로토타입 `Store`는 값을 public 필드로 열었다. 본 구현은 D-109대로 메서드로만 바꾼다. 값을 바꾸는 메서드는 M2a의 `Task`처럼 그 일을 옮기는 단위가 더한다. 이 단위는 고른 펫을 정하는 `addPet`, `setActiveKind`만 더한다. 06 30번의 `choose`, `adopt`(S2, M14)와 저장의 읽기(M8)가 쓰고, 이 단위의 고른 펫 검사가 쓴다. 모음 값(`pets`, `attendDays`, `ownedItems` 같은 것)은 바꿀 수 없는 모음으로 읽는다.
@@ -25,15 +27,15 @@
 
 ## 2. 입력의 경계와 프로토타입 결과
 
-프로토타입 결과는 `prototype/src`를 컴파일한 클래스로 `new Store()`, `Store.today`, `Store.pet`, `onChange`, `changed`, `book.add`, `new PetState`, `Poses.ALL`, `Wardrobe`, `Shop.ITEMS`를 부르는 버리는 Java 파일에서 얻었다(develop `9a59f15`, JDK 21.0.11). 06 데이터 절에는 검사 줄이 없어 T-WEAR-2 밖은 `E-APP`, `E-PET`, `E-WEAR`, `E-SHOP` 번호다. "본 구현" 칸의 결과는 `AppDataTest`, `PetStateTest`, `ItemIdTest`가 번호 이름의 테스트로 확인한다.
+프로토타입 결과는 `prototype/src`를 컴파일한 클래스로 `new Store()`, `Store.today`, `Store.pet`, `onChange`, `changed`, `book.add`, `new PetState`, `Poses.ALL`, `Wardrobe`, `Shop.ITEMS`를 부르는 버리는 Java 파일에서 얻었다(develop `9a59f15`, JDK 21.0.11). 06 데이터 절에는 검사 줄이 없어 T-WEAR-2 밖은 `E-APP`, `E-PET`, `E-WEAR`, `E-SHOP` 번호다. "본 구현" 칸의 결과는 `AppDataTest`, `PetStateTest`, `WearIdTest`, `ItemIdTest`가 번호 이름의 테스트로 확인한다.
 
 | 번호 | 입력과 경계 | 넣은 값 | 프로토타입 결과 | 본 구현 |
 |---|---|---|---|---|
 | E-APP-1 | 처음 값, 보상과 출석 | 새 앱 데이터 | `points` 0, `rewardCountDay` `null`, `rewardCount` 0, `attendanceDay` `null`, `attendDays` 없음, `lastOpenDay` `null`, `streak` 0 | 같음 |
 | E-APP-2 | 처음 값, 아이템과 설정 | 새 앱 데이터 | `ownedItems`, `placedItems` 없음, `calendarFixed` false, `listClickTime` false, `weekStart` `MONDAY`. `trayNoticeShown`은 프로토타입에 없다(트레이가 없다) | 같음. `trayNoticeShown` false |
 | E-APP-3 | 처음 값, 예시와 일정 | 새 앱 데이터 | `sampleIds`, `sampleLooks` 없음, 일정 0개, `deletedRewarded` 없음, `nextSeq` 1 | 같음 |
-| E-APP-4 | 처음 펫 | 새 앱 데이터 | 펫 하나(고양이 "나비"), `activeKind` `CAT` | 같음 |
-| E-APP-5 | 펫이 없음 | 펫을 모두 뺀 앱 데이터의 고른 펫 | `IndexOutOfBoundsException` | 같음 |
+| E-APP-4 | 처음 펫 | 새 앱 데이터 | 펫 하나(고양이 "나비"), `activeKind` `CAT` | 프로토타입과 일부러 다름: 펫 없음, `activeKind` `null`. 첫 실행은 빈 앱 데이터이고 고르기 창이 펫을 넣는다(4절 표, 07 seq-uc01, 06 30번) |
+| E-APP-5 | 펫이 없음 | 펫을 모두 뺀 앱 데이터의 고른 펫 | `IndexOutOfBoundsException` | 프로토타입과 일부러 다름: `null`. 고르기 창 전의 빈 앱 데이터에서 고른 펫은 없다(E-APP-4) |
 | E-APP-6 | 자정 | 11-17 00:00의 `today` | 11-16 | 같음 |
 | E-APP-7 | 앱 하루의 끝 | 11-17 03:59 | 11-16 | 같음 |
 | E-APP-8 | 앱 하루의 시작 | 11-17 04:00 | 11-17 | 같음 |
@@ -54,7 +56,7 @@
 경계마다 본 것:
 
 - E-APP-4: 프로토타입은 첫 실행 전에도 고양이 하나가 있고, 반려동물 고르기 창(`PetController.choose`)이 펫 목록을 비우고 고른 펫을 넣는다.
-- E-APP-5: 프로토타입은 늘 펫이 하나 이상이라 이 길이 없다. 고른 펫은 `activeKind`의 펫이고 없으면 첫 펫이다(E-APP-12).
+- E-APP-5: 프로토타입은 늘 펫이 하나 이상이라 이 길이 없다. 고른 펫은 `activeKind`의 펫이고 없으면 첫 펫이다(E-APP-12). 본 구현은 첫 실행에 펫이 없어(E-APP-4) 그때 `null`이다. 반려동물 고르기 창은 메인 창보다 먼저 뜨므로 그동안 고른 펫을 읽는 화면이 없다(UC-01 2a).
 - E-APP-6~10: 앱 날짜는 M1의 `AppDay.of`다. 시계가 새벽 4시 전이면 앞날이다(D-15, 06 1번).
 - E-APP-15: 일정 다루기의 넣은 순 번호는 앱 데이터의 `nextSeq`에서 꺼내고 늘린다. 저장(M8)이 이 값을 `app` 표에 쓴다.
 - E-SHOP-1: 털실 공과 뼈다귀는 둘 다 40P라 D-52에 적은 순서다. 가격과 합(T-SHOP-7)은 M15가 확인한다.
