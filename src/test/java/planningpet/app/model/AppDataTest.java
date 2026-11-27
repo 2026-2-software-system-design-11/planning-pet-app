@@ -1,6 +1,7 @@
 package planningpet.app.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.time.Clock;
 import java.time.DayOfWeek;
@@ -10,6 +11,8 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import planningpet.pet.model.PetKind;
+import planningpet.pet.model.PetState;
 import planningpet.schedule.model.Category;
 import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Repeat;
@@ -23,6 +26,13 @@ class AppDataTest {
     private static AppData at(String time) {
         ZoneId zone = ZoneId.systemDefault();
         return new AppData(Clock.fixed(LocalDateTime.parse(time).atZone(zone).toInstant(), zone));
+    }
+
+    @Test
+    void E_APP_4_firstPet() {
+        assertEquals(1, data.getPets().size());
+        assertEquals("나비", data.activePet().getName());
+        assertEquals(PetKind.CAT, data.getActiveKind());
     }
 
     @Test
@@ -48,6 +58,37 @@ class AppDataTest {
     @Test
     void E_APP_10_yearChanges() {
         assertEquals(LocalDate.of(2026, 12, 31), at("2027-01-01T03:59").today());
+    }
+
+    @Test
+    void E_APP_11_activePet() {
+        data.addPet(new PetState(PetKind.DOG, "바둑이"));
+        data.setActiveKind(PetKind.DOG);
+        assertEquals("바둑이", data.activePet().getName());
+        assertEquals("나비", data.pet(PetKind.CAT).getName());
+    }
+
+    @Test
+    void E_APP_12_activeKindWithoutPet() {
+        data.setActiveKind(PetKind.DOG);
+        assertEquals("나비", data.activePet().getName());
+        assertNull(data.pet(PetKind.DOG));
+    }
+
+    @Test
+    void E_APP_13_listenersInOrder() {
+        StringBuilder heard = new StringBuilder();
+        data.onChange(() -> heard.append("A"));
+        data.onChange(() -> heard.append("B"));
+        data.onChange(() -> heard.append("A"));
+        data.changed();
+        assertEquals("ABA", heard.toString());
+    }
+
+    @Test
+    void E_APP_14_noListener() {
+        data.changed();
+        assertEquals(1, data.getNextSeq());
     }
 
     @Test
