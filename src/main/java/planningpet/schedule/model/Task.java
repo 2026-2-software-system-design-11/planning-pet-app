@@ -95,6 +95,19 @@ public final class Task {
     /** 경험치를 받은 펫의 종류(D-48). 받지 않았으면 null. */
     public PetKind getRewardPet() { return rewardPet; }
 
+    // 06 4번의 고치기. TaskBook만 부르도록 package-private이다(D-109). 시각이 없으면 nextDay는 false다(D-77).
+    void setTitle(String title) { this.title = title; }
+    void setCategory(Category category) { this.category = category; }
+    void setDate(LocalDate date) { this.date = date; }
+    void setStart(LocalTime startTime, boolean nextDay) {
+        this.startTime = startTime;
+        this.nextDay = startTime != null && nextDay;
+    }
+    void setDurationMinutes(int durationMinutes) { this.durationMinutes = durationMinutes; }
+    void setMemo(String memo) { this.memo = memo; }
+    void setStartDay(LocalDate startDay) { this.startDay = startDay; }
+    void setDueDate(LocalDate dueDate) { this.dueDate = dueDate; }
+
     public boolean timed() {
         return startTime != null;
     }
