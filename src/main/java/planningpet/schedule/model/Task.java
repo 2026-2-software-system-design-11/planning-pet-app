@@ -108,6 +108,19 @@ public final class Task {
     void setStartDay(LocalDate startDay) { this.startDay = startDay; }
     void setDueDate(LocalDate dueDate) { this.dueDate = dueDate; }
 
+    /**
+     * 끝냄으로 바꾸고 끝낸 앱 날짜와 받은 보상을 적는다(06 8번). Rewards가 부른다(07). 받은 포인트와 경험치가 0이면(하루 상한, D-18)
+     * 받은 날은 null이다. 날짜, 시작 시각, 기간은 그대로 둔다(D-66).
+     */
+    public void finish(LocalDate day, int points, int exp, PetKind pet) {
+        done = true;
+        doneDay = day;
+        rewardPoints = points;
+        rewardExp = exp;
+        rewardDay = points == 0 && exp == 0 ? null : day;
+        rewardPet = pet;
+    }
+
     /** 값이 같은 새 일정. TaskBook.restore가 쓴다. */
     Task copy() {
         return new Task(id, seq, kind, title, date, startTime, durationMinutes, memo, nextDay, category, seriesId,
