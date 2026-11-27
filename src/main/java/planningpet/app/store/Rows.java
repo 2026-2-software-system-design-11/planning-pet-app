@@ -1,5 +1,8 @@
 package planningpet.app.store;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
@@ -79,5 +82,38 @@ final class Rows {
             return e.name();
         }
         return v == null ? null : v.toString();
+    }
+
+    /** before에 있고 달라졌거나 없어진 행을 지우고, 새로 생기거나 달라진 행을 넣는다. 달라진 행 수를 돌려준다. */
+    static int write(Connection db, Map<String, Map<List<Object>, List<Object>>> before,
+            Map<String, Map<List<Object>, List<Object>>> after) throws SQLException {
+        int n = 0;
+        for (Schema.Table t : Schema.TABLES) {
+            Map<List<Object>, List<Object>> old = before.getOrDefault(t.name(), Map.of());
+            Map<List<Object>, List<Object>> now = after.get(t.name());
+            try (PreparedStatement del = db.prepareStatement(t.delete());
+                    PreparedStatement ins = db.prepareStatement(t.insert())) {
+                for (var e : old.entrySet()) {
+                    if (!e.getValue().equals(now.get(e.getKey()))) {
+                        run(del, e.getKey());
+                        n++;
+                    }
+                }
+                for (var e : now.entrySet()) {
+                    if (!e.getValue().equals(old.get(e.getKey()))) {
+                        run(ins, e.getValue());
+                        n += old.containsKey(e.getKey()) ? 0 : 1;
+                    }
+                }
+            }
+        }
+        return n;
+    }
+
+    private static void run(PreparedStatement s, List<Object> values) throws SQLException {
+        for (int i = 0; i < values.size(); i++) {
+            s.setObject(i + 1, values.get(i));
+        }
+        s.executeUpdate();
     }
 }
