@@ -37,8 +37,11 @@
 | M14 | 펫 | `Bond`, `Wardrobe`, `Poses`, `PetState.pat` | 27번, 28번이 쓰는 장신구 표 | [docs/porting/pet.md](porting/pet.md) |
 | M15 | 상점과 방 | `Shop`, `Item`, `Room` | 20번 | [docs/porting/shop.md](porting/shop.md) |
 | M16 | 통계 | `Stats` | 29번 | [docs/porting/stats.md](porting/stats.md) |
-| S1 | 창 틀과 날 바뀜 | `AppWindow`, `AppController.onWindowShown`, `say`, `DayWatcher`, `RewardController.attend` | 11번, 15번, 23번 | `docs/porting/app-window.md` |
-| S2 | 반려동물 고르기 창 | `PickDialog`, `PetController.adopt`, `select` | 30번 | `docs/porting/pick.md` |
+| S1 | 창이 보일 때와 날 바뀜 | `AppController.onWindowShown`, `say`, `DayWatcher`, `Tray`의 30초 타이머, `RewardController.attend` | 11번, 15번, 23번 | [docs/porting/app-window.md](porting/app-window.md) |
+| S1b | 디자인 시스템 바탕 | `common.view`의 `Theme`, 글꼴 파일, `Card`, `RoundButtonUI` | 없음([디자인 시스템](design-system.md)) | `docs/porting/theme.md` |
+| S1c | 아이콘과 수치 카드 | `common.view`의 `Icons`(창 틀이 쓰는 것), `StatCard`, 창 바탕 그림 | 없음([디자인 시스템](design-system.md)) | `docs/porting/icons.md` |
+| S1d | 창 틀 | `AppWindow`(05 창 구조의 배치, 화면 머리 오른쪽 카드, 화면 바꾸기, 알림 받아 다시 그리기) | 11번의 출석 단추, 15번의 연속 접속 | `docs/porting/frame.md` |
+| S2 | 반려동물 고르기 창 | `PickDialog`, `PetController.adopt`, `select`, 사이드바 로고의 `PetArt`, `Main` 잇기(읽기, 못 읽음 창, 첫 실행 갈래, 창과 타이머 잇기) | 30번, 21번의 시작할 때 읽기 | `docs/porting/pick.md` |
 | S3 | 홈 목록 | `MainScreen`, `PetCard`, `CalendarPanel`, `HomeController`, `RewardController.complete`, `uncomplete` | 6번, 8번, 9번, 13번, 16번, 26번 | `docs/porting/home.md` |
 | S4 | 일정 입력 창 | `TaskDialog`, `TaskController.add`, `update`, `delete` | 2~5번, 14번 | `docs/porting/task-dialog.md` |
 | S5 | 일정관리 | `ScheduleScreen`, `TimetablePanel`, `TaskRows`, `TimeEditor`, `TaskController.clearTime` | 4번의 시각 고치기 창, 7번, 19번 | `docs/porting/schedule.md` |
@@ -61,6 +64,7 @@
 - **반복은 일정 넣기 앞이다.** 3번이 반복 사본을 `Repeat`로 만든다. 2번의 반복 칸 검사도 사본 수를 세므로 M2b에서 빼고 M3에 둔다.
 - **목록은 고치기와 지우기 앞이다.** 4번, 5번 검사 줄에 고친 결과를 그날 목록과 시간표에 보이는 모양으로 적은 줄이 있어, 그 줄을 6번, 7번으로 확인한다.
 - **앱 데이터는 저장 앞이다.** `AppData`의 값을 한 번에 다 두어야 저장 표(07 저장 형식)가 단위마다 바뀌지 않는다. 보상, 상점, 통계 규칙은 `AppData`를 받으므로 그 뒤다. 22번은 controller지만 저장 실패를 창 없이 검사하므로(T-SAVE-1~3) 저장과 함께 둔다.
+- **창 틀은 부품 다음이다.** 프로토타입 창 틀은 디자인 시스템 부품(`Theme`, `Card`, `RoundButtonUI`, `Icons`, `StatCard`)과 로고 그림(`PetArt`)에 기대고, 이것을 다 옮기면 PR 한도의 세 배가 넘는다. 창 틀을 Swing 기본 모양으로 지었다가 다시 입히는 중간 단계를 두지 않으려고 S1b, S1c가 부품을 먼저 옮기고 S1d가 창 틀을 짓는다. S1은 화면 없이 검사하는 15번, 23번, 출석의 controller다. 첫 실행 갈래가 고르기 창 없이 생기지 않도록 `Main` 잇기는 고르기 창과 함께 S2가 한다.
 - **화면은 홈 목록, 일정 입력 창, 일정관리 순이다.** 앱을 열면 처음 보는 것이 홈이고, 일정을 넣어야 다른 화면에 보일 것이 생긴다. 반려동물 고르기 창은 빈 폴더로 처음 열 때 뜨므로 홈 앞이다.
 - **편의 기능은 끝이다.** 편의 기능은 핵심 길로 이미 되는 결과에 더 짧은 길을 더하는 것이다. 칸에 쳐 넣기는 목록에서 고르기, 끌어 놓기와 "목록 누르기"는 시각 고치기 창, 빠른 추가는 일정 입력 창, 예시로 둘러보기는 빈 앱에서 일정 넣기가 핵심 길이다. 끝에 둔다는 것은 순서일 뿐 빼는 것이 아니다. 편의 단위는 그 단위의 model과 화면을 함께 옮긴다.
 
