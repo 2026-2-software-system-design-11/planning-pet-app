@@ -2,10 +2,12 @@ package planningpet.schedule.model;
 
 import static java.time.DayOfWeek.MONDAY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
@@ -119,5 +121,71 @@ class TaskBookEditTest {
         Task t = at(day(12, 28));
         book.update(t, draft(t, "끝", day(12, 28), null, T1030, 75), EditScope.THIS_AND_AFTER);
         titles(6, "끝");
+    }
+
+    @Test
+    void T_EDIT_11_dueThenPeriodOff() {
+        today = day(11, 16);
+        Task t = put("P", day(11, 16), null, day(11, 16), day(11, 22), null);
+        book().update(t, draft(t, "P", day(11, 16), day(11, 29), null, 30), EditScope.ONLY_THIS);
+        assertEquals(List.of(day(11, 16), day(11, 29)), List.of(t.getStartDay(), t.getDueDate()));
+        book.update(t, draft(t, "P", day(11, 16), null, null, 30), EditScope.ONLY_THIS);
+        assertEquals(Arrays.asList(null, null), Arrays.asList(t.getStartDay(), t.getDueDate()));
+        assertEquals(List.of(t), book.dayPlan(day(11, 16)).untimed());
+        assertTrue(book.dayPlan(day(11, 17)).isEmpty());
+    }
+
+    @Test
+    void T_EDIT_14_laterDueKeepsPlacedTime() {
+        today = day(11, 17);
+        Task t = new Task("p", 1, Kind.TASK, "P", day(11, 18), LocalTime.of(9, 0), 90, "초안", false, Category.OTHER,
+                null, null, day(11, 22), day(11, 16), false, null, 0, 0, null, null);
+        tasks.add(t);
+        book().update(t, draft(t, "P", day(11, 16), day(11, 24), null, 90), EditScope.ONLY_THIS);
+        assertEquals(Arrays.asList(day(11, 16), day(11, 18), LocalTime.of(9, 0), 90, "초안", day(11, 24)),
+                Arrays.asList(t.getStartDay(), t.getDate(), t.getStartTime(), t.getDurationMinutes(), t.getMemo(),
+                        t.getDueDate()));
+        assertEquals("~11/24까지", book.dueText(t));
+        assertEquals(List.of(t), book.dayPlan(day(11, 18)).timed());
+        assertTrue(book.dayPlan(day(11, 22)).isEmpty());
+    }
+
+    @Test
+    void T_EDIT_41_pastDuePeriod() {
+        Task t = put("Q", day(11, 10), null, day(11, 10), day(11, 16), null);
+        book().update(t, draft(t, "Q2", day(11, 10), day(11, 16), null, 60), EditScope.ONLY_THIS);
+        assertEquals(Arrays.asList("Q2", 60, day(11, 10), day(11, 10), day(11, 16)), Arrays.asList(t.getTitle(),
+                t.getDurationMinutes(), t.getDate(), t.getStartDay(), t.getDueDate()));
+        assertEquals(List.of(t), book.dayPlan(day(11, 16)).dueToday());
+    }
+
+    @Test
+    void E_EDIT_4_copyNeverPeriod() {
+        Task t = put("운동", day(11, 17), null, null, null, "S");
+        book().update(t, draft(t, "운동", day(11, 17), day(11, 20), null, 30), EditScope.ONLY_THIS);
+        assertEquals(Arrays.asList(null, null), Arrays.asList(t.getStartDay(), t.getDueDate()));
+    }
+
+    @Test
+    void E_EDIT_5_periodOnDropsTime() {
+        Task t = put("과제", day(11, 16), LocalTime.of(14, 0), null, null, null);
+        book().update(t, draft(t, "과제", day(11, 16), day(11, 20), LocalTime.of(14, 0), 60), EditScope.ONLY_THIS);
+        assertEquals(Arrays.asList(day(11, 16), day(11, 16), day(11, 20), null, false, 60), Arrays.asList(t.getDate(),
+                t.getStartDay(), t.getDueDate(), t.getStartTime(), t.isNextDay(), t.getDurationMinutes()));
+    }
+
+    @Test
+    void E_EDIT_6_untimedPeriodFirstDay() {
+        Task t = put("P", day(11, 16), null, day(11, 16), day(11, 22), null);
+        book().update(t, draft(t, "P", day(11, 18), day(11, 22), null, 30), EditScope.ONLY_THIS);
+        assertEquals(List.of(day(11, 18), day(11, 18)), List.of(t.getDate(), t.getStartDay()));
+    }
+
+    @Test
+    void E_EDIT_7_placedPeriodOff() {
+        Task t = put("P", day(11, 19), LocalTime.of(14, 0), day(11, 16), day(11, 22), null);
+        book().update(t, draft(t, "P", day(11, 20), null, LocalTime.of(15, 0), 30), EditScope.ONLY_THIS);
+        assertEquals(Arrays.asList(day(11, 20), LocalTime.of(15, 0), null, null),
+                Arrays.asList(t.getDate(), t.getStartTime(), t.getStartDay(), t.getDueDate()));
     }
 }
