@@ -48,6 +48,12 @@
 | `SKY_TOP`, `SKY_BOTTOM` | `#C9E9FC`, `#EAF6FD` | 홈 펫 카드 장면의 하늘(위에서 땅 선까지) |
 | `GRASS`, `GRASS_FAR`, `GRASS_DEEP` | `#DCEDA2`, `#CCEBC8`, `#A9D38A` | 홈 펫 카드의 가까운 풀밭, 먼 언덕, 풀잎 |
 | `TRACK_DEEP` | `#B4D0E2` | 흰 바탕이 아닌 곳(하늘 위)의 막대 바탕, 칸 막대의 빈 칸 |
+| `RIBBON_TOP`, `RIBBON_DEEP`, `RIBBON_TAIL` | `#3DA898`, `#2C9282`, `#7FCDBF` | 고르기 창 리본의 띠(위에서 아래로)와 뒤로 접힌 꼬리. 흰 글과 띠 가운데가 3.2:1이 되게 예시(`#55B8AA`, 2.38:1)보다 진하다 |
+| `COOL_TOP`, `COOL_BOTTOM`, `COOL_LINE`, `COOL_HILL` | `#EAF8FD`, `#DDF3FB`, `#BFE6EA`, `#C9EDCE` | 고르기 창 고양이 카드의 바탕, 고르지 않았을 때 안쪽 테두리, 카드 안 언덕 |
+| `WARM_TOP`, `WARM_BOTTOM`, `WARM_LINE`, `WARM_HILL` | `#FEF9F0`, `#FCF2E2`, `#F4DDBC`, `#E5EDBA` | 고르기 창 강아지 카드의 같은 자리 |
+| `WARM_ICON` | `#885832` | 강아지 카드의 발자국(크림 바탕과 5.5:1). 아이콘을 `ICON` 하나로 두는 규칙의 예외는 이것뿐이다 |
+| `SKY_PAW`, `MOUNTAIN` | `#9ECEED`, `#CDEAF6` | 고르기 창 하늘의 발자국 장식, 먼 산 |
+| `DAISY`, `DAISY_HEART` | `#FEFCF4`, `#FDD65E` | 데이지 꽃잎과 가운데(고르기 창 바닥과 카드 안) |
 
 예시에서 뽑은 대조 값(예시 1672x941): 창 가장자리 `#B4E8EC`, 본문 판 `#E0F4FC`, 사이드바 `#E8F8F8`, 고른 메뉴 `#B8F4E4`, 아이콘 `#0B6360` 안팎, 글자 `#121A2E` 안팎, 진행 막대 `#3CCCAC`와 바탕 `#D8E8F0`, 민트 버튼 `#2FC7A6` 안팎, 체크 배지 `#18B898`, 동전 `#FCD828`.
 

@@ -68,6 +68,27 @@ public final class Theme {
     public static final Color GRASS_DEEP = new Color(0xA9D38A);
     /** 흰 바탕이 아닌 곳(하늘 위)의 진행 막대 바탕과 진행 칸의 빈 칸. */
     public static final Color TRACK_DEEP = new Color(0xB4D0E2);
+    /** 반려동물 고르기 창(2026-11-23 고르기 예시). 리본 띠(위에서 아래로)와 뒤로 접힌 꼬리. 흰 글과 띠 가운데가 3:1을 넘게 예시(#55B8AA)보다 진하다. */
+    public static final Color RIBBON_TOP = new Color(0x3DA898);
+    public static final Color RIBBON_DEEP = new Color(0x2C9282);
+    public static final Color RIBBON_TAIL = new Color(0x7FCDBF);
+    /** 고르기 카드 바탕(위에서 아래로)과 안쪽 테두리, 카드 안 언덕. 고양이는 차가운 하늘빛, 강아지는 따뜻한 크림이다. */
+    public static final Color COOL_TOP = new Color(0xEAF8FD);
+    public static final Color COOL_BOTTOM = new Color(0xDDF3FB);
+    public static final Color COOL_LINE = new Color(0xBFE6EA);
+    public static final Color COOL_HILL = new Color(0xC9EDCE);
+    public static final Color WARM_TOP = new Color(0xFEF9F0);
+    public static final Color WARM_BOTTOM = new Color(0xFCF2E2);
+    public static final Color WARM_LINE = new Color(0xF4DDBC);
+    public static final Color WARM_HILL = new Color(0xE5EDBA);
+    /** 강아지 카드의 발자국(예시 #885832, 크림 바탕과 5.5:1). */
+    public static final Color WARM_ICON = new Color(0x885832);
+    /** 하늘의 발자국 장식과 먼 산. */
+    public static final Color SKY_PAW = new Color(0x9ECEED);
+    public static final Color MOUNTAIN = new Color(0xCDEAF6);
+    /** 데이지 꽃잎과 가운데. */
+    public static final Color DAISY = new Color(0xFEFCF4);
+    public static final Color DAISY_HEART = new Color(0xFDD65E);
     public static final int CARD_RADIUS = 18;
     public static final int BUTTON_RADIUS = 22;
     public static final int IMAGE_RADIUS = 16;
