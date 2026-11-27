@@ -1,0 +1,80 @@
+package planningpet.stats.model;
+
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import planningpet.app.model.AppData;
+import planningpet.reward.model.Rewards;
+import planningpet.schedule.model.Category;
+import planningpet.schedule.model.Task;
+
+/** 통계 화면의 값(06 29번, D-55). 펫 둘이 함께 쓰는 일정, 보상, 출석을 센다(D-48). */
+public final class Stats {
+    private final AppData data;
+
+    public Stats(AppData data) {
+        this.data = data;
+    }
+
+    /** 기간 동안 끝낸 수와 셀 일정 수. */
+    public Rate rate(Period p) {
+        return rate(counted(p.from(), p.to()));
+    }
+
+    /** 추이. 주간은 날마다, 월간은 한 주의 마지막 날에서 끊은 주마다 한 칸이고 그 달 밖의 날은 넣지 않는다(D-91). */
+    public List<Bucket> trend(Period p) {
+        DayOfWeek last = data.getWeekStart().minus(1);
+        List<Bucket> out = new ArrayList<>();
+        LocalDate d = p.from();
+        while (!d.isAfter(p.to())) {
+            LocalDate end = p.monthly() ? d.with(TemporalAdjusters.nextOrSame(last)) : d;
+            if (end.isAfter(p.to())) {
+                end = p.to();
+            }
+            out.add(new Bucket(d, end, rate(counted(d, end))));
+            d = end.plusDays(1);
+        }
+        return out;
+    }
+
+    /** 유형별 Rate. 셀 일정이 하나라도 있는 유형만 D-54 순서로 담는다. */
+    public Map<Category, Rate> byCategory(Period p) {
+        List<Task> list = counted(p.from(), p.to());
+        Map<Category, Rate> out = new LinkedHashMap<>();
+        for (Category c : Category.values()) {
+            List<Task> in = list.stream().filter(t -> t.getCategory() == c).toList();
+            if (!in.isEmpty()) {
+                out.put(c, rate(in));
+            }
+        }
+        return out;
+    }
+
+    /** 기간에 얻은 포인트: 받은 날이 기간 안인 완료 보상(지운 일정 것도, D-19)과 기간 안의 출석. */
+    public int points(Period p) {
+        int tasks = data.getBook().rewardHistory().stream().filter(t -> p.contains(t.getRewardDay()))
+                .mapToInt(Task::getRewardPoints).sum();
+        long attend = data.getAttendDays().stream().filter(p::contains).count();
+        return tasks + (int) attend * Rewards.ATTEND_POINTS;
+    }
+
+    /**
+     * from부터 to까지가 세는 날(06 데이터 절)인 셀 일정. 앞날은 세지 않고(D-55), 오늘의 일정은 끝낸 것만 센다(D-63). 끝내지 않은 기간 할
+     * 일은 마감 날의 일이다(D-65).
+     */
+    private List<Task> counted(LocalDate from, LocalDate to) {
+        LocalDate today = data.today();
+        LocalDate end = to.isAfter(today) ? today : to;
+        return data.getBook().getTasks().stream()
+                .filter(t -> !t.countDay().isBefore(from) && !t.countDay().isAfter(end))
+                .filter(t -> t.isDone() || t.countDay().isBefore(today)).toList();
+    }
+
+    private static Rate rate(List<Task> list) {
+        return new Rate((int) list.stream().filter(Task::isDone).count(), list.size());
+    }
+}
