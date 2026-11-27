@@ -26,12 +26,27 @@ class TaskBookEditTest {
         return LocalDate.of(2026, month, d);
     }
 
-    /** 할 일 하나를 둔다. due가 있으면 첫날 from인 기간 할 일이다. */
-    private Task put(String title, LocalDate date, LocalTime start, LocalDate from, LocalDate due, String series) {
+    /** 할 일 하나를 둔다. due가 있으면 첫날 from인 기간 할 일, rewardDay가 있으면 그날 끝내 10P, 경험치 10을 받았다. */
+    private Task put(String title, LocalDate date, LocalTime start, LocalDate from, LocalDate due, String series,
+            LocalDate rewardDay) {
+        int reward = rewardDay == null ? 0 : 10;
         Task t = new Task("id" + next, next++, Kind.TASK, title, date, start, 30, "", false, Category.OTHER, series,
-                series == null ? null : Repeat.DAILY, due, from, false, null, 0, 0, null, null);
+                series == null ? null : Repeat.DAILY, due, from, rewardDay != null, rewardDay, reward, reward,
+                rewardDay, null);
         tasks.add(t);
         return t;
+    }
+
+    private Task put(String title, LocalDate date, LocalTime start, LocalDate from, LocalDate due, String series) {
+        return put(title, date, start, from, due, series, null);
+    }
+
+    /** 영어 단어: 11-16~11-20 매일 21:00 사본 5개. 11-18 사본은 그날 끝내 보상을 받았다(T-EDIT-43). */
+    private void english() {
+        for (int d = 16; d <= 20; d++) {
+            put("영어 단어", day(11, d), LocalTime.of(21, 0), null, null, "S", d == 18 ? day(11, 18) : null);
+        }
+        book();
     }
 
     private TaskBook book() {
@@ -52,6 +67,18 @@ class TaskBookEditTest {
     /** 일정마다 f의 값. 넣은 순서다. */
     private List<Object> each(Function<Task, Object> f) {
         return book.getTasks().stream().map(f).toList();
+    }
+
+    /** 제목, 유형, 메모만 바꾼 수정 창의 값. */
+    private static TaskDraft draft(Task t, String title, Category category, String memo) {
+        return new TaskDraft(t.getKind(), title, category, t.getDate(), t.getDueDate(), t.getStartTime(),
+                t.getDurationMinutes(), memo, t.getRepeat(), null, t.isNextDay(), null, null, true);
+    }
+
+    /** 영어 단어의 11-18 사본은 끝냄과 보상이 그대로다. */
+    private void doneKept() {
+        Task t = at(day(11, 18));
+        assertEquals(List.of(true, 10, 10), List.of(t.isDone(), t.getRewardPoints(), t.getRewardExp()));
     }
 
     /** 수정 창의 값. 유형과 메모는 t의 값이다. 기간 할 일의 날짜 칸은 첫날이다. */
@@ -187,5 +214,46 @@ class TaskBookEditTest {
         book().update(t, draft(t, "P", day(11, 20), null, LocalTime.of(15, 0), 30), EditScope.ONLY_THIS);
         assertEquals(Arrays.asList(day(11, 20), LocalTime.of(15, 0), null, null),
                 Arrays.asList(t.getDate(), t.getStartTime(), t.getStartDay(), t.getDueDate()));
+    }
+
+    @Test
+    void T_EDIT_1_doneTaskKeepsReward() {
+        Task t = put("과제", day(11, 16), null, null, null, null, day(11, 16));
+        book().update(t, draft(t, "과제", day(11, 20), null, null, 120), EditScope.ONLY_THIS);
+        assertEquals(Arrays.asList(day(11, 20), 120, true, day(11, 16), 10, 10, day(11, 16)),
+                Arrays.asList(t.getDate(), t.getDurationMinutes(), t.isDone(), t.getDoneDay(), t.getRewardPoints(),
+                        t.getRewardExp(), t.getRewardDay()));
+    }
+
+    @Test
+    void T_EDIT_10_taskRepeatAfter() {
+        book().add(new TaskDraft(Kind.TASK, "운동", Category.OTHER, day(11, 16), null, null, 30, "", Repeat.DAILY,
+                day(11, 22), false, null, null, false));
+        Task t = at(day(11, 19));
+        book.update(t, draft(t, "운동 30분", day(11, 19), null, null, 30), EditScope.THIS_AND_AFTER);
+        assertEquals(List.of("운동", "운동", "운동", "운동 30분", "운동 30분", "운동 30분", "운동 30분"), each(Task::getTitle));
+    }
+
+    @Test
+    void T_EDIT_43_doneCopyStaysInDialog() {
+        english();
+        Task t = at(day(11, 17));
+        book.update(t, draft(t, "영어 단어 복습", Category.OTHER, "30개"), EditScope.THIS_AND_AFTER);
+        String a = "영어 단어";
+        String b = "영어 단어 복습";
+        assertEquals(List.of(a, b, a, b, b), each(Task::getTitle));
+        assertEquals(List.of("", "30개", "", "30개", "30개"), each(Task::getMemo));
+        doneKept();
+    }
+
+    @Test
+    void E_EDIT_11_editDoneCopy() {
+        english();
+        Task t = at(day(11, 18));
+        book.update(t, draft(t, "복습", Category.STUDY, ""), EditScope.THIS_AND_AFTER);
+        assertEquals(List.of("영어 단어", "영어 단어", "복습", "복습", "복습"), each(Task::getTitle));
+        assertEquals(List.of(Category.OTHER, Category.OTHER, Category.STUDY, Category.STUDY, Category.STUDY),
+                each(Task::getCategory));
+        doneKept();
     }
 }
