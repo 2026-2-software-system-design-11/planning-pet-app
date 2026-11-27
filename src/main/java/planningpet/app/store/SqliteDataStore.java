@@ -34,7 +34,10 @@ public final class SqliteDataStore implements DataStore {
         this.clock = clock;
     }
 
-    /** 파일이 없으면 FIRST_RUN이다. 먼저 읽기 전용으로 열어 형식 번호를 보고, 읽을 수 없으면 파일을 건드리지 않고 UNREADABLE과 이유다(07 저장 형식). */
+    /**
+     * 파일이 없거나 표 없는 형식 번호 0 파일(첫 저장 도중 꺼진 파일)이면 FIRST_RUN이다. 먼저 읽기 전용으로 열어 형식 번호를 보고,
+     * 읽을 수 없으면 파일을 건드리지 않고 UNREADABLE과 이유다(07 저장 형식).
+     */
     @Override
     public LoadResult load() {
         Path file = folder.resolve(FILE);
@@ -42,7 +45,11 @@ public final class SqliteDataStore implements DataStore {
             return LoadResult.firstRun();
         }
         try (Connection db = openToRead(file)) {
-            if (version(db) > Schema.VERSION) {
+            int version = version(db);
+            if (version == 0) {
+                return hasTables(db) ? LoadResult.unreadable(Reason.NOT_DATA_FILE) : LoadResult.firstRun();
+            }
+            if (version > Schema.VERSION) {
                 return LoadResult.unreadable(Reason.NEWER_VERSION);
             }
             AppData data = Rows.read(db, clock);
@@ -105,6 +112,13 @@ public final class SqliteDataStore implements DataStore {
     static int version(Connection db) throws SQLException {
         try (Statement s = db.createStatement(); ResultSet r = s.executeQuery("PRAGMA user_version")) {
             return r.getInt(1);
+        }
+    }
+
+    /** 표가 하나라도 있으면 참이다. 형식 번호 0인데 표가 있으면 다른 프로그램의 sqlite 파일이다. */
+    private static boolean hasTables(Connection db) throws SQLException {
+        try (Statement s = db.createStatement(); ResultSet r = s.executeQuery("SELECT count(*) FROM sqlite_master")) {
+            return r.getInt(1) > 0;
         }
     }
 }

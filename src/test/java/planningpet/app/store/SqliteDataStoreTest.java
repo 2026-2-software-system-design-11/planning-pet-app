@@ -160,6 +160,19 @@ class SqliteDataStoreTest {
         assertUnreadable(LoadResult.Reason.NEWER_VERSION);
     }
 
+    @Test
+    void E_STORE_9_emptyFileIsFirstRun() throws IOException {
+        Files.write(file(), new byte[0]);
+        assertEquals(LoadResult.Status.FIRST_RUN, store().load().status());
+        assertEquals(0, Files.size(file()));
+    }
+
+    @Test
+    void E_STORE_10_otherSqliteFileUntouched() throws Exception {
+        sql("CREATE TABLE note (body)");
+        assertUnreadable(LoadResult.Reason.NOT_DATA_FILE);
+    }
+
     private Path file() {
         return folder.resolve(SqliteDataStore.FILE);
     }
