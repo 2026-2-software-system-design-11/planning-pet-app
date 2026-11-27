@@ -2,11 +2,14 @@ package planningpet.pet.view;
 
 import planningpet.common.view.Icons;
 import planningpet.common.view.Theme;
+import planningpet.pet.model.PetState;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.geom.Ellipse2D;
+import java.util.HashSet;
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -79,4 +82,64 @@ public final class AdoptDialog {
         }
     }
 
+    /**
+     * 큰 펫 자리: 데려올 펫이 앉기 자세와 기본 목걸이로 앉아 있고(05: 데려온 펫은 앉기 자세, 기본 목걸이) 왼쪽 위에 강조선, 발밑에 옅은 그림자다.
+     * 창이 뜰 때 펫이 한 번 살짝 튀고, 보이는 동안 숨쉰다(고르기 창 카드와 같은 PetArt 시간 값).
+     */
+    private static final class Stage extends JComponent {
+        private final PetKind kind;
+        private final PetState look;
+        private final long start = System.nanoTime();
+        private double t;
+        private double since = 99;
+        private javax.swing.Timer clock;
+
+        Stage(boolean dog) {
+            String k = dog ? "DOG" : "CAT";
+            kind = dog ? PetKind.DOG : PetKind.CAT;
+            look = new PetState(k, PetState.defaultName(k));
+            setAlignmentX(0.5f);
+            // 높이는 더 큰 고양이 앉기 그림(0.88)에 맞춰 강아지 창과 고양이 창의 크기가 같다. 위 18은 강조선, 아래 6은 그림자 자리다.
+            setPreferredSize(new Dimension(W - 44, (int) Math.ceil(PET_BOX * PetArt.heightRatio(PetKind.CAT, PetPose.SIT)) + 24));
+            setMaximumSize(getPreferredSize());
+        }
+
+        @Override
+        public void addNotify() {
+            super.addNotify();
+            if (clock == null) {
+                clock = new javax.swing.Timer(40, e -> {
+                    if (isShowing()) {
+                        double now = (System.nanoTime() - start) / 1e9;
+                        t = now;
+                        since = now;
+                        repaint();
+                    }
+                });
+            }
+            clock.start();
+        }
+
+        @Override
+        public void removeNotify() {
+            if (clock != null) {
+                clock.stop();
+            }
+            super.removeNotify();
+        }
+
+        @Override
+        protected void paintComponent(Graphics graphics) {
+            Graphics2D g = (Graphics2D) graphics.create();
+            PickScene.hints(g);
+            double cx = getWidth() / 2.0;
+            double ground = getHeight() - 6;
+            g.setColor(PickScene.alpha(Theme.CARD_SHADOW, 40));
+            g.fill(new Ellipse2D.Double(cx - PET_BOX * 0.36, ground - 7, PET_BOX * 0.72, 12));
+            PetArt.drawAt(g, kind, PetPose.SIT, new HashSet<>(look.wear.values()), t, since, cx, ground, PET_BOX);
+            double petTop = ground - PET_BOX * PetArt.heightRatio(kind, PetPose.SIT);
+            Icons.draw(g, Icons.Kind.SPARK, (int) (cx - PET_BOX * 0.72), (int) (petTop - 8), 40, Theme.SPARK);
+            g.dispose();
+        }
+    }
 }
