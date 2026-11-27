@@ -12,9 +12,9 @@ package planningpet.schedule.view {
 package planningpet.schedule.controller {
   class TaskController {
     + add(draft : TaskDraft, ask : Predicate<Overlap>) : boolean
-    + update(task : Task, draft : TaskDraft, scope : EditScope) : boolean
+    + update(task : Task, draft : TaskDraft, ask : Predicate<Overlap>, chooseScope : Supplier<EditScope>) : boolean
     + clearTime(task : Task, scope : EditScope) : void
-    + placeAt(task : Task, day : LocalDate, start : int, scope : EditScope) : String
+    + placeAt(task : Task, day : LocalDate, start : int, ask : Predicate<Overlap>, chooseScope : Supplier<EditScope>) : String
     + undoPlace() : void
     + delete(task : Task, scope : DeleteScope) : void
     + applyPlacement(p : Placement) : void
@@ -46,6 +46,7 @@ package planningpet.schedule.model {
     {static} + minutes(text : String) : Read
     {static} + start(text : String, day : LocalDate, due : LocalDate) : Read
   }
+  class Task
   class TaskBook
   class TaskDraft
 }
@@ -63,6 +64,15 @@ AutoPlaceDialog ..> AutoPlacer
 TaskController --> "1" TaskBook
 TaskController --> "1" planningpet.app.controller.AppController
 TaskController ..> TaskDraft
+TaskController ..> planningpet.pet.model.PetTalk
+TaskDialog ..> TaskDraft
+TimeEditor ..> DefaultDates
+ScheduleScreen ..> planningpet.common.model.Rules
+TaskRows ..> TaskBook
+TaskRows ..> TaskController
+TimetablePanel ..> Task
+TaskRows ..> planningpet.reward.controller.RewardController
+TimetablePanel ..> planningpet.reward.controller.RewardController
 AutoPlacer ..> TaskBook
 Reminders ..> TaskBook
 CalendarCell ..> TaskBook

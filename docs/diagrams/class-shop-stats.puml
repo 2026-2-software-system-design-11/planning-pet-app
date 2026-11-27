@@ -36,6 +36,7 @@ package planningpet.stats.model {
 ShopPanel ..> ShopController
 ShopPanel ..> Shop
 ShopController --> "1" Shop
+ShopController ..> planningpet.pet.model.PetTalk
 ShopController --> "1" planningpet.pet.model.Room
 ShopController --> "1" planningpet.app.controller.AppController
 Shop --> "1" planningpet.app.model.AppData

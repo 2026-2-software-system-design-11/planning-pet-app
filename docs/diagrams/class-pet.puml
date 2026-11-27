@@ -9,6 +9,7 @@ package planningpet.pet.view {
 }
 package planningpet.pet.controller {
   class PetController {
+    + choose(kind : PetKind, name : String, examples : boolean) : void
     + adopt(kind : PetKind, name : String) : boolean
     + select(kind : PetKind) : void
     + step(delta : int) : void
@@ -33,6 +34,7 @@ package planningpet.pet.model {
     - line : String
     - newLines : int
     - recountDay : LocalDate
+    - roomLine : String
     + say(line : String) : void
     + retell(line : String) : void
   }
@@ -58,6 +60,17 @@ PetScreen ..> PetController
 CharacterDialog ..> PetController
 PickDialog ..> PetController
 RoomView ..> Bubble
+RoomView ..> PetState
+PetScreen ..> Bond
+PetScreen ..> planningpet.reward.model.Level
+PetScreen ..> planningpet.reward.model.DailyProgress
+PetScreen ..> planningpet.shop.model.Shop
+CharacterDialog ..> Bond
+CharacterDialog ..> Wardrobe
+CharacterDialog ..> planningpet.reward.model.Level
+CharacterDialog ..> planningpet.reward.model.DailyProgress
+PetController ..> planningpet.reward.model.Level
+PetController ..> planningpet.app.model.Examples
 PetController --> "1" planningpet.app.controller.AppController
 PetController --> "1" planningpet.app.model.AppData
 PetController ..> Wardrobe

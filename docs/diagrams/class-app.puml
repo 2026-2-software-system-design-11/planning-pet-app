@@ -4,8 +4,11 @@ left to right direction
 package planningpet.app {
   class Main {
     {static} + main(args : String[]) : void
+    {static} + dataFolder(args : String[]) : Path
   }
   class SingleInstance {
+    - folder : Path
+    - onSignal : Runnable
     + acquire() : boolean
   }
 }
@@ -21,6 +24,7 @@ package planningpet.app.controller {
     + change(what : String, edit : Runnable) : void
     + onWindowShown() : void
     + say(line : String, day : LocalDate) : void
+    + sayInRoom(line : String) : void
     + dueReminders(now : LocalDateTime) : List<Reminder>
     + onClose(traySupported : boolean) : CloseAction
     + quit() : void
@@ -31,10 +35,16 @@ package planningpet.app.controller {
   }
 }
 package planningpet.app.store {
-  class FileDataStore {
+  class SqliteDataStore {
     - folder : Path
+    - saved : AppData
     + load() : LoadResult
     + save(data : AppData) : void
+  }
+  class Schema {
+    {static} + VERSION : int = 1
+    {static} + create(db : Connection) : void
+    {static} + upgrade(db : Connection, from : int) : void
   }
 }
 package planningpet.app.model {
@@ -85,9 +95,15 @@ AppController --> "1" AppData
 AppController --> "1" DataStore
 AppController --> "1" planningpet.pet.model.Bubble
 AppController ..> Visits
+AppController ..> planningpet.pet.model.PetTalk
+AppController ..> planningpet.schedule.model.Reminders
+AppWindow ..> planningpet.reward.controller.RewardController
+Tray ..> planningpet.home.view.MainScreen
+DayWatcher ..> AppData
 DayWatcher --> "1" AppController
-FileDataStore ..|> DataStore
-FileDataStore ..> AppData
+SqliteDataStore ..|> DataStore
+SqliteDataStore ..> AppData
+SqliteDataStore ..> Schema
 AppData *-- "1" planningpet.schedule.model.TaskBook : book
 AppData *-- "1..2" planningpet.pet.model.PetState : pets
 @enduml

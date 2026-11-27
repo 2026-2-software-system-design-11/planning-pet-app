@@ -44,10 +44,16 @@ package planningpet.common.model {
 MainScreen *-- CalendarPanel
 MainScreen *-- PetCard
 MainScreen ..> HomeController
+MainScreen *-- planningpet.schedule.view.TaskRows
+MainScreen ..> planningpet.schedule.controller.TaskController
+MainScreen ..> planningpet.schedule.model.DefaultDates
+CalendarPanel ..> HomeController
+HomeController ..> planningpet.pet.model.PetTalk
 CalendarPanel ..> planningpet.schedule.model.CalendarCell
 PetCard ..> planningpet.reward.model.DailyProgress
 HomeController --> "1" planningpet.app.controller.AppController
 SettingsScreen ..> SettingsController
+SettingsScreen ..> Autostart
 SettingsController --> "1" Autostart
 SettingsController --> "1" planningpet.app.controller.AppController
 OsAutostart ..|> Autostart
