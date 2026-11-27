@@ -192,4 +192,73 @@ class PetTalkTest {
         assertEquals("오늘은 할 일이 없어. 어제 하기로 한 'E사 지원서'를 못 했어. 마감은 22일이야. 'F사 서류' 마감이 모레(23일)야, D-2.",
                 say(BRIEFING));
     }
+
+    @Test
+    void E_TALK_2_dueInThreeDays() {
+        at("11-18", period("E사 지원서", 16, 21));
+        assertEquals("오늘은 할 일이 없어. 'E사 지원서' 마감이 3일 뒤(21일)야, D-3.", say(BRIEFING));
+    }
+
+    @Test
+    void E_TALK_3_nearestDueFirst() {
+        at("11-18", period("가", 16, 21), period("나", 16, 20), period("다", 16, 20));
+        assertEquals("오늘은 할 일이 없어. '나' 마감이 모레(20일)야, D-2.", say(BRIEFING));
+    }
+
+    @Test
+    void E_TALK_4_dueTodayBeforeTomorrow() {
+        at("11-18", period("가", 16, 19), period("나", 16, 18));
+        assertEquals("오늘 할 일 1개 남았어. 오늘이 나 마감이야!", say(BRIEFING));
+    }
+
+    @Test
+    void E_TALK_5_donePeriodOnDueDay() {
+        at("11-18", done(period("가", 16, 18), 18));
+        assertEquals("오늘 할 일은 다 끝냈어!", say(BRIEFING));
+    }
+
+    @Test
+    void E_TALK_6_dueNextMonth() {
+        at("11-29", period("가", 29, 31));
+        assertEquals("오늘은 할 일이 없어. '가' 마감이 모레(1일)야, D-2.", say(BRIEFING));
+    }
+
+    @Test
+    void E_TALK_7_allDoneWithPeriod() {
+        at("11-18", done(task("가", 18), 18), period("나", 16, 25));
+        assertEquals("오늘 할 일은 다 끝냈어! 오늘 할 일은 다 끝냈어!", say(BRIEFING) + " " + say(USUAL));
+    }
+
+    @Test
+    void E_TALK_8_yesterdayTasksOnly() {
+        at("11-18", fixed("알바", 17, 18), period("가", 16, 17));
+        assertEquals("오늘은 할 일이 없어. 어제 못 끝낸 일 1개는 달력에 남아 있어. 아래 칸에 하나 적어 볼까?", say(BRIEFING));
+    }
+
+    @Test
+    void E_TALK_9_tomorrowOrder() {
+        at("11-18", task("가", 19), make(Kind.TASK, "나", 19, 10, null, null), fixed("다", 19, 9),
+                done(make(Kind.TASK, "라", 19, 8, null, null), 18), period("마", 19, 25));
+        assertEquals("오늘은 할 일이 없어. 내일 '나'가 있어.", say(BRIEFING));
+    }
+
+    @Test
+    void E_TALK_10_plannedPeriodTomorrow() {
+        at("11-18", planned("E사 지원서", 16, 25, 19, 10));
+        assertEquals("오늘은 할 일이 없어. 내일 'E사 지원서'가 있어.", say(BRIEFING));
+    }
+
+    @Test
+    void E_TALK_11_earliestMissedPlan() {
+        at("11-18", planned("가", 16, 25, 17, 14), planned("나", 16, 25, 17, 9));
+        assertEquals("오늘은 할 일이 없어. 어제 하기로 한 '나'를 못 했어. 마감은 25일이야. 가는 25일까지야, 7일 남았어.", say(BRIEFING));
+    }
+
+    @Test
+    void E_TALK_14_josaOfFullTitle() {
+        String title = "2026 하반기 공채 자기소개서 1번 문항";
+        at("11-18", planned(title, 16, 22, 17, 9), task(title, 19));
+        assertEquals("오늘은 할 일이 없어. 어제 하기로 한 '2026 하반기 공채 자기…'을 못 했어. 마감은 22일이야. 내일 '2026 하반기 공채 자기…'이 있어.",
+                say(BRIEFING));
+    }
 }
