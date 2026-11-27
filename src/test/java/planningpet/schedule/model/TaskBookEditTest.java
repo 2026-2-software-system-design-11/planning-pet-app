@@ -2,6 +2,7 @@ package planningpet.schedule.model;
 
 import static java.time.DayOfWeek.MONDAY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -86,6 +87,13 @@ class TaskBookEditTest {
     private static TaskDraft draft(Task t, String title, LocalDate date, LocalDate due, LocalTime start, int minutes) {
         return new TaskDraft(t.getKind(), title, t.getCategory(), date, due, start, minutes, t.getMemo(), t.getRepeat(),
                 null, false, null, null, true);
+    }
+
+    /** 시각 고치기 창의 값. 날짜는 day이고 minute은 앱 하루의 시작 분(D-77)이다. 나머지 칸은 t의 값이다. */
+    private static TaskDraft time(Task t, LocalDate day, int minute, int minutes) {
+        return new TaskDraft(t.getKind(), t.getTitle(), t.getCategory(), day, t.getDueDate(),
+                LocalTime.of(minute % Task.DAY / 60, minute % 60), minutes, t.getMemo(), t.getRepeat(), null,
+                minute >= Task.DAY, null, null, true, true);
     }
 
     @Test
@@ -298,5 +306,198 @@ class TaskBookEditTest {
         Task t = put("과제", day(11, 16), null, null, null, null);
         book().update(t, draft(t, "  ", day(11, 16), null, null, 5), EditScope.ONLY_THIS);
         assertEquals(List.of("", 5), List.of(t.getTitle(), t.getDurationMinutes()));
+    }
+
+    @Test
+    void T_EDIT_4_setTime() {
+        Task t = put("과제", day(11, 18), null, null, null, null);
+        book().update(t, time(t, day(11, 18), 14 * 60, 60), EditScope.ONLY_THIS);
+        assertEquals(List.of(LocalTime.of(14, 0), 60), List.of(t.getStartTime(), t.getDurationMinutes()));
+        assertEquals(List.of(t), book.dayPlan(day(11, 18)).timed());
+    }
+
+    @Test
+    void T_EDIT_9_periodMovesToListDay() {
+        Task t = put("P", day(11, 16), null, day(11, 16), day(11, 22), null);
+        book().update(t, time(t, day(11, 18), 14 * 60, 30), EditScope.ONLY_THIS);
+        assertEquals(List.of(day(11, 18), LocalTime.of(14, 0), day(11, 16), day(11, 22)),
+                List.of(t.getDate(), t.getStartTime(), t.getStartDay(), t.getDueDate()));
+        assertEquals(List.of(t), book.dayPlan(day(11, 18)).timed());
+        assertTrue(book.dayPlan(day(11, 17)).isEmpty() && book.dayPlan(day(11, 19)).isEmpty());
+    }
+
+    @Test
+    void T_EDIT_22_pastRowOpensToday() {
+        Task t = put("지원서", day(11, 12), null, day(11, 12), day(11, 20), null);
+        book().update(t, time(t, day(11, 18), 14 * 60, 30), EditScope.ONLY_THIS);
+        assertEquals(List.of(day(11, 18), LocalTime.of(14, 0), day(11, 20)),
+                List.of(t.getDate(), t.getStartTime(), t.getDueDate()));
+    }
+
+    @Test
+    void E_EDIT_18_nextDayStart() {
+        Task t = put("과제", day(11, 18), null, null, null, null);
+        book().update(t, time(t, day(11, 18), 25 * 60, 30), EditScope.ONLY_THIS);
+        assertEquals(List.of(LocalTime.of(1, 0), true), List.of(t.getStartTime(), t.isNextDay()));
+    }
+
+    @Test
+    void T_EDIT_48_night4MovesLaterCopies() {
+        english();
+        Task t = at(day(11, 17));
+        book.update(t, time(t, day(11, 18), 4 * 60, 30), EditScope.THIS_AND_AFTER);
+        LocalTime nine = LocalTime.of(21, 0);
+        LocalTime four = LocalTime.of(4, 0);
+        assertEquals(List.of(day(11, 16), day(11, 18), day(11, 18), day(11, 20), day(11, 21)), each(Task::getDate));
+        assertEquals(List.of(nine, four, nine, four, four), each(Task::getStartTime));
+        assertEquals(List.of(false, false, true, false, false), each(Task::isDone));
+    }
+
+    @Test
+    void T_EDIT_5_clearedJoinsUntimedBySeq() {
+        put("a", day(11, 18), null, null, null, null);
+        put("b", day(11, 19), null, null, null, null);
+        Task t = put("c", day(11, 18), LocalTime.of(10, 0), null, null, null);
+        put("d", day(11, 19), null, null, null, null);
+        put("e", day(11, 18), null, null, null, null);
+        book().clearTime(t, EditScope.ONLY_THIS);
+        assertNull(t.getStartTime());
+        assertEquals(List.of(1L, 3L, 5L), book.dayPlan(day(11, 18)).untimed().stream().map(Task::getSeq).toList());
+    }
+
+    @Test
+    void T_EDIT_6_fixedClearTime() {
+        Task t = new Task("f", 1, Kind.FIXED, "실습", day(11, 18), LocalTime.of(10, 0), 60, "", false, Category.OTHER,
+                null, null, null, null, false, null, 0, 0, null, null);
+        tasks.add(t);
+        book().clearTime(t, EditScope.ONLY_THIS);
+        assertEquals(LocalTime.of(10, 0), t.getStartTime());
+    }
+
+    @Test
+    void T_EDIT_12_clearCopyTimes() {
+        LocalTime s = LocalTime.of(7, 0);
+        book().add(new TaskDraft(Kind.TASK, "운동", Category.OTHER, day(11, 16), null, s, 30, "", Repeat.DAILY,
+                day(11, 22), false, null, null, false));
+        book.clearTime(at(day(11, 18)), EditScope.ONLY_THIS);
+        assertEquals(Arrays.asList(s, s, null, s, s, s, s), each(Task::getStartTime));
+        book.clearTime(at(day(11, 19)), EditScope.THIS_AND_AFTER);
+        assertEquals(Arrays.asList(s, s, null, null, null, null, null), each(Task::getStartTime));
+    }
+
+    @Test
+    void T_EDIT_13_clearPeriodFromToday() {
+        Task t = put("P", day(11, 20), LocalTime.of(14, 0), day(11, 16), day(11, 22), null);
+        book().clearTime(t, EditScope.ONLY_THIS);
+        assertEquals(Arrays.asList(null, day(11, 18), day(11, 16), day(11, 22)),
+                Arrays.asList(t.getStartTime(), t.getDate(), t.getStartDay(), t.getDueDate()));
+        for (int d = 18; d <= 21; d++) {
+            assertEquals(List.of(t), book.dayPlan(day(11, d)).period());
+        }
+        assertEquals(List.of(t), book.dayPlan(day(11, 22)).dueToday());
+        assertTrue(book.dayPlan(day(11, 16)).isEmpty() && book.dayPlan(day(11, 17)).isEmpty());
+    }
+
+    @Test
+    void E_EDIT_20_clearPeriodNotStarted() {
+        Task t = put("P", day(11, 21), LocalTime.of(10, 0), day(11, 20), day(11, 25), null);
+        book().clearTime(t, EditScope.ONLY_THIS);
+        assertEquals(day(11, 20), t.getDate());
+    }
+
+    @Test
+    void E_EDIT_21_clearPeriodPastDue() {
+        Task t = put("Q", day(11, 15), LocalTime.of(10, 0), day(11, 10), day(11, 16), null);
+        book().clearTime(t, EditScope.ONLY_THIS);
+        assertEquals(day(11, 16), t.getDate());
+    }
+
+    @Test
+    void T_EDIT_43_doneCopyStaysInTimeEditor() {
+        english();
+        Task t = at(day(11, 17));
+        book.update(t, time(t, day(11, 17), 22 * 60, 30), EditScope.THIS_AND_AFTER);
+        LocalTime nine = LocalTime.of(21, 0);
+        LocalTime ten = LocalTime.of(22, 0);
+        assertEquals(List.of(nine, ten, nine, ten, ten), each(Task::getStartTime));
+        book.clearTime(t, EditScope.THIS_AND_AFTER);
+        assertEquals(Arrays.asList(nine, null, nine, null, null), each(Task::getStartTime));
+        doneKept();
+    }
+
+    @Test
+    void E_EDIT_13_laterTitleMemoKept() {
+        english();
+        Task u = at(day(11, 19));
+        u.setTitle("다른 제목");
+        u.setMemo("m");
+        Task t = at(day(11, 17));
+        book.update(t, time(t, day(11, 17), 22 * 60, 30), EditScope.THIS_AND_AFTER);
+        assertEquals(List.of(LocalTime.of(22, 0), "다른 제목", "m"), List.of(u.getStartTime(), u.getTitle(), u.getMemo()));
+    }
+
+    @Test
+    void E_EDIT_19_night4OnlyThis() {
+        english();
+        Task t = at(day(11, 17));
+        book.update(t, time(t, day(11, 18), 4 * 60, 30), EditScope.ONLY_THIS);
+        LocalTime nine = LocalTime.of(21, 0);
+        assertEquals(List.of(day(11, 16), day(11, 18), day(11, 18), day(11, 19), day(11, 20)), each(Task::getDate));
+        assertEquals(List.of(nine, LocalTime.of(4, 0), nine, nine, nine), each(Task::getStartTime));
+    }
+
+    @Test
+    void E_EDIT_22_clearNotCopyAfter() {
+        Task t = put("과제", day(11, 16), LocalTime.of(10, 0), null, null, null);
+        put("과제", day(11, 17), LocalTime.of(10, 0), null, null, null);
+        book().clearTime(t, EditScope.THIS_AND_AFTER);
+        assertEquals(Arrays.asList(null, LocalTime.of(10, 0)), each(Task::getStartTime));
+    }
+
+    @Test
+    void E_EDIT_23_clearDoneCopyAfter() {
+        english();
+        book.clearTime(at(day(11, 18)), EditScope.THIS_AND_AFTER);
+        LocalTime nine = LocalTime.of(21, 0);
+        assertEquals(Arrays.asList(nine, nine, null, null, null), each(Task::getStartTime));
+        doneKept();
+    }
+
+    @Test
+    void T_EDIT_42_pastDuePeriodTime() {
+        Task t = put("Q", day(11, 10), null, day(11, 10), day(11, 16), null);
+        book().update(t, time(t, day(11, 16), 10 * 60, 30), EditScope.ONLY_THIS);
+        assertEquals(Arrays.asList(day(11, 10), null), Arrays.asList(t.getDate(), t.getStartTime()));
+    }
+
+    @Test
+    void E_EDIT_14_doneTaskTime() {
+        Task t = put("과제", day(11, 18), null, null, null, null, day(11, 18));
+        book().update(t, time(t, day(11, 18), 14 * 60, 60), EditScope.ONLY_THIS);
+        assertEquals(List.of(LocalTime.of(14, 0), 60, true), List.of(t.getStartTime(), t.getDurationMinutes(), t.isDone()));
+    }
+
+    @Test
+    void E_EDIT_15_listDayBeforeToday() {
+        Task t = put("P", day(11, 16), null, day(11, 16), day(11, 22), null);
+        book().update(t, time(t, day(11, 17), 10 * 60, 30), EditScope.ONLY_THIS);
+        assertEquals(Arrays.asList(day(11, 16), null), Arrays.asList(t.getDate(), t.getStartTime()));
+    }
+
+    @Test
+    void E_EDIT_16_dueDay() {
+        Task t = put("P", day(11, 16), null, day(11, 16), day(11, 18), null);
+        book().update(t, time(t, day(11, 18), 14 * 60, 30), EditScope.ONLY_THIS);
+        assertEquals(List.of(day(11, 18), LocalTime.of(14, 0)), List.of(t.getDate(), t.getStartTime()));
+        assertEquals(List.of(t), book.dayPlan(day(11, 18)).timed());
+    }
+
+    @Test
+    void E_EDIT_17_missedPlanSetAgain() {
+        Task t = put("P", day(11, 17), LocalTime.of(10, 0), day(11, 16), day(11, 22), null);
+        assertTrue(t.missed(today));
+        book().update(t, time(t, day(11, 18), 14 * 60, 30), EditScope.ONLY_THIS);
+        assertEquals(List.of(day(11, 18), LocalTime.of(14, 0), false), List.of(t.getDate(), t.getStartTime(), t.missed(today)));
+        assertEquals(List.of(t), book.dayPlan(day(11, 18)).timed());
     }
 }

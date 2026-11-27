@@ -1,6 +1,7 @@
 package planningpet.schedule.model;
 
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -98,6 +99,10 @@ public final class TaskBook {
         if (task.getKind() != draft.kind()) {
             throw new IllegalArgumentException("종류는 바꿀 수 없다");
         }
+        if (draft.timeOnly()) {
+            updateTime(task, draft, scope);
+            return;
+        }
         LocalDate originalDate = task.getDate();
         task.setTitle(draft.title().strip());
         task.setCategory(draft.category());
@@ -127,6 +132,52 @@ public final class TaskBook {
                 t.setMemo(task.getMemo());
                 t.setCategory(task.getCategory());
             }
+        }
+    }
+
+    /**
+     * 06 4번을 시각 고치기 창(D-32)에서 부를 때. 시작 시각과 걸리는 시간만 넣고 날짜를 값의 날짜로 옮긴다. 기간 할 일은 창을 연 목록의
+     * 날로 옮기고 기간은 둔다(D-65, D-68). THIS_AND_AFTER면 끝내지 않은 뒤 사본에 시작 시각과 걸리는 시간을 넣고, 고친 사본이
+     * 옮긴 날 수("밤 4시", D-98)만큼 옮긴다(D-42). 기간 할 일에 정할 날이 오늘보다 앞이면(지난 날 목록, 마감이 지난 기간 할 일)
+     * 아무것도 바꾸지 않는다(06 4번, D-99).
+     */
+    private void updateTime(Task task, TaskDraft draft, EditScope scope) {
+        if (task.period() && draft.startTime() != null && draft.date().isBefore(today.get())) {
+            return;
+        }
+        LocalDate originalDate = task.getDate();
+        if (!task.period() || draft.startTime() != null) {
+            task.setDate(draft.date());
+        }
+        task.setStart(draft.startTime(), draft.nextDay());
+        task.setDurationMinutes(draft.durationMinutes());
+        if (scope == EditScope.THIS_AND_AFTER) {
+            long days = ChronoUnit.DAYS.between(originalDate, task.getDate());
+            for (Task t : laterCopies(task, originalDate)) {
+                t.setStart(task.getStartTime(), task.isNextDay());
+                t.setDurationMinutes(task.getDurationMinutes());
+                t.setDate(t.getDate().plusDays(days));
+            }
+        }
+    }
+
+    /**
+     * 06 4번의 시각 빼기(D-72). 시작 시각을 뺀다. THIS_AND_AFTER면 같은 반복에서 날짜가 같거나 뒤인 끝내지 않은 사본의 시작 시각도
+     * 뺀다(D-42). 기간 할 일은 계획한 날에서 빠져 오늘(첫날이 뒤면 첫날, 마감이 지났으면 마감)로 날짜를 옮기고 첫날과 마감은 둔다.
+     * 고정 일정은 시작 시각이 있어야 하므로 아무것도 바꾸지 않는다(06 T-EDIT-6).
+     */
+    public void clearTime(Task task, EditScope scope) {
+        if (task.getKind() == Kind.FIXED) {
+            return;
+        }
+        if (scope == EditScope.THIS_AND_AFTER) {
+            laterCopies(task, task.getDate()).forEach(t -> t.setStart(null, false));
+        }
+        task.setStart(null, false);
+        if (task.period()) {
+            LocalDate now = today.get();
+            LocalDate from = now.isBefore(task.getStartDay()) ? task.getStartDay() : now;
+            task.setDate(from.isAfter(task.getDueDate()) ? task.getDueDate() : from);
         }
     }
 
