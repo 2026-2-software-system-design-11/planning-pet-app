@@ -3,6 +3,7 @@ package planningpet.schedule.model;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -19,6 +20,12 @@ class TimetableLayoutTest {
 
     private static Task task(String title, long seq, String start, int minutes) {
         return task(title, seq, start, minutes, false);
+    }
+
+    /** top(monday, now). 날짜는 "11-16"처럼 적고 해가 다르면 "2027-01-01T10:00"이다. */
+    private static int top(String monday, String now) {
+        return TimetableLayout.top(LocalDate.parse("2026-" + monday),
+                LocalDateTime.parse(now.startsWith("20") ? now : "2026-" + now));
     }
 
     /** "A 0/2, B 1/2"처럼 돌려준 순서대로 적는다. */
@@ -102,5 +109,38 @@ class TimetableLayoutTest {
     void E_TT_8_longBesideThree() {
         assertEquals("A 0/2, B 1/2, C 1/2, D 1/2", layout(task("A", 1, "09:00", 180), task("B", 2, "09:00", 60),
                 task("C", 3, "10:00", 60), task("D", 4, "11:00", 60)));
+    }
+
+    @Test
+    void T_TT_8_firstTop() {
+        assertEquals(1150, top("11-16", "11-18T20:10"));
+        assertEquals(1470, top("11-16", "11-21T01:30"));
+        assertEquals(480, top("11-23", "11-18T20:10"));
+        assertEquals(480, top("11-16", "11-16T00:30"));
+    }
+
+    @Test
+    void E_TT_9_firstAndLastDayOfWeek() {
+        assertEquals(180, top("11-16", "11-16T04:00"));
+        assertEquals(1320, top("11-16", "11-22T23:00"));
+        assertEquals(1619, top("11-16", "11-23T03:59"));
+        assertEquals(480, top("11-16", "11-23T04:00"));
+    }
+
+    @Test
+    void E_TT_10_sundayWeek() {
+        assertEquals(540, top("11-22", "11-28T10:00"));
+        assertEquals(480, top("11-22", "11-21T10:00"));
+    }
+
+    @Test
+    void E_TT_11_secondsDropped() {
+        assertEquals(1150, top("11-16", "11-18T20:10:59"));
+    }
+
+    @Test
+    void E_TT_12_weekAcrossYear() {
+        assertEquals(540, top("12-28", "2027-01-01T10:00"));
+        assertEquals(1590, top("12-28", "2027-01-04T03:30"));
     }
 }

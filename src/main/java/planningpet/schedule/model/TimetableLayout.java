@@ -1,8 +1,11 @@
 package planningpet.schedule.model;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import planningpet.common.model.AppDay;
 
 /** 06 19번. 시간표 한 날에서 겹친 일정을 나란히 놓을 열. */
 public final class TimetableLayout {
@@ -51,5 +54,18 @@ public final class TimetableLayout {
             Slot s = result.get(i);
             result.set(i, new Slot(s.task(), s.column(), count));
         }
+    }
+
+    /**
+     * 처음 보이는 자리(D-89): 시간표 맨 위에 둘 앱 하루의 분. 보이는 주(첫날 monday부터 7일, D-91)에 오늘(앱 날짜)이 있으면 지금의
+     * 앱 하루의 시각(다음 날 새벽이면 24시간을 더한다, D-77)에서 60분 앞(0보다 작으면 0), 없으면 480(08:00)이다.
+     */
+    public static int top(LocalDate monday, LocalDateTime now) {
+        LocalDate today = AppDay.of(now);
+        if (today.isBefore(monday) || today.isAfter(monday.plusDays(6))) {
+            return 8 * 60;
+        }
+        int minute = (now.toLocalDate().equals(today) ? 0 : Task.DAY) + now.getHour() * 60 + now.getMinute();
+        return Math.max(0, minute - 60);
     }
 }
