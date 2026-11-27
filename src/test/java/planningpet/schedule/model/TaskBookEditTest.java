@@ -411,4 +411,55 @@ class TaskBookEditTest {
         book().clearTime(t, EditScope.ONLY_THIS);
         assertEquals(day(11, 16), t.getDate());
     }
+
+    @Test
+    void T_EDIT_43_doneCopyStaysInTimeEditor() {
+        english();
+        Task t = at(day(11, 17));
+        book.update(t, time(t, day(11, 17), 22 * 60, 30), EditScope.THIS_AND_AFTER);
+        LocalTime nine = LocalTime.of(21, 0);
+        LocalTime ten = LocalTime.of(22, 0);
+        assertEquals(List.of(nine, ten, nine, ten, ten), each(Task::getStartTime));
+        book.clearTime(t, EditScope.THIS_AND_AFTER);
+        assertEquals(Arrays.asList(nine, null, nine, null, null), each(Task::getStartTime));
+        doneKept();
+    }
+
+    @Test
+    void E_EDIT_13_laterTitleMemoKept() {
+        english();
+        Task u = at(day(11, 19));
+        u.setTitle("다른 제목");
+        u.setMemo("m");
+        Task t = at(day(11, 17));
+        book.update(t, time(t, day(11, 17), 22 * 60, 30), EditScope.THIS_AND_AFTER);
+        assertEquals(List.of(LocalTime.of(22, 0), "다른 제목", "m"), List.of(u.getStartTime(), u.getTitle(), u.getMemo()));
+    }
+
+    @Test
+    void E_EDIT_19_night4OnlyThis() {
+        english();
+        Task t = at(day(11, 17));
+        book.update(t, time(t, day(11, 18), 4 * 60, 30), EditScope.ONLY_THIS);
+        LocalTime nine = LocalTime.of(21, 0);
+        assertEquals(List.of(day(11, 16), day(11, 18), day(11, 18), day(11, 19), day(11, 20)), each(Task::getDate));
+        assertEquals(List.of(nine, LocalTime.of(4, 0), nine, nine, nine), each(Task::getStartTime));
+    }
+
+    @Test
+    void E_EDIT_22_clearNotCopyAfter() {
+        Task t = put("과제", day(11, 16), LocalTime.of(10, 0), null, null, null);
+        put("과제", day(11, 17), LocalTime.of(10, 0), null, null, null);
+        book().clearTime(t, EditScope.THIS_AND_AFTER);
+        assertEquals(Arrays.asList(null, LocalTime.of(10, 0)), each(Task::getStartTime));
+    }
+
+    @Test
+    void E_EDIT_23_clearDoneCopyAfter() {
+        english();
+        book.clearTime(at(day(11, 18)), EditScope.THIS_AND_AFTER);
+        LocalTime nine = LocalTime.of(21, 0);
+        assertEquals(Arrays.asList(nine, nine, null, null, null), each(Task::getStartTime));
+        doneKept();
+    }
 }
