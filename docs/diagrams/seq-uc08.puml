@@ -1,0 +1,32 @@
+@startuml seq-uc08
+!include seq-common.iuml
+actor 사용자
+$obj(TaskRows)
+$obj(RewardController)
+$obj(AppController)
+$obj(Level)
+$obj(Rewards)
+$obj(Task)
+$obj(PetTalk)
+$obj(PetCard)
+$obj(DailyProgress)
+사용자 -> TaskRows : 체크된 둥근 체크 누르기
+note right of TaskRows : 고정 일정도 같다.\n시간표 블록의 체크(TimetablePanel)도 같다
+TaskRows -> RewardController : uncomplete(task)
+RewardController -> AppController : change(what, edit)
+AppController -> RewardController : edit()
+RewardController -> Level : of(exp)
+note right of Level : rewardPet 펫의 바뀌기 전 레벨
+RewardController -> Rewards : uncomplete(task, today)
+note right of Rewards : 받은 포인트를 빼고 rewardPet 펫에서\n경험치를 뺀다(지금 고른 펫이 달라도).\n3a 포인트는 음수가 될 수 있다.\n3c rewardDay가 오늘이면 오늘 횟수를 하나 줄인다.\n3d 상한에 걸려 보상이 없던 일이면 빼는 것이 없다
+Rewards -> Task : unfinish()
+note right of Task : 2a 기간 할 일이면 doneDay만 지워\n처음 계획(날짜, 시각, 기간)으로
+RewardController -> Level : of(exp)
+note right of Level : 바뀐 뒤 레벨.\n3b 기준 아래로 내려가면 레벨이 내려간다
+RewardController -> PetTalk : say(UNCOMPLETED, ...)
+note right of PetTalk : "체크를 풀었어. -{포인트}P".\n3b ", 이제 Lv.{레벨}"을 붙인다.\n3d "체크를 풀었어."
+RewardController -> AppController : say(line, day)
+ref over RewardController, Rewards : 저장과 되돌리기. 4a 저장 실패면 바꾸기 전으로 되돌린다
+PetCard -> DailyProgress : of(book, today)
+note right of PetCard : 체크가 풀리고 보유 포인트와\n"오늘 끝낸 일" 막대가 바뀐다.\n"끝낸 일" 묶음의 줄은 바로 제자리로
+@enduml

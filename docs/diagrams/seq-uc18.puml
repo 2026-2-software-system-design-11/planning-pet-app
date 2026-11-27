@@ -1,0 +1,23 @@
+@startuml seq-uc18
+!include seq-common.iuml
+actor 사용자
+$obj(SettingsScreen)
+$obj(SettingsController)
+$obj(Autostart)
+사용자 -> SettingsScreen : 사이드바 "설정" 누르기
+SettingsScreen -> Autostart : available()
+SettingsScreen -> Autostart : registered()
+note right of SettingsScreen : 열 때마다 운영체제의 등록 상태를\n다시 읽어 "컴퓨터 켤 때 같이 실행"\n체크박스에 보인다
+alt 2b 실행 JAR로 켰다(available()이 false)
+  note right of SettingsScreen : 체크박스가 흐리고 아래에\n"설치 파일로 설치했을 때만 쓸 수 있어요"
+else 기본 흐름
+  사용자 -> SettingsScreen : "컴퓨터 켤 때 같이 실행" 켜기
+  note right of SettingsScreen : 2a 끄기도 같다
+  SettingsScreen -> SettingsController : setAutostart(on)
+  SettingsController -> Autostart : set(on)
+  note right of Autostart : 켜면 시작 프로그램에 설치된 앱의 경로와\n--autostart를 등록하고(Windows는 HKCU Run,\nmacOS는 LaunchAgents의 plist),\n2a 끄면 지운다
+  opt 3a 등록에 실패했다(권한)
+    note right of SettingsScreen : 체크를 되돌리고\n이유를 창으로 알린다
+  end
+end
+@enduml

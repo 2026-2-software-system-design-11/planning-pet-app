@@ -1,0 +1,34 @@
+@startuml seq-uc19
+!include seq-common.iuml
+actor 사용자
+actor 운영체제
+$obj(AppWindow)
+$obj(Tray)
+$obj(AppController)
+$obj(AppData)
+사용자 -> AppWindow : 창의 닫기 버튼 누르기
+AppWindow -> AppController : onClose(traySupported)
+alt 1b 운영체제가 트레이를 지원하지 않는다
+  AppWindow -> AppController : quit()
+  note right of AppController : 앱이 끝난다
+else 기본 흐름
+  note right of AppWindow : 창을 숨긴다. 앱은 트레이 아이콘으로 남는다
+  opt 1a 설치 뒤 처음 닫았다(trayNoticeShown이 false)
+    AppController -> AppController : change(what, edit)
+    note right of AppController : edit 안에서 trayNoticeShown을 true로
+    ref over AppController, AppData : 저장과 되돌리기
+    Tray -> 운영체제 : 알림 "플래닝펫은 트레이에서 계속 알림을 보내요"
+  end
+  alt 기본 흐름
+    사용자 -> Tray : 트레이 아이콘을 누르고 "열기" 누르기
+    note right of Tray : 창이 다시 보인다
+    Tray -> AppController : onWindowShown()
+    note right of AppController : UC-01과 같다. 그날 처음이면\n브리핑, 아니면 USUAL
+  else 3a 끝내기
+    사용자 -> Tray : 트레이 아이콘을 누르고 "끝내기" 누르기
+    note right of Tray : macOS의 Cmd+Q도 같다
+    Tray -> AppController : quit()
+    note right of AppController : 앱이 완전히 끝난다.\n이후 알림은 오지 않는다
+  end
+end
+@enduml

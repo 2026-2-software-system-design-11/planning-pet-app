@@ -1,0 +1,29 @@
+@startuml seq-uc24
+!include seq-common.iuml
+actor 사용자
+$obj(StatsScreen)
+$obj(Stats)
+사용자 -> StatsScreen : 사이드바 "통계" 누르기
+note right of StatsScreen : 처음 기간은 이번 주\n(설정의 한 주 시작부터 7일)
+loop 요약 카드의 이번 주와 이번 달
+  StatsScreen -> Stats : rate(p)
+  StatsScreen -> Stats : points(p)
+end
+note right of StatsScreen : 요약은 고른 기간과 관계없다.\n저장하는 것은 없다
+loop 처음 열 때, 그리고 기간을 바꿀 때마다
+  StatsScreen -> Stats : rate(p)
+  note right of Stats : 기간 안에서 오늘까지인 일정.\n오늘은 끝낸 것만, 끝내지 않은\n기간 할 일은 마감 날의 일
+  StatsScreen -> Stats : trend(p)
+  StatsScreen -> Stats : byCategory(p)
+  opt 2a 기간에 셀 일정이 없다
+    note right of StatsScreen : 계획 달성률, 추이, 유형별 달성률 자리에\n"아직 셀 일정이 없어요"
+  end
+  alt 기본 흐름
+    사용자 -> StatsScreen : 화면 머리 오른쪽 "<"나 ">" 누르기
+    note right of StatsScreen : 같은 종류로 한 주나 한 달씩 옮긴다
+  else 3a 주간과 월간을 바꾼다
+    사용자 -> StatsScreen : "주간"이나 "월간" 누르기
+    note right of StatsScreen : 지금 기간에 오늘이 있으면 오늘이 든,\n없으면 지금 기간 첫날이 든 주나 달
+  end
+end
+@enduml

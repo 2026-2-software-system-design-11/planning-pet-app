@@ -1,0 +1,40 @@
+@startuml seq-uc07
+!include seq-common.iuml
+actor 사용자
+$obj(TaskRows)
+$obj(RewardController)
+$obj(AppController)
+$obj(Rewards)
+$obj(Level)
+$obj(Task)
+$obj(PetTalk)
+$obj(PetCard)
+$obj(DailyProgress)
+사용자 -> TaskRows : 끝내지 않은 줄의 둥근 체크 누르기
+note right of TaskRows : 고정 일정도 같다.\n시간표 블록의 체크(TimetablePanel)도 같다
+TaskRows -> RewardController : complete(task)
+RewardController -> AppController : change(what, edit)
+AppController -> RewardController : edit()
+RewardController -> Rewards : complete(task, today)
+alt 3a 오늘 보상을 받은 완료가 이미 20번이다
+  Rewards -> Task : finish(today, 0, 0, null)
+  note right of Task : CAPPED. 보상 없이 끝냄만
+else 기본 흐름
+  Rewards -> Task : finish(today, 10, 10, activeKind)
+  note right of Rewards : 10P, 고른 펫 경험치 10,\n오늘 보상 횟수 하나
+  Rewards -> Level : of(exp)
+  note right of Level : 바뀌기 전과 뒤의 레벨.\n3b 기준에 닿으면 레벨이 오르고\n모습 단계가 바뀔 수 있다
+end
+note right of Task : 2a 기간 할 일이면 날짜와 시각은 그대로,\ndoneDay(오늘)만 적는다
+RewardController -> PetTalk : say(COMPLETED, ...)
+note right of PetTalk : "잘했어! +10P".\n3a CAPPED, 3b LEVEL_UP이나 STAGE_UP,\n오늘 할 일을 다 끝내면 ALL_DONE
+RewardController -> AppController : say(line, day)
+ref over RewardController, Rewards : 저장과 되돌리기. 4a 저장 실패면 완료와 보상을 되돌린다
+PetCard -> DailyProgress : of(book, today)
+note right of PetCard : "오늘 끝낸 일" 막대와 보유 포인트.\n3b 바뀐 레벨과 모습 단계의 크기
+alt 5a 홈 목록에서 체크했다
+  note right of TaskRows : 체크한 자리에 1.5초 머문 뒤\n맨 아래 "끝낸 일" 묶음으로 내려간다
+else 2a 다른 날 목록에서 기간 할 일을 체크했다
+  note right of TaskRows : 그 목록에서 바로 빠진다
+end
+@enduml
