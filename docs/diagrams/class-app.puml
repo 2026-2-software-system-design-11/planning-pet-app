@@ -93,6 +93,7 @@ AppController --> "1" AppData
 AppController --> "1" DataStore
 AppController --> "1" planningpet.pet.model.Bubble
 AppController ..> Visits
+AppController ..> planningpet.pet.model.PetTalk
 DayWatcher --> "1" AppController
 SqliteDataStore ..|> DataStore
 SqliteDataStore ..> AppData
