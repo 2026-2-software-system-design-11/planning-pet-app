@@ -1,0 +1,68 @@
+@startuml seq-uc22
+!include seq-common.iuml
+actor 사용자
+$obj(PetCard)
+$obj(PetScreen)
+$obj(CharacterDialog)
+$obj(PetController)
+$obj(AppController)
+$obj(Wardrobe)
+$obj(Level)
+$obj(Bond)
+$obj(DailyProgress)
+alt 기본 흐름
+  사용자 -> PetCard : 메인의 홈 펫 카드 누르기
+  note right of PetCard : 캐릭터 창을 상태 탭으로 연다
+else 1a 나의 방에서 연다
+  사용자 -> PetScreen : 펫 패널의 장신구 칸이나 "{이름} 꾸미기" 누르기
+  note right of PetScreen : 고른 펫을 바꾸지 않고\n캐릭터 창을 꾸미기 탭으로 연다
+end
+note right of CharacterDialog : 메인 창 위의 "캐릭터" 창. 입혀 보는 장신구는\n고른 펫의 저장된 장신구에서 시작한다
+CharacterDialog -> Level : of(exp)
+CharacterDialog -> Bond : percent(tasks, kind)
+CharacterDialog -> Bond : days(tasks, kind)
+CharacterDialog -> DailyProgress : of(book, today)
+note right of CharacterDialog : 왼쪽에 펫 탭, 큰 펫, 자세 다섯 칸. 오른쪽에 이름,\n"Lv. {레벨}", 친밀도, 경험치, 성장 단계와 탭.\n상태 탭은 "오늘 끝낸 일 {수}개", 친밀도와 함께한 날,\n"누적 경험치 {경험치}"
+opt 3a 큰 그림 양옆 화살표를 누른다
+  ref over CharacterDialog, PetController : UC-21 고른 펫 바꾸기(1a). 자세는 바꾸지 않는다
+end
+사용자 -> CharacterDialog : 자세 칸 누르기
+CharacterDialog -> PetController : pose(kind, pose)
+PetController -> AppController : change(what, edit)
+AppController -> PetController : edit()
+note right of PetController : 그 펫의 자세를 바꾼다
+ref over PetController, AppController : 저장과 되돌리기. 4a 저장 실패면 자세를 되돌린다
+note right of CharacterDialog : 큰 그림과 나의 방의 펫이 그 자세가 된다
+사용자 -> CharacterDialog : 꾸미기 탭에서 칸(목걸이, 액세서리, 모자, 의상) 고르기
+loop 고른 칸의 장신구 카드마다
+  CharacterDialog -> Wardrobe : opensAt(wear)
+end
+note right of CharacterDialog : 5a 고른 펫의 레벨보다 높은 레벨에서 열리면\n자물쇠와 "Lv.{레벨} 해금"이고 누를 수 없다
+사용자 -> CharacterDialog : 장신구 카드 누르기
+note right of CharacterDialog : 큰 그림에 입혀 보이고 카드에 체크 배지.\n저장하지 않는다. 5b 입혀 본 카드를 다시 누르면 벗겨 본다.\n6a 저장된 것과 같으면 "꾸미기 적용"이 흐리다
+alt 기본 흐름
+  사용자 -> CharacterDialog : "꾸미기 적용" 누르기
+  CharacterDialog -> PetController : applyWear(kind, chosen)
+  PetController -> AppController : change(what, edit)
+  AppController -> PetController : edit()
+  PetController -> Level : of(exp)
+  loop 입혀 본 장신구마다
+    PetController -> Wardrobe : opensAt(wear)
+    PetController -> Wardrobe : slotOf(wear)
+  end
+  note right of PetController : 열리지 않은 것과 칸이 맞지 않는 것을 빼고\n그 펫의 wear를 바꾼다
+  ref over PetController, AppController : 저장과 되돌리기. 8a 저장 실패면 장신구를 되돌린다
+  note right of CharacterDialog : 나의 방의 펫도 그 장신구를 입는다
+else 6b 입혀 본 것이 저장된 것과 다른데 펫을 바꾸거나 창을 닫는다
+  사용자 -> CharacterDialog : 다른 펫 탭, 큰 그림 양옆 화살표, 닫기나 Esc 누르기
+  note right of CharacterDialog : 창 "꾸미기" "입혀 본 장신구를 적용할까요?"\n"적용", "버리기", "취소"
+  alt 적용
+    CharacterDialog -> PetController : applyWear(kind, chosen)
+    note right of PetController : 위 기본 흐름의 applyWear와 같다. 저장하면\n펫을 바꾸거나(UC-21) 창을 닫고, 실패하면 캐릭터 창은 그대로
+  else 버리기
+    note right of CharacterDialog : 저장된 장신구로 돌아가\n펫을 바꾸거나(UC-21) 창을 닫는다
+  else 취소
+    note right of CharacterDialog : 캐릭터 창과 고른 펫을 그대로 둔다
+  end
+end
+@enduml
