@@ -12,19 +12,26 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import planningpet.app.model.AppData;
 import planningpet.app.model.SampleLook;
 import planningpet.pet.model.PetKind;
 import planningpet.pet.model.PetState;
+import planningpet.pet.model.Pose;
+import planningpet.pet.model.Slot;
+import planningpet.pet.model.WearId;
 import planningpet.schedule.model.Category;
 import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Repeat;
 import planningpet.schedule.model.Task;
+import planningpet.shop.model.ItemId;
 
 /**
  * 앱 데이터와 07 저장 형식의 표 행 사이를 바꾸고, 표를 읽어 앱 데이터를 만든다. 날짜는 2026-11-16, 시각은 14:30, 반복은
@@ -143,7 +150,7 @@ final class Rows {
         void read(ResultSet r) throws SQLException;
     }
 
-    /** 표를 읽어 앱 데이터를 만든다. 일정과 지운 보상 기록은 넣은 순이다. */
+    /** 표를 읽어 앱 데이터를 만든다. 일정과 지운 보상 기록은 넣은 순, 펫은 ord 순이다. */
     static AppData read(Connection db, Clock clock) throws SQLException {
         List<Task> tasks = new ArrayList<>();
         List<Task> deleted = new ArrayList<>();
@@ -163,6 +170,40 @@ final class Rows {
             d.setWeekStart(DayOfWeek.valueOf(r.getString("week_start")));
             d.setNextSeq(r.getLong("next_seq"));
         });
+        Map<String, Map<Slot, WearId>> wear = new LinkedHashMap<>();
+        each(db, "wear", r -> wear.computeIfAbsent(r.getString("pet_kind"), k -> new EnumMap<>(Slot.class))
+                .put(Slot.valueOf(r.getString("slot")), WearId.valueOf(r.getString("wear_id"))));
+        each(db, "pet ORDER BY ord", r -> {
+            PetState p = new PetState(PetKind.valueOf(r.getString("kind")), r.getString("name"));
+            p.setExp(r.getInt("exp"));
+            p.setPose(Pose.valueOf(r.getString("pose")));
+            p.setWear(wear.getOrDefault(r.getString("kind"), Map.of()));
+            d.addPet(p);
+        });
+        Set<LocalDate> days = new LinkedHashSet<>();
+        each(db, "attend_day ORDER BY day", r -> days.add(date(r, "day")));
+        d.setAttendDays(days);
+        Set<ItemId> owned = new LinkedHashSet<>();
+        Set<ItemId> placed = new LinkedHashSet<>();
+        each(db, "item", r -> {
+            ItemId item = ItemId.valueOf(r.getString("item_id"));
+            owned.add(item);
+            if (r.getInt("placed") == 1) {
+                placed.add(item);
+            }
+        });
+        d.setOwnedItems(owned);
+        d.setPlacedItems(placed);
+        Set<String> ids = new LinkedHashSet<>();
+        Map<String, SampleLook> looks = new LinkedHashMap<>();
+        each(db, "sample", r -> {
+            ids.add(r.getString("task_id"));
+            if (r.getString("title") != null) {
+                looks.put(r.getString("task_id"), new SampleLook(r.getString("title"), time(r, "start_time"),
+                        r.getInt("next_day") == 1, r.getString("memo"), date(r, "date")));
+            }
+        });
+        d.setSamples(ids, looks);
         return d;
     }
 
