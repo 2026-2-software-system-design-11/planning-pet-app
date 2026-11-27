@@ -7,6 +7,8 @@ import java.awt.FlowLayout;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -14,6 +16,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
+import planningpet.app.model.AppData;
 import planningpet.common.view.Backdrop;
 import planningpet.common.view.Card;
 import planningpet.common.view.Icons;
@@ -29,6 +32,7 @@ public final class AppWindow {
     /** 05 창 구조의 창 제목. */
     public static final String TITLE = "플래닝펫 (Planning Pet)";
     private static final String COMMON = "공통";
+    private final AppData data;
     private final JPanel nav = new JPanel(new GridLayout(0, 1, 0, 6));
     private final Card navWrap = new Card(new BorderLayout(), 22).filled(Theme.SIDE);
     private final Backdrop root = new Backdrop(new BorderLayout(Theme.GAP, 0), navWrap);
@@ -41,8 +45,10 @@ public final class AppWindow {
     final StatCard.Value streak = new StatCard.Value();
     final StatCard.Value points = new StatCard.Value();
     final JButton attend = new JButton();
+    private final List<Runnable> views = new ArrayList<>();
 
-    public AppWindow() {
+    public AppWindow(AppData data) {
+        this.data = data;
         navWrap.setBorder(BorderFactory.createEmptyBorder(18, 8, 12, 8));
         navWrap.add(logo(), BorderLayout.NORTH);
         JPanel navTop = new JPanel(new BorderLayout());
@@ -57,11 +63,23 @@ public final class AppWindow {
         main.add(center, BorderLayout.CENTER);
         root.add(main, BorderLayout.CENTER);
         root.setPreferredSize(new Dimension(1000, 680));
+        watch(this::refresh);
     }
 
     /** 창 내용(창 바탕). */
     public JComponent root() {
         return root;
+    }
+
+    /** 데이터 변경 알림과 다시 그리기 신호를 함께 받는다. */
+    public void watch(Runnable refresh) {
+        data.onChange(refresh);
+        views.add(refresh);
+    }
+
+    /** 화면 전환이나 주 옮기기처럼 model을 바꾸지 않을 때 화면을 다시 그린다(D-46). */
+    public void redraw() {
+        views.forEach(Runnable::run);
     }
 
     /** 사이드바 위의 로고(05 창 구조의 앱 이름). 얼굴 자리는 S2가 고양이 얼굴(PetArt)을 그린다. */
@@ -96,6 +114,15 @@ public final class AppWindow {
         rights.add(right, COMMON);
         row.add(rights, BorderLayout.EAST);
         return row;
+    }
+
+    /** 카드 값과 출석 단추(06 11번: 오늘 출석했으면 "출석 완료"로 흐림). 앱 날짜가 바뀐 알림에도 이것이 단추를 되돌린다(23번). */
+    private void refresh() {
+        streak.set("연속 접속", data.getStreak() + "일");
+        points.set("보유", String.format("%,dP", data.getPoints()));
+        boolean attended = data.today().equals(data.getAttendanceDay());
+        attend.setText(attended ? "출석 완료" : "출석 +20P");
+        attend.setEnabled(!attended);
     }
 
     /** 창(05 창 구조, D-47). 창을 띄우는 일은 Main이 한다. 25번(트레이에 남기)은 S11이라 그때까지는 닫으면 끝난다. */

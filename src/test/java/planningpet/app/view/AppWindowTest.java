@@ -7,6 +7,10 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.io.IOException;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import javax.swing.AbstractButton;
 import javax.swing.JLabel;
@@ -15,6 +19,7 @@ import javax.swing.UIManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import planningpet.app.model.AppData;
 import planningpet.common.view.RoundButtonUI;
 import planningpet.common.view.Snap;
 import planningpet.common.view.Theme;
@@ -24,6 +29,25 @@ import planningpet.common.view.Theme;
  * 그렸다. 창(JFrame)은 headless 검사에서 만들 수 없어 창 내용과 창 아이콘을 그려 맞춘다.
  */
 class AppWindowTest {
+    private static final ZoneId ZONE = ZoneId.systemDefault();
+    private LocalDateTime now = LocalDateTime.of(2026, 11, 16, 10, 0);
+    private final AppData data = new AppData(new Clock() {
+        public ZoneId getZone() { return ZONE; }
+        public Clock withZone(ZoneId zone) { return this; }
+        public Instant instant() { return now.atZone(ZONE).toInstant(); }
+    });
+
+    private AppWindow window() {
+        return new AppWindow(data);
+    }
+
+    private static List<Object> shown(AppWindow w) {
+        return List.of(w.streak.getText(), w.points.getText(), w.attend.getText(), w.attend.isEnabled());
+    }
+
+    private static List<Object> shown(String streak, String points, String attend, boolean enabled) {
+        return List.of("<html>연속 접속 <b>" + streak + "</b></html>", "<html>보유 <b>" + points + "</b></html>", attend, enabled);
+    }
     @BeforeEach
     void install() {
         Theme.install();
@@ -57,6 +81,35 @@ class AppWindowTest {
             }
         }
     }
+    @Test
+    void eWin4BeforeFirstNotice() {
+        assertEquals(List.of("", "", "", true), shown(window()));
+    }
+
+    @Test
+    void eWin5ValueTexts() {
+        AppWindow w = window();
+        int[][] cases = {{0, 0}, {1, 1}, {365, 1234567}, {Integer.MAX_VALUE, Integer.MAX_VALUE}, {1, -10}, {1, Integer.MIN_VALUE}};
+        String[][] want = {{"0일", "0P"}, {"1일", "1P"}, {"365일", "1,234,567P"}, {"2147483647일", "2,147,483,647P"},
+            {"1일", "-10P"}, {"1일", "-2,147,483,648P"}};
+        for (int i = 0; i < cases.length; i++) {
+            data.setStreak(cases[i][0]);
+            data.setPoints(cases[i][1]);
+            data.changed();
+            assertEquals(shown(want[i][0], want[i][1], "출석 +20P", true), shown(w));
+        }
+    }
+
+    @Test
+    void eWin9RedrawWithoutNotice() {
+        AppWindow w = window();
+        int[] heard = {0};
+        data.onChange(() -> heard[0]++);
+        data.setStreak(3);
+        w.redraw();
+        assertEquals(List.of(shown("3일", "0P", "출석 +20P", true), 0), List.of(shown(w), heard[0]));
+    }
+
     private static Component at(Component c, int... path) {
         for (int i : path) {
             c = ((Container) c).getComponent(i);
@@ -66,7 +119,7 @@ class AppWindowTest {
 
     @Test
     void eWin1Bounds() {
-        AppWindow w = new AppWindow();
+        AppWindow w = window();
         assertEquals(new Dimension(1000, 680), w.root().getPreferredSize());
         w.root().setSize(1000, 680);
         w.root().doLayout();
@@ -77,24 +130,24 @@ class AppWindowTest {
 
     @Test
     void eWin1UsualWindow() throws IOException {
-        looksLikePrototype("frame-1000x680", new AppWindow(), 1000, 680);
+        looksLikePrototype("frame-1000x680", window(), 1000, 680);
     }
 
     @Test
     void eWin2LargerAndSmallerWindow() throws IOException {
-        looksLikePrototype("frame-1366x768", new AppWindow(), 1366, 768);
-        looksLikePrototype("frame-2560x1440", new AppWindow(), 2560, 1440);
-        looksLikePrototype("frame-600x400", new AppWindow(), 600, 400);
+        looksLikePrototype("frame-1366x768", window(), 1366, 768);
+        looksLikePrototype("frame-2560x1440", window(), 2560, 1440);
+        looksLikePrototype("frame-600x400", window(), 600, 400);
     }
 
     @Test
     void eWin3ZeroSize() throws IOException {
-        looksLikePrototype("frame-0x0", new AppWindow(), 0, 0);
+        looksLikePrototype("frame-0x0", window(), 0, 0);
     }
 
     @Test
     void eWin12LogoWordsAndAttendButton() {
-        AppWindow w = new AppWindow();
+        AppWindow w = window();
         JLabel name = (JLabel) at(w.root(), 0, 0, 1, 0);
         JLabel en = (JLabel) at(w.root(), 0, 0, 1, 1);
         assertEquals(List.of("플래닝펫", Theme.heavy(22), Theme.INK, SwingConstants.CENTER),
