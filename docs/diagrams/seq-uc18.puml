@@ -16,7 +16,7 @@ else 기본 흐름
   SettingsScreen -> SettingsController : setAutostart(on)
   SettingsController -> Autostart : set(on)
   note right of Autostart : 켜면 시작 프로그램에 설치된 앱의 경로와\n--autostart를 등록하고(Windows는 HKCU Run,\nmacOS는 LaunchAgents의 plist),\n2a 끄면 지운다
-  opt 3a 등록에 실패했다(권한)
+  opt 3a 등록이나 빼기에 실패했다(권한)
     note right of SettingsScreen : 체크를 되돌리고\n이유를 창으로 알린다
   end
 end
