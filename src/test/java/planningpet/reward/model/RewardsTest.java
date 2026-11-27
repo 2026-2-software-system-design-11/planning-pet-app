@@ -1,6 +1,7 @@
 package planningpet.reward.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.Clock;
 import java.time.LocalDate;
@@ -149,5 +150,13 @@ class RewardsTest {
         complete(q, d(16));
         assertEquals("2026-11-18 09:00 2026-11-16", q.getDate() + " " + q.getStartTime() + " " + q.getDoneDay());
         assertEquals("untimed,", where(q, 16) + "," + where(q, 18));
+    }
+
+    /** 프로토타입과 일부러 다름: 프로토타입은 보상을 또 준다. */
+    @Test
+    void E_RWD_2_alreadyDone() {
+        complete(a, d(16));
+        assertThrows(IllegalStateException.class, () -> complete(a, d(16)));
+        assertEquals("10P 10 1", data.getPoints() + "P " + data.pet(PetKind.CAT).getExp() + " " + data.getRewardCount());
     }
 }

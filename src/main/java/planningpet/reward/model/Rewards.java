@@ -19,6 +19,9 @@ public final class Rewards {
 
     /** 06 8번. 일정의 날짜는 보지 않고 하루 상한은 today로 센다(D-18). 경험치는 고른 펫이 받는다(D-48). */
     public RewardResult complete(Task task, LocalDate today) {
+        if (task.isDone()) {
+            throw new IllegalStateException("이미 끝낸 일정"); // 06 8번 오류. 보상을 두 번 받지 않는다(E-RWD-2).
+        }
         PetState pet = data.activePet();
         Level before = Level.of(pet.getExp());
         if (!today.equals(data.getRewardCountDay())) {
