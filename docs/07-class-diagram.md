@@ -38,7 +38,7 @@ D-109의 방향(view에서 controller와 model, controller에서 model, store에
 
 - **데이터는 `AppData` 하나에 모은다.** 06 "데이터" 표의 `AppData` 값을 필드로 갖고, 일정은 `TaskBook`, 펫은 `PetState`로 담는다. sqlite 파일 하나(D-111)를 그대로 옮긴 꼴이라 저장은 `AppData` 하나를 쓰고 읽는다. 22번의 되돌리기는 `copy`와 `restore`가 한다. 버린 안: 도메인마다 데이터 클래스를 두기. 06 표의 대상과 달라지고, 저장할 때 다시 모아야 한다.
 - **규칙 클래스는 `AppData`를 받는다.** `Rewards`, `Visits`, `Shop`, `Room`, `Stats`는 포인트, 출석, 아이템처럼 펫 둘이 함께 쓰는 값을 바꾸거나 센다(D-48). 그래서 이 도메인 model과 `app.model`은 서로를 안다. 버린 안: 값마다 좁은 인터페이스를 두어 끊기. 클래스가 값의 수만큼 늘고 얻는 것이 그림의 화살표 몇 개뿐이다.
-- **펫 말풍선 `Bubble`은 `AppData` 밖에 둔다.** 펫 말은 저장할 데이터가 아니다(06 읽는 법). `AppController`가 22번에서 다시 세기(D-106)를 판단하고, 홈과 나의 방 view가 읽는다.
+- **펫 말풍선 `Bubble`은 `AppData` 밖에 둔다.** 펫 말은 저장할 데이터가 아니다(06 읽는 법). `AppController`가 22번에서 다시 세기(D-106)를 판단하고, 홈과 나의 방 view가 읽는다. 나의 방 말풍선에 한 번 하는 말(`BOUGHT`, `ADOPTED`)도 `roomLine`에 두어 창 없이 검사한다(D-109). controller가 `AppController.sayInRoom`으로 넣고 다음 변경 때 비우며, `RoomView`는 그 말이 없으면 하트를 그린다.
 - **controller는 창을 모른다.** 확인을 묻는 일은 인자로 받는다. `TaskController.add`, `update`, `placeAt`의 `ask`(3번 겹침 묻기)와 `update`, `placeAt`의 `chooseScope`(반복 사본일 때만 부르는 범위 물음, 취소면 null. 3번이 겹침을 먼저, 범위를 나중에 묻는다), `clearSamples`의 `confirm`(31번 확인 창), `AppController`의 `errors`(22번 저장 실패 창)는 view가 넘긴 함수다. 버린 안: controller가 `JOptionPane`을 부르기. controller에서 view로 가는 의존이 생기고 창 없이 검사할 수 없다.
 - **30초 타이머는 `app.view.Tray`에 둔다.** 타이머가 `DayWatcher.tick`(23번)과 `AppController.dueReminders`(17번)를 부르고, 받은 알림을 운영체제 알림으로 띄운다. 알림을 띄우는 일이 화면 쪽이라 controller가 view를 부르지 않게 하려는 것이다.
 - **06에 없는 메서드.** `Task.finish`와 `unfinish`는 `Rewards`가 끝냄과 보상을 적는 길이다(D-109, 필드를 열지 않는다). `AppController.onClose`와 `quit`는 25번, `SettingsController.setAutostart`와 `Autostart`는 25번의 컴퓨터 켤 때 실행이다. `TaskBook`의 `deletedRewarded`는 5번이 남기는 보상 기록이고 06 "데이터" 표에도 있다.

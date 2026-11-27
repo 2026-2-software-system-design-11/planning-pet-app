@@ -24,6 +24,7 @@ package planningpet.app.controller {
     + change(what : String, edit : Runnable) : void
     + onWindowShown() : void
     + say(line : String, day : LocalDate) : void
+    + sayInRoom(line : String) : void
     + dueReminders(now : LocalDateTime) : List<Reminder>
     + onClose(traySupported : boolean) : CloseAction
     + quit() : void
