@@ -29,6 +29,15 @@ class TaskBookWeekTest {
         return t;
     }
 
+    private Task put(String title, LocalDate date) {
+        return put(title, date, null, null, null, null);
+    }
+
+    /** 시각을 정하지 않은 기간 할 일. */
+    private Task period(String title, LocalDate from, LocalDate due) {
+        return put(title, from, null, from, due, null);
+    }
+
     /** weekStart부터의 주의 줄을 "11/18 P"처럼 줄 순서대로. */
     private List<String> rows(LocalDate weekStart) {
         return new TaskBook(tasks, () -> 0, () -> today).untimedOfWeek(weekStart).stream()
@@ -43,5 +52,43 @@ class TaskBookWeekTest {
         put("d", day(11, 23), null, null, null, null);
         put("e", day(11, 18), 10 * 60, null, null, null);
         assertEquals(List.of("11/16 b", "11/22 c"), rows(WEEK));
+    }
+
+    @Test
+    void T_WEEK_2_periodOneRow() {
+        period("P", day(11, 12), day(11, 20));
+        period("Q", day(11, 10), day(11, 17));
+        assertEquals(List.of("11/17 Q", "11/18 P", "11/20 P"), rows(WEEK));
+        today = day(11, 20);
+        assertEquals(List.of("11/17 Q", "11/20 P"), rows(WEEK));
+    }
+
+    @Test
+    void T_WEEK_3_firstAndDueDay() {
+        today = day(11, 17);
+        period("P", day(11, 16), day(11, 20));
+        period("Q", day(11, 16), day(11, 29));
+        put("R", day(11, 16), null, day(11, 16), day(11, 19), today);
+        assertEquals(List.of("11/17 P", "11/17 Q", "11/17 R", "11/20 P"), rows(WEEK));
+    }
+
+    @Test
+    void T_WEEK_4_pastRepeatCopies() {
+        for (int d = 16; d <= 22; d++) {
+            tasks.add(new Task("r" + d, tasks.size() + 1, Kind.TASK, "운동", day(11, d), null, 30, "", false, Category.OTHER,
+                    "s", Repeat.DAILY, null, null, false, null, 0, 0, null, null));
+        }
+        put("과제", day(11, 16));
+        assertEquals(List.of("11/16 운동", "11/16 과제", "11/17 운동", "11/18 운동", "11/19 운동", "11/20 운동", "11/21 운동",
+                "11/22 운동"), rows(WEEK));
+        assertEquals(List.of(16, 17), tasks.stream().filter(t -> t.pastCopy(today)).map(t -> t.getDate().getDayOfMonth())
+                .toList());
+    }
+
+    @Test
+    void T_WEEK_5_doneTask() {
+        put("과제", day(11, 16), null, null, null, day(11, 16));
+        put("빨래", day(11, 16));
+        assertEquals(List.of("11/16 과제", "11/16 빨래"), rows(WEEK));
     }
 }
