@@ -1,0 +1,58 @@
+@startuml class-schedule
+!include class-common.iuml
+package planningpet.schedule.model {
+  class Task {
+    - id : String
+    - seq : long
+    - kind : Kind
+    - title : String
+    - date : LocalDate
+    - startTime : LocalTime
+    - durationMinutes : int
+    - memo : String
+    - nextDay : boolean
+    - category : Category
+    - seriesId : String
+    - repeat : Repeat
+    - dueDate : LocalDate
+    - startDay : LocalDate
+    - done : boolean
+    - doneDay : LocalDate
+    - rewardPoints : int
+    - rewardExp : int
+    - rewardDay : LocalDate
+    - rewardPet : PetKind
+    + missed(today : LocalDate) : boolean
+    + pastCopy(today : LocalDate) : boolean
+    + countDay() : LocalDate
+    + startMinute() : int
+    + onTimetable(day : LocalDate) : boolean
+    + finish(day : LocalDate, points : int, exp : int, pet : PetKind) : void
+    + unfinish() : void
+  }
+  class TaskDraft {
+    + validate() : List<FieldError>
+  }
+  class TaskBook {
+    - tasks : List<Task>
+    - deletedRewarded : List<Task>
+    - nextSeq : LongSupplier
+    + add(draft : TaskDraft) : List<Task>
+    + overlap(draft : TaskDraft, self : Task) : Overlap
+    + update(task : Task, draft : TaskDraft, scope : EditScope) : void
+    + clearTime(task : Task, scope : EditScope) : void
+    + placeAt(task : Task, day : LocalDate, start : int, scope : EditScope) : void
+    + dropRange(task : Task, today : LocalDate) : List<LocalDate>
+    + dropStart(minute : int, durationMinutes : int) : int
+    + delete(task : Task, scope : DeleteScope) : void
+    + dayPlan(date : LocalDate) : DayPlan
+    + untimedOfWeek(weekStart : LocalDate) : List<WeekRow>
+    + timeText(task : Task) : String
+    + dueText(task : Task) : String
+    + periodNote(today : LocalDate) : String
+    + rewardHistory() : List<Task>
+  }
+}
+TaskBook *-- "0..*" Task : tasks
+TaskBook ..> TaskDraft
+@enduml

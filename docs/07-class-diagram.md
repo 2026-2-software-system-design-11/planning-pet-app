@@ -26,8 +26,13 @@ D-109의 방향(view에서 controller와 model, controller에서 model, store에
 
 | 도메인 | 그림 |
 |---|---|
+| 일정 model | ![일정 model](diagrams/class-schedule.png) |
 | 보상 | ![보상](diagrams/class-reward.png) |
 | 앱 | ![앱](diagrams/class-app.png) |
+
+## 나눈 까닭과 버린 안
+
+- **데이터는 `AppData` 하나에 모은다.** 06 "데이터" 표의 `AppData` 값을 필드로 갖고, 일정은 `TaskBook`, 펫은 `PetState`로 담는다. 파일 하나(D-08)를 그대로 옮긴 꼴이라 저장은 `AppData` 하나를 쓰고 읽는다. 22번의 되돌리기는 `copy`와 `restore`가 한다. 버린 안: 도메인마다 데이터 클래스를 두기. 06 표의 대상과 달라지고, 저장할 때 다시 모아야 한다.
 
 ## 다시 그리기
 
