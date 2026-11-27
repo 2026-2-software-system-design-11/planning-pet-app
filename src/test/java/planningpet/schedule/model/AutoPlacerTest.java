@@ -294,4 +294,39 @@ class AutoPlacerTest {
         }
         assertEquals("Q 마감 11/29(일): " + NEXT_NO, reasons(16, 22, "23:40"));
     }
+
+    @Test
+    void E_AUTO_14_dueOnWeekEdges() {
+        period("Q", 16, 23, 30);
+        period("U", 16, 22, 30);
+        assertEquals("Q 마감 11/23(월): " + NEXT_YES.formatted("11/23(월)") + " | U 마감 11/22(일): 마감까지 빈 시간이 모자라요",
+                reasons(16, 22, "23:40"));
+    }
+
+    @Test
+    void E_AUTO_15_nextWeekOnlyToDue() {
+        fixed("알바", 23, "09:00", 720);
+        period("Q", 16, 23, 720);
+        assertEquals("Q 마감 11/23(월): " + NEXT_NO, reasons(16, 22, "23:40"));
+    }
+
+    @Test
+    void E_AUTO_16_missedPlan() {
+        add(Kind.TASK, "P", day(17), "09:00", 30, day(16), day(22), false);
+        assertEquals("P 마감 11/22(일): 마감까지 빈 시간이 모자라요", reasons(16, 22, "23:40"));
+    }
+
+    @Test
+    void E_AUTO_17_monthChange() {
+        add(Kind.TASK, "M", day(23), null, 30, day(23), LocalDate.of(2026, 12, 1), false);
+        task("K", 29, 30);
+        assertEquals("M 마감 12/1(화): " + NEXT_YES.formatted("12/1(화)") + " | K 날짜 11/29(일): 그날 빈 시간이 모자라요",
+                reasons(23, 29, "23:40"));
+    }
+
+    @Test
+    void E_AUTO_18_lastDayAfterMidnight() {
+        period("Q", 16, 29, 30);
+        assertEquals("Q 마감 11/29(일): " + NEXT_YES.formatted("11/29(일)"), reasons(16, 23, "01:00"));
+    }
 }
