@@ -52,6 +52,7 @@
 | C3 | 설정 "목록 누르기" | `SettingsController.setListClickTime`, `TaskRows` | 데이터 절 `listClickTime` | `docs/porting/list-click.md` |
 | C4 | 빠른 추가 | `TaskController.add` | 3번의 빠른 추가 | `docs/porting/quick-add.md` |
 | C5 | 예시로 둘러보기 | `Examples`, `TaskController.clearSamples` | 31번 | `docs/porting/examples.md` |
+| R | 릴리스 | 없음 | 없음(D-114의 설치 파일과 GitHub Releases) | `docs/porting/release.md` |
 
 고른 순서의 까닭:
 
