@@ -1,0 +1,26 @@
+@startuml seq-uc11
+!include seq-common.iuml
+actor 사용자
+$obj(ScheduleScreen)
+$obj(AutoPlaceDialog)
+$obj(AutoPlacer)
+$obj(TaskController)
+$obj(AppController)
+사용자 -> ScheduleScreen : "자동 배치" 누르기
+note right of ScheduleScreen : 자동 배치 결과 창을 연다
+AutoPlaceDialog -> AutoPlacer : place(book, weekStart, now)
+note right of AutoPlacer : 놓을 수 있는 날의 09:00부터 24:00 사이,\n시각 있는 일정과 지난 시간을 뺀 빈 시간에\n긴 할 일부터 가장 이른 자리. 저장하지 않는다
+opt 3a 빈 시간이 모자라 놓지 못한 할 일이 있다
+  loop 놓지 못한 할 일마다
+    AutoPlacer -> AutoPlacer : reason(task, book, weekStart, now)
+  end
+  note right of AutoPlaceDialog : "놓지 못한 일" 칸에\n제목, 날짜나 마감, 까닭
+end
+사용자 -> AutoPlaceDialog : "적용" 누르기
+AutoPlaceDialog -> TaskController : applyPlacement(p)
+TaskController -> AppController : change(what, edit)
+AppController -> TaskController : edit()
+note right of TaskController : 놓은 할 일에 시작 시각을 넣고,\n기간 할 일은 날짜를 놓은 날로 바꾼다.\n마감은 그대로다
+ref over TaskController, AppController : 저장과 되돌리기
+note right of AutoPlaceDialog : 창이 닫히고 시간표가 놓인 블록으로\n내려가 2초 동안 진하게 보인다(06 19번)
+@enduml

@@ -1,0 +1,30 @@
+@startuml seq-uc06
+!include seq-common.iuml
+actor 사용자
+$obj(TaskRows)
+$obj(TaskController)
+$obj(AppController)
+$obj(TaskBook)
+사용자 -> TaskRows : 휴지통 "삭제" 누르기
+note right of TaskRows : 일정 수정 창의 "삭제",\n오른쪽 버튼 메뉴 "삭제"도 같다
+alt 반복 사본이 아니다
+  note right of TaskRows : 확인 창 "'{제목}'{을/를} 삭제할까요?"\n삭제, 취소
+else 2a 반복 사본이다
+  note right of TaskRows : 선택 창 "'{제목}'{은/는} 반복 일정이에요."\n이 일정만, 이후 반복 모두, 취소
+end
+alt 3a 취소
+  사용자 -> TaskRows : "취소" 누르기
+  note right of TaskRows : 아무것도 지우지 않는다
+else 기본 흐름
+  사용자 -> TaskRows : "삭제", "이 일정만", "이후 반복 모두" 누르기
+  TaskRows -> TaskController : delete(task, scope)
+  TaskController -> AppController : change(what, edit)
+  AppController -> TaskController : edit()
+  TaskController -> TaskBook : delete(task, scope)
+  note right of TaskBook : 이후 반복 모두는 날짜가 같거나 뒤인\n끝내지 않은 사본도 지운다
+  opt 4b 끝낸 할 일이다
+    note right of TaskBook : 받은 보상과 오늘 보상 횟수는 그대로.\ndeletedRewarded에 남긴다
+  end
+  ref over AppController, TaskBook : 저장과 되돌리기. 4a 저장 실패
+end
+@enduml

@@ -1,0 +1,27 @@
+@startuml seq-uc04
+!include seq-common.iuml
+actor 사용자
+$obj(MainScreen)
+$obj(DefaultDates)
+$obj(TaskController)
+$obj(TaskDraft)
+$obj(TaskBook)
+$obj(AppController)
+$obj(PetTalk)
+사용자 -> MainScreen : 빠른 추가 입력칸에 제목을 쓰고 Enter나 "추가" 누르기
+alt 1a 제목이 비어 있다
+  note right of MainScreen : 아무 일도 없다.\n"추가"는 흐리다
+else 기본 흐름
+  MainScreen -> DefaultDates : forAdd(MAIN, selected, shownStart, today)
+  note right of MainScreen : 선택된 날짜, 30분,\n유형 기타, 시각 없음
+  MainScreen -> TaskController : add(draft, ask)
+  TaskController -> TaskDraft : validate()
+  TaskController -> AppController : change(what, edit)
+  AppController -> TaskController : edit()
+  TaskController -> TaskBook : add(draft)
+  TaskController -> PetTalk : say(ADDED, ...)
+  TaskController -> AppController : say(line, day)
+  ref over TaskController, AppController : 저장과 되돌리기. 3a 저장 실패면 입력칸에 제목을 남긴다
+  note right of MainScreen : 목록에 새 할 일이\n걸리는 시간과 함께 보이고\n입력칸이 비워진다
+end
+@enduml

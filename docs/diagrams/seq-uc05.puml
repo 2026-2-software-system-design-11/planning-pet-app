@@ -1,0 +1,66 @@
+@startuml seq-uc05
+!include seq-common.iuml
+actor 사용자
+$obj(TaskRows)
+$obj(TaskDialog)
+$obj(TimeEditor)
+$obj(DefaultDates)
+$obj(Typed)
+$obj(TaskDraft)
+$obj(TaskController)
+$obj(TaskBook)
+$obj(AppController)
+alt 기본 흐름
+  사용자 -> TaskRows : 연필 "수정" 누르기
+  note right of TaskRows : 두 번 누르기, 오른쪽 버튼 메뉴 "수정"도 같다.\n현재 값이 채워진 "일정 수정" 창을 연다
+  opt 3a 마감이 지나도 끝내지 못한 기간 할 일이다
+    note right of TaskDialog : 날짜, 기간 안에 하기, 마감일 칸이 비활성.\n"마감이 지난 일은 날짜를 바꿀 수 없어요"
+  end
+  사용자 -> TaskDialog : 값을 고치기
+  opt 3b, 3c 마감일이나 시작일이 맞지 않다
+    TaskDialog -> TaskDraft : validate()
+    note right of TaskDraft : 저장 전에도 마감일 칸 아래에 까닭
+  end
+else 1a, 1b 시각 알약, 시계 단추, "목록 누르기"를 켠 줄 한 번
+  사용자 -> TaskRows : 시각 알약이나 "시각 정하기" 누르기
+  note right of TaskRows : 단추 아래에 시각 고치기 창을 연다.\n끝낸 줄, 지난 날의 기간 할 일,\n마감이 지난 기간 할 일은 단추가 흐리다
+  TimeEditor -> DefaultDates : defaultStart(date, now)
+  opt 시각 빼기
+    사용자 -> TimeEditor : "시각 빼기" 누르기
+    note right of TimeEditor : 반복 사본이면 범위를 먼저 묻는다
+    TimeEditor -> TaskController : clearTime(task, scope)
+    TaskController -> AppController : change(what, edit)
+    AppController -> TaskController : edit()
+    TaskController -> TaskBook : clearTime(task, scope)
+    note right of TaskBook : 기간 할 일은 오늘부터 마감까지\n다시 "기간 안에 할 일"에 보인다
+    ref over TaskController, AppController : 저장과 되돌리기. 5a 저장 실패
+    note right of TimeEditor : 시각 빼기는 여기서 끝난다.\n고정 일정은 시각을 뺄 수 없다
+  end
+end
+opt 3d 시작 시각이나 걸리는 시간 칸에 쳐 넣는다
+  TaskDialog -> Typed : start(text, day, due)
+  TaskDialog -> Typed : minutes(text)
+  note right of Typed : UC-03의 3c, 4b와 같다
+end
+사용자 -> TaskDialog : "저장" 누르기
+TaskDialog -> TaskController : update(task, draft, ask, chooseScope)
+note right of TaskDialog : 시각 고치기 창이면 TimeEditor가 보내고\n시작 시각과 걸리는 시간만 넣는다.\n기간 할 일은 창을 연 목록의 날로 옮긴다
+TaskController -> TaskDraft : validate()
+alt 4a 입력값이 잘못되었다
+  note right of TaskDialog : UC-03의 5a와 같다
+else 통과했다
+  TaskController -> TaskBook : overlap(draft, task)
+  opt 겹친다(06 3번)
+    TaskController -> TaskDialog : ask(overlap)
+  end
+  opt 4b 반복 사본이다
+    TaskController -> TaskDialog : chooseScope()
+    note right of TaskDialog : 이 일정만, 이후 반복 모두, 취소.\n취소하면 창으로 돌아간다
+  end
+  TaskController -> AppController : change(what, edit)
+  AppController -> TaskController : edit()
+  TaskController -> TaskBook : update(task, draft, scope)
+  note right of TaskBook : 완료 여부와 받은 보상은 그대로.\n이후 반복 모두는 끝내지 않은 뒤 사본에 넣는다
+  ref over TaskController, AppController : 저장과 되돌리기. 5a 저장 실패면 바꾸기 전 값
+end
+@enduml
