@@ -1,15 +1,18 @@
 package planningpet.pet.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static planningpet.pet.model.Situation.ADDED;
 import static planningpet.pet.model.Situation.BRIEFING;
 import static planningpet.pet.model.Situation.COMPLETED;
 import static planningpet.pet.model.Situation.FIRST_RUN;
 import static planningpet.pet.model.Situation.OTHER_DATE;
 import static planningpet.pet.model.Situation.UNCOMPLETED;
 import static planningpet.pet.model.Situation.USUAL;
+import static planningpet.pet.model.Situation.WEEKLY_ADDED;
 import static planningpet.pet.model.Situation.WELCOME_BACK;
 
 import java.time.Clock;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -25,6 +28,7 @@ import planningpet.schedule.model.Category;
 import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Repeat;
 import planningpet.schedule.model.Task;
+import planningpet.schedule.model.TaskDraft;
 
 /** 06 16번과 docs/porting/pet-talk.md 2절. at은 시계("11-16"이면 10:00)와 일정, 고른 고양이(이름 petName)를 정한다. 날 32는 12-02다. */
 class PetTalkTest {
@@ -71,6 +75,16 @@ class PetTalkTest {
     private static Task done(Task task, int day) {
         task.finish(d(day), 0, 0, null);
         return task;
+    }
+
+    /** 반복 일정을 넣고(06 3번) 첫 사본을 돌려준다. */
+    private Task repeat(Kind kind, String title, LocalDate first, Integer hour, Repeat how, LocalDate end) {
+        return data.getBook().add(new TaskDraft(kind, title, Category.OTHER, first, null,
+                hour == null ? null : LocalTime.of(hour, 0), 30, "", how, end, false, null, data.today(), false)).get(0);
+    }
+
+    private String say(Situation situation, Task task) {
+        return new PetTalk(data).say(situation, task);
     }
 
     /** 완료하고 펫 말을 돌려준다. 끝내기는 Rewards.complete로 한다. */
@@ -366,5 +380,22 @@ class PetTalkTest {
         at("11-16", first);
         complete(first);
         assertEquals("체크를 풀었어. -10P", uncomplete(first));
+    }
+
+    @Test
+    void T_TALK_21_weeklyAdded() {
+        at("11-16");
+        Task first = repeat(Kind.FIXED, "편의점 알바", d(16), 18, Repeat.weekly(DayOfWeek.TUESDAY, DayOfWeek.THURSDAY), d(26));
+        assertEquals("17일(화)부터 화, 목마다 넣었어요", say(WEEKLY_ADDED, first));
+    }
+
+    @Test
+    void T_TALK_23_addedTodayAndOtherDays() {
+        Task report = task("통계 레포트", 16);
+        Task bank = task("은행 서류", 20);
+        Task gym = task("운동", 17);
+        at("11-16", task("과제", 16), report, bank, gym);
+        assertEquals("'통계 레포트' 넣었구나! 오늘 남은 일 2개야. '은행 서류' 11/20에 넣었어. '운동' 11/17에 넣었어.",
+                say(ADDED, report) + " " + say(ADDED, bank) + " " + say(ADDED, gym));
     }
 }

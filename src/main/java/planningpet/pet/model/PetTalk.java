@@ -77,6 +77,36 @@ public final class PetTalk {
         return "체크를 풀었어. -" + points + "P" + (after.getLevel() < before.getLevel() ? ", 이제 Lv." + after.getLevel() : "");
     }
 
+    /** ADDED와 WEEKLY_ADDED: 넣은 일정(반복이면 첫 사본)을 말한다. */
+    public String say(Situation situation, Task task) {
+        require(situation, Situation.ADDED, Situation.WEEKLY_ADDED);
+        return situation == Situation.ADDED ? added(task) : weeklyAdded(task);
+    }
+
+    /** D-90, D-94: 기간 할 일은 마감, 오늘 넣은 일은 오늘 남은 수, 다른 날은 그 날짜. */
+    private String added(Task task) {
+        String title = "'" + Words.shortTitle(task.getTitle()) + "'";
+        if (task.period()) {
+            return title + " 넣었구나! " + task.getDueDate().getDayOfMonth() + "일까지야.";
+        }
+        LocalDate day = task.getDate();
+        if (!day.equals(data.today())) {
+            return title + " " + day.getMonthValue() + "/" + day.getDayOfMonth() + "에 넣었어.";
+        }
+        long left = checkables(day).stream().filter(t -> !t.isDone()).count();
+        return title + " 넣었구나! 오늘 남은 일 " + left + "개야.";
+    }
+
+    /** D-75, D-94: "17일(화)부터 화, 목마다 넣었어요". 첫 사본이 오늘과 다른 달이면 달을 붙인다. */
+    private String weeklyAdded(Task first) {
+        LocalDate day = first.getDate();
+        LocalDate today = data.today();
+        String month = day.getMonth() == today.getMonth() && day.getYear() == today.getYear() ? ""
+                : day.getMonthValue() + "월 ";
+        return month + day.getDayOfMonth() + "일(" + "월화수목금토일".charAt(day.getDayOfWeek().getValue() - 1) + ")부터 "
+                + first.getRepeat().text(data.getWeekStart()) + "마다 넣었어요";
+    }
+
     private static void require(Situation given, Situation... allowed) {
         if (!List.of(allowed).contains(given)) {
             throw new IllegalArgumentException("이 인자를 받지 않는 상황: " + given);

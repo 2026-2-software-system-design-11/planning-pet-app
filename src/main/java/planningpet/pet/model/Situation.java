@@ -15,5 +15,9 @@ public enum Situation {
     /** 할 일 완료. 06 16번의 STAGE_UP, LEVEL_UP, CAPPED, ALL_DONE, COMPLETED 가운데 PetTalk가 고른다. */
     COMPLETED,
     /** 완료 취소(D-36). */
-    UNCOMPLETED
+    UNCOMPLETED,
+    /** 홈에서 빠른 추가나 일정 입력 창으로 새 일정을 넣음(D-90). */
+    ADDED,
+    /** 요일 반복을 새로 넣음(D-75). */
+    WEEKLY_ADDED
 }
