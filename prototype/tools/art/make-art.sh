@@ -6,7 +6,6 @@
 set -e
 EX=$1; OUT=$2; T=$(cd "$(dirname "$0")" && pwd)
 mkdir -p "$OUT/items" "$OUT/pets" "$OUT/cut"
-python3 "$T/cut.py" "$EX" "$OUT/logo-face.png" 30,68,156,152 18
 python3 "$T/cut.py" "$EX" "$OUT/cloud.png" 15,665,165,745 6
 python3 "$T/greenkey.py" "$EX" "$OUT/meadow-corner.png" 0,770,182,941
 python3 "$T/cut.py" "$EX" "$OUT/shop-bag.png" 212,798,378,912 14

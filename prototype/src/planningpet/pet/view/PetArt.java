@@ -71,6 +71,18 @@ public final class PetArt {
         g.dispose();
     }
 
+    /**
+     * 앱 로고(사이드바, 고르기 창 머리): 장신구 없는 고양이 얼굴을 (x, y, w, h) 상자 가운데에 가장 크게 그린다.
+     * 예전의 잘라 낸 그림(logo-face.png, 112x77)은 넓은 창과 2배 화면에서 흐려 도형 얼굴로 바꿨다. 얼굴은 폭이 size의 1.10배,
+     * 높이가 0.83배(가운데 위 0.51, 아래 0.31)라서 그 비율로 상자에 맞춘다.
+     */
+    public static void drawLogo(Graphics2D g, double x, double y, double w, double h) {
+        double size = Math.min(w / 1.10, h / 0.84);
+        double cx = x + w / 2;
+        double cy = y + (h - 0.83 * size) / 2 + 0.51 * size;
+        drawFace(g, PetKind.CAT, Set.of(), cx, cy, size);
+    }
+
     /** 장신구 파일 이름(wear/*.png)과 D-51 이름. 아이콘을 그림 파일로 내보낼 때 쓴다. */
     public static final String[][] WEAR_FILES = {
         {"collar-basic", "기본 목걸이"}, {"collar-ribbon", "리본 목걸이"}, {"collar-star", "별 목걸이"},

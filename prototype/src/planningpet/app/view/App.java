@@ -151,13 +151,11 @@ public final class App {
         javax.swing.JComponent face = new javax.swing.JComponent() {
             @Override
             protected void paintComponent(Graphics graphics) {
-                java.awt.image.BufferedImage im = Images.LOGO;
-                if (im != null) {
-                    Graphics2D g = (Graphics2D) graphics.create();
-                    g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-                    Images.fit(g, im, 0, 0, getWidth(), getHeight());
-                    g.dispose();
-                }
+                // 앱이 그리는 고양이 얼굴(PetArt). 크기가 바뀌어도 흐려지지 않는다. 높이 64 칸에 폭 88까지 그린다.
+                Graphics2D g = (Graphics2D) graphics.create();
+                int w = Math.min(getWidth(), 88);
+                planningpet.pet.view.PetArt.drawLogo(g, (getWidth() - w) / 2.0, 0, w, getHeight());
+                g.dispose();
             }
         };
         face.setPreferredSize(new Dimension(0, 64));
