@@ -101,6 +101,22 @@ class AppControllerTalkTest {
                 t.isDone() ? null : data.today(), true, timeOnly), EditScope.ONLY_THIS));
     }
 
+    /** 15번(S1)이 브리핑하거나 반길 때. */
+    private void brief(Situation situation) {
+        var line = talk.recount(situation);
+        app.getBubble().say(line.get());
+        app.getBubble().follow(data.today(), line);
+    }
+
+    /** 홈에서 넣기. 오늘 넣은 보통 일이면 오늘을 센다(06 16번 다시 세기 1). */
+    private void add(String title, int day) {
+        app.change("일정 추가", () -> {
+            Task t = data.getBook().add(new TaskDraft(Kind.TASK, title, Category.OTHER, d(day), null, null, 30, "", null,
+                    null, false, null, data.today(), false)).get(0);
+            app.say(talk.say(Situation.ADDED, t), t.getDate().equals(data.today()) ? data.today() : null);
+        });
+    }
+
     @Test
     void T_TALK_30_1_pickedDay() {
         at(14, "가", 16, "나", 16, "다", 17, "빨래", 14, "청소", 14);
@@ -126,5 +142,78 @@ class AppControllerTalkTest {
         pick(16);
         delete("나");
         assertEquals("11월 16일 할 일은 1개야. 1", line() + " " + app.getBubble().getNewLines());
+    }
+
+    @Test
+    void T_TALK_30_2_todayAndAdded() {
+        at(14, "빨래", 14, "청소", 14);
+        pick(14);
+        delete("청소");
+        String said = line();
+        add("영어 단어", 14);
+        said += "|" + line();
+        delete("영어 단어");
+        assertEquals("오늘 할 일 1개 남았어.|'영어 단어' 넣었구나! 오늘 남은 일 2개야.|오늘 할 일 1개 남았어.", said + "|" + line());
+    }
+
+    @Test
+    void T_TALK_30_3_briefingKeepsMiddle() {
+        at(18, "과제", 18, "빨래", 18, "청소", 18, "밀린 일", 17, "통계 퀴즈", 19);
+        brief(Situation.BRIEFING);
+        delete("과제");
+        assertEquals("오늘 할 일 2개 남았어. 어제 못 끝낸 일 1개는 달력에 남아 있어. 내일 '통계 퀴즈'가 있어.", line());
+    }
+
+    @Test
+    void T_TALK_30_4_welcomeBack() {
+        at(18, "과제", 18, "빨래", 18, "청소", 18);
+        brief(Situation.WELCOME_BACK);
+        delete("과제");
+        assertEquals("오랜만이야! 다시 와서 반가워. 오늘 할 일은 2개야.", line());
+    }
+
+    @Test
+    void T_TALK_30_5_selectedFollowsToday() {
+        at(18, "과제", 18, "빨래", 18);
+        data.addPet(new PetState(PetKind.DOG, "바둑이"));
+        data.setActiveKind(PetKind.DOG);
+        pick(20);
+        app.change("고른 펫", () -> {
+            data.setActiveKind(PetKind.CAT);
+            app.say(talk.say(Situation.SELECTED), data.today());
+        });
+        String said = line();
+        delete("과제");
+        assertEquals("이제 경험치는 내가 받을게! 오늘 할 일 2개 남았어.|오늘 할 일 1개 남았어.", said + "|" + line());
+    }
+
+    @Test
+    void T_TALK_30_6_sixthSentence() {
+        at(18, "가", 20);
+        brief(Situation.BRIEFING);
+        String said = line();
+        edit("가", "가", 18, 14, 30, true);
+        said += "|" + line();
+        delete("가");
+        assertEquals("오늘은 할 일이 없어. 아래 칸에 하나 적어 볼까?|오늘 할 일 1개 남았어.|오늘은 할 일이 없어. 아래 칸에 하나 적어 볼까?",
+                said + "|" + line());
+    }
+
+    @Test
+    void T_TALK_30_7_periodNote() {
+        at(18, "과제", 18, "F사 서류", "F");
+        brief(Situation.BRIEFING);
+        String said = line();
+        delete("과제");
+        assertEquals("오늘 할 일 1개 남았어.|오늘은 할 일이 없어. F사 서류는 25일까지야, 7일 남았어.", said + "|" + line());
+    }
+
+    @Test
+    void T_TALK_30_8_tomorrowKept() {
+        at(18, "통계 퀴즈", 19);
+        brief(Situation.BRIEFING);
+        String said = line();
+        edit("통계 퀴즈", "통계 퀴즈", 18, 15, 30, true);
+        assertEquals("오늘은 할 일이 없어. 내일 '통계 퀴즈'가 있어.|오늘 할 일 1개 남았어. 내일 '통계 퀴즈'가 있어.", said + "|" + line());
     }
 }
