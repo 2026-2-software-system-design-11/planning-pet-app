@@ -31,10 +31,16 @@ package planningpet.app.controller {
   }
 }
 package planningpet.app.store {
-  class FileDataStore {
+  class SqliteDataStore {
     - folder : Path
+    - saved : AppData
     + load() : LoadResult
     + save(data : AppData) : void
+  }
+  class Schema {
+    {static} + VERSION : int = 1
+    {static} + create(db : Connection) : void
+    {static} + upgrade(db : Connection, from : int) : void
   }
 }
 package planningpet.app.model {
@@ -86,8 +92,9 @@ AppController --> "1" DataStore
 AppController --> "1" planningpet.pet.model.Bubble
 AppController ..> Visits
 DayWatcher --> "1" AppController
-FileDataStore ..|> DataStore
-FileDataStore ..> AppData
+SqliteDataStore ..|> DataStore
+SqliteDataStore ..> AppData
+SqliteDataStore ..> Schema
 AppData *-- "1" planningpet.schedule.model.TaskBook : book
 AppData *-- "1..2" planningpet.pet.model.PetState : pets
 @enduml
