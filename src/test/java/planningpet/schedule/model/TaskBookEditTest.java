@@ -467,7 +467,7 @@ class TaskBookEditTest {
     void T_EDIT_42_pastDuePeriodTime() {
         Task t = put("Q", day(11, 10), null, day(11, 10), day(11, 16), null);
         book().update(t, time(t, day(11, 16), 10 * 60, 30), EditScope.ONLY_THIS);
-        assertEquals(List.of(day(11, 16), LocalTime.of(10, 0)), List.of(t.getDate(), t.getStartTime()));
+        assertEquals(Arrays.asList(day(11, 10), null), Arrays.asList(t.getDate(), t.getStartTime()));
     }
 
     @Test
@@ -481,7 +481,7 @@ class TaskBookEditTest {
     void E_EDIT_15_listDayBeforeToday() {
         Task t = put("P", day(11, 16), null, day(11, 16), day(11, 22), null);
         book().update(t, time(t, day(11, 17), 10 * 60, 30), EditScope.ONLY_THIS);
-        assertEquals(List.of(day(11, 17), LocalTime.of(10, 0)), List.of(t.getDate(), t.getStartTime()));
+        assertEquals(Arrays.asList(day(11, 16), null), Arrays.asList(t.getDate(), t.getStartTime()));
     }
 
     @Test

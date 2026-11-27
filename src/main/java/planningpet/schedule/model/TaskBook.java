@@ -138,9 +138,13 @@ public final class TaskBook {
     /**
      * 06 4번을 시각 고치기 창(D-32)에서 부를 때. 시작 시각과 걸리는 시간만 넣고 날짜를 값의 날짜로 옮긴다. 기간 할 일은 창을 연 목록의
      * 날로 옮기고 기간은 둔다(D-65, D-68). THIS_AND_AFTER면 끝내지 않은 뒤 사본에 시작 시각과 걸리는 시간을 넣고, 고친 사본이
-     * 옮긴 날 수("밤 4시", D-98)만큼 옮긴다(D-42).
+     * 옮긴 날 수("밤 4시", D-98)만큼 옮긴다(D-42). 기간 할 일에 정할 날이 오늘보다 앞이면(지난 날 목록, 마감이 지난 기간 할 일)
+     * 아무것도 바꾸지 않는다(06 4번, D-99).
      */
     private void updateTime(Task task, TaskDraft draft, EditScope scope) {
+        if (task.period() && draft.startTime() != null && draft.date().isBefore(today.get())) {
+            return;
+        }
         LocalDate originalDate = task.getDate();
         if (!task.period() || draft.startTime() != null) {
             task.setDate(draft.date());
