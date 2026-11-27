@@ -6,7 +6,6 @@ import planningpet.pet.model.PetKind;
 
 /**
  * 일정 하나(06 데이터 절 Task). 값은 06 데이터 표 순서대로 생성자에서 모두 받는다. 처음 값은 만드는 쪽이 정한다.
- * 반복 방식(repeat)은 Repeat과 함께 M3에서 더한다.
  */
 public final class Task {
     /** 하루 칸의 분(24:00). */
@@ -31,6 +30,7 @@ public final class Task {
     private boolean nextDay;
     private Category category;
     private String seriesId;
+    private Repeat repeat;
     private LocalDate dueDate;
     private LocalDate startDay;
     private boolean done;
@@ -42,7 +42,7 @@ public final class Task {
 
     public Task(String id, long seq, Kind kind, String title, LocalDate date, LocalTime startTime,
             int durationMinutes, String memo, boolean nextDay, Category category, String seriesId,
-            LocalDate dueDate, LocalDate startDay, boolean done, LocalDate doneDay, int rewardPoints,
+            Repeat repeat, LocalDate dueDate, LocalDate startDay, boolean done, LocalDate doneDay, int rewardPoints,
             int rewardExp, LocalDate rewardDay, PetKind rewardPet) {
         this.id = id;
         this.seq = seq;
@@ -55,6 +55,7 @@ public final class Task {
         this.nextDay = nextDay;
         this.category = category;
         this.seriesId = seriesId;
+        this.repeat = repeat;
         this.dueDate = dueDate;
         this.startDay = startDay;
         this.done = done;
@@ -79,6 +80,8 @@ public final class Task {
     public Category getCategory() { return category; }
     /** 반복 사본끼리 같은 번호. 반복이 아니면 null(D-17, D-64). */
     public String getSeriesId() { return seriesId; }
+    /** 반복 방식. 반복 사본이 아니면 null(D-64). */
+    public Repeat getRepeat() { return repeat; }
     /** 기간 할 일의 마감. 기간 할 일이 아니면 null(D-65). */
     public LocalDate getDueDate() { return dueDate; }
     /** 기간 할 일의 첫날. 기간 할 일이 아니면 null(D-66). */

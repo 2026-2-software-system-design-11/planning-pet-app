@@ -8,10 +8,12 @@ import planningpet.common.model.Words;
 
 /**
  * 일정 입력 창에 쓴 값(06 2번 입력). 기간 안에 하기를 켜지 않았으면 dueDate는 null이다. placed는 수정하는 기간 할 일에 시각을
- * 정해 둔 날, today는 앱의 오늘이고 없으면 null이다(D-99). 반복 칸은 Repeat과 함께 M3에서 더한다.
+ * 정해 둔 날, today는 앱의 오늘이고 없으면 null이다(D-99). 반복하지 않으면 repeat와 repeatEnd는 null이다. editing은 수정
+ * 창의 값인지다(D-42).
  */
 public record TaskDraft(Kind kind, String title, Category category, LocalDate date, LocalDate dueDate,
-        LocalTime startTime, int durationMinutes, String memo, boolean nextDay, LocalDate placed, LocalDate today) {
+        LocalTime startTime, int durationMinutes, String memo, Repeat repeat, LocalDate repeatEnd, boolean nextDay,
+        LocalDate placed, LocalDate today, boolean editing) {
     /** 끝이 다음 날 04:00을 넘을 때의 문장(D-77). 자정을 넘는 것은 막지 않는다. */
     public static final String END_PROBLEM = "다음 날 04:00까지 끝나야 해요";
 
@@ -21,7 +23,7 @@ public record TaskDraft(Kind kind, String title, Category category, LocalDate da
     }
 
     /**
-     * 06 2번 검사. 칸 순서(제목, 마감, 시작 시각, 걸리는 시간, 메모)로 모두 담는다. 비어 있으면 저장할 수 있다. 글자 수는 코드 포인트로
+     * 06 2번 검사. 칸 순서(제목, 마감, 시작 시각, 걸리는 시간, 메모, 반복)로 모두 담는다. 비어 있으면 저장할 수 있다. 글자 수는 코드 포인트로
      * 센다(06 읽는 법).
      */
     public List<FieldError> validate() {
@@ -56,6 +58,11 @@ public record TaskDraft(Kind kind, String title, Category category, LocalDate da
         if (memo.codePointCount(0, memo.length()) > 1000) {
             out.add(new FieldError("메모", "메모는 1000자까지예요"));
         }
+        // D-42: 수정할 때 반복 칸은 보이기만 하므로 검사하지 않는다.
+        String repeatProblem = repeat == null || editing ? null : repeatProblem();
+        if (repeatProblem != null) {
+            out.add(new FieldError("반복", repeatProblem));
+        }
         return out;
     }
 
@@ -76,6 +83,22 @@ public record TaskDraft(Kind kind, String title, Category category, LocalDate da
             return "시작일이 시각을 정해 둔 " + monthDay(placed) + "보다 후예요";
         }
         return null;
+    }
+
+    /** 반복 칸의 문장(D-64, D-65). 기간, 요일, 끝 날짜, 반복하는 날, 사본 수 순서로 하나만 고른다. 맞으면 null. */
+    private String repeatProblem() {
+        if (dueDate != null) {
+            return "기간 안에 하는 할 일은 반복할 수 없어요";
+        } else if (!repeat.daily() && repeat.days().isEmpty()) {
+            return "요일을 하나 이상 골라 주세요";
+        } else if (repeatEnd.isBefore(date)) {
+            return "반복 끝나는 날이 날짜보다 전이에요";
+        }
+        int copies = repeat.dates(date, repeatEnd, Repeat.MAX_COPIES).size();
+        if (copies == 0) {
+            return "반복 끝나는 날 안에 반복하는 날이 없어요";
+        }
+        return copies > Repeat.MAX_COPIES ? "반복이 너무 많아요. 반복 끝나는 날을 앞당겨 주세요" : null;
     }
 
     /** "11/19(목)". */
