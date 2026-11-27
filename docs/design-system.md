@@ -61,7 +61,7 @@
 
 ## 3. 글꼴
 
-앱에 넣은 Pretendard(`prototype/assets/fonts/`, SIL Open Font License 1.1, 라이선스는 `Pretendard-LICENSE.txt`)를 쓴다. 운영체제마다 글꼴이 달라 화면이 달라 보이던 것을 없애고, 예시의 굵은 제목과 숫자를 내려고 넣었다. 파일을 못 읽으면 맑은 고딕, 그다음 Apple SD Gothic Neo로 간다.
+앱에 넣은 Pretendard(`prototype/assets/fonts/`, 본 구현은 `src/main/resources/assets/fonts/`, SIL Open Font License 1.1, 라이선스는 `Pretendard-LICENSE.txt`)를 쓴다. 운영체제마다 글꼴이 달라 화면이 달라 보이던 것을 없애고, 예시의 굵은 제목과 숫자를 내려고 넣었다. 파일을 못 읽으면 맑은 고딕, 그다음 Apple SD Gothic Neo로 간다.
 
 굵기는 네 가지이고 `Theme`의 함수로 고른다.
 
