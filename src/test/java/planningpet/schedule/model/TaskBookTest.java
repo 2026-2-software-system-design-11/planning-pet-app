@@ -253,6 +253,12 @@ class TaskBookTest {
         assertEquals(new Overlap(first, 60, true), at(10 * 60, 60));
     }
 
+    @Test
+    void E_OVL_7_inside() {
+        Task lab = put(Kind.FIXED, "실습", day(11, 16), 8 * 60, 480);
+        assertEquals(new Overlap(lab, 30, true), at(8 * 60 + 30, 30));
+    }
+
     /** from부터 due까지인 기간 할 일 "계획"을 date 10:00, 60분에 정해 둔 것. done이면 date에 끝냈다. */
     private static Task planned(LocalDate from, LocalDate due, LocalDate date, boolean done) {
         return new Task("p", 1, Kind.TASK, "계획", date, LocalTime.of(10, 0), 60, "", false, Category.OTHER, null, null,
