@@ -20,7 +20,13 @@ public final class TaskBook {
 
     /** nextSeq는 앱 데이터의 다음 넣은 순 번호를 하나 꺼내고 늘린다. today는 앱의 오늘이다(못 끝낸 계획, D-67). */
     public TaskBook(List<Task> tasks, LongSupplier nextSeq, Supplier<LocalDate> today) {
+        this(tasks, List.of(), nextSeq, today);
+    }
+
+    /** deletedRewarded는 저장에서 읽은 지운 일의 보상 기록이다(07 저장 형식 task 표의 deleted 열). */
+    public TaskBook(List<Task> tasks, List<Task> deletedRewarded, LongSupplier nextSeq, Supplier<LocalDate> today) {
         this.tasks = new ArrayList<>(tasks);
+        this.deletedRewarded.addAll(deletedRewarded);
         this.nextSeq = nextSeq;
         this.today = today;
     }
