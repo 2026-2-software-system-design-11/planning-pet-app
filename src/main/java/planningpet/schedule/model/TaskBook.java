@@ -10,11 +10,13 @@ import java.util.UUID;
 import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
-/** 일정 다루기(06 3번, 6번, 7번). 앱 데이터의 일정 목록, 넣은 순 번호, 앱의 오늘을 받아 다룬다. */
+/** 일정 다루기(06 3~7번). 앱 데이터의 일정 목록, 넣은 순 번호, 앱의 오늘을 받아 다룬다. */
 public final class TaskBook {
     private final List<Task> tasks;
     private final LongSupplier nextSeq;
     private final Supplier<LocalDate> today;
+    /** 지운 일정 가운데 보상을 받았던 것(06 데이터 절, D-19). */
+    private final List<Task> deletedRewarded = new ArrayList<>();
 
     /** nextSeq는 앱 데이터의 다음 넣은 순 번호를 하나 꺼내고 늘린다. today는 앱의 오늘이다(못 끝낸 계획, D-67). */
     public TaskBook(List<Task> tasks, LongSupplier nextSeq, Supplier<LocalDate> today) {
@@ -179,6 +181,31 @@ public final class TaskBook {
             LocalDate from = now.isBefore(task.getStartDay()) ? task.getStartDay() : now;
             task.setDate(from.isAfter(task.getDueDate()) ? task.getDueDate() : from);
         }
+    }
+
+    /**
+     * 06 5번. ONLY_THIS는 task만, THIS_AND_AFTER는 같은 반복에서 날짜가 같거나 뒤인 끝내지 않은 사본도 지운다(끝낸 사본은 남긴다,
+     * D-42). 받은 보상은 그대로 두고, 보상을 받았던 일정은 deletedRewarded에 남긴다(D-19).
+     */
+    public void delete(Task task, DeleteScope scope) {
+        List<Task> gone = new ArrayList<>(List.of(task));
+        if (scope == DeleteScope.THIS_AND_AFTER) {
+            gone.addAll(laterCopies(task, task.getDate()));
+        }
+        tasks.stream().filter(gone::contains).filter(t -> t.getRewardDay() != null).forEach(deletedRewarded::add);
+        tasks.removeIf(gone::contains);
+    }
+
+    /** 지운 일정 가운데 보상을 받았던 것. 바꿀 수 없는 목록이다. */
+    public List<Task> getDeletedRewarded() {
+        return Collections.unmodifiableList(deletedRewarded);
+    }
+
+    /** 보상 기록: 지운 일정 가운데 보상을 받았던 것, 이어서 남은 일정 가운데 보상을 받은 것(친밀도 27번, 통계 포인트 29번). */
+    public List<Task> rewardHistory() {
+        List<Task> all = new ArrayList<>(deletedRewarded);
+        tasks.stream().filter(t -> t.getRewardDay() != null).forEach(all::add);
+        return all;
     }
 
     /** task와 같은 반복에서 날짜가 from과 같거나 뒤인 끝내지 않은 다른 사본(D-42). 반복 사본이 아니면 없다. */
