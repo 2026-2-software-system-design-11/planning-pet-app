@@ -16,8 +16,12 @@ import planningpet.pet.model.PetKind;
 import planningpet.pet.model.PetState;
 import planningpet.schedule.model.Category;
 import planningpet.schedule.model.DayPlan;
+import planningpet.schedule.model.DeleteScope;
+import planningpet.schedule.model.EditScope;
 import planningpet.schedule.model.Kind;
+import planningpet.schedule.model.Repeat;
 import planningpet.schedule.model.Task;
+import planningpet.schedule.model.TaskDraft;
 
 /** 06 8, 9, 11번과 docs/porting/rewards.md 2절의 경계. 펫은 고른 고양이 하나이고 complete, undo, attend, done은 값을 잇는다. */
 class RewardsTest {
@@ -53,6 +57,11 @@ class RewardsTest {
 
     private String undo(Task t, LocalDate today) {
         new Rewards(data).uncomplete(t, today);
+        return state();
+    }
+
+    /** 보유 포인트, 고양이 경험치, 하루 상한 횟수의 날과 수. */
+    private String state() {
         return data.getPoints() + "P " + data.pet(PetKind.CAT).getExp() + " " + data.getRewardCountDay() + " "
                 + data.getRewardCount();
     }
@@ -280,5 +289,46 @@ class RewardsTest {
     void T_ATT_4_fromNegative() {
         data.setPoints(-10);
         assertEquals("true 10P 2026-11-16 [2026-11-16] 0 0", attend(d(16)));
+    }
+
+    @Test
+    void T_EDIT_1_editDoneKeepsReward() {
+        complete(a, d(16));
+        data.getBook().update(a, new TaskDraft(Kind.TASK, "A", Category.OTHER, d(20), null, null, 120, "", null, null,
+                false, null, null, true), EditScope.ONLY_THIS);
+        assertEquals("10P 10 2026-11-16 1", state());
+        assertEquals("true 2026-11-16 10 10 2026-11-16 CAT 2026-11-20 120", done(a) + " " + a.getDate() + " "
+                + a.getDurationMinutes());
+    }
+
+    @Test
+    void T_DEL_1_deleteDoneKeepsReward() {
+        data.setPoints(20);
+        complete(a, d(16));
+        data.getBook().delete(a, DeleteScope.ONLY_THIS);
+        assertEquals(List.of(p, q), data.getBook().getTasks());
+        assertEquals(List.of(a), data.getBook().getDeletedRewarded());
+        assertEquals("30P 10 2026-11-16 1", state());
+    }
+
+    /** "영어 단어" 11-16~11-20 매일 21:00의 11-18 사본을 끝낸 뒤(T-EDIT-43) 지운다. 두 번째는 처음 상태로 되돌려서 한다. */
+    @Test
+    void T_EDIT_49_deleteSeriesKeepsReward() {
+        List<Task> copies = data.getBook().add(new TaskDraft(Kind.TASK, "영어 단어", Category.OTHER, d(16), null,
+                LocalTime.of(21, 0), 30, "", Repeat.DAILY, d(20), false, null, null, false));
+        complete(copies.get(2), d(18));
+        AppData before = data.copy();
+        data.getBook().delete(copies.get(1), DeleteScope.THIS_AND_AFTER);
+        assertEquals(List.of(d(16), d(18)), english());
+        assertEquals("10P 10 2026-11-18 1 1", state() + " " + data.getBook().rewardHistory().size());
+        data.restore(before);
+        data.getBook().delete(copies.get(2), DeleteScope.THIS_AND_AFTER);
+        assertEquals(List.of(d(16), d(17)), english());
+        assertEquals("10P 10 2026-11-18 1 1", state() + " " + data.getBook().rewardHistory().size());
+    }
+
+    private List<LocalDate> english() {
+        return data.getBook().getTasks().stream().filter(t -> t.getTitle().equals("영어 단어")).map(Task::getDate)
+                .toList();
     }
 }
