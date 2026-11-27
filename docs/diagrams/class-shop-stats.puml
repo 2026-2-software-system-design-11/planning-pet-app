@@ -1,0 +1,45 @@
+@startuml class-shop-stats
+!include class-common.iuml
+left to right direction
+package planningpet.shop.view {
+  class ShopPanel
+}
+package planningpet.shop.controller {
+  class ShopController {
+    + buy(item : ItemId) : BuyResult
+    + sell(item : ItemId) : int
+    + toggle(item : ItemId) : void
+  }
+}
+package planningpet.shop.model {
+  class Shop {
+    - data : AppData
+    + buy(item : ItemId) : BuyResult
+    + sell(item : ItemId) : int
+    + satisfaction(placed : Set<ItemId>) : int
+    + find(category : String, query : String, ownedOnly : boolean) : List<Item>
+  }
+  class Item <<record>>
+}
+package planningpet.stats.view {
+  class StatsScreen
+}
+package planningpet.stats.model {
+  class Stats {
+    - data : AppData
+    + rate(p : Period) : Rate
+    + trend(p : Period) : List<Bucket>
+    + byCategory(p : Period) : Map<Category, Rate>
+    + points(p : Period) : int
+  }
+}
+ShopPanel ..> ShopController
+ShopPanel ..> Shop
+ShopController --> "1" Shop
+ShopController --> "1" planningpet.pet.model.Room
+ShopController --> "1" planningpet.app.controller.AppController
+Shop --> "1" planningpet.app.model.AppData
+Shop *-- "13" Item
+StatsScreen ..> Stats
+Stats --> "1" planningpet.app.model.AppData
+@enduml
