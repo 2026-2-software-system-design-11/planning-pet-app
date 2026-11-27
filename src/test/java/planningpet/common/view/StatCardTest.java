@@ -1,6 +1,8 @@
 package planningpet.common.view;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.Component;
 import java.awt.Container;
@@ -84,5 +86,25 @@ class StatCardTest {
         looksLikePrototype("stat-coin", card, 72, 62);
         Card full = StatCard.of(Icons.Kind.COIN, value("보유", "1,234,567P"), null);
         assertEquals(new Dimension(183, 62), full.getPreferredSize());
+    }
+
+    @Test
+    void eScard3BiggerSmallerAndZero() throws IOException {
+        looksLikePrototype("stat-flame-wide", StatCard.of(Icons.Kind.FLAME, new StatCard.Value(), attend("")), 320, 90);
+        looksLikePrototype("stat-coin-short", StatCard.of(Icons.Kind.COIN, new StatCard.Value(), null), 120, 30);
+        looksLikePrototype("stat-0x0", StatCard.of(Icons.Kind.COIN, new StatCard.Value(), null), 0, 0);
+        looksLikePrototype("stat-home", StatCard.of(Icons.Kind.HOME, new StatCard.Value(), null), 120, 66);
+    }
+
+    @Test
+    void eScard4ButtonPanelBeforeAndAfterClear() throws IOException {
+        StatCard.Value v = new StatCard.Value();
+        Card card = StatCard.of(Icons.Kind.FLAME, v, attend(""));
+        assertTrue(((JComponent) card.getComponent(2)).isOpaque());
+        Theme.clear(card);
+        assertFalse(((JComponent) card.getComponent(2)).isOpaque());
+        assertFalse(card.isOpaque());
+        assertFalse(v.isOpaque());
+        looksLikePrototype("stat-flame-clear", card, 110, 62);
     }
 }
