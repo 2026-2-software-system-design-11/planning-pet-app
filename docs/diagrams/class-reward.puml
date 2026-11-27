@@ -1,0 +1,37 @@
+@startuml class-reward
+!include class-common.iuml
+left to right direction
+package planningpet.reward.controller {
+  class RewardController {
+    + complete(task : Task) : void
+    + uncomplete(task : Task) : void
+    + attend() : void
+  }
+}
+package planningpet.reward.model {
+  class Rewards {
+    - data : AppData
+    + complete(task : Task, today : LocalDate) : RewardResult
+    + uncomplete(task : Task, today : LocalDate) : void
+    + attend(today : LocalDate) : boolean
+  }
+  class Level {
+    - level : int
+    - stage : int
+    - inLevel : int
+    - span : int
+    {static} + of(exp : int) : Level
+  }
+  class DailyProgress {
+    - done : int
+    - total : int
+    {static} + of(book : TaskBook, today : LocalDate) : DailyProgress
+  }
+}
+RewardController --> "1" Rewards
+RewardController --> "1" planningpet.app.controller.AppController
+Rewards --> "1" planningpet.app.model.AppData
+Rewards ..> planningpet.schedule.model.Task
+Rewards ..> Level
+DailyProgress ..> planningpet.schedule.model.TaskBook
+@enduml
