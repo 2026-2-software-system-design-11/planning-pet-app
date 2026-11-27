@@ -63,4 +63,61 @@ class DayWatcherTest {
         tick(t(17, 4, 0, 40));
         assertEquals(1, heard);
     }
+
+    @Test
+    void T_DAYW_2_shownWindowBriefs() {
+        start(t(17, 3, 59, 40), d(16));
+        app.onWindowShown();
+        heard = 0;
+        tick(t(17, 4, 0, 10));
+        assertEquals("오늘은 할 일이 없어. 아래 칸에 하나 적어 볼까?", app.getBubble().getLine());
+        assertEquals(d(17), data.getLastOpenDay());
+        assertEquals(2, data.getStreak());
+        assertEquals(1, heard);
+    }
+
+    @Test
+    void T_DAYW_3_hiddenWindowWaits() {
+        start(t(17, 3, 59, 40), d(16));
+        tick(t(17, 4, 0, 10));
+        assertEquals("", app.getBubble().getLine());
+        assertEquals(d(16), data.getLastOpenDay());
+        app.onWindowShown();
+        assertEquals("오늘은 할 일이 없어. 아래 칸에 하나 적어 볼까?", app.getBubble().getLine());
+        assertEquals(2, data.getStreak());
+    }
+
+    @Test
+    void T_DAYW_5_wakeAfterSleep() {
+        start(t(16, 23, 0, 0), d(16));
+        tick(t(18, 10, 0, 0));
+        tick(t(18, 10, 0, 0));
+        assertEquals(1, heard);
+    }
+
+    @Test
+    void E_DAYW_1_sameDay() {
+        start(t(16, 10, 0, 0), d(16));
+        tick(t(16, 10, 0, 0));
+        assertEquals(0, heard);
+    }
+
+    @Test
+    void E_DAYW_2_midnight() {
+        start(t(16, 23, 59, 50), d(16));
+        tick(t(17, 0, 0, 20));
+        assertEquals(0, heard);
+    }
+
+    @Test
+    void E_DAYW_3_clockBackBeforeFour() {
+        start(t(17, 4, 0, 10), d(17));
+        app.onWindowShown();
+        heard = 0;
+        tick(t(17, 3, 59, 50));
+        assertEquals(1, heard);
+        assertEquals("오늘은 할 일이 없어. 아래 칸에 하나 적어 볼까?", app.getBubble().getLine());
+        assertEquals(d(16), data.getLastOpenDay());
+        assertEquals(1, data.getStreak());
+    }
 }
