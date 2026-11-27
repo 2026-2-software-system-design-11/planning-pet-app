@@ -260,4 +260,38 @@ class AutoPlacerTest {
         task("A", 16, 30);
         assertEquals(" / 못 놓음  / 대상 0", text(run(9, 16, "08:00")));
     }
+
+    private static final String NEXT_YES = "이번 주엔 자리가 없어요. 마감 %s까지 시간이 있으니 다음 주에서 자동 배치하면 놓을 수 있어요";
+    private static final String NEXT_NO = "이번 주엔 자리가 없어요. 다음 주에도 자리가 없어요. 걸리는 시간을 나누거나 다른 일을 옮겨 보세요";
+
+    /** 놓지 못한 일마다 "제목 날짜 글: 까닭"을 대상 순서대로 " | "로 잇는다. */
+    private String reasons(LocalDate weekStart, LocalDateTime now) {
+        TaskBook book = new TaskBook(tasks, () -> tasks.size() + 1L, () -> AppDay.of(now));
+        return AutoPlacer.place(book, weekStart, now).unplaced().stream()
+                .map(t -> t.getTitle() + " " + AutoPlacer.dateText(t) + ": " + AutoPlacer.reason(t, book, weekStart, now))
+                .collect(Collectors.joining(" | "));
+    }
+
+    private String reasons(int weekStart, int date, String time) {
+        return reasons(day(weekStart), day(date).atTime(LocalTime.parse(time)));
+    }
+
+    @Test
+    void T_AUTO_15_threeReasons() {
+        task("E", 22, 30);
+        period("P", 16, 22, 30);
+        period("Q", 16, 29, 30);
+        assertEquals("P 마감 11/22(일): 마감까지 빈 시간이 모자라요 | Q 마감 11/29(일): " + NEXT_YES.formatted("11/29(일)")
+                + " | E 날짜 11/22(일): 그날 빈 시간이 모자라요", reasons(16, 22, "23:40"));
+    }
+
+    @Test
+    void T_AUTO_17_noRoomNextWeek() {
+        period("Q", 16, 29, 720);
+        assertEquals("Q 마감 11/29(일): " + NEXT_YES.formatted("11/29(일)"), reasons(16, 22, "23:40"));
+        for (int d = 23; d <= 29; d++) {
+            fixed("알바", d, "09:00", 720);
+        }
+        assertEquals("Q 마감 11/29(일): " + NEXT_NO, reasons(16, 22, "23:40"));
+    }
 }

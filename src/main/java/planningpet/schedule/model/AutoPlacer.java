@@ -18,9 +18,7 @@ public final class AutoPlacer {
     /** 대상을 하나씩 놓을 수 있는 날의 이른 날부터 보며 처음으로 비는 자리에 둔다. 오늘은 지금의 앱 날짜다(D-15). */
     public static Placement place(TaskBook book, LocalDate weekStart, LocalDateTime now) {
         LocalDate today = AppDay.of(now);
-        // D-38: 지금을 5분 단위로 올린 때보다 앞에는 놓지 않는다. 초가 있으면 그 분을 지난 것으로 본다.
-        LocalDateTime m = now.truncatedTo(ChronoUnit.MINUTES).plusMinutes(now.getSecond() > 0 ? 1 : 0);
-        LocalDateTime earliest = m.plusMinutes((5 - m.getMinute() % 5) % 5);
+        LocalDateTime earliest = earliest(now);
         List<Placement.Placed> placed = new ArrayList<>();
         List<Task> unplaced = new ArrayList<>();
         for (Task t : targets(book, weekStart, today)) {
@@ -31,6 +29,41 @@ public final class AutoPlacer {
                     .ifPresentOrElse(placed::add, () -> unplaced.add(t));
         }
         return new Placement(placed, unplaced);
+    }
+
+    /**
+     * 놓지 못한 까닭(D-76). 마감이 보이는 주의 마지막 날보다 뒤인 기간 할 일은 다음 주에 놓을 자리가 있는지 알린다(D-94). 그 밖은
+     * 기간 할 일이면 마감까지, 아니면 그날의 빈 시간이 모자란 것이다.
+     */
+    public static String reason(Task task, TaskBook book, LocalDate weekStart, LocalDateTime now) {
+        if (task.period() && task.getDueDate().isAfter(weekStart.plusDays(6))) {
+            return nextWeekFits(task, book, weekStart.plusDays(7), now)
+                    ? "이번 주엔 자리가 없어요. 마감 " + monthDay(task.getDueDate()) + "까지 시간이 있으니 다음 주에서 자동 배치하면 놓을 수 있어요"
+                    : "이번 주엔 자리가 없어요. 다음 주에도 자리가 없어요. 걸리는 시간을 나누거나 다른 일을 옮겨 보세요";
+        }
+        return task.period() ? "마감까지 빈 시간이 모자라요" : "그날 빈 시간이 모자라요";
+    }
+
+    /** 놓지 못한 일의 날짜 글: 기간 할 일은 "마감 11/22(일)", 그 밖은 "날짜 11/22(일)"(06 18번, D-71). */
+    public static String dateText(Task task) {
+        return task.period() ? "마감 " + monthDay(task.getDueDate()) : "날짜 " + monthDay(task.getDate());
+    }
+
+    /** 다음 주(next부터 7일)의 마감까지의 날에, 지금 시간표에 있는 일정만 보고 놓을 자리가 있는가(D-94). */
+    private static boolean nextWeekFits(Task task, TaskBook book, LocalDate next, LocalDateTime now) {
+        LocalDate today = AppDay.of(now);
+        LocalDateTime earliest = earliest(now);
+        return days(task, next, today).stream().anyMatch(d -> slot(book, task, d, List.of(), earliest, today) != null);
+    }
+
+    /** 지금을 5분 단위로 올린 때. 초가 있으면 그 분을 지난 것으로 본다(D-38). */
+    private static LocalDateTime earliest(LocalDateTime now) {
+        LocalDateTime m = now.truncatedTo(ChronoUnit.MINUTES).plusMinutes(now.getSecond() > 0 ? 1 : 0);
+        return m.plusMinutes((5 - m.getMinute() % 5) % 5);
+    }
+
+    private static String monthDay(LocalDate d) {
+        return d.getMonthValue() + "/" + d.getDayOfMonth() + "(" + "월화수목금토일".charAt(d.getDayOfWeek().getValue() - 1) + ")";
     }
 
     /**
