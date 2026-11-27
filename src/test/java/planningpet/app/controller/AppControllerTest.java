@@ -128,4 +128,28 @@ class AppControllerTest {
         assertEquals(List.of(1), saved);
         assertTrue(t.isDone());
     }
+
+    @Test
+    void E_TALK_37_sayOutsideChangeTellsOnce() {
+        app.say("오늘은 할 일이 없어.", data.today());
+        app.change("할 일 추가", () -> {
+            addTask();
+            app.say("'과제' 넣었구나! 오늘 남은 일 1개야.", data.today());
+        });
+        assertEquals("2 '과제' 넣었구나! 오늘 남은 일 1개야. 2", heard.size() + " " + app.getBubble().getLine() + " "
+                + app.getBubble().getNewLines());
+    }
+
+    @Test
+    void E_TALK_38_failedSaveRestoresBubble() {
+        app.say("오늘은 할 일이 없어.", data.today());
+        failing = true;
+        app.change("할 일 추가", () -> {
+            addTask();
+            app.say("'과제' 넣었구나! 오늘 남은 일 1개야.", data.today());
+            app.sayInRoom("쿠션 고마워!");
+        });
+        assertEquals("오늘은 할 일이 없어. 1 null", app.getBubble().getLine() + " " + app.getBubble().getNewLines() + " "
+                + app.getBubble().getRoomLine());
+    }
 }

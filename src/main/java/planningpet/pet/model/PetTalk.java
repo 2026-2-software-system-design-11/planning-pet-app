@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 import planningpet.app.model.AppData;
 import planningpet.common.model.Words;
@@ -27,7 +28,7 @@ public final class PetTalk {
         return switch (situation) {
             case FIRST_RUN -> firstRun();
             case WELCOME_BACK -> welcomeBack();
-            case BRIEFING -> briefing();
+            case BRIEFING -> briefing().get();
             case USUAL -> usual();
             case ATTENDED -> "출석했어! +20P";
             case SAMPLES_CLEARED -> "예시를 지웠어. 수업부터 넣어 볼까?";
@@ -151,11 +152,11 @@ public final class PetTalk {
         return "오랜만이야! 다시 와서 반가워." + (n > 0 ? " 오늘 할 일은 " + n + "개야." : "");
     }
 
-    /** 06 16번 BRIEFING의 1~6번 문장. 해당하지 않는 문장은 뺀다. */
-    private String briefing() {
+        /** 06 16번 BRIEFING의 1~6번 문장. 다시 세면(D-106) 1번과 6번만 다시 만들고 2~5번 문장은 처음 그대로 둔다. */
+    private Supplier<String> briefing() {
         LocalDate today = data.today();
         List<Task> tasks = data.getBook().getTasks();
-        StringBuilder b = new StringBuilder(left());
+        StringBuilder b = new StringBuilder();
         // 세는 날(06 데이터 절)이 어제인 할 일. 놓친 반복 사본은 밀린 일이 아니다(D-69).
         long yesterday = tasks.stream().filter(t -> t.getKind() == Kind.TASK && !t.isDone()
                 && t.countDay().equals(today.minusDays(1)) && !t.pastCopy(today)).count();
@@ -194,12 +195,38 @@ public final class PetTalk {
             b.append(" 내일 '").append(Words.shortTitle(tomorrow.getTitle())).append("'")
                     .append(Words.josa(tomorrow.getTitle(), "이", "가")).append(" 있어.");
         }
-        // 6번 문장: 오늘 할 일이 없고 마감, 내일 문장이 없을 때. 3번 문장이 말한 일은 빼고 본다(D-94).
-        if (checkables(today).isEmpty() && dueToday == null && near == null && tomorrow == null) {
-            String period = periodLine(told);
-            b.append(period != null ? " " + period : told != null ? "" : " 아래 칸에 하나 적어 볼까?");
+        String middle = b.toString();
+        boolean quiet = dueToday == null && near == null && tomorrow == null;
+        return () -> left() + middle + six(quiet, told);
+    }
+
+    /** BRIEFING 6번 문장: 오늘 할 일이 없고 마감, 내일 문장이 없을 때. 3번 문장이 말한 일은 빼고 본다(D-94). */
+    private String six(boolean quiet, Task told) {
+        if (!quiet || !checkables(data.today()).isEmpty()) {
+            return "";
         }
-        return b.toString();
+        String period = periodLine(told);
+        return period != null ? " " + period : told != null ? "" : " 아래 칸에 하나 적어 볼까?";
+    }
+
+    /** D-106: BRIEFING과 WELCOME_BACK을 목록이 바뀔 때 다시 만들 말. 15번이 말풍선에 둔다. 그 밖의 상황이면 IllegalArgumentException. */
+    public Supplier<String> recount(Situation situation) {
+        require(situation, Situation.BRIEFING, Situation.WELCOME_BACK);
+        return situation == Situation.BRIEFING ? briefing() : this::welcomeBack;
+    }
+
+    /** D-106: day의 수 말. 오늘이면 USUAL, 아니면 OTHER_DATE이고 부를 때마다 다시 센다. */
+    public Supplier<String> dayLine(LocalDate day) {
+        return day.equals(data.today()) ? this::usual : () -> say(Situation.OTHER_DATE, day);
+    }
+
+    /** 06 16번 "목록이 바뀜"을 견줄 값: 그날 dayPlan의 묶음마다 든 일정과 그 날짜, 제목, 시각, 걸리는 시간, 끝냄. */
+    public String listKey(LocalDate day) {
+        DayPlan plan = data.getBook().dayPlan(day);
+        return Stream.of(plan.dueToday(), plan.timed(), plan.untimed(), plan.period())
+                .map(l -> l.stream().map(t -> t.getId() + t.getDate() + t.getTitle() + t.getStartTime() + t.isNextDay()
+                        + t.getDurationMinutes() + t.isDone()).toList())
+                .toList().toString();
     }
 
     /** 오늘 할 일이 없고 기간 안에 할 일이 있으면 기간 할 일 문장을 붙인다(D-94). */

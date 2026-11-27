@@ -1,0 +1,268 @@
+package planningpet.app.controller;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.time.Clock;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.util.List;
+import org.junit.jupiter.api.Test;
+import planningpet.app.model.AppData;
+import planningpet.app.model.DataStore;
+import planningpet.app.model.LoadResult;
+import planningpet.pet.model.PetKind;
+import planningpet.pet.model.PetState;
+import planningpet.pet.model.PetTalk;
+import planningpet.pet.model.Situation;
+import planningpet.reward.model.Level;
+import planningpet.reward.model.Rewards;
+import planningpet.schedule.model.Category;
+import planningpet.schedule.model.DeleteScope;
+import planningpet.schedule.model.EditScope;
+import planningpet.schedule.model.Kind;
+import planningpet.schedule.model.Task;
+import planningpet.schedule.model.TaskDraft;
+
+/** 06 16번 다시 세기(D-106)와 docs/porting/pet-talk.md 2절. 바꾸는 일은 controller가 change 안에서 할 일을 그대로 부른다. */
+class AppControllerTalkTest {
+    private static final ZoneId ZONE = ZoneId.systemDefault();
+    private AppData data;
+    private AppController app;
+    private PetTalk talk;
+    private LocalDate home;
+    private final DataStore store = new DataStore() {
+        public LoadResult load() { return LoadResult.firstRun(); }
+        public void save(AppData saved) { }
+    };
+
+    /** 오늘 11-{today} 10:00, 고른 고양이, 일정(제목과 날을 번갈아, 날 앞에 F면 기간 할 일 11-16~11-25). */
+    private void at(int today, Object... titleAndDay) {
+        LocalDateTime now = LocalDateTime.of(2026, 11, today, 10, 0);
+        data = new AppData(Clock.fixed(now.atZone(ZONE).toInstant(), ZONE), List.of(), List.of());
+        data.addPet(new PetState(PetKind.CAT, "나비"));
+        data.setActiveKind(PetKind.CAT);
+        for (int i = 0; i < titleAndDay.length; i += 2) {
+            boolean period = titleAndDay[i + 1] instanceof String;
+            LocalDate date = period ? d(16) : d((Integer) titleAndDay[i + 1]);
+            data.getBook().add(new TaskDraft(Kind.TASK, (String) titleAndDay[i], Category.OTHER, date, period ? d(25) : null,
+                    null, 30, "", null, null, false, null, null, false));
+        }
+        app = new AppController(data, store, error -> { });
+        talk = new PetTalk(data);
+        home = data.today();
+        app.setHomeDay(() -> home);
+    }
+
+    private static LocalDate d(int day) {
+        return LocalDate.of(2026, 11, day);
+    }
+
+    private Task find(String title) {
+        return data.getBook().getTasks().stream().filter(t -> t.getTitle().equals(title)).findFirst().orElseThrow();
+    }
+
+    private String line() {
+        return app.getBubble().getLine();
+    }
+
+    /** HomeController가 달력 날짜를 고를 때(06 16번 OTHER_DATE, 오늘이면 USUAL). */
+    private void pick(int day) {
+        home = d(day);
+        app.say(home.equals(data.today()) ? talk.say(Situation.USUAL) : talk.say(Situation.OTHER_DATE, home), home);
+    }
+
+    private void delete(String title) {
+        app.change("일정 삭제", () -> data.getBook().delete(find(title), DeleteScope.ONLY_THIS));
+    }
+
+    private void complete(String title) {
+        Task t = find(title);
+        app.change("할 일 완료", () -> app.say(talk.say(Situation.COMPLETED, new Rewards(data).complete(t, data.today()), t),
+                null));
+    }
+
+    private void uncomplete(String title) {
+        Task t = find(title);
+        app.change("완료 취소", () -> {
+            int points = t.getRewardPoints();
+            Level before = Level.of(data.activePet().getExp());
+            new Rewards(data).uncomplete(t, data.today());
+            app.say(talk.say(Situation.UNCOMPLETED, points, before, Level.of(data.activePet().getExp())), null);
+        });
+    }
+
+    /** 수정 창(timeOnly false)이나 시각 고치기 창(true)의 저장. */
+    private void edit(String title, String newTitle, int day, Integer hour, int minutes, boolean timeOnly) {
+        Task t = find(title);
+        app.change("일정 수정", () -> data.getBook().update(t, new TaskDraft(t.getKind(), newTitle, t.getCategory(), d(day),
+                t.getDueDate(), hour == null ? null : LocalTime.of(hour, 0), minutes, "", null, null, false, null,
+                t.isDone() ? null : data.today(), true, timeOnly), EditScope.ONLY_THIS));
+    }
+
+    /** 15번(S1)이 브리핑하거나 반길 때. */
+    private void brief(Situation situation) {
+        var line = talk.recount(situation);
+        app.getBubble().say(line.get());
+        app.getBubble().follow(data.today(), line);
+    }
+
+    /** 홈에서 넣기. 오늘 넣은 보통 일이면 오늘을 센다(06 16번 다시 세기 1). */
+    private void add(String title, int day) {
+        app.change("일정 추가", () -> {
+            Task t = data.getBook().add(new TaskDraft(Kind.TASK, title, Category.OTHER, d(day), null, null, 30, "", null,
+                    null, false, null, data.today(), false)).get(0);
+            app.say(talk.say(Situation.ADDED, t), t.getDate().equals(data.today()) ? data.today() : null);
+        });
+    }
+
+    @Test
+    void T_TALK_30_1_pickedDay() {
+        at(14, "가", 16, "나", 16, "다", 17, "빨래", 14, "청소", 14);
+        pick(16);
+        delete("나");
+        String said = line();
+        complete("가");
+        said += "|" + line();
+        edit("가", "가나", 16, null, 30, false);
+        said += "|" + line();
+        uncomplete("가나");
+        said += "|" + line();
+        edit("가나", "가나", 16, null, 60, false);
+        said += "|" + line();
+        edit("다", "다", 16, 10, 30, true);
+        assertEquals("11월 16일 할 일은 1개야.|잘했어! +10P|11월 16일 할 일은 1개야.|체크를 풀었어. -10P|11월 16일 할 일은 1개야."
+                + "|11월 16일 할 일은 2개야.", said + "|" + line());
+    }
+
+    @Test
+    void E_TALK_36_retellIsNotNew() {
+        at(14, "가", 16, "나", 16);
+        pick(16);
+        delete("나");
+        assertEquals("11월 16일 할 일은 1개야. 1", line() + " " + app.getBubble().getNewLines());
+    }
+
+    @Test
+    void T_TALK_30_2_todayAndAdded() {
+        at(14, "빨래", 14, "청소", 14);
+        pick(14);
+        delete("청소");
+        String said = line();
+        add("영어 단어", 14);
+        said += "|" + line();
+        delete("영어 단어");
+        assertEquals("오늘 할 일 1개 남았어.|'영어 단어' 넣었구나! 오늘 남은 일 2개야.|오늘 할 일 1개 남았어.", said + "|" + line());
+    }
+
+    @Test
+    void T_TALK_30_3_briefingKeepsMiddle() {
+        at(18, "과제", 18, "빨래", 18, "청소", 18, "밀린 일", 17, "통계 퀴즈", 19);
+        brief(Situation.BRIEFING);
+        delete("과제");
+        assertEquals("오늘 할 일 2개 남았어. 어제 못 끝낸 일 1개는 달력에 남아 있어. 내일 '통계 퀴즈'가 있어.", line());
+    }
+
+    @Test
+    void T_TALK_30_4_welcomeBack() {
+        at(18, "과제", 18, "빨래", 18, "청소", 18);
+        brief(Situation.WELCOME_BACK);
+        delete("과제");
+        assertEquals("오랜만이야! 다시 와서 반가워. 오늘 할 일은 2개야.", line());
+    }
+
+    @Test
+    void T_TALK_30_5_selectedFollowsToday() {
+        at(18, "과제", 18, "빨래", 18);
+        data.addPet(new PetState(PetKind.DOG, "바둑이"));
+        data.setActiveKind(PetKind.DOG);
+        pick(20);
+        app.change("고른 펫", () -> {
+            data.setActiveKind(PetKind.CAT);
+            app.say(talk.say(Situation.SELECTED), data.today());
+        });
+        String said = line();
+        delete("과제");
+        assertEquals("이제 경험치는 내가 받을게! 오늘 할 일 2개 남았어.|오늘 할 일 1개 남았어.", said + "|" + line());
+    }
+
+    @Test
+    void T_TALK_30_6_sixthSentence() {
+        at(18, "가", 20);
+        brief(Situation.BRIEFING);
+        String said = line();
+        edit("가", "가", 18, 14, 30, true);
+        said += "|" + line();
+        delete("가");
+        assertEquals("오늘은 할 일이 없어. 아래 칸에 하나 적어 볼까?|오늘 할 일 1개 남았어.|오늘은 할 일이 없어. 아래 칸에 하나 적어 볼까?",
+                said + "|" + line());
+    }
+
+    @Test
+    void T_TALK_30_7_periodNote() {
+        at(18, "과제", 18, "F사 서류", "F");
+        brief(Situation.BRIEFING);
+        String said = line();
+        delete("과제");
+        assertEquals("오늘 할 일 1개 남았어.|오늘은 할 일이 없어. F사 서류는 25일까지야, 7일 남았어.", said + "|" + line());
+    }
+
+    @Test
+    void T_TALK_30_8_tomorrowKept() {
+        at(18, "통계 퀴즈", 19);
+        brief(Situation.BRIEFING);
+        String said = line();
+        edit("통계 퀴즈", "통계 퀴즈", 18, 15, 30, true);
+        assertEquals("오늘은 할 일이 없어. 내일 '통계 퀴즈'가 있어.|오늘 할 일 1개 남았어. 내일 '통계 퀴즈'가 있어.", said + "|" + line());
+    }
+
+    @Test
+    void T_TALK_13_adoptedInRoom() {
+        at(16);
+        app.change("펫 데려오기", () -> {
+            PetState dog = new PetState(PetKind.DOG, "바둑이");
+            data.addPet(dog);
+            app.say(talk.say(Situation.ADOPTED, dog), null);
+            app.sayInRoom(talk.say(Situation.ADOPTED, dog));
+        });
+        String hello = "안녕, 나는 바둑이야. 이제 경험치는 내가 받을게!";
+        assertEquals(hello + "|" + hello, app.getBubble().getRoomLine() + "|" + line());
+    }
+
+    @Test
+    void E_TALK_39_roomLineClears() {
+        T_TALK_13_adoptedInRoom();
+        app.change("포인트", () -> data.setPoints(5));
+        assertEquals(null, app.getBubble().getRoomLine());
+    }
+
+    @Test
+    void E_TALK_33_sameListKeeps() {
+        at(16, "가", 16, "나", 16);
+        pick(16);
+        app.change("포인트", () -> data.setPoints(5));
+        assertEquals("오늘 할 일 2개 남았어. 1", line() + " " + app.getBubble().getNewLines());
+    }
+
+    @Test
+    void E_TALK_34_otherDayFollowsPicked() {
+        at(16, "가", 16, "나", 16, "x", 18);
+        pick(18);
+        complete("가");
+        edit("나", "나나", 16, null, 30, false);
+        String said = line();
+        edit("x", "xx", 18, null, 30, false);
+        assertEquals("잘했어! +10P|11월 18일 할 일은 1개야.", said + "|" + line());
+    }
+
+    @Test
+    void E_TALK_35_addedOtherDay() {
+        at(16, "가", 16);
+        pick(20);
+        add("b", 20);
+        String said = line();
+        edit("b", "bb", 20, null, 30, false);
+        assertEquals("'b' 11/20에 넣었어.|11월 20일 할 일은 1개야.", said + "|" + line());
+    }
+}
