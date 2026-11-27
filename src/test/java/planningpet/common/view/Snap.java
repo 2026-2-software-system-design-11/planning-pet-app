@@ -2,6 +2,8 @@ package planningpet.common.view;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.awt.Component;
+import java.awt.Container;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -27,6 +29,22 @@ final class Snap {
 
     static void assertLooksLikePrototype(String name, JComponent c, int w, int h) throws IOException {
         assertLooksLikePrototype(name, paint(c, w, h));
+    }
+
+    /** 창 없이는 배치가 돌지 않아 자식까지 배치한 뒤 기준 그림과 맞춘다(자식이 든 부품). */
+    static void assertLaidOutLooksLikePrototype(String name, JComponent c, int w, int h) throws IOException {
+        c.setSize(w, h);
+        layOut(c);
+        assertLooksLikePrototype(name, c, w, h);
+    }
+
+    private static void layOut(Component c) {
+        if (c instanceof Container k) {
+            k.doLayout();
+            for (Component child : k.getComponents()) {
+                layOut(child);
+            }
+        }
     }
 
     /** 이미 그린 그림을 기준 그림과 맞춘다(아이콘처럼 부품이 아닌 것). */
