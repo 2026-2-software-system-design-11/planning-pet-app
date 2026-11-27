@@ -88,12 +88,13 @@ class TaskDraftTest {
 
     @Test
     void E_VAL_1_hundredEmojiTitle() {
-        assertEquals(List.of("제목: 제목은 100자까지예요"), errors(titled(EMOJI.repeat(100))));
+        assertEquals(List.of(), errors(titled(EMOJI.repeat(100))));
+        assertEquals(List.of("제목: 제목은 100자까지예요"), errors(titled(EMOJI.repeat(101))));
     }
 
     @Test
     void E_VAL_2_fiftyOneEmojiTitle() {
-        assertEquals(List.of("제목: 제목은 100자까지예요"), errors(titled(EMOJI.repeat(51))));
+        assertEquals(List.of(), errors(titled(EMOJI.repeat(51))));
     }
 
     @Test
@@ -103,7 +104,8 @@ class TaskDraftTest {
 
     @Test
     void E_VAL_7_thousandEmojiMemo() {
-        assertEquals(List.of("메모: 메모는 1000자까지예요"), errors(memo(EMOJI.repeat(1000))));
+        assertEquals(List.of(), errors(memo(EMOJI.repeat(1000))));
+        assertEquals(List.of("메모: 메모는 1000자까지예요"), errors(memo(EMOJI.repeat(1001))));
     }
 
     @Test

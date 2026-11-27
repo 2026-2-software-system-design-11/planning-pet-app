@@ -20,12 +20,16 @@ public record TaskDraft(Kind kind, String title, Category category, LocalDate da
         return startTime == null ? null : (nextDay ? Task.DAY : 0) + startTime.getHour() * 60 + startTime.getMinute();
     }
 
-    /** 06 2번 검사. 칸 순서(제목, 마감, 시작 시각, 걸리는 시간, 메모)로 모두 담는다. 비어 있으면 저장할 수 있다. */
+    /**
+     * 06 2번 검사. 칸 순서(제목, 마감, 시작 시각, 걸리는 시간, 메모)로 모두 담는다. 비어 있으면 저장할 수 있다. 글자 수는 코드 포인트로
+     * 센다(06 읽는 법).
+     */
     public List<FieldError> validate() {
         List<FieldError> out = new ArrayList<>();
+        String stripped = title.strip();
         if (title.isBlank()) {
             out.add(new FieldError("제목", "제목을 써 주세요"));
-        } else if (title.strip().length() > 100) {
+        } else if (stripped.codePointCount(0, stripped.length()) > 100) {
             out.add(new FieldError("제목", "제목은 100자까지예요"));
         }
         String due = dueDate == null ? null : dueProblem();
@@ -49,7 +53,7 @@ public record TaskDraft(Kind kind, String title, Category category, LocalDate da
         if (durationMinutes < 10 || durationMinutes > 720 || durationMinutes % 5 != 0) {
             out.add(new FieldError("걸리는 시간", "10분부터 720분까지, 5분 단위예요"));
         }
-        if (memo.length() > 1000) {
+        if (memo.codePointCount(0, memo.length()) > 1000) {
             out.add(new FieldError("메모", "메모는 1000자까지예요"));
         }
         return out;
