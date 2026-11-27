@@ -27,4 +27,28 @@ public final class PetState {
     public Pose getPose() { return pose; }
     /** 칸마다 입은 장신구. 바꿀 수 없는 모음이다. */
     public Map<Slot, WearId> getWear() { return Collections.unmodifiableMap(wear); }
+
+    // 값 하나를 넣는 메서드. 저장의 읽기가 쓰고, 규칙(06 10번, 28번, 30번)은 그 규칙을 옮기는 단위가 이것을 부르는 메서드로 더한다.
+    public void setExp(int exp) { this.exp = exp; }
+    public void setPose(Pose pose) { this.pose = pose; }
+    /** 입은 장신구를 이 모음으로 바꾼다. 안 입은 칸은 넣지 않는다(D-51). */
+    public void setWear(Map<Slot, WearId> wear) {
+        this.wear.clear();
+        this.wear.putAll(wear);
+    }
+
+    /** 값이 같은 새 펫(06 22번의 되돌리기에 쓰는 사본). */
+    public PetState copy() {
+        PetState c = new PetState(kind, name);
+        c.restore(this);
+        return c;
+    }
+
+    /** 같은 종류인 from의 이름, 경험치, 자세, 장신구를 넣는다. 되돌려도 이 객체가 그 펫이다(docs/porting/store.md). */
+    public void restore(PetState from) {
+        name = from.name;
+        exp = from.exp;
+        pose = from.pose;
+        setWear(from.wear);
+    }
 }
