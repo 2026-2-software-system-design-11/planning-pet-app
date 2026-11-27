@@ -1,19 +1,29 @@
 package planningpet.pet.view;
 
 import planningpet.common.view.Icons;
+import planningpet.common.view.RoundButtonUI;
 import planningpet.common.view.Theme;
+import planningpet.common.view.Ui;
 import planningpet.pet.model.PetState;
+import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.geom.Ellipse2D;
 import java.util.HashSet;
 import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
 /**
@@ -31,6 +41,91 @@ public final class AdoptDialog {
     private static final java.awt.Color BOTTOM = PickScene.mix(Theme.CARD_TOP, Theme.DAY, 0.75);
 
     private AdoptDialog() {
+    }
+
+    /** 창 안. field, cancel, ok는 부르는 쪽이 동작을 단다. */
+    public static JComponent content(boolean dog, JTextField field, JButton cancel, JButton ok) {
+        String kind = dog ? "강아지" : "고양이";
+        JPanel root = new Backdrop();
+        root.setLayout(new BorderLayout());
+        root.add(new Head(kind + " 데려오기"), BorderLayout.NORTH);
+
+        JPanel body = new JPanel();
+        body.setOpaque(false);
+        body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
+        body.setBorder(BorderFactory.createEmptyBorder(6, 22, 22, 22));
+        body.add(new Stage(dog));
+        body.add(Box.createVerticalStrut(6));
+        JLabel ask = new JLabel(kind + "를 데려올까요?", SwingConstants.CENTER);
+        ask.setFont(Theme.heavy(22));
+        ask.setForeground(Theme.INK);
+        // 배율이 1이 아닌 화면에서 글자 폭이 조금 늘어도 잘리지 않게 양옆에 여유를 둔다.
+        ask.setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 6));
+        body.add(center(ask));
+        body.add(Box.createVerticalStrut(14));
+        body.add(center(nameRow(dog, field)));
+        body.add(Box.createVerticalStrut(18));
+
+        JPanel buttons = new JPanel(new GridBagLayout());
+        buttons.setOpaque(false);
+        for (JButton b : new JButton[] {cancel, ok}) {
+            b.setFont(Theme.bold(18));
+            b.setBorder(BorderFactory.createEmptyBorder(12, 20, 13, 20));
+        }
+        ok.putClientProperty(RoundButtonUI.PRIMARY, Boolean.TRUE);
+        GridBagConstraints c = new GridBagConstraints();
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.gridx = 0;
+        c.weightx = 0.4;
+        c.insets = new Insets(0, 0, 0, 6);
+        buttons.add(cancel, c);
+        c.gridx = 1;
+        c.weightx = 0.6;
+        c.insets = new Insets(0, 6, 0, 0);
+        buttons.add(ok, c);
+        // 예시처럼 취소가 좁고 주 행동이 넓다(4 대 6).
+        int inner = W - 44;
+        cancel.setPreferredSize(new Dimension((int) ((inner - 12) * 0.4), 50));
+        ok.setPreferredSize(new Dimension((int) ((inner - 12) * 0.6), 50));
+        buttons.setAlignmentX(0.5f);
+        buttons.setMaximumSize(new Dimension(inner, 50));
+        body.add(buttons);
+        root.add(body, BorderLayout.CENTER);
+        return root;
+    }
+
+    /** 이름 줄: 연필과 "이름", 둥근 이름 칸, 칸 아래 그 종류의 기본 이름 안내(05). 고르기 창의 이름 줄과 같은 글과 부품이다. */
+    private static JPanel nameRow(boolean dog, JTextField field) {
+        JPanel row = new JPanel(new GridBagLayout());
+        row.setOpaque(false);
+        Ui.limit(field, 10);
+        field.setFont(Theme.font(15));
+        field.setColumns(12);
+        field.getAccessibleContext().setAccessibleName("반려동물 이름");
+        JLabel label = new JLabel("이름", Icons.icon(Icons.Kind.PENCIL, 20, Theme.ICON), SwingConstants.LEFT);
+        label.setFont(Theme.bold(15));
+        label.setIconTextGap(6);
+        label.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 4));
+        label.setLabelFor(field);
+        JLabel hint = Ui.hint("비워 두면 " + (dog ? "바둑이" : "나비") + "로 불러요");
+        hint.setBorder(BorderFactory.createEmptyBorder(0, 18, 0, 8));
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridx = 0;
+        c.gridy = 0;
+        c.anchor = GridBagConstraints.WEST;
+        c.insets = new Insets(0, 0, 0, 12);
+        row.add(label, c);
+        c.gridx = 1;
+        c.weightx = 1;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.insets = new Insets(0, 0, 0, 0);
+        row.add(field, c);
+        c.gridy = 1;
+        c.fill = GridBagConstraints.NONE;
+        c.insets = new Insets(4, 0, 0, 0);
+        row.add(hint, c);
+        row.setPreferredSize(new Dimension(W - 64, row.getPreferredSize().height));
+        return row;
     }
 
     private static JPanel center(JComponent c) {
