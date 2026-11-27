@@ -1,0 +1,93 @@
+@startuml class-app
+!include class-common.iuml
+left to right direction
+package planningpet.app {
+  class Main {
+    {static} + main(args : String[]) : void
+  }
+  class SingleInstance {
+    + acquire() : boolean
+  }
+}
+package planningpet.app.view {
+  class AppWindow
+  class Tray
+}
+package planningpet.app.controller {
+  class AppController {
+    - windowVisible : boolean
+    - sent : Set<ReminderKey>
+    - errors : Consumer<String>
+    + change(what : String, edit : Runnable) : void
+    + onWindowShown() : void
+    + say(line : String, day : LocalDate) : void
+    + dueReminders(now : LocalDateTime) : List<Reminder>
+    + onClose(traySupported : boolean) : CloseAction
+    + quit() : void
+  }
+  class DayWatcher {
+    - lastDay : LocalDate
+    + tick(now : LocalDateTime) : void
+  }
+}
+package planningpet.app.store {
+  class FileDataStore {
+    - folder : Path
+    + load() : LoadResult
+    + save(data : AppData) : void
+  }
+}
+package planningpet.app.model {
+  class AppData {
+    - points : int
+    - rewardCountDay : LocalDate
+    - rewardCount : int
+    - attendanceDay : LocalDate
+    - attendDays : Set<LocalDate>
+    - lastOpenDay : LocalDate
+    - streak : int
+    - pets : List<PetState>
+    - activeKind : PetKind
+    - ownedItems : Set<ItemId>
+    - placedItems : Set<ItemId>
+    - trayNoticeShown : boolean
+    - calendarFixed : boolean
+    - listClickTime : boolean
+    - sampleIds : Set<String>
+    - sampleLooks : Map<String, SampleLook>
+    - weekStart : DayOfWeek
+    - nextSeq : long
+    - clock : Clock
+    - listeners : List<Runnable>
+    + today() : LocalDate
+    + activePet() : PetState
+    + copy() : AppData
+    + restore(copy : AppData) : void
+    + onChange(listener : Runnable) : void
+    + changed() : void
+  }
+  interface DataStore <<interface>> {
+    + load() : LoadResult
+    + save(data : AppData) : void
+  }
+  class Visits {
+    + recordOpen(today : LocalDate) : int
+  }
+  class Examples {
+    {static} + fill(data : AppData) : void
+  }
+}
+AppWindow ..> AppController
+AppWindow ..> AppData
+Tray ..> AppController
+Tray ..> DayWatcher
+AppController --> "1" AppData
+AppController --> "1" DataStore
+AppController --> "1" planningpet.pet.model.Bubble
+AppController ..> Visits
+DayWatcher --> "1" AppController
+FileDataStore ..|> DataStore
+FileDataStore ..> AppData
+AppData *-- "1" planningpet.schedule.model.TaskBook : book
+AppData *-- "1..2" planningpet.pet.model.PetState : pets
+@enduml

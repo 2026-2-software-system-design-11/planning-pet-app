@@ -27,6 +27,7 @@ D-109의 방향(view에서 controller와 model, controller에서 model, store에
 | 도메인 | 그림 |
 |---|---|
 | 보상 | ![보상](diagrams/class-reward.png) |
+| 앱 | ![앱](diagrams/class-app.png) |
 
 ## 다시 그리기
 
