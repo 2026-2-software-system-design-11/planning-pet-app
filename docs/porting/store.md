@@ -33,7 +33,7 @@ PR 하나의 크기 한도(1절) 때문에 넷으로 나눠 옮긴다. 되돌리
 
 ## 2. 입력의 경계와 결과
 
-프로토타입 결과는 모두 "없음"이다(저장이 없다). 06에 검사 줄이 없는 되돌리기와 `change`의 경계는 `E-BOOK`, `E-PET`(M7에 이어서), `E-APP`(M7에 이어서), `E-SAVE`, `E-STORE` 번호다. "모든 값을 채운 데이터"는 06 데이터 절의 값마다 처음 값과 다른 값을 넣은 앱 데이터다. 일정은 끝내고 보상을 받은 기간 할 일, 반복 사본, 다음 날 새벽 시각의 고정 일정이 있고, 지운 보상 기록 하나, 장신구 둘을 입은 펫 둘이 있다. "본 구현" 칸의 결과는 `TaskBookRestoreTest`, `PetStateTest`, `AppDataCopyTest`, `AppControllerTest`, `SqliteDataStoreTest`가 번호 이름의 테스트로 확인한다. 저장 검사의 데이터 폴더는 `@TempDir`이다.
+프로토타입 결과는 모두 "없음"이다(저장이 없다). 06에 검사 줄이 없는 되돌리기와 `change`의 경계는 `E-BOOK`, `E-PET`(M7에 이어서), `E-APP`(M7에 이어서), `E-SAVE`, `E-STORE` 번호다. "모든 값을 채운 데이터"는 06 데이터 절의 값마다 처음 값과 다른 값을 넣은 앱 데이터다. 일정은 끝내고 보상을 받은 기간 할 일, 반복 사본, 다음 날 새벽 시각의 고정 일정이 있고, 지운 보상 기록 하나, 장신구 둘을 입은 펫 둘이 있다. "본 구현" 칸의 결과는 `TaskBookRestoreTest`, `PetStateTest`, `AppDataCopyTest`, `AppControllerTest`, `SqliteDataStoreTest`, `SaveKillTest`가 번호 이름의 테스트로 확인한다. 저장 검사의 데이터 폴더는 `@TempDir`이다.
 
 | 번호 | 입력과 경계 | 넣은 값 | 프로토타입 결과 | 본 구현 |
 |---|---|---|---|---|
