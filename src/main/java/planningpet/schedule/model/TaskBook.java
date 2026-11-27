@@ -6,16 +6,19 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.LongSupplier;
+import java.util.function.Supplier;
 
-/** 일정 다루기(06 3번). 앱 데이터의 일정 목록과 넣은 순 번호를 받아 다룬다. */
+/** 일정 다루기(06 3번). 앱 데이터의 일정 목록, 넣은 순 번호, 앱의 오늘을 받아 다룬다. */
 public final class TaskBook {
     private final List<Task> tasks;
     private final LongSupplier nextSeq;
+    private final Supplier<LocalDate> today;
 
-    /** nextSeq는 앱 데이터의 다음 넣은 순 번호를 하나 꺼내고 늘린다. */
-    public TaskBook(List<Task> tasks, LongSupplier nextSeq) {
+    /** nextSeq는 앱 데이터의 다음 넣은 순 번호를 하나 꺼내고 늘린다. today는 앱의 오늘이다(못 끝낸 계획, D-67). */
+    public TaskBook(List<Task> tasks, LongSupplier nextSeq, Supplier<LocalDate> today) {
         this.tasks = new ArrayList<>(tasks);
         this.nextSeq = nextSeq;
+        this.today = today;
     }
 
     /** 넣은 일정 모두. 바꿀 수 없는 목록이다. */
@@ -80,9 +83,10 @@ public final class TaskBook {
         return best;
     }
 
-    /** 그날 시간표에 놓인 일정. */
+    /** 그날 시간표에 놓인 일정. 끝낸 기간 할 일(D-66)과 못 끝낸 계획(D-67)은 빠진다. */
     private List<Task> timedOn(LocalDate date) {
-        return tasks.stream().filter(t -> t.timed() && t.getDate().equals(date)).toList();
+        LocalDate now = today.get();
+        return tasks.stream().filter(t -> t.onTimetable(now) && t.getDate().equals(date)).toList();
     }
 
     /** 06 데이터 절의 처음 값으로 day의 일정 하나를 만든다. 보상과 끝냄은 없다. */
