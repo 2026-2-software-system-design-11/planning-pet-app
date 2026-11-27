@@ -218,6 +218,7 @@ class TaskBookTest {
     void T_OVL_1_overlaps() {
         Task essay = put(Kind.TASK, "자소서 초안", day(11, 16), 14 * 60, 60);
         assertEquals(new Overlap(essay, 30, true), at(14 * 60 + 30, 60));
+        assertEquals("14:00~15:00 '자소서 초안'과 30분 겹쳐요. 그래도 넣을까요?", at(14 * 60 + 30, 60).question());
     }
 
     @Test
@@ -232,18 +233,22 @@ class TaskBookTest {
         Task lab = put(Kind.FIXED, "실습", day(11, 16), 8 * 60, 480);
         put(Kind.TASK, "과제", day(11, 16), 8 * 60 + 30, 30);
         assertEquals(new Overlap(lab, 60, true), at(8 * 60, 60));
+        assertEquals("08:00~16:00 '실습'과 60분 겹쳐요. 그래도 넣을까요?", at(8 * 60, 60).question());
     }
 
     @Test
     void T_OVL_4_repeatAndEdit() {
         Task homework = put(Kind.TASK, "과제", day(11, 17), 18 * 60 + 30, 60);
         Task report = put(Kind.TASK, "보고서", day(11, 16), 10 * 60, 30);
-        TaskDraft job = repeat(Kind.FIXED, day(11, 16), 18 * 60, 240, Repeat.weekly(TUESDAY), day(11, 30));
+        TaskDraft job = new TaskDraft(Kind.FIXED, "알바", Category.OTHER, day(11, 16), null, LocalTime.of(18, 0), 240, "",
+                Repeat.weekly(TUESDAY), day(11, 30), false, null, null, false);
         assertEquals(new Overlap(homework, 60, true), book.overlap(job, null));
+        assertEquals("18:30~19:30 '과제'와 60분 겹쳐요. 그래도 넣을까요?", book.overlap(job, null).question());
         Task jobOn17 = book.add(job).get(0);
         assertNull(book.overlap(draft(Kind.TASK, "보고서", day(11, 16), null, 10 * 60 + 15, 30), report));
         assertEquals(new Overlap(jobOn17, 60, true),
                 book.overlap(draft(Kind.TASK, "과제", day(11, 17), null, 19 * 60, 60), homework));
+        assertEquals("18:00~22:00 '알바'와 60분 겹쳐요. 그래도 넣을까요?", new Overlap(jobOn17, 60, true).question());
     }
 
     @Test
@@ -319,18 +324,24 @@ class TaskBookTest {
         assertEquals(new Overlap(meeting, 30, false), on(day(11, 21), 30, 60));
         assertEquals(new Overlap(review, 30, false), on(day(11, 21), 90, 30));
         assertEquals(new Overlap(meeting, 30, true), on(day(11, 20), 23 * 60 + 30, 30));
+        assertEquals(List.of("11/20(금) 23:00~01:00(다음 날) '회의'와 30분 겹쳐요. 그래도 넣을까요?",
+                "11/20(금) 01:30~02:00(다음 날) '복습'과 30분 겹쳐요. 그래도 넣을까요?",
+                "23:00~01:00(다음 날) '회의'와 30분 겹쳐요. 그래도 넣을까요?"), List.of(on(day(11, 21), 30, 60).question(),
+                on(day(11, 21), 90, 30).question(), on(day(11, 20), 23 * 60 + 30, 30).question()));
     }
 
     @Test
     void E_OVL_8_nextDayDawn() {
         Task dawn = put(Kind.TASK, "새벽 일", day(11, 21), 0, 60);
         assertEquals(new Overlap(dawn, 30, false), on(day(11, 20), Task.DAY + 30, 60));
+        assertEquals("11/21(토) 00:00~01:00 '새벽 일'과 30분 겹쳐요. 그래도 넣을까요?", new Overlap(dawn, 30, false).question());
     }
 
     @Test
     void E_OVL_9_newYear() {
         Task eve = put(Kind.TASK, "해넘이", day(12, 31), 23 * 60, 120);
         assertEquals(new Overlap(eve, 30, false), on(LocalDate.of(2027, 1, 1), 30, 60));
+        assertEquals("12/31(목) 23:00~01:00(다음 날) '해넘이'와 30분 겹쳐요. 그래도 넣을까요?", new Overlap(eve, 30, false).question());
     }
 
     @Test
@@ -344,5 +355,20 @@ class TaskBookTest {
         put(Kind.TASK, "같은 날", day(11, 21), 60, 120);
         Task night = put(Kind.TASK, "앞날 밤", day(11, 20), 23 * 60, 180);
         assertEquals(new Overlap(night, 30, false), on(day(11, 21), 90, 30));
+    }
+
+    @Test
+    void E_OVL_13_digitTitle() {
+        Task t = put(Kind.TASK, "과제1", TODAY, 10 * 60, 60);
+        assertEquals("10:00~11:00 '과제1'과 30분 겹쳐요. 그래도 넣을까요?", new Overlap(t, 30, true).question());
+    }
+
+    @Test
+    void E_OVL_14_sameDayNextDayAndMidnight() {
+        Task late = put(Kind.TASK, "밤샘", TODAY, Task.DAY + 90, 30);
+        Task dinner = put(Kind.TASK, "저녁", TODAY, 23 * 60, 60);
+        assertEquals(List.of("01:30~02:00(다음 날) '밤샘'과 15분 겹쳐요. 그래도 넣을까요?",
+                "23:00~24:00 '저녁'과 30분 겹쳐요. 그래도 넣을까요?"),
+                List.of(new Overlap(late, 15, true).question(), new Overlap(dinner, 30, true).question()));
     }
 }
