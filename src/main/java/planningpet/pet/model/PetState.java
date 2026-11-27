@@ -28,6 +28,11 @@ public final class PetState {
     /** 칸마다 입은 장신구. 바꿀 수 없는 모음이다. */
     public Map<Slot, WearId> getWear() { return Collections.unmodifiableMap(wear); }
 
+    /** 나의 방에서 이 펫을 누르면 그 펫 위 말풍선에 한 번 보이는 말(06 16번 PETTED, D-80). 아무것도 바꾸지 않는다. */
+    public String pat() {
+        return kind == PetKind.DOG ? "멍멍, 좋아!" : "야옹, 좋아!";
+    }
+
     // 값 하나를 넣는 메서드. 저장의 읽기가 쓰고, 규칙(06 10번, 28번, 30번)은 그 규칙을 옮기는 단위가 이것을 부르는 메서드로 더한다.
     public void setExp(int exp) { this.exp = exp; }
     public void setPose(Pose pose) { this.pose = pose; }

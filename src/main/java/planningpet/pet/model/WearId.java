@@ -1,6 +1,6 @@
 package planningpet.pet.model;
 
-/** 장신구(D-51). 칸 순서이고 칸 안에서는 열리는 레벨 순서다. 칸과 레벨은 `Wardrobe`(M14)가 정한다. */
+/** 장신구(D-51). 칸 순서이고 칸 안에서는 열리는 레벨 순서다. 칸과 레벨은 `Wardrobe`가 정한다. */
 public enum WearId {
     BASIC_NECKLACE("기본 목걸이"),
     RIBBON_NECKLACE("리본 목걸이"),
