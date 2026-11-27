@@ -8,6 +8,7 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import planningpet.app.model.AppData;
 import planningpet.app.model.DataStore;
@@ -58,5 +59,26 @@ class AppControllerTest {
         assertEquals(List.of(1), saved);
         assertEquals(1, heard.size());
         assertEquals(List.of(), errors);
+    }
+
+    @Test
+    void E_SAVE_2_failureText() {
+        failing = true;
+        app.change("할 일 완료", () -> data.setPoints(40));
+        assertEquals(List.of("할 일 완료 저장에 실패해서 바꾸기 전으로 돌렸어요."), errors);
+        assertEquals(1, heard.size());
+    }
+
+    @Test
+    void E_SAVE_3_restoresBeforeTelling() {
+        data.setPoints(30);
+        failing = true;
+        app.change("출석", () -> {
+            data.setPoints(50);
+            data.setAttendDays(Set.of(data.today()));
+        });
+        assertEquals(30, data.getPoints());
+        assertTrue(data.getAttendDays().isEmpty());
+        assertEquals(List.of(30), heard);
     }
 }
