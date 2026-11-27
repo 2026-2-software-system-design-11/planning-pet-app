@@ -35,7 +35,7 @@
 | M12 | 자동 배치 | `AutoPlacer` | 18번 | [docs/porting/auto-place.md](porting/auto-place.md) |
 | M13 | 알림 고르기 | `Reminders` | 17번(프로토타입 기준 없음) | [docs/porting/reminders.md](porting/reminders.md) |
 | M14 | 펫 | `Bond`, `Wardrobe`, `Poses`, `PetState.pat` | 27번, 28번이 쓰는 장신구 표 | [docs/porting/pet.md](porting/pet.md) |
-| M15 | 상점과 방 | `Shop`, `Item`, `Room` | 20번 | `docs/porting/shop.md` |
+| M15 | 상점과 방 | `Shop`, `Item`, `Room` | 20번 | [docs/porting/shop.md](porting/shop.md) |
 | M16 | 통계 | `Stats` | 29번 | `docs/porting/stats.md` |
 | S1 | 창 틀과 날 바뀜 | `AppWindow`, `AppController.onWindowShown`, `say`, `DayWatcher`, `RewardController.attend` | 11번, 15번, 23번 | `docs/porting/app-window.md` |
 | S2 | 반려동물 고르기 창 | `PickDialog`, `PetController.adopt`, `select` | 30번 | `docs/porting/pick.md` |
