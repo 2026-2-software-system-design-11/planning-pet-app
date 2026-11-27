@@ -30,6 +30,7 @@ import planningpet.app.controller.AppController;
 import planningpet.app.model.AppData;
 import planningpet.app.model.DataStore;
 import planningpet.app.model.LoadResult;
+import planningpet.common.view.Card;
 import planningpet.common.view.Icons;
 import planningpet.common.view.RoundButtonUI;
 import planningpet.common.view.Snap;
@@ -260,6 +261,60 @@ class AppWindowTest {
         assertEquals("홈", w.current());
         assertArrayEquals(pixels(Icons.icon(Icons.Kind.GEAR, 22, Theme.ICON)), pixels(((JToggleButton) nav[4]).getIcon()));
         assertArrayEquals(pixels(Icons.icon(Icons.Kind.PAW, 22, Theme.ICON)), pixels(((JToggleButton) nav[5]).getIcon()));
+    }
+
+    /** 프로토타입 기준 그림과 같은 창: 부제는 빈 글, 나의 방은 200x62 카드, 통계는 빈 패널을 오른쪽에 둔다. */
+    private AppWindow pictured(String shown) {
+        AppWindow w = window();
+        w.addScreen("홈", "", new JPanel());
+        w.addScreen("일정관리", "", new JPanel());
+        Card room = new Card(new java.awt.BorderLayout(), 18);
+        room.setPreferredSize(new Dimension(200, 62));
+        w.addScreen("나의 방", "", new JPanel(), room);
+        w.addScreen("통계", "", new JPanel(), new JPanel());
+        w.addScreen("설정", "", new JPanel());
+        data.changed();
+        w.show(shown);
+        return w;
+    }
+
+    private static Component visible(Component cards) {
+        for (Component c : ((Container) cards).getComponents()) {
+            if (c.isVisible()) {
+                return c;
+            }
+        }
+        return null;
+    }
+
+    @Test
+    void eWin14ShowScreen() throws IOException {
+        looksLikePrototype("frame-home", pictured("홈"), 1000, 680);
+        looksLikePrototype("frame-room", pictured("나의 방"), 1000, 680);
+        AppWindow w = withScreens();
+        JPanel room = new JPanel();
+        w.addScreen("방 카드", "", new JPanel(), room);
+        int[] heard = {0};
+        data.onChange(() -> heard[0]++);
+        Component[] nav = ((Container) at(w.root(), 0, 1, 0)).getComponents();
+        ((JToggleButton) nav[6]).doClick();
+        assertEquals(List.of("방 카드", 0, room), List.of(w.current(), heard[0], at(visible(at(w.root(), 1, 0, 1)), 0)));
+        for (int i = 0; i < nav.length; i++) {
+            assertEquals(i == 6, ((JToggleButton) nav[i]).isSelected());
+        }
+        ((JToggleButton) nav[1]).doClick(); // 자기 카드가 없는 화면은 공통 카드 둘(연속 접속, 보유)로 돌아온다.
+        assertEquals(List.of("일정관리", 2), List.of(w.current(), ((Container) visible(at(w.root(), 1, 0, 1))).getComponentCount()));
+    }
+
+    @Test
+    void eWin15UnknownScreen() {
+        AppWindow w = withScreens();
+        w.show("나의 방");
+        Component screen = visible(at(w.root(), 1, 1));
+        w.show("없는 화면");
+        Component[] nav = ((Container) at(w.root(), 0, 1, 0)).getComponents();
+        assertEquals(List.of("없는 화면", true, false, screen), List.of(w.current(), ((JToggleButton) nav[2]).isSelected(),
+                ((JToggleButton) nav[0]).isSelected(), visible(at(w.root(), 1, 1))));
     }
 
     @Test

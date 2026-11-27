@@ -2,14 +2,17 @@ package planningpet.app.view;
 
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -55,6 +58,8 @@ public final class AppWindow {
     final JButton attend = new JButton();
     private final List<Runnable> views = new ArrayList<>();
     private final ButtonGroup navGroup = new ButtonGroup();
+    /** 화면 머리 오른쪽에 자기 카드를 둔 화면의 이름(D-47). */
+    private final Set<String> ownRight = new HashSet<>();
     private String current = "";
 
     public AppWindow(AppData data, AppController app) {
@@ -101,6 +106,11 @@ public final class AppWindow {
 
     /** 메뉴 단추와 화면을 함께 넣는다. 화면 위에 아이콘, 제목, 부제를 둔다(D-33). 처음 넣은 화면을 고른다. */
     public void addScreen(String name, String subtitle, JComponent screen) {
+        addScreen(name, subtitle, screen, null);
+    }
+
+    /** right가 있으면 화면 머리 오른쪽에 공통 카드(연속 접속, 출석, 보유 포인트) 대신 그것을 둔다(D-47). */
+    public void addScreen(String name, String subtitle, JComponent screen, JComponent right) {
         Icons.Kind kind = ICONS.getOrDefault(name, Icons.Kind.PAW);
         JToggleButton b = new JToggleButton(name);
         b.putClientProperty(RoundButtonUI.NAV, Boolean.TRUE);
@@ -128,11 +138,35 @@ public final class AppWindow {
         head.add(icon, BorderLayout.WEST);
         head.add(words, BorderLayout.CENTER);
         heads.add(head, name);
+        if (right != null) {
+            JPanel r = new JPanel(new BorderLayout());
+            r.add(right, BorderLayout.EAST);
+            rights.add(r, name);
+            ownRight.add(name);
+        }
         center.add(screen, name);
+        b.addActionListener(e -> show(name));
         if (navGroup.getButtonCount() == 1) {
             b.setSelected(true);
             current = name;
         }
+    }
+
+    /** 그 화면과 화면 머리, 오른쪽 카드를 보이고 그 메뉴만 고른다. model을 바꾸지 않아 알림 없이 다시 그린다(D-46). */
+    public void show(String name) {
+        current = name;
+        flip(center, name);
+        flip(heads, name);
+        flip(rights, ownRight.contains(name) ? name : COMMON);
+        for (Component c : nav.getComponents()) {
+            JToggleButton b = (JToggleButton) c;
+            b.setSelected(b.getText().equals(name));
+        }
+        redraw();
+    }
+
+    private static void flip(JPanel cards, String name) {
+        ((CardLayout) cards.getLayout()).show(cards, name);
     }
 
     /** 사이드바 위의 로고(05 창 구조의 앱 이름). 얼굴 자리는 S2가 고양이 얼굴(PetArt)을 그린다. */
