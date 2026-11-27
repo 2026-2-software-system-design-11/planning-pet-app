@@ -2,20 +2,30 @@ package planningpet.app.store;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import planningpet.app.model.AppData;
 import planningpet.app.model.Filled;
 import planningpet.app.model.LoadResult;
+import planningpet.pet.model.PetKind;
+import planningpet.pet.model.PetState;
+import planningpet.schedule.model.Category;
+import planningpet.schedule.model.DeleteScope;
 import planningpet.schedule.model.EditScope;
+import planningpet.schedule.model.Kind;
+import planningpet.schedule.model.Task;
+import planningpet.schedule.model.TaskDraft;
 
 /** 06 21번과 docs/porting/store.md 2절의 E-STORE 경계. 데이터 폴더는 @TempDir, 지금은 11-18(수) 10:00이다. */
 class SqliteDataStoreTest {
@@ -74,5 +84,67 @@ class SqliteDataStoreTest {
         SqliteDataStore store = store();
         store.save(store.load().data());
         assertEquals(0, store.written());
+    }
+
+    @Test
+    void E_STORE_4_deletedTasks() throws IOException {
+        SqliteDataStore store = store();
+        AppData data = Filled.data(CLOCK);
+        store.save(data);
+        List.copyOf(data.getBook().getTasks()).forEach(t -> data.getBook().delete(t, DeleteScope.ONLY_THIS));
+        store.save(data);
+        assertEquals(2, store.written());
+        AppData back = reload();
+        assertTrue(back.getBook().getTasks().isEmpty());
+        assertEquals(List.of(1L, 3L), back.getBook().getDeletedRewarded().stream().map(Task::getSeq).toList());
+    }
+
+    @Test
+    void E_STORE_5_makesFolder() throws IOException {
+        Path inner = folder.resolve("a").resolve("PlanningPet");
+        new SqliteDataStore(inner, CLOCK).save(new AppData(CLOCK));
+        assertTrue(Files.isRegularFile(inner.resolve(SqliteDataStore.FILE)));
+    }
+
+    @Test
+    void E_STORE_6_order() throws IOException {
+        AppData data = new AppData(CLOCK);
+        data.addPet(new PetState(PetKind.DOG, "바둑이"));
+        data.addPet(new PetState(PetKind.CAT, "나비"));
+        for (String title : List.of("셋", "하나", "둘")) {
+            add(data, title, "");
+        }
+        store().save(data);
+        AppData back = reload();
+        assertEquals(List.of(PetKind.DOG, PetKind.CAT), back.getPets().stream().map(PetState::getKind).toList());
+        assertEquals(List.of("셋", "하나", "둘"), back.getBook().getTasks().stream().map(Task::getTitle).toList());
+    }
+
+    @Test
+    void E_STORE_7_text() throws IOException {
+        AppData data = new AppData(CLOCK);
+        add(data, "it's \"따옴표\" 🐱", "첫 줄\n둘째 줄");
+        store().save(data);
+        Task back = reload().getBook().getTasks().get(0);
+        assertEquals("it's \"따옴표\" 🐱", back.getTitle());
+        assertEquals("첫 줄\n둘째 줄", back.getMemo());
+    }
+
+    @Test
+    void E_STORE_8_failedSaveKeepsLastSave() throws IOException {
+        Path blocked = folder.resolve("data");
+        Files.writeString(blocked, "폴더 자리에 파일");
+        SqliteDataStore store = new SqliteDataStore(blocked, CLOCK);
+        AppData data = Filled.data(CLOCK);
+        assertThrows(IOException.class, () -> store.save(data));
+        Files.delete(blocked);
+        store.save(data);
+        assertEquals(Rows.of(data).values().stream().mapToInt(t -> t.size()).sum(), store.written());
+    }
+
+    private static void add(AppData data, String title, String memo) {
+        LocalDate today = data.today();
+        data.getBook().add(new TaskDraft(Kind.TASK, title, Category.OTHER, today, null, null, 30, memo, null, null,
+                false, null, today, false));
     }
 }
