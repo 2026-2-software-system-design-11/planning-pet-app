@@ -6,6 +6,7 @@ import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.geom.Arc2D;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
@@ -17,7 +18,7 @@ import javax.swing.Icon;
  */
 public final class Icons {
     /** 아이콘의 종류. */
-    public enum Kind { HOME, CALENDAR, CHART, PAW }
+    public enum Kind { HOME, ROOM, CALENDAR, CHART, GEAR, PAW, COIN, FLAME }
 
     private Icons() {
     }
@@ -42,7 +43,7 @@ public final class Icons {
         };
     }
 
-    /** (x, y)에서 size 크기로 그린다. 채우는 아이콘(발자국)은 color로 채운다. */
+    /** (x, y)에서 size 크기로 그린다. 채우는 아이콘(동전, 발자국)은 color를 바탕색으로 쓴다. */
     public static void draw(Graphics2D graphics, Kind kind, int x, int y, int size, Color color) {
         Graphics2D g = (Graphics2D) graphics.create();
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -58,6 +59,11 @@ public final class Icons {
                 g.draw(new RoundRectangle2D.Double(5.5, 9.5, 13, 11, 3, 3));
                 g.draw(new RoundRectangle2D.Double(10, 14, 4, 6.5, 2, 2));
             }
+            case ROOM -> {
+                g.draw(path(3, 11, 12, 3.5, 21, 11));
+                g.draw(new RoundRectangle2D.Double(5.5, 9.5, 13, 11, 3, 3));
+                paw(g, 12, 15.6, 0.62);
+            }
             case CALENDAR -> {
                 g.draw(new RoundRectangle2D.Double(3.5, 5, 17, 15.5, 4, 4));
                 g.draw(path(3.5, 9.5, 20.5, 9.5));
@@ -70,7 +76,47 @@ public final class Icons {
                 g.draw(new RoundRectangle2D.Double(10, 9, 4, 11.5, 2.5, 2.5));
                 g.draw(new RoundRectangle2D.Double(16.5, 4, 4, 16.5, 2.5, 2.5));
             }
+            case GEAR -> {
+                Path2D p = new Path2D.Double();
+                for (int i = 0; i < 16; i++) {
+                    double a = Math.PI * 2 * i / 16 - Math.PI / 16;
+                    double r = (i % 2 == 0) ? 9.3 : 7.2;
+                    double a2 = a + Math.PI * 2 / 16;
+                    if (i == 0) {
+                        p.moveTo(12 + r * Math.cos(a), 12 + r * Math.sin(a));
+                    } else {
+                        p.lineTo(12 + r * Math.cos(a), 12 + r * Math.sin(a));
+                    }
+                    p.lineTo(12 + r * Math.cos(a2), 12 + r * Math.sin(a2));
+                }
+                p.closePath();
+                g.draw(p);
+                g.draw(new Ellipse2D.Double(9, 9, 6, 6));
+            }
             case PAW -> paw(g, 12, 13.5, 1.6);
+            case COIN -> {
+                g.setColor(Theme.COIN_RIM);
+                g.fill(new Ellipse2D.Double(1, 1, 22, 22));
+                g.setColor(color);
+                g.fill(new Ellipse2D.Double(2.6, 2.2, 18.8, 18.8));
+                g.setColor(new Color(255, 255, 255, 120));
+                g.setStroke(new BasicStroke(1.4f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                g.draw(new Arc2D.Double(5, 4.5, 14, 14, 100, 80, Arc2D.OPEN));
+                g.setColor(Theme.COIN_RIM);
+                paw(g, 12, 12.6, 0.82);
+            }
+            case FLAME -> {
+                Path2D f = new Path2D.Double();
+                f.moveTo(12, 21);
+                f.curveTo(6.5, 21, 4.5, 17, 5.5, 13.5);
+                f.curveTo(6.3, 10.8, 8.5, 10, 9, 7.5);
+                f.curveTo(11, 9, 11.2, 10.5, 11, 12);
+                f.curveTo(13, 10, 13.5, 6, 12.5, 3);
+                f.curveTo(17, 5.5, 19.5, 10.5, 18.6, 15);
+                f.curveTo(18, 18.5, 15.5, 21, 12, 21);
+                f.closePath();
+                g.draw(f);
+            }
         }
         g.dispose();
     }
