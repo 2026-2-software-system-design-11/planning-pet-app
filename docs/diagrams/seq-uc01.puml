@@ -1,0 +1,61 @@
+@startuml seq-uc01
+!include seq-common.iuml
+actor 사용자
+actor 운영체제
+$obj(Main)
+$obj(SingleInstance)
+$obj(SqliteDataStore)
+$obj(Tray)
+$obj(AppWindow)
+$obj(DayWatcher)
+$obj(AppController)
+$obj(AppData)
+$obj(Visits)
+$obj(PetTalk)
+alt 기본 흐름
+  사용자 -> Main : 앱 실행
+else 1b 컴퓨터 켤 때 실행이 켜져 있다
+  운영체제 -> Main : --autostart로 실행
+end
+Main -> Main : dataFolder(args)
+Main -> SingleInstance : acquire()
+opt 1a 앱이 이미 실행 중이다(false)
+  note right of SingleInstance : 실행 중인 앱에 신호를 보내고 끝난다.\n실행 중인 앱은 창을 앞으로 가져오고\n아래 onWindowShown부터 한다(06 24번)
+end
+Main -> SqliteDataStore : load()
+alt 2b UNREADABLE
+  note right of Main : 창에 파일 위치와 원인.\n파일을 건드리지 않고 끝낸다
+else 2a FIRST_RUN
+  ref over Main, AppWindow : UC-17 반려동물 고르기
+end
+note right of Main : AppData, controller, 창, 트레이를\n만들어 잇는다
+alt 1b --autostart
+  note right of Tray : 창을 띄우지 않고 트레이로 시작
+  사용자 -> Tray : 트레이 아이콘을 누르고 "열기" 누르기
+  Tray -> AppController : onWindowShown()
+else 기본 흐름
+  AppWindow -> AppController : onWindowShown()
+end
+note right of AppWindow : 3 메인 화면. 달력은 오늘,\n할 일 목록은 오늘의 하루 시간표
+alt 5b lastOpenDay가 오늘이다
+  AppController -> PetTalk : say(USUAL, ...)
+  AppController -> AppController : say(line, today)
+else 그날 처음이다
+  AppController -> AppController : change(what, edit)
+  note right of AppController : 아래 둘이 edit 안이다
+  AppController -> Visits : recordOpen(today)
+  note right of Visits : 4 연속 접속 일수
+  AppController -> PetTalk : say(BRIEFING, ...)
+  note right of PetTalk : 5 오늘 남은 일, 어제 못 끝낸 일, 마감.\n5a 오늘 할 일이 없으면 기간 할 일이나\n"아래 칸에 하나 적어 볼까?".\n5c 8일 이상 만이면 WELCOME_BACK.\n2a 첫 실행이면 FIRST_RUN
+  AppController -> AppController : say(line, today)
+  ref over AppController, AppData : 저장과 되돌리기
+end
+opt 5d 창을 켜 둔 채 새벽 4시가 지나 앱 날짜가 바뀌었다
+  Tray -> DayWatcher : tick(now)
+  note right of Tray : 30초 타이머
+  DayWatcher -> AppData : changed()
+  note right of AppData : 달력의 오늘 표시, 출석 버튼,\n성취도 막대를 새 날로 다시 그린다.\n고른 날짜가 옛 오늘이면 새 오늘로
+  DayWatcher -> AppController : onWindowShown()
+  note right of AppController : 위 alt부터 한다
+end
+@enduml
