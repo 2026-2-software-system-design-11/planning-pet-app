@@ -1,0 +1,25 @@
+@startuml seq-uc23
+!include seq-common.iuml
+actor 사용자
+$obj(CharacterDialog)
+$obj(PetController)
+$obj(AppController)
+$obj(PetTalk)
+사용자 -> CharacterDialog : 이름 옆 "이름 변경" 누르기
+note right of CharacterDialog : 창 "이름 변경"에 지금 이름이 든 칸,\n"10자까지. 비워 두면 {기본 이름}로 불러요",\n"취소"와 "저장"
+alt 3a 취소
+  사용자 -> CharacterDialog : "취소" 누르거나 창 닫기
+  note right of CharacterDialog : 이름을 바꾸지 않는다
+else 기본 흐름
+  사용자 -> CharacterDialog : 이름을 고치고 "저장" 누르기
+  CharacterDialog -> PetController : rename(kind, name)
+  PetController -> AppController : change(what, edit)
+  AppController -> PetController : edit()
+  note right of PetController : 앞뒤 공백을 지운 이름으로 바꾼다.\n4a 비웠으면 고양이는 "나비", 강아지는 "바둑이".\n종류는 바꾸지 않는다
+  PetController -> PetTalk : say(RENAMED, ...)
+  PetController -> AppController : say(line, day)
+  note right of AppController : "이제 내 이름은 {이름}{이야/야}."\n메인 말풍선에 남는다
+  ref over PetController, AppController : 저장과 되돌리기. 4b 저장 실패면 이름을 되돌린다
+  note right of CharacterDialog : 캐릭터 창, 나의 방, 펫 말의 이름이 바뀐다.\n나의 방 말풍선은 하트 그대로
+end
+@enduml

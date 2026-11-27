@@ -1,0 +1,45 @@
+@startuml seq-uc14
+!include seq-common.iuml
+actor 사용자
+$obj(PetScreen)
+$obj(RoomView)
+$obj(ShopPanel)
+$obj(PetState)
+$obj(Shop)
+$obj(Level)
+$obj(DailyProgress)
+$obj(Bond)
+사용자 -> PetScreen : 사이드바 "나의 방" 누르기
+PetScreen -> Shop : satisfaction(placed)
+note right of PetScreen : 화면 머리 오른쪽에 보유 포인트,\n방 꾸미기 만족도, 배치 아이템 "{놓은 수} / 13"
+note right of RoomView : 펫마다 고른 자세와 입은 장신구로,\n놓아 둔 아이템은 정해진 자리에 그린다.\n고른 펫 위 말풍선은 하트 하나(PET_ROOM)
+alt 3a 펫이 하나다
+  note right of RoomView : 펫이 방 가운데에 있고\n펫 칩 옆에 "+"(UC-20)
+else 3b 펫이 둘이다
+  note right of RoomView : 고양이는 왼쪽, 강아지는 오른쪽.\n펫 칩이 둘이고 "+"는 없다
+end
+opt 3c 아이템을 사거나 펫을 데려온 직후다
+  note right of RoomView : 하트 대신 Bubble의 roomLine(그때 한 말)을\n그린다. 다음 change가 roomLine을 비우면\n하트로 돌아간다
+end
+loop 펫 칩과 펫 탭마다
+  PetScreen -> Level : of(exp)
+end
+note right of PetScreen : 칩과 탭은 이름, 작은 종류, "Lv. {레벨}".\n펫 패널은 고른 펫의 레벨과 경험치 막대
+PetScreen -> DailyProgress : of(book, today)
+PetScreen -> Bond : percent(tasks, kind)
+PetScreen -> Bond : days(tasks, kind)
+note right of PetScreen : 펫 패널 상태 탭의 "오늘 끝낸 일 {수}개",\n"친밀도 {퍼센트}%", "함께한 날 {날 수}일"
+ShopPanel -> Shop : find("전체", "", false)
+note right of ShopPanel : 상점 칸의 아이템 카드를 가격 순으로
+alt 4a 펫 칩을 누른다
+  사용자 -> PetScreen : 방 왼쪽 위 펫 칩 누르기
+  ref over PetScreen, RoomView : UC-21 고른 펫 바꾸기
+else 4b 꾸미기로 간다
+  사용자 -> PetScreen : 펫 패널의 장신구 칸이나 "{이름} 꾸미기" 누르기
+  ref over PetScreen, RoomView : UC-22 펫 꾸미기와 자세 고르기(꾸미기 탭)
+else 4c 방의 펫을 누른다
+  사용자 -> RoomView : 방의 펫 누르기
+  RoomView -> PetState : pat()
+  note right of PetState : 누른 펫 머리 위 말풍선에 하트와\n"야옹, 좋아!"(강아지는 "멍멍, 좋아!")를 한 번.\n저장하지 않고 고른 펫과 메인 말풍선은 그대로
+end
+@enduml
