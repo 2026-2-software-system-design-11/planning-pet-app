@@ -1,6 +1,7 @@
 package planningpet.schedule.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -90,5 +91,83 @@ class TaskBookWeekTest {
         put("과제", day(11, 16), null, null, null, day(11, 16));
         put("빨래", day(11, 16));
         assertEquals(List.of("11/16 과제", "11/16 빨래"), rows(WEEK));
+    }
+
+    @Test
+    void T_EDIT_46_periodOnTodayRow() {
+        period("P", day(11, 12), day(11, 27));
+        period("S", day(11, 20), day(11, 22));
+        put("빨래", today);
+        assertEquals(List.of("11/18 P", "11/18 빨래", "11/20 S", "11/22 S"), rows(WEEK));
+        assertEquals(List.of("11/15 P"), rows(day(11, 9)));
+        assertEquals(List.of("11/23 P", "11/27 P"), rows(day(11, 23)));
+        today = day(11, 19);
+        assertEquals(List.of("11/18 빨래", "11/19 P", "11/20 S", "11/22 S"), rows(WEEK));
+    }
+
+    @Test
+    void T_EDIT_47_pastDueNotMissed() {
+        Task m = put("M", day(11, 17), 10 * 60, day(11, 16), day(11, 20), null);
+        today = day(11, 20);
+        assertTrue(m.missed(today));
+        assertEquals(List.of("11/20 M"), rows(WEEK));
+        today = day(11, 22);
+        assertEquals(List.of(false, false), List.of(m.missed(today), m.onTimetable(today)));
+        assertEquals(List.of("11/20 M"), rows(WEEK));
+    }
+
+    @Test
+    void E_WEEK_1_sundayWeek() {
+        put("14", day(11, 14));
+        put("15", day(11, 15));
+        put("21", day(11, 21));
+        put("22", day(11, 22));
+        assertEquals(List.of("11/15 15", "11/21 21"), rows(day(11, 15)));
+    }
+
+    @Test
+    void E_WEEK_2_periodStartsLater() {
+        period("P", day(11, 20), day(11, 25));
+        assertEquals(List.of("11/20 P"), rows(WEEK));
+        assertEquals(List.of("11/23 P", "11/25 P"), rows(day(11, 23)));
+    }
+
+    @Test
+    void E_WEEK_3_dueOnWeekEdge() {
+        period("P", day(11, 16), day(11, 22));
+        period("Q", day(11, 16), day(11, 23));
+        assertEquals(List.of("11/18 P", "11/18 Q", "11/22 P"), rows(WEEK));
+    }
+
+    @Test
+    void E_WEEK_4_plannedLaterThenDone() {
+        put("P", day(11, 19), 10 * 60, day(11, 16), day(11, 20), today);
+        assertEquals(List.of("11/18 P"), rows(WEEK));
+    }
+
+    @Test
+    void E_WEEK_5_missedPlan() {
+        put("M", day(11, 17), 10 * 60, day(11, 16), day(11, 22), null);
+        assertEquals(List.of("11/18 M", "11/22 M"), rows(WEEK));
+    }
+
+    @Test
+    void E_WEEK_6_onTimetable() {
+        put("시각", today, 10 * 60, null, null, null);
+        put("정한 계획", day(11, 19), 10 * 60, day(11, 16), day(11, 22), null);
+        assertEquals(List.of(), rows(WEEK));
+    }
+
+    @Test
+    void E_WEEK_7_emptyWeek() {
+        assertEquals(List.of(), rows(WEEK));
+    }
+
+    @Test
+    void E_WEEK_8_newYearWeek() {
+        period("P", day(12, 30), LocalDate.of(2027, 1, 2));
+        put("새해", LocalDate.of(2027, 1, 3));
+        put("다음", LocalDate.of(2027, 1, 4));
+        assertEquals(List.of("12/30 P", "1/2 P", "1/3 새해"), rows(day(12, 28)));
     }
 }
