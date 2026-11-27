@@ -1,0 +1,36 @@
+@startuml seq-uc21
+!include seq-common.iuml
+actor 사용자
+$obj(PetScreen)
+$obj(CharacterDialog)
+$obj(PetController)
+$obj(AppController)
+$obj(PetTalk)
+alt 기본 흐름
+  사용자 -> PetScreen : 나의 방 펫 패널의 펫 탭 누르기
+  note right of PetScreen : 1d 방 왼쪽 위 펫 칩도 같다.\n캐릭터 창은 뜨지 않는다
+  PetScreen -> PetController : select(kind)
+else 1b 캐릭터 창의 펫 탭
+  사용자 -> CharacterDialog : 캐릭터 창의 펫 탭 누르기
+  note right of CharacterDialog : 입혀 본 장신구가 저장된 것과 다르면\n먼저 묻는다(UC-22 6b). 취소면 바꾸지 않는다.\n1a 화살표도 같다
+  CharacterDialog -> PetController : select(kind)
+else 1a 캐릭터 창의 화살표
+  사용자 -> CharacterDialog : 큰 펫 양옆 화살표 누르기
+  note right of CharacterDialog : 펫이 하나면 두 화살표가 흐리다
+  CharacterDialog -> PetController : step(delta)
+  PetController -> PetController : select(kind)
+  note right of PetController : pets 순서에서 앞(-1)이나 다음(+1) 펫.\n끝에서 처음으로 돈다
+end
+alt 1c 이미 고른 펫이다
+  note right of PetController : 아무것도 바뀌지 않는다
+else 기본 흐름
+  PetController -> AppController : change(what, edit)
+  AppController -> PetController : edit()
+  note right of PetController : activeKind를 그 펫으로
+  PetController -> PetTalk : say(SELECTED, ...)
+  PetController -> AppController : say(line, day)
+  note right of AppController : "이제 경험치는 내가 받을게! "에\nUSUAL 문장을 붙여 메인 말풍선에 남는다
+  ref over PetController, AppController : 저장과 되돌리기. 2a 저장 실패면 고른 펫을 되돌린다
+  note right of PetScreen : 방의 하트와 강조선이 그 펫 위로 옮겨 가고\n펫 칩, 펫 탭, 펫 패널, 캐릭터 창이 그 펫을 보인다.\n나의 방 말풍선은 하트 그대로
+end
+@enduml
