@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Test;
 
 /** 06 2번(반복 칸 빼고)과 docs/porting/task-check.md 2절의 경계. */
 class TaskDraftTest {
+    private static final String EMOJI = new String(Character.toChars(0x1F600));
+
     /** minute은 앱 하루의 시작 분(D-77)이고 null이면 시각 없음이다. */
     private static TaskDraft draft(Kind kind, String title, LocalDate date, LocalDate due, Integer minute,
             int minutes, String memo, LocalDate placed, LocalDate today) {
@@ -20,6 +22,10 @@ class TaskDraftTest {
 
     private static TaskDraft titled(String title) {
         return draft(Kind.TASK, title, day(11, 16), null, null, 30, "", null, null);
+    }
+
+    private static TaskDraft memo(String memo) {
+        return draft(Kind.TASK, "과제", day(11, 16), null, null, 30, memo, null, null);
     }
 
     private static LocalDate day(int month, int d) {
@@ -65,5 +71,30 @@ class TaskDraftTest {
     @Test
     void E_VAL_20_nullTitle() {
         assertThrows(NullPointerException.class, () -> titled(null).validate());
+    }
+
+    @Test
+    void T_VAL_10_memoLength() {
+        assertEquals(List.of("메모: 메모는 1000자까지예요"), errors(memo("가".repeat(1001))));
+    }
+
+    @Test
+    void E_VAL_1_hundredEmojiTitle() {
+        assertEquals(List.of("제목: 제목은 100자까지예요"), errors(titled(EMOJI.repeat(100))));
+    }
+
+    @Test
+    void E_VAL_2_fiftyOneEmojiTitle() {
+        assertEquals(List.of("제목: 제목은 100자까지예요"), errors(titled(EMOJI.repeat(51))));
+    }
+
+    @Test
+    void E_VAL_6_memoThousand() {
+        assertEquals(List.of(), errors(memo("가".repeat(1000))));
+    }
+
+    @Test
+    void E_VAL_7_thousandEmojiMemo() {
+        assertEquals(List.of("메모: 메모는 1000자까지예요"), errors(memo(EMOJI.repeat(1000))));
     }
 }

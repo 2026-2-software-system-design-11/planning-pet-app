@@ -20,6 +20,9 @@ public record TaskDraft(Kind kind, String title, Category category, LocalDate da
         } else if (title.strip().length() > 100) {
             out.add(new FieldError("제목", "제목은 100자까지예요"));
         }
+        if (memo.length() > 1000) {
+            out.add(new FieldError("메모", "메모는 1000자까지예요"));
+        }
         return out;
     }
 }
