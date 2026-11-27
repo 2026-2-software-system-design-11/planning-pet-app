@@ -1,5 +1,6 @@
 package planningpet.schedule.model;
 
+import static java.time.DayOfWeek.MONDAY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -8,7 +9,7 @@ import java.time.LocalTime;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
-/** 06 2번(반복 칸 빼고)과 docs/porting/task-check.md 2절의 경계. */
+/** 06 2번과 docs/porting/task-check.md, repeat.md 2절의 경계. */
 class TaskDraftTest {
     private static final String EMOJI = new String(Character.toChars(0x1F600));
 
@@ -17,7 +18,16 @@ class TaskDraftTest {
             int minutes, String memo, LocalDate placed, LocalDate today) {
         LocalTime start = minute == null ? null : LocalTime.of(minute % Task.DAY / 60, minute % 60);
         boolean nextDay = minute != null && minute >= Task.DAY;
-        return new TaskDraft(kind, title, Category.OTHER, date, due, start, minutes, memo, nextDay, placed, today);
+        return new TaskDraft(kind, title, Category.OTHER, date, due, start, minutes, memo, null, null, nextDay, placed,
+                today, false);
+    }
+
+    /** 11-16의 30분 반복. minute은 그날 시작 분이고 null이면 시각 없음이다. */
+    private static TaskDraft repeat(Kind kind, Integer minute, LocalDate due, Repeat how, LocalDate end,
+            boolean editing) {
+        LocalTime start = minute == null ? null : LocalTime.of(minute / 60, minute % 60);
+        return new TaskDraft(kind, "과제", Category.OTHER, day(11, 16), due, start, 30, "", how, end, false, null, null,
+                editing);
     }
 
     private static TaskDraft titled(String title) {
@@ -277,5 +287,61 @@ class TaskDraftTest {
         TaskDraft d = draft(Kind.FIXED, "", day(11, 18), day(11, 17), null, 0, "가".repeat(1001), null, null);
         assertEquals(List.of("제목", "마감", "시작 시각", "걸리는 시간", "메모"),
                 d.validate().stream().map(FieldError::field).toList());
+    }
+
+    @Test
+    void T_VAL_11_taskRepeatWithoutStart() {
+        assertEquals(List.of(), errors(repeat(Kind.TASK, null, null, Repeat.DAILY, day(12, 13), false)));
+    }
+
+    @Test
+    void T_VAL_12_endBeforeDate() {
+        List<String> before = List.of("반복: 반복 끝나는 날이 날짜보다 전이에요");
+        assertEquals(before, errors(repeat(Kind.FIXED, 600, null, Repeat.weekly(MONDAY), day(11, 15), false)));
+        assertEquals(before, errors(repeat(Kind.FIXED, 600, null, Repeat.DAILY, day(11, 15), false)));
+    }
+
+    @Test
+    void T_VAL_15_noDayPicked() {
+        assertEquals(List.of("반복: 요일을 하나 이상 골라 주세요"),
+                errors(repeat(Kind.TASK, null, null, Repeat.weekly(), day(11, 30), false)));
+    }
+
+    @Test
+    void T_VAL_18_periodRepeat() {
+        assertEquals(List.of("반복: 기간 안에 하는 할 일은 반복할 수 없어요"),
+                errors(repeat(Kind.TASK, null, day(11, 22), Repeat.DAILY, day(11, 22), false)));
+    }
+
+    @Test
+    void E_VAL_21_editingEndBeforeDate() {
+        assertEquals(List.of(), errors(repeat(Kind.TASK, null, null, Repeat.DAILY, day(11, 15), true)));
+    }
+
+    @Test
+    void E_VAL_22_editingNoDay() {
+        assertEquals(List.of(), errors(repeat(Kind.TASK, null, null, Repeat.weekly(), day(11, 30), true)));
+    }
+
+    @Test
+    void E_VAL_25_noDayAndEndBefore() {
+        assertEquals(List.of("반복: 요일을 하나 이상 골라 주세요"),
+                errors(repeat(Kind.TASK, null, null, Repeat.weekly(), day(11, 15), false)));
+    }
+
+    @Test
+    void E_VAL_26_periodAndNoDay() {
+        assertEquals(List.of("반복: 기간 안에 하는 할 일은 반복할 수 없어요"),
+                errors(repeat(Kind.TASK, null, day(11, 22), Repeat.weekly(), day(11, 15), false)));
+    }
+
+    @Test
+    void E_VAL_27_noEnd() {
+        assertThrows(NullPointerException.class, () -> repeat(Kind.TASK, null, null, Repeat.DAILY, null, false).validate());
+    }
+
+    @Test
+    void E_VAL_28_editingPeriodRepeat() {
+        assertEquals(List.of(), errors(repeat(Kind.TASK, null, day(11, 22), Repeat.DAILY, day(11, 22), true)));
     }
 }
