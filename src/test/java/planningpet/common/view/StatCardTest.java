@@ -1,13 +1,18 @@
 package planningpet.common.view;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.Graphics2D;
 import java.awt.Insets;
+import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.List;
 import javax.swing.BorderFactory;
@@ -106,5 +111,51 @@ class StatCardTest {
         assertFalse(card.isOpaque());
         assertFalse(v.isOpaque());
         looksLikePrototype("stat-flame-clear", card, 110, 62);
+    }
+
+    @Test
+    void eScard5ValueText() {
+        assertEquals("", new StatCard.Value().getText());
+        assertEquals("<html>연속 접속 <b>5일</b></html>", value("연속 접속", "5일").getText());
+        assertEquals("<html> <b></b></html>", value("", "").getText());
+        assertEquals("<html>보유 <b><b>x</b></b></html>", value("보유", "<b>x</b>").getText());
+    }
+
+    @Test
+    void eScard6ValuePreferredSize() {
+        assertEquals(new Dimension(2, 42), new StatCard.Value().getPreferredSize());
+        assertEquals(45, value("연속 접속", "0일").getPreferredSize().width);
+        assertEquals(29, value("보유", "0P").getPreferredSize().width);
+        assertEquals(157, value("보유", "2,147,483,647P").getPreferredSize().width);
+        assertEquals(new Dimension(114, 42), value("아주 긴 이름의 수치 카드", "1일").getPreferredSize());
+        assertEquals(22, value("보유", "😀").getPreferredSize().width);
+    }
+
+    /** 42 칸을 세로 가운데에 두고 이름(굵은 11, INK_SUB)을 위에서 13, 값(아주 굵은 20, INK)을 38에 그린다. */
+    @Test
+    void eScard7ValueHeight() {
+        for (int h : new int[] {30, 42, 80}) {
+            BufferedImage want = new BufferedImage(84, h + 4, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g = want.createGraphics();
+            g.clipRect(0, 0, 80, h);
+            g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            int top = (h - 42) / 2;
+            g.setFont(Theme.bold(11));
+            g.setColor(Theme.INK_SUB);
+            g.drawString("연속 접속", 0, top + 13);
+            g.setFont(Theme.heavy(20));
+            g.setColor(Theme.INK);
+            g.drawString("5일", 0, top + 38);
+            g.dispose();
+            BufferedImage got = Snap.paint(value("연속 접속", "5일"), 80, h);
+            assertArrayEquals(want.getRGB(0, 0, 84, h + 4, null, 0, 84), got.getRGB(0, 0, 84, h + 4, null, 0, 84), "높이 " + h);
+        }
+    }
+
+    @Test
+    void eScard8NullCaption() {
+        StatCard.Value v = value(null, "1");
+        assertEquals("<html>null <b>1</b></html>", v.getText());
+        assertThrows(NullPointerException.class, v::getPreferredSize);
     }
 }
