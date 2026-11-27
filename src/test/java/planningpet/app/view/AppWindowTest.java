@@ -12,6 +12,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.List;
 import javax.swing.AbstractButton;
 import javax.swing.JLabel;
@@ -20,7 +21,10 @@ import javax.swing.UIManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import planningpet.app.controller.AppController;
 import planningpet.app.model.AppData;
+import planningpet.app.model.DataStore;
+import planningpet.app.model.LoadResult;
 import planningpet.common.view.RoundButtonUI;
 import planningpet.common.view.Snap;
 import planningpet.common.view.Theme;
@@ -38,8 +42,19 @@ class AppWindowTest {
         public Instant instant() { return now.atZone(ZONE).toInstant(); }
     });
 
+    private final List<String> errors = new ArrayList<>();
+    private boolean failing;
+    private final AppController app = new AppController(data, new DataStore() {
+        public LoadResult load() { return LoadResult.firstRun(); }
+        public void save(AppData d) throws IOException {
+            if (failing) {
+                throw new IOException("디스크가 찼다");
+            }
+        }
+    }, errors::add);
+
     private AppWindow window() {
-        return new AppWindow(data);
+        return new AppWindow(data, app);
     }
 
     private static List<Object> shown(AppWindow w) {
@@ -116,6 +131,29 @@ class AppWindowTest {
         data.changed();
         assertEquals(shown("0일", "0P", "출석 완료", false), shown(w));
         looksLikePrototype("frame-attended", w, 1000, 680);
+    }
+
+    @Test
+    void eWin7PressAttend() {
+        AppWindow w = window();
+        int[] heard = {0};
+        data.onChange(() -> heard[0]++);
+        w.attend.doClick();
+        assertEquals(List.of(20, LocalDate.of(2026, 11, 16), "출석했어! +20P", 1),
+                List.of(data.getPoints(), data.getAttendanceDay(), app.getBubble().getLine(), heard[0]));
+        assertEquals(shown("0일", "20P", "출석 완료", false), shown(w));
+    }
+
+    @Test
+    void eWin10AttendNotSaved() {
+        AppWindow w = window();
+        data.setPoints(30);
+        data.changed();
+        failing = true;
+        w.attend.doClick();
+        assertEquals(List.of(30, List.of("출석 저장에 실패해서 바꾸기 전으로 돌렸어요.")), List.of(data.getPoints(), errors));
+        assertEquals(null, data.getAttendanceDay());
+        assertEquals(shown("0일", "30P", "출석 +20P", true), shown(w));
     }
 
     @Test

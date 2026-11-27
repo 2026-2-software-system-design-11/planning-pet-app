@@ -16,6 +16,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
+import planningpet.app.controller.AppController;
 import planningpet.app.model.AppData;
 import planningpet.common.view.Backdrop;
 import planningpet.common.view.Card;
@@ -23,6 +24,7 @@ import planningpet.common.view.Icons;
 import planningpet.common.view.RoundButtonUI;
 import planningpet.common.view.StatCard;
 import planningpet.common.view.Theme;
+import planningpet.reward.controller.RewardController;
 
 /**
  * 앱의 창(05 창 구조): 창 바탕 안에 왼쪽 사이드바, 오른쪽 본문 판(위 줄은 화면 머리와 오른쪽 카드, 가운데는 고른 화면).
@@ -47,8 +49,9 @@ public final class AppWindow {
     final JButton attend = new JButton();
     private final List<Runnable> views = new ArrayList<>();
 
-    public AppWindow(AppData data) {
+    public AppWindow(AppData data, AppController app) {
         this.data = data;
+        RewardController reward = new RewardController(data, app);
         navWrap.setBorder(BorderFactory.createEmptyBorder(18, 8, 12, 8));
         navWrap.add(logo(), BorderLayout.NORTH);
         JPanel navTop = new JPanel(new BorderLayout());
@@ -63,6 +66,7 @@ public final class AppWindow {
         main.add(center, BorderLayout.CENTER);
         root.add(main, BorderLayout.CENTER);
         root.setPreferredSize(new Dimension(1000, 680));
+        attend.addActionListener(e -> reward.attend());
         watch(this::refresh);
     }
 
