@@ -1,9 +1,15 @@
 package planningpet.common.view;
 
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
 import java.awt.Font;
 import java.awt.GraphicsEnvironment;
 import java.util.List;
+import javax.swing.JPanel;
+import javax.swing.UIManager;
+import javax.swing.plaf.ColorUIResource;
+import javax.swing.plaf.FontUIResource;
 
 /** 디자인 시스템(docs/design-system.md)의 값. 이름은 문서의 이름과 같다. */
 public final class Theme {
@@ -137,5 +143,48 @@ public final class Theme {
     /** 보통(긴 안내 문장). */
     public static Font regular(int size) {
         return REGULAR.deriveFont((float) size);
+    }
+
+    /** Swing 기본값에 글꼴, 글자 색, 버튼 그리기를 건다. 부품을 만들기 전에 한 번 부른다. */
+    public static void install() {
+        UIManager.put("swing.boldMetal", Boolean.FALSE);
+        for (Object key : List.copyOf(UIManager.getLookAndFeelDefaults().keySet())) {
+            String k = key.toString();
+            if (k.endsWith(".font")) {
+                UIManager.put(key, new FontUIResource(font(14)));
+            } else if (k.endsWith(".foreground") && !k.startsWith("ProgressBar")) {
+                UIManager.put(key, new ColorUIResource(INK));
+            }
+        }
+        UIManager.put("Button.font", new FontUIResource(bold(14)));
+        UIManager.put("ToggleButton.font", new FontUIResource(bold(14)));
+        UIManager.put("ButtonUI", RoundButtonUI.class.getName());
+        UIManager.put("ToggleButtonUI", RoundButtonUI.class.getName());
+        // 고르는 칸(ComboUI)은 일정 입력 창과 함께 S4가 옮긴다(docs/porting/theme.md).
+        for (String k : List.of("Panel", "CheckBox", "RadioButton", "OptionPane")) {
+            UIManager.put(k + ".background", new ColorUIResource(BG));
+        }
+        UIManager.put("ProgressBar.foreground", new ColorUIResource(MINT));
+        UIManager.put("ProgressBar.background", new ColorUIResource(TRACK));
+        UIManager.put("ProgressBar.selectionForeground", new ColorUIResource(INK));
+    }
+
+    /** 배경 그림이 보이게 카드 밖의 패널을 투명하게 한다. 화면을 다시 만든 뒤마다 부른다. */
+    public static void clear(Component c) {
+        if (c instanceof JPanel p && !(p instanceof Card)) {
+            p.setOpaque(false);
+        }
+        if (c instanceof javax.swing.JToggleButton t && !(t.getUI() instanceof RoundButtonUI)) {
+            t.setOpaque(false);
+        }
+        if (c instanceof javax.swing.JScrollPane s) {
+            s.setOpaque(false);
+            s.getViewport().setOpaque(false);
+        }
+        if (c instanceof Container k) {
+            for (Component child : k.getComponents()) {
+                clear(child);
+            }
+        }
     }
 }
