@@ -1,0 +1,27 @@
+@startuml seq-uc09
+!include seq-common.iuml
+actor 사용자
+$obj(CalendarPanel)
+$obj(HomeController)
+$obj(PetTalk)
+$obj(AppController)
+$obj(TaskRows)
+$obj(TaskBook)
+$obj(CalendarCell)
+alt 기본 흐름
+  사용자 -> CalendarPanel : 달력 날짜 누르기
+  CalendarPanel -> HomeController : pick(date)
+  HomeController -> PetTalk : say(OTHER_DATE, ...)
+  note right : 오늘을 고르면 USUAL.\n그날 할 일 없이 기간 할 일만\n있으면 그 수를 붙인다(02의 3)
+  HomeController -> AppController : say(line, day)
+  note right : 저장하지 않고\n알림만 보낸다
+  TaskRows -> TaskBook : dayPlan(date)
+  note right : 할 일 목록이 고른 날짜의\n하루 시간표가 된다.\n일정 추가의 기본 날짜도\n이 날짜다(06 14번)
+else 1a 이전 달, 다음 달
+  사용자 -> CalendarPanel : 이전 달, 다음 달 꺾쇠 누르기
+  loop 보이는 달의 날짜 칸마다
+    CalendarPanel -> CalendarCell : preview(book, date, withFixed)
+  end
+  note right of CalendarPanel : 고른 날짜는 그대로다
+end
+@enduml

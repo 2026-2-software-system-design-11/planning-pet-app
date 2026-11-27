@@ -1,0 +1,28 @@
+@startuml seq-uc10
+!include seq-common.iuml
+actor 사용자
+$obj(ScheduleScreen)
+$obj(Rules)
+$obj(TimetablePanel)
+$obj(TimetableLayout)
+$obj(Task)
+$obj(TaskRows)
+$obj(TaskBook)
+사용자 -> ScheduleScreen : 내비게이션 바 "일정관리" 누르기
+ScheduleScreen -> Rules : weekStart(today, weekStart)
+note right of ScheduleScreen : 오늘이 든 주.\n설정의 한 주 시작부터 7일
+TimetablePanel -> TimetableLayout : top(monday, now)
+loop 보이는 주의 날마다
+  loop 일정마다
+    TimetablePanel -> Task : onTimetable(day)
+  end
+  TimetablePanel -> TimetableLayout : of(dayTasks)
+end
+note right of TimetablePanel : 하루 칸은 다음 날 04:00까지.\n일정은 걸리는 시간만큼 칸을 차지하고\n겹치면 열을 나눈다
+TaskRows -> TaskBook : untimedOfWeek(weekStart)
+opt 2a 시작 시각이 없는 할 일이 있다
+  note right of TaskRows : 시간표 옆 목록에 보인다.\n기간 할 일은 그 주에서 한 줄이고\n마감 날이 그 주에 있으면\n마감 줄이 하나 더 있다
+end
+사용자 -> ScheduleScreen : "오늘", 이전 주, 다음 주 누르기
+note right of ScheduleScreen : 옮긴 주로 3부터\n같은 메시지를 다시 보낸다
+@enduml

@@ -30,6 +30,20 @@
 - 그림의 `TaskController`는 예다. 다른 도메인 controller도 같다.
 - 마지막 `opt`는 06 16번의 다시 세기(D-106)다. 끝내기나 추가처럼 새 펫 말을 하는 변경은 이 조각을 지나지 않는다.
 
+## 일정 유스케이스
+
+### UC-09 달력으로 일정 보기
+
+![UC-09](diagrams/seq-uc09.png)
+
+- 날짜 고르기는 펫 말만 바꾸므로 22번을 거치지 않는다(06 읽는 법). `AppController.say`가 말풍선을 바꾸고 알림을 보내면 할 일 목록이 고른 날짜로 `dayPlan`을 다시 부른다.
+
+### UC-10 시간표로 일정 보기
+
+![UC-10](diagrams/seq-uc10.png)
+
+- 주 옮기기는 model을 바꾸지 않는 다시 그리기라 view끼리 한다(06 읽는 법). 그래서 7 뒤의 메시지는 3부터와 같아 다시 그리지 않았다.
+
 ## 다시 그리기
 
 원본은 [diagrams/](diagrams/) 아래 `seq-*.puml`이고 공통 꾸밈은 `seq-common.iuml`이다. PlantUML로 그린다.
