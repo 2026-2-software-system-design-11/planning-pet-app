@@ -1,7 +1,9 @@
 package planningpet.pet.view;
 
+import planningpet.app.view.App;
 import planningpet.common.view.Icons;
 import planningpet.common.view.RoundButtonUI;
+import planningpet.common.view.RoundField;
 import planningpet.common.view.Theme;
 import planningpet.common.view.Ui;
 import planningpet.pet.model.PetState;
@@ -21,10 +23,13 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JDialog;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 
 /**
  * 펫 데려오기 창(05 "펫 데려오기 창", UC-20, D-48). 나의 방의 "+"로 연다.
@@ -41,6 +46,62 @@ public final class AdoptDialog {
     private static final java.awt.Color BOTTOM = PickScene.mix(Theme.CARD_TOP, Theme.DAY, 0.75);
 
     private AdoptDialog() {
+    }
+
+    /** "+"가 부른다. 남은 종류 하나를 이름을 붙여 데려온다. 둘 다 있으면 아무것도 하지 않는다. */
+    public static void show(App app) {
+        boolean dog = app.store.pet("DOG") == null;
+        if (app.store.pet(dog ? "DOG" : "CAT") != null) {
+            return;
+        }
+        String kind = dog ? "강아지" : "고양이";
+        JTextField field = new RoundField(null, null);
+        JButton cancel = new JButton("취소");
+        JButton ok = new JButton("데려오기");
+        JOptionPane pane = pane(dog, field, cancel, ok);
+        cancel.addActionListener(e -> pane.setValue(cancel));
+        ok.addActionListener(e -> pane.setValue(ok));
+        Ui.focusWhenShown(field);
+        JDialog d = pane.createDialog(app.root, kind + " 데려오기");
+        // 이름 칸에서 Enter는 데려오기다(바꾸기 전 JOptionPane의 처음 값과 같다).
+        d.getRootPane().setDefaultButton(ok);
+        d.setVisible(true);
+        d.dispose();
+        if (pane.getValue() == ok) {
+            app.pet.adopt(dog, field.getText());
+        }
+    }
+
+    /**
+     * 창 안을 담은 `JOptionPane`. 버튼은 본문 안에 있으므로 JOptionPane의 빈 버튼 줄을 없애고, 본문 둘레의 틈은 본문 아래 색으로 칠한다.
+     * 창 없이 그리는 Snap도 이것을 쓴다.
+     */
+    public static JOptionPane pane(boolean dog, JTextField field, JButton cancel, JButton ok) {
+        JComponent content = content(dog, field, cancel, ok);
+        JOptionPane pane = new JOptionPane(content, JOptionPane.PLAIN_MESSAGE, JOptionPane.DEFAULT_OPTION, null, new Object[0]);
+        pane.setBorder(BorderFactory.createEmptyBorder());
+        pane.setBackground(BOTTOM);
+        for (java.awt.Component c : pane.getComponents()) {
+            if (c instanceof JPanel p && p.getComponentCount() == 0) {
+                pane.remove(c);
+            }
+        }
+        clearAround(pane, content);
+        return pane;
+    }
+
+    private static void clearAround(java.awt.Container c, JComponent content) {
+        for (java.awt.Component child : c.getComponents()) {
+            if (child == content) {
+                continue;
+            }
+            if (child instanceof JPanel p) {
+                p.setOpaque(false);
+            }
+            if (child instanceof java.awt.Container k) {
+                clearAround(k, content);
+            }
+        }
     }
 
     /** 창 안. field, cancel, ok는 부르는 쪽이 동작을 단다. */
