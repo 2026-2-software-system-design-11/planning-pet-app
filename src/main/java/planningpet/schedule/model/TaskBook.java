@@ -9,7 +9,7 @@ import java.util.UUID;
 import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
-/** 일정 다루기(06 3번, 6번). 앱 데이터의 일정 목록, 넣은 순 번호, 앱의 오늘을 받아 다룬다. */
+/** 일정 다루기(06 3번, 6번, 7번). 앱 데이터의 일정 목록, 넣은 순 번호, 앱의 오늘을 받아 다룬다. */
 public final class TaskBook {
     private final List<Task> tasks;
     private final LongSupplier nextSeq;
@@ -106,6 +106,47 @@ public final class TaskBook {
         List<Task> period = rest.stream().filter(t -> t.period() && !t.isDone() && t.getDueDate().isAfter(date)).toList();
         List<Task> untimed = rest.stream().filter(t -> !due.contains(t) && !period.contains(t)).toList();
         return new DayPlan(date, due, timed, untimed, period);
+    }
+
+    /**
+     * 06 7번. 일정관리 오른쪽 목록: weekStart부터 7일 동안 보이는 시각 없는 할 일을 한 줄씩(줄의 날짜는 rowDay, D-105). 끝내지 않은
+     * 기간 할 일은 마감 날이 그 주에 있고 줄의 날짜와 다르면 마감 날에 한 줄을 더한다(D-93). 줄의 날짜 순, 같은 날은 넣은 순.
+     */
+    public List<WeekRow> untimedOfWeek(LocalDate weekStart) {
+        LocalDate now = today.get();
+        List<WeekRow> rows = new ArrayList<>();
+        tasks.stream().filter(t -> t.getKind() == Kind.TASK && !t.onTimetable(now)).forEach(t -> {
+            LocalDate day = rowDay(t, weekStart, now);
+            if (day == null) {
+                return;
+            }
+            rows.add(new WeekRow(t, day));
+            LocalDate due = t.getDueDate();
+            boolean dueInWeek = t.period() && !t.isDone() && !due.isBefore(weekStart) && due.isBefore(weekStart.plusDays(7));
+            if (dueInWeek && !due.equals(day) && t.shownOn(due, now)) {
+                rows.add(new WeekRow(t, due));
+            }
+        });
+        rows.sort(Comparator.comparing(WeekRow::day).thenComparingLong(r -> r.task().getSeq()));
+        return rows;
+    }
+
+    /**
+     * 목록 줄의 날짜(D-65, D-105): 그 주에서 보이는 날 가운데 오늘이거나 오늘 뒤인 첫날. 그런 날이 없으면(오늘이 없는 지난 주)
+     * 그 주에서 보이는 마지막 날. 그 주에 보이지 않으면 null.
+     */
+    private static LocalDate rowDay(Task t, LocalDate weekStart, LocalDate today) {
+        LocalDate last = null;
+        for (int i = 0; i < 7; i++) {
+            LocalDate day = weekStart.plusDays(i);
+            if (t.shownOn(day, today)) {
+                if (!day.isBefore(today)) {
+                    return day;
+                }
+                last = day;
+            }
+        }
+        return last;
     }
 
     /**
