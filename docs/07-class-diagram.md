@@ -70,6 +70,24 @@ D-109의 방향(view에서 controller와 model, controller에서 model, store에
 - 옮기다 실패하면 트랜잭션이 되돌려 파일은 옮기기 전 그대로이고 `UNREADABLE`이다. 옛 앱으로 돌아가면 사본을 열 수 있다.
 - 버린 안: 앱 버전 문자열(형식이 그대로인 릴리스에도 번호가 바뀐다), 사본 없이 옮기기(옛 앱으로 돌아가면 열 수 없다), 파일 형식을 손으로 짜기와 h2(D-111).
 
+## 실행 모드
+
+`Main`이 실행 인자로 데이터 폴더를 정하고 클래스들을 만들어 잇는다. 시계는 늘 컴퓨터 시계(`Clock.systemDefaultZone()`)이고 `AppData`에 넘긴다.
+
+| 인자 | 하는 일 |
+|---|---|
+| 없음 | 운영체제 데이터 폴더(06 21번)로 뜬다 |
+| `--autostart` | 컴퓨터 켤 때 실행으로 뜬다. 창을 띄우지 않는다(15번, 25번) |
+| `--data-dir 경로` | 그 폴더를 데이터 폴더로 쓴다. `planningpet.db`와 24번의 잠금 파일 `planningpet.lock`이 그 폴더에 생기고, 빈 폴더면 첫 실행이다 |
+
+- `--data-dir`은 시연과 손 확인을 실제 데이터와 떼어 놓고, 다른 프로세스로 띄워야 하는 검사(T-ONE-2, T-ONE-3)가 실행 JAR를 그대로 쓰게 한다.
+- 정한 시각에서 도는 시계와 프로토타입의 목 데이터, `--sample-clock`, `--first-run`은 두지 않는다. 프로토타입은 멈춘 시계 때문에 실제 오늘로 바뀌지 않는 문제를 검사가 놓쳤다([prototype/README.md](../prototype/README.md) "빠진 것"). 첫 실행은 빈 폴더, 예시는 31번 "예시로 둘러보기"다.
+- 검사(JUnit)는 생성자로 바꿔 끼운다. `AppData`에는 고정 시계나 검사가 옮기는 `Clock`을, `SqliteDataStore`와 `SingleInstance`에는 `@TempDir` 폴더를, `AppController`에는 늘 실패하는 `DataStore`(T-SAVE-1~3)를 넘긴다. T-STORE-6은 검사가 새 JVM에서 `SqliteDataStore`로 저장을 되풀이하다 강제 종료한다.
+
+## 바깥 서비스 자리
+
+UC-12 URL에서 일정 가져오기(다음 단계, D-26)가 들어오면 일정 도메인 model 층에 interface(주소를 받아 `TaskDraft` 목록을 돌려준다)를 두고, 웹에서 읽는 구현은 `schedule.store`에 둔다. 지금은 클래스를 만들지 않는다.
+
 ## 다시 그리기
 
 원본은 [diagrams/](diagrams/) 아래 `class-*.puml`이고 공통 꾸밈은 `class-common.iuml`이다. PlantUML로 그린다.

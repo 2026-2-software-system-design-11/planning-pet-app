@@ -4,8 +4,10 @@ left to right direction
 package planningpet.app {
   class Main {
     {static} + main(args : String[]) : void
+    {static} + dataFolder(args : String[]) : Path
   }
   class SingleInstance {
+    - folder : Path
     + acquire() : boolean
   }
 }
