@@ -1,0 +1,54 @@
+@startuml class-home-settings
+!include class-common.iuml
+left to right direction
+package planningpet.home.view {
+  class MainScreen
+  class CalendarPanel
+  class PetCard
+}
+package planningpet.home.controller {
+  class HomeController {
+    + pick(date : LocalDate) : void
+  }
+}
+package planningpet.settings.view {
+  class SettingsScreen
+}
+package planningpet.settings.controller {
+  class SettingsController {
+    + setCalendarFixed(on : boolean) : void
+    + setListClickTime(on : boolean) : void
+    + setWeekStart(day : DayOfWeek) : void
+    + setAutostart(on : boolean) : void
+  }
+}
+package planningpet.settings.store {
+  class OsAutostart
+}
+package planningpet.settings.model {
+  interface Autostart <<interface>> {
+    + available() : boolean
+    + registered() : boolean
+    + set(on : boolean) : void
+  }
+}
+package planningpet.common.model {
+  class AppDay {
+    {static} + of(time : LocalDateTime) : LocalDate
+  }
+  class Rules {
+    {static} + weekStart(date : LocalDate, weekStart : DayOfWeek) : LocalDate
+  }
+  class Words
+}
+MainScreen *-- CalendarPanel
+MainScreen *-- PetCard
+MainScreen ..> HomeController
+CalendarPanel ..> planningpet.schedule.model.CalendarCell
+PetCard ..> planningpet.reward.model.DailyProgress
+HomeController --> "1" planningpet.app.controller.AppController
+SettingsScreen ..> SettingsController
+SettingsController --> "1" Autostart
+SettingsController --> "1" planningpet.app.controller.AppController
+OsAutostart ..|> Autostart
+@enduml

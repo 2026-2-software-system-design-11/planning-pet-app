@@ -32,6 +32,7 @@ D-109의 방향(view에서 controller와 model, controller에서 model, store에
 | 펫 | ![펫](diagrams/class-pet.png) |
 | 상점, 통계 | ![상점과 통계](diagrams/class-shop-stats.png) |
 | 앱 | ![앱](diagrams/class-app.png) |
+| 홈, 설정, 공통 | ![홈, 설정, 공통](diagrams/class-home-settings.png) |
 
 ## 나눈 까닭과 버린 안
 
@@ -40,7 +41,9 @@ D-109의 방향(view에서 controller와 model, controller에서 model, store에
 - **펫 말풍선 `Bubble`은 `AppData` 밖에 둔다.** 펫 말은 저장할 데이터가 아니다(06 읽는 법). `AppController`가 22번에서 다시 세기(D-106)를 판단하고, 홈과 나의 방 view가 읽는다.
 - **controller는 창을 모른다.** 확인을 묻는 일은 인자로 받는다. `TaskController.add`의 `ask`(3번 겹침 묻기), `clearSamples`의 `confirm`(31번 확인 창), `AppController`의 `errors`(22번 저장 실패 창)는 view가 넘긴 함수다. 버린 안: controller가 `JOptionPane`을 부르기. controller에서 view로 가는 의존이 생기고 창 없이 검사할 수 없다.
 - **30초 타이머는 `app.view.Tray`에 둔다.** 타이머가 `DayWatcher.tick`(23번)과 `AppController.dueReminders`(17번)를 부르고, 받은 알림을 운영체제 알림으로 띄운다. 알림을 띄우는 일이 화면 쪽이라 controller가 view를 부르지 않게 하려는 것이다.
+- **06에 없는 메서드.** `Task.finish`와 `unfinish`는 `Rewards`가 끝냄과 보상을 적는 길이다(D-109, 필드를 열지 않는다). `AppController.onClose`와 `quit`는 25번, `SettingsController.setAutostart`와 `Autostart`는 25번의 컴퓨터 켤 때 실행이다. `TaskBook`의 `deletedRewarded`는 5번이 남기는 보상 기록이고 06 "데이터" 표에도 있다.
 - **이름이 같은 `Slot` 둘.** `schedule.model.Slot`은 19번 시간표 칸, `pet.model.Slot`은 28번 장신구 칸이다. 06의 이름을 그대로 두었고 패키지가 달라 겹치지 않는다.
+- **프로토타입에서 옮긴 것.** 프로토타입은 본 구현의 참고일 뿐이다(D-107). `Store`의 public 필드는 `AppData`의 private 필드로, `TaskController`가 하던 제목 길이와 지난 날 판단은 `TaskDraft.validate`로 옮긴다(D-109). `Typed`(32번)와 `PetKind`는 Swing을 쓰지 않는 규칙과 값이라 view에서 model로 옮긴다. 18번의 까닭 고르기는 `AutoPlacer.reason`이다.
 
 ## 다시 그리기
 
