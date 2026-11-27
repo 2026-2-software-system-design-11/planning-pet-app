@@ -9,8 +9,10 @@ import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.util.List;
 import javax.swing.AbstractButton;
 import javax.swing.JButton;
+import javax.swing.JToggleButton;
 import org.junit.jupiter.api.Test;
 
 /** 디자인 시스템 5절의 버튼. 모양은 빈 글 단추를 160x40으로 그려 프로토타입 그림과 맞춘다. 번호는 docs/porting/theme.md 2절. */
@@ -89,5 +91,39 @@ class RoundButtonUITest {
         b.getModel().setRollover(true);
         looks("disabled", b);
         assertEquals(Theme.INK_DIM, ink(b));
+    }
+
+    @Test
+    void eBtn8Primary() throws IOException {
+        JButton b = button(RoundButtonUI.PRIMARY);
+        looks("primary", b);
+        assertEquals(Color.WHITE, ink(b));
+    }
+
+    @Test
+    void eBtn9PrimaryOverAndPressed() throws IOException {
+        JButton b = button(RoundButtonUI.PRIMARY);
+        b.getModel().setRollover(true);
+        looks("primary-over", b);
+        b = button(RoundButtonUI.PRIMARY);
+        press(b);
+        looks("primary-pressed", b);
+    }
+
+    @Test
+    void eBtn10PrimaryDisabled() throws IOException {
+        JButton b = button(RoundButtonUI.PRIMARY);
+        b.setEnabled(false);
+        looks("primary-disabled", b);
+        assertEquals(Theme.INK_DIM, ink(b));
+    }
+
+    @Test
+    void eBtn11Toggle() throws IOException {
+        JToggleButton on = round(new JToggleButton("", true));
+        JToggleButton off = round(new JToggleButton("", false));
+        looks("toggle-on", on);
+        looks("toggle-off", off);
+        assertEquals(List.of(Color.WHITE, Theme.INK), List.of(ink(on), ink(off)));
     }
 }
