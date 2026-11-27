@@ -1,8 +1,11 @@
 package planningpet.stats.model;
 
 import java.time.LocalDate;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import planningpet.app.model.AppData;
+import planningpet.schedule.model.Category;
 import planningpet.schedule.model.Task;
 
 /** 통계 화면의 값(06 29번, D-55). 펫 둘이 함께 쓰는 일정, 보상, 출석을 센다(D-48). */
@@ -16,6 +19,19 @@ public final class Stats {
     /** 기간 동안 끝낸 수와 셀 일정 수. */
     public Rate rate(Period p) {
         return rate(counted(p.from(), p.to()));
+    }
+
+    /** 유형별 Rate. 셀 일정이 하나라도 있는 유형만 D-54 순서로 담는다. */
+    public Map<Category, Rate> byCategory(Period p) {
+        List<Task> list = counted(p.from(), p.to());
+        Map<Category, Rate> out = new LinkedHashMap<>();
+        for (Category c : Category.values()) {
+            List<Task> in = list.stream().filter(t -> t.getCategory() == c).toList();
+            if (!in.isEmpty()) {
+                out.put(c, rate(in));
+            }
+        }
+        return out;
     }
 
     /**

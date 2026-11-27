@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import planningpet.app.model.AppData;
 import planningpet.schedule.model.Category;
@@ -102,5 +103,29 @@ class StatsTest {
         open();
         assertEquals(new Rate(1, 1), stats.rate(week()));
         assertEquals(new Rate(0, 1), stats.rate(week().step(-1)));
+    }
+
+    @Test
+    void T_STAT_2_onlyCategoriesWithTasks() {
+        stat1();
+        assertEquals(Map.of(Category.EXERCISE, new Rate(1, 1), Category.OTHER, new Rate(0, 1)), stats.byCategory(week()));
+    }
+
+    @Test
+    void E_STAT_6_fixedCounts() {
+        put(Kind.FIXED, d(16), Category.STUDY, false, null, null);
+        put(Kind.FIXED, d(17), Category.STUDY, true, null, null);
+        open();
+        assertEquals(new Rate(1, 2), stats.rate(week()));
+        assertEquals(Map.of(Category.STUDY, new Rate(1, 2)), stats.byCategory(week()));
+    }
+
+    @Test
+    void E_STAT_9_categoryOrder() {
+        List<Category> added = List.of(Category.OTHER, Category.PERSONAL, Category.PROJECT, Category.EXERCISE,
+                Category.STUDY);
+        added.forEach(c -> put(Kind.TASK, d(16), c, false, null, null));
+        open();
+        assertEquals(List.of(Category.values()), List.copyOf(stats.byCategory(week()).keySet()));
     }
 }
