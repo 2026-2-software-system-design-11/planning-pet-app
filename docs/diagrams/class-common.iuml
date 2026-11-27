@@ -1,0 +1,11 @@
+skinparam defaultFontName "Apple SD Gothic Neo"
+skinparam defaultFontSize 12
+skinparam dpi 130
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam ArrowColor #4A5568
+skinparam classBackgroundColor #F7F9FC
+skinparam classBorderColor #4A5568
+hide empty members
+hide circle
+set separator none
