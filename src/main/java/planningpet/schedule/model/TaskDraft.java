@@ -85,7 +85,7 @@ public record TaskDraft(Kind kind, String title, Category category, LocalDate da
         return null;
     }
 
-    /** 반복 칸의 문장(D-64, D-65). 기간, 요일, 끝 날짜 순서로 하나만 고른다. 맞으면 null. */
+    /** 반복 칸의 문장(D-64, D-65). 기간, 요일, 끝 날짜, 반복하는 날, 사본 수 순서로 하나만 고른다. 맞으면 null. */
     private String repeatProblem() {
         if (dueDate != null) {
             return "기간 안에 하는 할 일은 반복할 수 없어요";
@@ -94,7 +94,11 @@ public record TaskDraft(Kind kind, String title, Category category, LocalDate da
         } else if (repeatEnd.isBefore(date)) {
             return "반복 끝나는 날이 날짜보다 전이에요";
         }
-        return null;
+        int copies = repeat.dates(date, repeatEnd, Repeat.MAX_COPIES).size();
+        if (copies == 0) {
+            return "반복 끝나는 날 안에 반복하는 날이 없어요";
+        }
+        return copies > Repeat.MAX_COPIES ? "반복이 너무 많아요. 반복 끝나는 날을 앞당겨 주세요" : null;
     }
 
     /** "11/19(목)". */

@@ -1,9 +1,12 @@
 package planningpet.schedule.model;
 
 import static java.time.DayOfWeek.MONDAY;
+import static java.time.DayOfWeek.TUESDAY;
+import static java.time.DayOfWeek.WEDNESDAY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -343,5 +346,51 @@ class TaskDraftTest {
     @Test
     void E_VAL_28_editingPeriodRepeat() {
         assertEquals(List.of(), errors(repeat(Kind.TASK, null, day(11, 22), Repeat.DAILY, day(11, 22), true)));
+    }
+
+    @Test
+    void T_VAL_13_copyLimit() {
+        assertEquals(List.of(), errors(repeat(Kind.TASK, null, null, Repeat.DAILY, LocalDate.of(2027, 3, 15), false)));
+        assertEquals(List.of("반복: 반복이 너무 많아요. 반복 끝나는 날을 앞당겨 주세요"),
+                errors(repeat(Kind.TASK, null, null, Repeat.DAILY, LocalDate.of(2027, 3, 16), false)));
+    }
+
+    @Test
+    void T_VAL_16_noRepeatDay() {
+        assertEquals(List.of("반복: 반복 끝나는 날 안에 반복하는 날이 없어요"),
+                errors(repeat(Kind.TASK, null, null, Repeat.weekly(WEDNESDAY), day(11, 17), false)));
+        assertEquals(List.of(), errors(repeat(Kind.TASK, null, null, Repeat.weekly(WEDNESDAY), day(11, 18), false)));
+    }
+
+    @Test
+    void E_VAL_23_oneCopy() {
+        assertEquals(List.of(), errors(repeat(Kind.TASK, null, null, Repeat.weekly(MONDAY), day(11, 16), false)));
+    }
+
+    @Test
+    void E_VAL_24_endIsDateNotRepeatDay() {
+        assertEquals(List.of("반복: 반복 끝나는 날 안에 반복하는 날이 없어요"),
+                errors(repeat(Kind.TASK, null, null, Repeat.weekly(TUESDAY), day(11, 16), false)));
+    }
+
+    @Test
+    void E_VAL_29_everyDayPicked() {
+        assertEquals(List.of("반복: 반복이 너무 많아요. 반복 끝나는 날을 앞당겨 주세요"),
+                errors(repeat(Kind.TASK, null, null, Repeat.weekly(DayOfWeek.values()), LocalDate.of(2027, 3, 16), false)));
+    }
+
+    @Test
+    void E_VAL_30_weeklyCopyLimit() {
+        Repeat monday = Repeat.weekly(MONDAY);
+        assertEquals(List.of(), errors(repeat(Kind.TASK, null, null, monday, LocalDate.of(2029, 2, 26), false)));
+        assertEquals(List.of("반복: 반복이 너무 많아요. 반복 끝나는 날을 앞당겨 주세요"),
+                errors(repeat(Kind.TASK, null, null, monday, LocalDate.of(2029, 3, 5), false)));
+    }
+
+    @Test
+    void E_VAL_31_withOtherField() {
+        TaskDraft d = new TaskDraft(Kind.TASK, "", Category.OTHER, day(11, 16), null, null, 30, "", Repeat.DAILY,
+                day(11, 15), false, null, null, false);
+        assertEquals(List.of("제목: 제목을 써 주세요", "반복: 반복 끝나는 날이 날짜보다 전이에요"), errors(d));
     }
 }
