@@ -25,7 +25,7 @@ PR 하나의 크기 한도(1절) 때문에 셋으로 나눠 옮긴다. 이 기�
 
 ## 2. 입력의 경계와 프로토타입 결과
 
-프로토타입 결과는 `prototype/src`를 컴파일한 클래스(develop `a2dc132`, 프로토타입의 마지막 변경 `2ac06b6`, JDK 21.0.11, macOS)를 부르는 버리는 Java 파일에서 얻었다. 클래스 경로에 `prototype/`(그 아래 `assets/fonts/`)를 두고 `java.awt.headless=true`로, 부품을 정한 크기로 두고 같은 크기의 `BufferedImage`에 그렸다. 단추는 프로토타입 `Main`처럼 `install` 뒤에 만들었다. "본 구현" 칸의 "픽셀 같음"은 본 구현을 같은 파일로 그려 두 그림의 픽셀이 모두 같다는 뜻이다. 결과는 `ThemeTest`, `ThemeFontTest`(#390), `CardTest`, `RoundButtonUITest`(#396), `ThemeInstallTest`(#397)가 번호 이름의 테스트로 확인한다. 이 맥에는 맑은 고딕이 없어 글꼴을 못 읽을 때 Apple SD Gothic Neo로 갔다.
+프로토타입 결과는 `prototype/src`를 컴파일한 클래스(develop `a2dc132`, 프로토타입의 마지막 변경 `2ac06b6`, JDK 21.0.11, macOS)를 부르는 버리는 Java 파일에서 얻었다. 클래스 경로에 `prototype/`(그 아래 `assets/fonts/`)를 두고 `java.awt.headless=true`로, 부품을 정한 크기로 두고 같은 크기의 `BufferedImage`에 그렸다. 단추는 프로토타입 `Main`처럼 `install` 뒤에 만들었다. "본 구현" 칸의 "픽셀 같음"은 본 구현을 같은 파일로 그려 두 그림의 픽셀이 모두 같다는 뜻이다. 결과는 `ThemeTest`, `ThemeFontTest`(#390), `CardTest`, `RoundButtonUITest`(#396), `ThemeInstallTest`, `ThemeClearTest`(#397)가 번호 이름의 테스트로 확인한다. 이 맥에는 맑은 고딕이 없어 글꼴을 못 읽을 때 Apple SD Gothic Neo로 갔다.
 
 | 번호 | 입력과 경계 | 넣은 값 | 프로토타입 결과 | 본 구현 |
 |---|---|---|---|---|
@@ -52,17 +52,17 @@ PR 하나의 크기 한도(1절) 때문에 셋으로 나눠 옮긴다. 이 기�
 | E-BTN-9 | 주 행동 올림과 누름 | `PRIMARY`에 올림, 누름 | 올림은 위쪽이 `MINT_TOP.brighter()`, 누름은 위아래 모두 `MINT_DEEP` | 같음. 픽셀 같음 |
 | E-BTN-10 | 주 행동 흐림 | `PRIMARY` "출석 완료", 누를 수 없음 | E-BTN-7과 같은 흐림 모양 | 같음. 픽셀 같음 |
 | E-BTN-11 | 토글 | `JToggleButton` "월" 눌림, 안 눌림 | 눌림은 E-BTN-8의 민트 채움과 흰 글, 안 눌림은 기본 | 같음. 픽셀 같음 |
-| E-BTN-12 | 메뉴 | `NAV` "홈" 안 고름, 올림, 고름과 `PRIMARY`, 누를 수 없음 | 안 고름은 바탕 없이 글만, 올림은 반투명 흰 알약, 고름은 `NAV_PILL` 알약에 `INK` 글(`PRIMARY`여도 채우지 않음), 누를 수 없으면 바탕 없이 `INK_DIM` 글 | #397 |
+| E-BTN-12 | 메뉴 | `NAV` "홈" 안 고름, 올림, 고름과 `PRIMARY`, 누를 수 없음 | 안 고름은 바탕 없이 글만, 올림은 반투명 흰 알약, 고름은 `NAV_PILL` 알약에 `INK` 글(`PRIMARY`여도 채우지 않음), 누를 수 없으면 바탕 없이 `INK_DIM` 글 | 같음. 픽셀 같음 |
 | E-BTN-13 | 흐린 글 표시 | `DIM` "방에서 치우기" | 기본 알약에 `INK_DIM` 글 | 같음. "저장"을 그린 그림도 픽셀 같음 |
 | E-BTN-14 | 글자색을 따로 줌 | "되돌리기"에 `TASK_TEXT`, 그것에 `PRIMARY`, 누를 수 없음 | `TASK_TEXT` 글, `PRIMARY`면 흰 글, 누를 수 없으면 `INK_DIM` 글 | 같음. "저장"을 그린 그림도 픽셀 같음 |
-| E-BTN-15 | 키보드 초점 | 기본, 누를 수 없음, `NAV` 고름, `PRIMARY`에 초점 | 기본과 `PRIMARY`는 안쪽에 반투명 민트 선(`#1FB99C`, 알파 110), 누를 수 없음과 `NAV`는 선 없음 | #397 |
+| E-BTN-15 | 키보드 초점 | 기본, 누를 수 없음, `NAV` 고름, `PRIMARY`에 초점 | 기본과 `PRIMARY`는 안쪽에 반투명 민트 선(`#1FB99C`, 알파 110), 누를 수 없음과 `NAV`는 선 없음 | 같음. 픽셀 같음. 창 없이 초점을 주려고 `setGlobalFocusOwner`를 여는 `KeyboardFocusManager`를 검사 동안만 건다 |
 | E-BTN-16 | 모서리 상한 | "저장" 160x49, 160x50 | 둘 다 호 지름 44(높이에서 5를 뺀 44와 45, 상한 44) | 같음. 픽셀 같음 |
 | E-BTN-17 | 크기 0과 아주 작은 크기 | 0x0, 4x5 | 0x0은 아무것도 그리지 않고, 4x5는 그림자 조각만 그린다. 예외 없음 | 같음. 픽셀 같음 |
-| E-THEME-3 | 기본값 걸기 | `install()` 뒤 새 단추, 토글, 글 | 단추와 토글의 UI가 `RoundButtonUI`, 모든 `.font`가 `font(14)`, 단추와 토글은 `bold(14)`, `.foreground`가 `INK`(`ProgressBar`는 `MINT`), `Panel`, `CheckBox`, `RadioButton`, `OptionPane`의 바탕이 `BG`, `ProgressBar.background`가 `TRACK` | #397 |
-| E-THEME-4 | 두 번 걸기 | `install()` 두 번 | 한 번과 같다 | #397 |
-| E-THEME-5 | 고르는 칸 | `install()` 뒤 `JComboBox` | `ComboUI`, 바탕 `CARD_TOP` | #397. 위 "정한 것"대로 S4가 옮긴다 |
-| E-THEME-6 | 투명하게 하기 | 패널 안 패널, 카드와 그 안 패널, Swing 기본 토글, 둥근 토글, 스크롤 칸, 불투명 글 | 패널, 카드 안 패널, 기본 토글, 스크롤 칸과 그 보이는 칸이 투명해진다. 카드, 둥근 토글, 글은 그대로 | #397 |
-| E-THEME-7 | 빈 부품 | `clear(null)` | 아무것도 하지 않는다 | #397 |
+| E-THEME-3 | 기본값 걸기 | `install()` 뒤 새 단추, 토글, 글 | 단추와 토글의 UI가 `RoundButtonUI`, 모든 `.font`가 `font(14)`, 단추와 토글은 `bold(14)`, `.foreground`가 `INK`(`ProgressBar`는 `MINT`), `Panel`, `CheckBox`, `RadioButton`, `OptionPane`의 바탕이 `BG`, `ProgressBar.background`가 `TRACK` | 같음. install 뒤 기본값(글꼴, 글자색, 바탕, UI)을 모두 적어 비교하면 고르는 칸 여섯 값만 다르다(E-THEME-5) |
+| E-THEME-4 | 두 번 걸기 | `install()` 두 번 | 한 번과 같다 | 같음 |
+| E-THEME-5 | 고르는 칸 | `install()` 뒤 `JComboBox` | `ComboUI`, 바탕 `CARD_TOP` | S4가 옮긴다. 이 단위가 끝난 뒤의 `JComboBox`는 Swing 기본 모양이다 |
+| E-THEME-6 | 투명하게 하기 | 패널 안 패널, 카드와 그 안 패널, Swing 기본 토글, 둥근 토글, 스크롤 칸, 불투명 글 | 패널, 카드 안 패널, 기본 토글, 스크롤 칸과 그 보이는 칸이 투명해진다. 카드, 둥근 토글, 글은 그대로 | 같음 |
+| E-THEME-7 | 빈 부품 | `clear(null)` | 아무것도 하지 않는다 | 같음 |
 
 ## 3. 알게 된 것
 
