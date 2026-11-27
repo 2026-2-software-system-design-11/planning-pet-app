@@ -18,6 +18,7 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import javax.swing.BorderFactory;
+import javax.swing.SwingConstants;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -28,6 +29,16 @@ import javax.swing.JTextField;
 
 /** 반려동물 고르기 창(05, UC-17). 첫 실행 때 메인 창보다 먼저 뜬다. */
 public final class PickDialog {
+    /** 리본 아래 부제(05, 11-23 예시 글). 비우면 줄을 그리지 않는다. */
+    static final String SUBTITLE = "선택한 친구와 함께 일정을 관리하고,\n계획을 실천하며 성장할 수 있어요!";
+    /** 이름 칸 라벨(05, 11-23 예시 글). */
+    static final String NAME_LABEL = "반려동물의 이름을 지어주세요!";
+    /** 버튼 자리. true면 예시처럼 가운데(05), false면 오른쪽 아래. */
+    static final boolean BUTTONS_CENTER = true;
+    /** 줄 폭: 카드 둘과 사이. 이름 줄 카드와 버튼 줄도 이 폭이다. */
+    private static final int ROW = PickCard.W * 2 + 20;
+
+
     public final JRadioButton cat = new JRadioButton("고양이", true);
     public final JRadioButton dog = new JRadioButton("강아지");
     public final JTextField name = new JTextField(12);
@@ -124,6 +135,41 @@ public final class PickDialog {
             Icons.draw(left, Icons.Kind.SPARK, 0, y + 2, s, Theme.SPARK);
             left.dispose();
             Icons.draw(g, Icons.Kind.SPARK, tx + wordW + 12, y + 2, s, Theme.SPARK);
+            g.dispose();
+        }
+    }
+
+    /** 리본 제목. 글은 라벨 글이라 화면 읽기와 QA가 그대로 읽는다. 하늘 발자국 둘이 양옆에 붙는다. */
+    private static final class Ribbon extends JLabel {
+        Ribbon(String text) {
+            super(text, SwingConstants.CENTER);
+            setFont(Theme.heavy(21));
+            setForeground(java.awt.Color.WHITE);
+            setAlignmentX(0.5f);
+            setPreferredSize(new Dimension(800, 62));
+            setMaximumSize(new Dimension(Integer.MAX_VALUE, 62));
+        }
+
+        @Override
+        protected void paintComponent(Graphics graphics) {
+            Graphics2D g = (Graphics2D) graphics.create();
+            PickScene.hints(g);
+            FontMetrics fm = g.getFontMetrics(getFont());
+            int bandW = Math.max(380, fm.stringWidth(getText()) + 120);
+            int bandH = 40;
+            double bx = (getWidth() - bandW) / 2.0;
+            double by = 8;
+            PickScene.ribbon(g, bx, by, bandW, bandH);
+            PickScene.skyPaw(g, bx - 78, by + 32, 28, -0.25);
+            PickScene.skyPaw(g, bx + bandW + 78, by + 32, 28, 0.25);
+            g.setFont(getFont());
+            int tw = fm.stringWidth(getText());
+            int tx = (getWidth() - tw) / 2;
+            int ty = (int) (by + bandH / 2.0 + (fm.getAscent() - fm.getDescent()) / 2.0);
+            g.setColor(PickScene.alpha(Theme.RIBBON_DEEP.darker(), 120));
+            g.drawString(getText(), tx, ty + 1);
+            g.setColor(getForeground());
+            g.drawString(getText(), tx, ty);
             g.dispose();
         }
     }
