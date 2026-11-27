@@ -398,4 +398,69 @@ class PetTalkTest {
         assertEquals("'통계 레포트' 넣었구나! 오늘 남은 일 2개야. '은행 서류' 11/20에 넣었어. '운동' 11/17에 넣었어.",
                 say(ADDED, report) + " " + say(ADDED, bank) + " " + say(ADDED, gym));
     }
+
+    @Test
+    void T_TALK_25_fixedAddedToday() {
+        Task lecture = fixed("자료구조", 16, 9);
+        at("11-16", lecture);
+        assertEquals("'자료구조' 넣었구나! 오늘 남은 일 1개야.", say(ADDED, lecture));
+    }
+
+    @Test
+    void T_TALK_26_periodAdded() {
+        Task apply = period("E사 지원서", 18, 22);
+        at("11-18", apply);
+        assertEquals("'E사 지원서' 넣었구나! 22일까지야.", say(ADDED, apply));
+    }
+
+    @Test
+    void T_TALK_28_weekStartSunday() {
+        at("11-16");
+        data.setWeekStart(DayOfWeek.SUNDAY);
+        Task first = repeat(Kind.TASK, "운동", d(16), null, Repeat.weekly(DayOfWeek.TUESDAY, DayOfWeek.SUNDAY), d(30));
+        assertEquals("17일(화)부터 일, 화마다 넣었어요", say(WEEKLY_ADDED, first));
+    }
+
+    @Test
+    void T_TALK_29_otherMonth() {
+        at("11-30");
+        Task first = repeat(Kind.TASK, "운동", d(30), null, Repeat.weekly(DayOfWeek.TUESDAY), LocalDate.of(2026, 12, 28));
+        assertEquals("12월 1일(화)부터 화마다 넣었어요", say(WEEKLY_ADDED, first));
+    }
+
+    @Test
+    void E_TALK_22_periodOtherDay() {
+        Task later = period("가", 20, 25);
+        at("11-16", later);
+        assertEquals("'가' 넣었구나! 25일까지야.", say(ADDED, later));
+    }
+
+    @Test
+    void E_TALK_23_longTitle() {
+        Task item = task("2026 하반기 공채 자기소개서 1번 문항", 16);
+        at("11-16", item);
+        assertEquals("'2026 하반기 공채 자기…' 넣었구나! 오늘 남은 일 1개야.", say(ADDED, item));
+    }
+
+    @Test
+    void E_TALK_24_nextMonth() {
+        Task item = task("가", 31);
+        at("11-30", item);
+        assertEquals("'가' 12/1에 넣었어.", say(ADDED, item));
+    }
+
+    @Test
+    void E_TALK_25_dailyRepeat() {
+        at("11-16");
+        assertEquals("'물 마시기' 넣었구나! 오늘 남은 일 1개야.", say(ADDED, repeat(Kind.TASK, "물 마시기", d(16), null,
+                Repeat.DAILY, d(20))));
+    }
+
+    @Test
+    void E_TALK_26_nextYear() {
+        at("12-28");
+        Task first = repeat(Kind.TASK, "운동", LocalDate.of(2026, 12, 28), null, Repeat.weekly(DayOfWeek.FRIDAY),
+                LocalDate.of(2027, 1, 15));
+        assertEquals("1월 1일(금)부터 금마다 넣었어요", say(WEEKLY_ADDED, first));
+    }
 }
