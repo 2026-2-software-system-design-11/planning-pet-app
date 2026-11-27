@@ -1,6 +1,9 @@
 package planningpet.stats.model;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +22,22 @@ public final class Stats {
     /** 기간 동안 끝낸 수와 셀 일정 수. */
     public Rate rate(Period p) {
         return rate(counted(p.from(), p.to()));
+    }
+
+    /** 추이. 주간은 날마다, 월간은 한 주의 마지막 날에서 끊은 주마다 한 칸이고 그 달 밖의 날은 넣지 않는다(D-91). */
+    public List<Bucket> trend(Period p) {
+        DayOfWeek last = data.getWeekStart().minus(1);
+        List<Bucket> out = new ArrayList<>();
+        LocalDate d = p.from();
+        while (!d.isAfter(p.to())) {
+            LocalDate end = p.monthly() ? d.with(TemporalAdjusters.nextOrSame(last)) : d;
+            if (end.isAfter(p.to())) {
+                end = p.to();
+            }
+            out.add(new Bucket(d, end, rate(counted(d, end))));
+            d = end.plusDays(1);
+        }
+        return out;
     }
 
     /** 유형별 Rate. 셀 일정이 하나라도 있는 유형만 D-54 순서로 담는다. */

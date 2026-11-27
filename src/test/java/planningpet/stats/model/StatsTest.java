@@ -3,6 +3,7 @@ package planningpet.stats.model;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.time.Clock;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -46,6 +47,13 @@ class StatsTest {
     private void open() { open(LocalDateTime.of(2026, 11, 17, 12, 0)); }
 
     private Period week() { return Period.week(data.today(), data.getWeekStart()); }
+
+    /** 추이 칸마다 "첫날~끝날 끝낸 수/셀 일정 수". 날은 월-일이다. */
+    private String trend(Period p) {
+        return String.join(", ", stats.trend(p).stream().map(b -> b.from().getMonthValue() + "-" + b.from().getDayOfMonth()
+                + "~" + b.to().getMonthValue() + "-" + b.to().getDayOfMonth() + " " + b.rate().done() + "/"
+                + b.rate().total()).toList());
+    }
 
     private void stat1() {
         put(Kind.TASK, d(16), Category.EXERCISE, true, null, null);
@@ -127,5 +135,58 @@ class StatsTest {
         added.forEach(c -> put(Kind.TASK, d(16), c, false, null, null));
         open();
         assertEquals(List.of(Category.values()), List.copyOf(stats.byCategory(week()).keySet()));
+    }
+
+    @Test
+    void T_STAT_3_weekHasSevenDays() {
+        stat1();
+        assertEquals("11-16~11-16 1/2, 11-17~11-17 0/0, 11-18~11-18 0/0, 11-19~11-19 0/0, 11-20~11-20 0/0, "
+                + "11-21~11-21 0/0, 11-22~11-22 0/0", trend(week()));
+    }
+
+    @Test
+    void T_STAT_4_monthCutAtWeekEnd() {
+        open();
+        assertEquals("11-1~11-1 0/0, 11-2~11-8 0/0, 11-9~11-15 0/0, 11-16~11-22 0/0, 11-23~11-29 0/0, 11-30~11-30 0/0",
+                trend(Period.month(d(17))));
+    }
+
+    @Test
+    void T_STAT_10_weekStartsSunday() {
+        open();
+        data.setWeekStart(DayOfWeek.SUNDAY);
+        assertEquals(new Period(d(15), d(21), false), week());
+        assertEquals("11-1~11-7 0/0, 11-8~11-14 0/0, 11-15~11-21 0/0, 11-22~11-28 0/0, 11-29~11-30 0/0",
+                trend(Period.month(d(17))));
+    }
+
+    @Test
+    void E_STAT_4_monthEdgesOnWeekEdges() {
+        open();
+        assertEquals("2-1~2-7 0/0, 2-8~2-14 0/0, 2-15~2-21 0/0, 2-22~2-28 0/0",
+                trend(Period.month(LocalDate.of(2027, 2, 1))));
+        assertEquals("5-1~5-3 0/0, 5-4~5-10 0/0, 5-11~5-17 0/0, 5-18~5-24 0/0, 5-25~5-31 0/0",
+                trend(Period.month(LocalDate.of(2026, 5, 1))));
+    }
+
+    @Test
+    void E_STAT_8_futurePeriod() {
+        stat1();
+        Period next = week().step(1);
+        assertEquals(new Rate(0, 0), stats.rate(next));
+        assertEquals("11-23~11-23 0/0, 11-24~11-24 0/0, 11-25~11-25 0/0, 11-26~11-26 0/0, 11-27~11-27 0/0, "
+                + "11-28~11-28 0/0, 11-29~11-29 0/0", trend(next));
+        assertEquals(Map.of(), stats.byCategory(next));
+    }
+
+    @Test
+    void E_STAT_12_todayInsideMonthBucket() {
+        task(16, false);
+        task(17, true);
+        task(17, false);
+        open();
+        assertEquals("11-1~11-1 0/0, 11-2~11-8 0/0, 11-9~11-15 0/0, 11-16~11-22 1/2, 11-23~11-29 0/0, 11-30~11-30 0/0",
+                trend(Period.month(d(17))));
+        assertEquals(new Rate(1, 2), stats.rate(Period.month(d(17))));
     }
 }
