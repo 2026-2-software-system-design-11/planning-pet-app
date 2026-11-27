@@ -19,7 +19,7 @@
 
 | 순서 | 단위 | 07 클래스 | 06 | 기록 |
 |---|---|---|---|---|
-| 0 | 빌드와 빈 앱 | `Main`, `AppWindow` | 없음(D-108, D-109의 층 의존 검사) | `docs/porting/build.md` |
+| 0 | 빌드와 빈 앱 | `Main`, `AppWindow` | 없음(D-108, D-109의 층 의존 검사) | [docs/porting/build.md](porting/build.md) |
 | M1 | 날짜 규칙 | `AppDay`, `Rules`, `Words` | 1번, 데이터 절 "한 주", 16번의 글자 규칙 | `docs/porting/day-rules.md` |
 | M2 | 일정과 그 검사 | `Task`, `TaskDraft`, 값 목록 `Kind`, `Category`, `PetKind` | 데이터 절 `Task`, 2번(반복 칸 빼고) | `docs/porting/task-check.md` |
 | M3 | 반복 | `Repeat`, `TaskDraft.validate`의 반복 칸 | 데이터 절 `repeat`, 2번 T-VAL-11~13, 15, 16, 18 | `docs/porting/repeat.md` |
