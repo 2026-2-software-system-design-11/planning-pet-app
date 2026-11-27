@@ -188,6 +188,28 @@ class SqliteDataStoreTest {
         assertArrayEquals(v1, Files.readAllBytes(copyV1()));
     }
 
+    @Test
+    void E_STORE_11_failedUpgradeUntouched() throws Exception {
+        store().save(Filled.data(CLOCK));
+        byte[] v1 = Files.readAllBytes(file());
+        List<Schema.Step> fails = List.of(db -> {
+            TO_2.get(0).apply(db);
+            throw new SQLException("검사가 낸 실패");
+        });
+        assertEquals(LoadResult.unreadable(LoadResult.Reason.UPGRADE_FAILED),
+                new SqliteDataStore(folder, CLOCK, fails).load());
+        assertArrayEquals(v1, Files.readAllBytes(file()));
+        assertArrayEquals(v1, Files.readAllBytes(copyV1()));
+    }
+
+    @Test
+    void E_STORE_12_copyNotOverwritten() throws IOException {
+        store().save(Filled.data(CLOCK));
+        Files.writeString(copyV1(), "옛 사본");
+        assertEquals(LoadResult.Status.LOADED, new SqliteDataStore(folder, CLOCK, TO_2).load().status());
+        assertEquals("옛 사본", Files.readString(copyV1()));
+    }
+
     private Path copyV1() {
         return folder.resolve("planningpet.v1.db");
     }

@@ -68,5 +68,7 @@ PR 하나의 크기 한도(1절) 때문에 넷으로 나눠 옮긴다. 되돌리
 | E-STORE-8 | 저장 실패 | 데이터 폴더 자리에 파일이 있음. `save`, 이어서 그 파일을 지우고 `save` | 없음 | 처음은 `IOException`. 다음 `save`는 모든 행을 쓴다(지난 저장이 바뀌지 않았다) |
 | E-STORE-9 | 표 없는 빈 파일 | 0바이트 `planningpet.db`를 `load` | 없음 | `FIRST_RUN`. 파일은 0바이트 그대로 |
 | E-STORE-10 | 다른 프로그램의 sqlite 파일 | 형식 번호 0에 표 `note`가 있는 `planningpet.db`를 `load` | 없음 | `UNREADABLE`(`NOT_DATA_FILE`). 폴더의 파일과 바이트가 그대로다 |
+| E-STORE-11 | 옮기기 실패 | 형식 1 파일을, 열을 더한 뒤 실패하는 형식 2 단계로 `load` | 없음 | `UNREADABLE`(`UPGRADE_FAILED`). 파일 바이트가 옮기기 전 그대로이고 `planningpet.v1.db`도 같다 |
+| E-STORE-12 | 사본 이름이 이미 있음 | 글 "옛 사본"인 `planningpet.v1.db`가 있는 폴더의 형식 1 파일을 형식 2 단계로 `load` | 없음 | `LOADED`. `planningpet.v1.db`는 "옛 사본" 그대로 |
 
 06 22번의 다른 검사 줄은 그 변경을 옮기는 단위가 확인한다. T-SAVE-1과 T-SAVE-4(할 일 완료)는 M9 보상, T-SAVE-2(쿠션 사기)는 M15 상점과 방, T-SAVE-5(메인 화면의 알림 한 번)는 S3 홈 목록이다.
