@@ -10,6 +10,7 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.stream.IntStream;
 import org.junit.jupiter.api.Test;
+import planningpet.pet.model.PetKind;
 
 /** 06 데이터 절의 Task 규칙과 docs/porting/task.md 2절의 경계. 오늘은 11-18(수)이다. */
 class TaskTest {
@@ -237,5 +238,23 @@ class TaskTest {
     @Test
     void E_TASK_37_dueToday() {
         assertEquals(List.of(16, 17, 18), shown(period(day(16), null, day(18))));
+    }
+
+    /** 06 8번이 부르는 끝내기(docs/porting/rewards.md T-RWD-1, T-RWD-11). 기간 할 일의 날짜와 기간은 그대로다(D-66). */
+    @Test
+    void finishWritesDoneDayAndReward() {
+        Task p = period(day(16), null, day(22));
+        p.finish(day(17), 10, 10, PetKind.DOG);
+        assertEquals("true 2026-11-17 10 10 2026-11-17 DOG 2026-11-16 2026-11-16 2026-11-22", p.isDone() + " "
+                + p.getDoneDay() + " " + p.getRewardPoints() + " " + p.getRewardExp() + " " + p.getRewardDay() + " "
+                + p.getRewardPet() + " " + p.getDate() + " " + p.getStartDay() + " " + p.getDueDate());
+    }
+
+    /** 하루 상한에 걸린 끝내기는 받은 날을 적지 않는다(docs/porting/rewards.md T-RWD-5). */
+    @Test
+    void finishWithoutRewardHasNoRewardDay() {
+        Task t = make(Kind.TASK, TODAY, null, false, 30);
+        t.finish(TODAY, 0, 0, null);
+        assertEquals("true 2026-11-18 null", t.isDone() + " " + t.getDoneDay() + " " + t.getRewardDay());
     }
 }
