@@ -96,11 +96,24 @@ class WordsTest {
 
     @Test
     void E_WORD_17_emoji() {
-        assertEquals(SMILE.repeat(7) + "…", Words.shortTitle(SMILE.repeat(15)));
+        assertEquals(SMILE.repeat(15), Words.shortTitle(SMILE.repeat(15)));
     }
 
     @Test
-    void E_WORD_18_emojiCut() {
-        assertEquals("가".repeat(13) + "\uD83D…", Words.shortTitle("가".repeat(13) + SMILE + "나"));
+    void E_WORD_18_emojiFifteenth() {
+        String title = "가".repeat(13) + SMILE + "나";
+        assertEquals(title, Words.shortTitle(title));
+    }
+
+    @Test
+    void E_WORD_19_emojiFourteenth() {
+        assertEquals("가".repeat(13) + SMILE + "…", Words.shortTitle("가".repeat(13) + SMILE + "나나"));
+    }
+
+    @Test
+    void E_WORD_20_joinedEmoji() {
+        String man = "\uD83D\uDC68";
+        String family = man + "\u200D\uD83D\uDC69\u200D\uD83D\uDC67";
+        assertEquals("가".repeat(13) + man + "…", Words.shortTitle("가".repeat(13) + family + "나"));
     }
 }

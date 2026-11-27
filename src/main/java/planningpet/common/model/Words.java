@@ -24,8 +24,11 @@ public final class Words {
         return hasBatchim(word) ? withBatchim : without;
     }
 
-    /** 15자를 넘으면 앞 14자 뒤에 "…". */
+    /** 15자를 넘으면 앞 14자 뒤에 "…". 글자 수는 코드 포인트로 센다(06 읽는 법). */
     public static String shortTitle(String title) {
-        return title.length() > 15 ? title.substring(0, 14) + "…" : title;
+        if (title.codePointCount(0, title.length()) <= 15) {
+            return title;
+        }
+        return title.substring(0, title.offsetByCodePoints(0, 14)) + "…";
     }
 }
