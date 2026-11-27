@@ -2,11 +2,17 @@ package planningpet.pet.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import planningpet.app.model.AppData;
+import planningpet.reward.model.Rewards;
 import planningpet.schedule.model.Category;
+import planningpet.schedule.model.DeleteScope;
 import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Task;
 
@@ -63,5 +69,87 @@ class BondTest {
     void E_BOND_3_twoDaysRoundUp() {
         catDays(2);
         assertEquals("2 7", cat());
+    }
+
+    @Test
+    void E_BOND_4_dayBeforeFull() {
+        catDays(29);
+        assertEquals("29 97", cat());
+    }
+
+    @Test
+    void E_BOND_5_full() {
+        catDays(30);
+        assertEquals("30 100", cat());
+    }
+
+    @Test
+    void E_BOND_6_overFullStops() {
+        catDays(31);
+        assertEquals("31 100", cat());
+    }
+
+    /** 11-16의 앱 데이터에 고른 고양이와 할 일 a를 두고 Rewards로 끝낸다. */
+    private AppData catApp(Task a) {
+        AppData data = new AppData(Clock.fixed(Instant.parse("2026-11-16T10:00:00Z"), ZoneOffset.UTC), List.of(a), List.of());
+        data.addPet(new PetState(PetKind.CAT, "나비"));
+        data.setActiveKind(PetKind.CAT);
+        new Rewards(data).complete(a, d(16));
+        return data;
+    }
+
+    private static Task open() {
+        return new Task("a", 1, Kind.TASK, "a", d(16), null, 30, "", false, Category.OTHER, null, null, null, null, false,
+                null, 0, 0, null, null);
+    }
+
+    private static String cat(List<Task> history) {
+        return Bond.days(history, PetKind.CAT) + " " + Bond.percent(history, PetKind.CAT);
+    }
+
+    @Test
+    void T_BOND_3_deletedKeepsDay() {
+        Task a = open();
+        AppData data = catApp(a);
+        data.getBook().delete(a, DeleteScope.ONLY_THIS);
+        assertEquals(0, data.getBook().getTasks().size());
+        assertEquals("1 3", cat(data.getBook().rewardHistory()));
+    }
+
+    @Test
+    void E_BOND_7_cappedNotCounted() {
+        Task a = open();
+        AppData data = new AppData(Clock.systemUTC(), List.of(), List.of());
+        data.addPet(new PetState(PetKind.CAT, "나비"));
+        data.setRewardCount(d(16), 20);
+        new Rewards(data).complete(a, d(16));
+        assertEquals("0 0", cat(List.of(a)));
+    }
+
+    @Test
+    void E_BOND_8_uncompleteDropsDay() {
+        Task a = open();
+        AppData data = catApp(a);
+        assertEquals("1 3", cat(data.getBook().rewardHistory()));
+        new Rewards(data).uncomplete(a, d(16));
+        assertEquals("0 0", cat(data.getBook().rewardHistory()));
+    }
+
+    @Test
+    void E_BOND_9_otherPetNotCounted() {
+        rewarded(PetKind.CAT, d(16));
+        rewarded(PetKind.CAT, d(17));
+        rewarded(PetKind.DOG, d(16));
+        assertEquals("2 7", cat());
+        assertEquals(1, Bond.days(tasks, PetKind.DOG));
+        assertEquals(3, Bond.percent(tasks, PetKind.DOG));
+    }
+
+    @Test
+    void E_BOND_10_monthAndYearChange() {
+        rewarded(PetKind.CAT, LocalDate.of(2026, 11, 30));
+        rewarded(PetKind.CAT, LocalDate.of(2026, 12, 1));
+        rewarded(PetKind.CAT, LocalDate.of(2027, 1, 1));
+        assertEquals("3 10", cat());
     }
 }
