@@ -135,4 +135,51 @@ class RemindersTest {
         assertEquals(List.of("통계 과제 7분 뒤 시작"), due.stream().map(Reminder::text).toList());
         assertEquals(LocalDateTime.of(2027, 1, 1, 0, 5), due.get(0).start());
     }
+
+    @Test
+    void E_NTF_1_roundsUp() {
+        stats();
+        assertEquals(List.of("통계 과제 5분 뒤 시작"), texts("14:55:30"));
+    }
+
+    @Test
+    void E_NTF_2_oneSecondBefore() {
+        stats();
+        assertEquals(List.of("통계 과제 1분 뒤 시작"), texts("14:59:59"));
+    }
+
+    @Test
+    void E_NTF_3_placedPeriodTask() {
+        tasks.add(new Task("p", 1, Kind.TASK, "통계 과제", D16, LocalTime.of(15, 0), 30, "", false, Category.OTHER,
+                null, null, D16.plusDays(4), D16, false, null, 0, 0, null, null));
+        assertEquals(List.of("통계 과제 5분 뒤 시작"), texts("14:55"));
+    }
+
+    @Test
+    void E_NTF_4_sameStartBySeq() {
+        stats();
+        put(Kind.TASK, "영어 단어", D16, "15:00", false);
+        put(Kind.FIXED, "조회", D16, "14:58", false);
+        assertEquals(List.of("조회 8분 뒤 시작", "통계 과제 10분 뒤 시작", "영어 단어 10분 뒤 시작"), texts("14:50"));
+    }
+
+    @Test
+    void E_NTF_5_repeatCopies() {
+        for (int d = 0; d < 2; d++) {
+            tasks.add(new Task("s" + d, d + 1, Kind.TASK, "영어 단어", D16.plusDays(d), LocalTime.of(15, 0), 30, "",
+                    false, Category.OTHER, "S", Repeat.DAILY, null, null, false, null, 0, 0, null, null));
+        }
+        List<Reminder> due = run(D16, "14:50");
+        assertEquals(1, due.size());
+        assertEquals("s0", due.get(0).task().getId());
+    }
+
+    @Test
+    void E_NTF_6_movedBack() {
+        Task t = stats();
+        texts("14:50:00");
+        move(t, "16:00");
+        move(t, "15:00");
+        assertEquals(List.of(), texts("14:55"));
+    }
 }
