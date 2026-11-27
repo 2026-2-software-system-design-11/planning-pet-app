@@ -26,7 +26,11 @@ final class Snap {
     }
 
     static void assertLooksLikePrototype(String name, JComponent c, int w, int h) throws IOException {
-        BufferedImage got = paint(c, w, h);
+        assertLooksLikePrototype(name, paint(c, w, h));
+    }
+
+    /** 이미 그린 그림을 기준 그림과 맞춘다(아이콘처럼 부품이 아닌 것). */
+    static void assertLooksLikePrototype(String name, BufferedImage got) throws IOException {
         BufferedImage want = ImageIO.read(Snap.class.getResource("proto/" + name + ".png"));
         assertEquals(want.getWidth() + "x" + want.getHeight(), got.getWidth() + "x" + got.getHeight(), name);
         int differ = 0;
