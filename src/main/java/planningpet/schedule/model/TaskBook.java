@@ -3,12 +3,13 @@ package planningpet.schedule.model;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
-/** 일정 다루기(06 3번). 앱 데이터의 일정 목록, 넣은 순 번호, 앱의 오늘을 받아 다룬다. */
+/** 일정 다루기(06 3번, 6번). 앱 데이터의 일정 목록, 넣은 순 번호, 앱의 오늘을 받아 다룬다. */
 public final class TaskBook {
     private final List<Task> tasks;
     private final LongSupplier nextSeq;
@@ -85,6 +86,26 @@ public final class TaskBook {
             }
         }
         return best;
+    }
+
+    /**
+     * 06 6번. date의 시간표 일정은 앱 하루의 시각 순(같으면 넣은 순)으로 timed에 둔다. 그날 보이는(Task.shownOn) 그 밖의 할 일은 넣은
+     * 순으로, 끝내지 않은 기간 할 일 가운데 마감이 그날이면 dueToday, 뒤면 period, 나머지는 untimed다(D-70).
+     */
+    public DayPlan dayPlan(LocalDate date) {
+        LocalDate now = today.get();
+        List<Task> timed = tasks.stream()
+                .filter(t -> t.onTimetable(now) && t.getDate().equals(date))
+                .sorted(Comparator.comparingInt(Task::startMinute).thenComparingLong(Task::getSeq))
+                .toList();
+        List<Task> rest = tasks.stream()
+                .filter(t -> t.getKind() == Kind.TASK && !t.onTimetable(now) && t.shownOn(date, now))
+                .sorted(Comparator.comparingLong(Task::getSeq))
+                .toList();
+        List<Task> due = rest.stream().filter(t -> t.period() && !t.isDone() && t.getDueDate().equals(date)).toList();
+        List<Task> period = rest.stream().filter(t -> t.period() && !t.isDone() && t.getDueDate().isAfter(date)).toList();
+        List<Task> untimed = rest.stream().filter(t -> !due.contains(t) && !period.contains(t)).toList();
+        return new DayPlan(date, due, timed, untimed, period);
     }
 
     /** 그날 시간표에 놓인 일정. 끝낸 기간 할 일(D-66)과 못 끝낸 계획(D-67)은 빠진다. */
