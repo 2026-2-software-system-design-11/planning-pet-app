@@ -1,9 +1,12 @@
 package planningpet.common.view;
 
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
 import java.awt.Font;
 import java.awt.GraphicsEnvironment;
 import java.util.List;
+import javax.swing.JPanel;
 import javax.swing.UIManager;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.FontUIResource;
@@ -164,5 +167,24 @@ public final class Theme {
         UIManager.put("ProgressBar.foreground", new ColorUIResource(MINT));
         UIManager.put("ProgressBar.background", new ColorUIResource(TRACK));
         UIManager.put("ProgressBar.selectionForeground", new ColorUIResource(INK));
+    }
+
+    /** 배경 그림이 보이게 카드 밖의 패널을 투명하게 한다. 화면을 다시 만든 뒤마다 부른다. */
+    public static void clear(Component c) {
+        if (c instanceof JPanel p && !(p instanceof Card)) {
+            p.setOpaque(false);
+        }
+        if (c instanceof javax.swing.JToggleButton t && !(t.getUI() instanceof RoundButtonUI)) {
+            t.setOpaque(false);
+        }
+        if (c instanceof javax.swing.JScrollPane s) {
+            s.setOpaque(false);
+            s.getViewport().setOpaque(false);
+        }
+        if (c instanceof Container k) {
+            for (Component child : k.getComponents()) {
+                clear(child);
+            }
+        }
     }
 }
