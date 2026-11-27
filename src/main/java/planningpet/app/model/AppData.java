@@ -75,6 +75,34 @@ public final class AppData {
     public Map<String, SampleLook> getSampleLooks() { return Collections.unmodifiableMap(sampleLooks); }
     public DayOfWeek getWeekStart() { return weekStart; }
 
+    // 값 하나를 넣는 메서드. 저장의 읽기(07 저장 형식)가 쓰고, 규칙은 그 규칙을 옮기는 단위가 이것을 부르는 메서드로 더한다.
+    public void setNextSeq(long nextSeq) { this.nextSeq = nextSeq; }
+    public void setPoints(int points) { this.points = points; }
+    public void setRewardCount(LocalDate day, int count) {
+        rewardCountDay = day;
+        rewardCount = count;
+    }
+    public void setAttendanceDay(LocalDate day) { attendanceDay = day; }
+    public void setAttendDays(Set<LocalDate> days) { replace(attendDays, days); }
+    public void setLastOpenDay(LocalDate day) { lastOpenDay = day; }
+    public void setStreak(int streak) { this.streak = streak; }
+    public void setOwnedItems(Set<ItemId> items) { replace(ownedItems, items); }
+    public void setPlacedItems(Set<ItemId> items) { replace(placedItems, items); }
+    public void setTrayNoticeShown(boolean shown) { trayNoticeShown = shown; }
+    public void setCalendarFixed(boolean on) { calendarFixed = on; }
+    public void setListClickTime(boolean on) { listClickTime = on; }
+    public void setSamples(Set<String> ids, Map<String, SampleLook> looks) {
+        replace(sampleIds, ids);
+        sampleLooks.clear();
+        sampleLooks.putAll(looks);
+    }
+    public void setWeekStart(DayOfWeek weekStart) { this.weekStart = weekStart; }
+
+    private static <T> void replace(Set<T> mine, Set<T> values) {
+        mine.clear();
+        mine.addAll(values);
+    }
+
     /** 펫을 넣는다. 종류마다 하나인지는 06 30번이 본다. */
     public void addPet(PetState pet) { pets.add(pet); }
     public void setActiveKind(PetKind kind) { activeKind = kind; }
@@ -88,6 +116,47 @@ public final class AppData {
     public PetState activePet() {
         PetState chosen = pet(activeKind);
         return chosen != null || pets.isEmpty() ? chosen : pets.get(0);
+    }
+
+    /** 값이 같은 사본(06 22번의 되돌리기). 같은 시계를 쓰고 데이터 변경 알림을 받는 곳은 옮기지 않는다. */
+    public AppData copy() {
+        AppData c = new AppData(clock);
+        c.restore(this);
+        return c;
+    }
+
+    /**
+     * 06 22번의 되돌리기. 값을 from의 값으로 바꾼다. 일정은 id, 펫은 종류가 같은 객체에 값만 넣으므로 창이 잡아 둔 일정과 펫이 그대로
+     * 목록에 있다(docs/porting/store.md). 데이터 변경 알림을 받는 곳은 그대로다.
+     */
+    public void restore(AppData from) {
+        nextSeq = from.nextSeq;
+        book.restore(from.book);
+        points = from.points;
+        setRewardCount(from.rewardCountDay, from.rewardCount);
+        attendanceDay = from.attendanceDay;
+        setAttendDays(from.attendDays);
+        lastOpenDay = from.lastOpenDay;
+        streak = from.streak;
+        List<PetState> mine = new ArrayList<>(pets);
+        pets.clear();
+        for (PetState p : from.pets) {
+            PetState same = mine.stream().filter(m -> m.getKind() == p.getKind()).findFirst().orElse(null);
+            if (same == null) {
+                same = p.copy();
+            } else {
+                same.restore(p);
+            }
+            pets.add(same);
+        }
+        activeKind = from.activeKind;
+        setOwnedItems(from.ownedItems);
+        setPlacedItems(from.placedItems);
+        trayNoticeShown = from.trayNoticeShown;
+        calendarFixed = from.calendarFixed;
+        listClickTime = from.listClickTime;
+        setSamples(from.sampleIds, from.sampleLooks);
+        weekStart = from.weekStart;
     }
 
     /** 데이터 변경 알림을 받을 곳을 넣는다(06 22번). */
