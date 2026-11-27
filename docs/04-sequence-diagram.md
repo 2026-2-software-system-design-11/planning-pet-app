@@ -100,6 +100,13 @@
 - 연속 접속 일수(`lastOpenDay`, `streak`)는 저장할 데이터라 22번 `change`로 감쌌다. 5b의 `USUAL`은 펫 말만 바꾸므로 UC-09처럼 `say`로 알림만 보낸다.
 - 5a와 5c, 2a의 첫 말은 `PetTalk.say`가 고르는 상황과 문장만 달라 그 메시지의 노트에 적었다.
 
+### UC-02 출석하기
+
+![UC-02](diagrams/seq-uc02.png)
+
+- 출석 버튼은 홈, 일정관리, 설정의 화면 머리 오른쪽 카드에 있다(05 창 구조). 그 카드는 창 틀 `AppWindow`의 것으로 보고 그렸다.
+- 펫 말 "출석했어! +20P"는 06 16번의 `ATTENDED`다.
+
 ## 다시 그리기
 
 원본은 [diagrams/](diagrams/) 아래 `seq-*.puml`이고 공통 꾸밈은 `seq-common.iuml`이다. PlantUML로 그린다.

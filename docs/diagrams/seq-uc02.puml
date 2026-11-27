@@ -1,0 +1,23 @@
+@startuml seq-uc02
+!include seq-common.iuml
+actor 사용자
+$obj(AppWindow)
+$obj(RewardController)
+$obj(AppController)
+$obj(Rewards)
+$obj(PetTalk)
+alt 1a 오늘 이미 출석했다
+  note right of AppWindow : 버튼이 "출석 완료"이고 흐려\n누를 수 없다
+else 기본 흐름
+  사용자 -> AppWindow : 화면 머리 오른쪽 "출석 +20P" 누르기
+  AppWindow -> RewardController : attend()
+  RewardController -> AppController : change(what, edit)
+  AppController -> RewardController : edit()
+  RewardController -> Rewards : attend(today)
+  note right of Rewards : 20P를 더하고 attendanceDay를 오늘로,\nattendDays에 오늘을 넣는다.\n경험치와 하루 상한 횟수는 그대로
+  RewardController -> PetTalk : say(ATTENDED, ...)
+  RewardController -> AppController : say(line, day)
+  ref over RewardController, AppController : 저장과 되돌리기. 3a 저장 실패면 포인트와 출석 기록을 되돌린다
+  note right of AppWindow : 4 버튼이 "출석 완료"로 바뀌고\n보유 포인트가 늘어난다
+end
+@enduml
