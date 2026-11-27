@@ -46,8 +46,8 @@ public final class TaskBook {
     }
 
     /**
-     * 06 3번 겹침 묻기(D-87). 입력이 들어갈 날(반복이면 사본마다)의 시간표 일정(self는 빼고) 가운데 겹치는 것. 날이 가장 이른, 그 안에서
-     * 시작이 가장 이르고 넣은 순이 앞인 하나다. 시작 시각이 없거나 기간 할 일이면 null. 수정 창(self가 있음)은 그 날짜만 본다(D-42).
+     * 06 3번 겹침 묻기(D-87). 입력이 들어갈 날(반복이면 사본마다)과 그 앞날, 다음 날의 시간표 일정(self는 빼고) 가운데 실제 시각으로
+     * 겹치는 것(D-94). 날이 가장 이른, 그 안에서 실제 시작이 가장 이르고 넣은 순이 앞인 하나다. 시작 시각이 없거나 기간 할 일이면 null. 수정 창(self가 있음)은 그 날짜만 본다(D-42).
      */
     public Overlap overlap(TaskDraft draft, Task self) {
         Integer start = draft.startMinute();
@@ -69,15 +69,19 @@ public final class TaskBook {
     /** 한 날의 겹침. 두 일정은 서로의 끝이 서로의 시작보다 늦을 때만 겹친다(18번과 같다). */
     private Overlap overlapOn(LocalDate day, int start, int minutes, Task self) {
         int end = start + minutes;
+        // D-94: 실제 시각으로 본다. 앞날 일정은 24시간을 빼고, 다음 날 일정은 더해 잰다.
         Overlap best = null;
         int bestStart = Integer.MAX_VALUE;
-        for (Task t : timedOn(day)) {
-            int s = t.startMinute();
-            int e = t.endMinute();
-            boolean earlier = s < bestStart || s == bestStart && t.getSeq() < best.other().getSeq();
-            if (t != self && s < end && start < e && earlier) {
-                best = new Overlap(t, Math.min(end, e) - Math.max(start, s), true);
-                bestStart = s;
+        for (int shift = -1; shift <= 1; shift++) {
+            int off = shift * Task.DAY;
+            for (Task t : timedOn(day.plusDays(shift))) {
+                int s = t.startMinute() + off;
+                int e = t.endMinute() + off;
+                boolean earlier = s < bestStart || s == bestStart && t.getSeq() < best.other().getSeq();
+                if (t != self && s < end && start < e && earlier) {
+                    best = new Overlap(t, Math.min(end, e) - Math.max(start, s), shift == 0);
+                    bestStart = s;
+                }
             }
         }
         return best;
