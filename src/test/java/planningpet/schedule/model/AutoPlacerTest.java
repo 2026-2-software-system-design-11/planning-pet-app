@@ -94,4 +94,74 @@ class AutoPlacerTest {
         task("D", 17, 30);
         assertEquals(" / 못 놓음  / 대상 0", text(run(16, 18, "10:00")));
     }
+
+    @Test
+    void T_AUTO_6_shortBeforeMidnight() {
+        task("E", 16, 30);
+        task("F", 16, 20);
+        assertEquals("F 11-16 23:40 / 못 놓음 E / 대상 2", text(run(16, 16, "23:40")));
+    }
+
+    @Test
+    void T_AUTO_7_afterMidnight() {
+        task("G", 16, 30);
+        assertEquals(" / 못 놓음 G / 대상 1", text(run(16, 17, "01:00")));
+    }
+
+    @Test
+    void T_AUTO_8_doneIsNotTarget() {
+        add(Kind.TASK, "끝냄", day(16), null, 30, null, null, true);
+        assertEquals(" / 못 놓음  / 대상 0", text(run(16, 16, "15:23")));
+    }
+
+    @Test
+    void T_AUTO_9_sameLengthBySeq() {
+        task("H", 16, 30);
+        task("I", 16, 30);
+        assertEquals("H 11-16 09:00, I 11-16 09:30 / 못 놓음  / 대상 2", text(run(16, 16, "08:00")));
+    }
+
+    @Test
+    void T_AUTO_10_nextWeek() {
+        task("J", 23, 30);
+        assertEquals("J 11-23 09:00 / 못 놓음  / 대상 1", text(run(23, 16, "15:23")));
+    }
+
+    @Test
+    void T_AUTO_11_periodEarliestDayWithRoom() {
+        period("P", 14, 18, 120);
+        assertEquals("P 11-17 09:00 / 못 놓음  / 대상 1", text(run(16, 16, "22:30")));
+    }
+
+    @Test
+    void T_AUTO_12_periodFromFirstDay() {
+        period("Q", 19, 22, 30);
+        assertEquals("Q 11-19 09:00 / 못 놓음  / 대상 1", text(run(16, 16, "15:23")));
+    }
+
+    @Test
+    void T_AUTO_13_onlyShownWeek() {
+        period("S", 16, 25, 30);
+        assertEquals("S 11-23 09:00 / 못 놓음  / 대상 1", text(run(23, 16, "15:23")));
+    }
+
+    @Test
+    void T_AUTO_14_missedPlanAgain() {
+        add(Kind.TASK, "P", day(17), "09:00", 30, day(16), day(22), false);
+        assertEquals("P 11-18 10:00 / 못 놓음  / 대상 1", text(run(16, 18, "10:00")));
+    }
+
+    @Test
+    void T_AUTO_16_weekStartSetting() {
+        task("Q", 22, 30);
+        assertEquals("Q 11-22 09:00 / 못 놓음  / 대상 1", text(run(16, 16, "15:23")));
+        assertEquals(" / 못 놓음  / 대상 0", text(run(15, 16, "15:23")));
+    }
+
+    @Test
+    void T_TT_9_placedForTimetable() {
+        task("A", 18, 30);
+        task("B", 20, 60);
+        assertEquals("A 11-18 09:00, B 11-20 09:00 / 못 놓음  / 대상 2", text(run(16, 18, "09:00")));
+    }
 }
