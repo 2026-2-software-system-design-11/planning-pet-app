@@ -15,6 +15,9 @@ public final class Room {
 
     /** 놓인 아이템이면 치우고, 아니면 놓는다. 미리보기 칸의 "방에 놓기"와 "방에서 치우기"가 부른다. */
     public void toggle(ItemId item) {
+        if (!data.getOwnedItems().contains(item)) {
+            throw new IllegalStateException("사지 않은 아이템"); // 06 20번 오류(E-ROOM-1).
+        }
         Set<ItemId> placed = new LinkedHashSet<>(data.getPlacedItems());
         if (!placed.remove(item)) {
             placed.add(item);

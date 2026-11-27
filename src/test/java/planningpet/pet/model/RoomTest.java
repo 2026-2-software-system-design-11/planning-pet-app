@@ -1,6 +1,7 @@
 package planningpet.pet.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static planningpet.shop.model.ItemId.CUSHION;
 
 import java.time.Clock;
@@ -25,7 +26,7 @@ class RoomTest {
 
     @Test
     void E_ROOM_1_toggleItemNotOwned() {
-        room.toggle(CUSHION);
-        assertEquals("[] [CUSHION]", data.getOwnedItems() + " " + data.getPlacedItems());
+        assertThrows(IllegalStateException.class, () -> room.toggle(CUSHION));
+        assertEquals("[] []", data.getOwnedItems() + " " + data.getPlacedItems());
     }
 }
