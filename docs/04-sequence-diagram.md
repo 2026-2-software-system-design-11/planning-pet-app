@@ -190,7 +190,7 @@
 
 ![UC-20](diagrams/seq-uc20.png)
 
-- "{종류} 데려오기" 창은 나의 방 view가 띄운다. 화면이 펫이 하나일 때만 "+"를 보이므로 `adopt`의 false는 그리지 않았다.
+- "{종류} 데려오기" 창은 나의 방 view(`PetScreen`)가 아직 없는 종류로 여는 `AdoptDialog`다. 창을 여는 일은 view끼리라 노트로 적었고, 데려오기를 누르면 `AdoptDialog`가 `adopt`를 부른다(07). 화면이 펫이 하나일 때만 "+"를 보이므로 `adopt`의 false는 그리지 않았다.
 - 펫 말 `ADOPTED`는 메인 말풍선에 남고 나의 방 말풍선에도 한 번 보인다(06 16번, D-62). 그래서 다른 펫 말처럼 `AppController.say`로 넘기고, 나의 방에 한 번 보이도록 `sayInRoom`도 부른다.
 
 ### UC-21 고른 펫 바꾸기
