@@ -2,17 +2,23 @@
 !include seq-common.iuml
 actor 사용자
 $obj(PickDialog)
+$obj(PickCard)
+$obj(RoundField)
 $obj(PetController)
 $obj(AppController)
 $obj(Examples)
-note right of PickDialog : 첫 실행에 메인 창보다 먼저 뜬다(UC-01 2a).\n고양이와 강아지, 처음 고른 것은 고양이
-사용자 -> PickDialog : 동물을 고르고 이름 칸에 이름 쓰기
+note right of PickDialog : 첫 실행에 메인 창보다 먼저 뜬다(UC-01 2a).\nPickScene이 그린 하늘 언덕 위에 PetArt 로고,\n리본 제목, 동물 카드 둘, 이름 칸, 버튼 줄
+사용자 -> PickCard : 고양이나 강아지 카드 누르기
+note right of PickCard : 처음 고른 것은 고양이.\n고른 카드는 민트 테두리와 체크 배지
+사용자 -> RoundField : 이름 칸에 이름 쓰기
+note right of RoundField : 칸 안 오른쪽 글자 수가 "0 / 10"에서\n칠 때마다 바뀐다. 10자를 넘게는 써지지 않는다
 alt 창을 닫는다(05 반려동물 고르기 창)
   사용자 -> PickDialog : 창의 닫기 버튼 누르기
   note right of PickDialog : 아무것도 저장하지 않고 앱을 끝낸다.\n다음에 켜면 다시 뜬다
 else 기본 흐름
   사용자 -> PickDialog : "바로 시작" 누르기
   note right of PickDialog : 이름 칸의 Enter도 같다.\n3a "예시로 둘러보기"도 같다
+  note right of PickDialog : 고른 카드의 종류와 이름 칸의 글을 읽는다
   PickDialog -> PetController : choose(kind, name, examples)
   PetController -> AppController : change(what, edit)
   AppController -> PetController : edit()
