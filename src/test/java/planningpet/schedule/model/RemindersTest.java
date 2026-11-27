@@ -112,4 +112,27 @@ class RemindersTest {
         assertEquals(List.of(), texts("14:50"));
         assertEquals(List.of(), texts("15:00"));
     }
+
+    @Test
+    void T_NTF_10_otherDate() {
+        put(Kind.TASK, "통계 과제", D16.plusDays(1), "00:05", false);
+        assertEquals(List.of("통계 과제 10분 뒤 시작"), texts("23:55"));
+    }
+
+    @Test
+    void T_NTF_11_nextDayStart() {
+        put(Kind.TASK, "통계 과제", D16, "+00:30", false);
+        assertEquals(List.of(), texts("00:20"));
+        assertEquals(List.of("통계 과제 10분 뒤 시작"),
+                run(D16.plusDays(1), "00:20").stream().map(Reminder::text).toList());
+    }
+
+    @Test
+    void E_NTF_7_yearChanges() {
+        LocalDate last = LocalDate.of(2026, 12, 31);
+        put(Kind.TASK, "통계 과제", last, "+00:05", false);
+        List<Reminder> due = run(last, "23:58");
+        assertEquals(List.of("통계 과제 7분 뒤 시작"), due.stream().map(Reminder::text).toList());
+        assertEquals(LocalDateTime.of(2027, 1, 1, 0, 5), due.get(0).start());
+    }
 }
