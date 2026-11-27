@@ -29,6 +29,8 @@ package planningpet.reward.model {
   }
 }
 RewardController --> "1" Rewards
+RewardController ..> Level
+RewardController ..> planningpet.pet.model.PetTalk
 RewardController --> "1" planningpet.app.controller.AppController
 Rewards --> "1" planningpet.app.model.AppData
 Rewards ..> planningpet.schedule.model.Task
