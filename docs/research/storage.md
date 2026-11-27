@@ -57,3 +57,12 @@
 ## 배포 크기
 
 - sqlite-jdbc jar 12.1MB(여러 운영체제용 네이티브 라이브러리 포함), h2 jar 2.7MB, 파일 방식 0MB.
+
+## 저장 엔진 고르기 (2026-11-27)
+
+[D-111](../decisions.md)의 근거다. 07에서 저장 형식을 정하며 파일 형식을 손으로 짜는 대신 위에서 잰 DB를 다시 봤다.
+
+- 위 표에서 sqlite와 h2는 할 일 10만 개에서도 체크 하나 저장이 1ms 아래이고, 저장 중 강제 종료 20번이 모두 온전했다. 첫 열기는 sqlite가 289ms로 가장 느리지만 앱을 켤 때 한 번이다.
+- h2는 잰 값이 가장 좋았지만 작은 버전 사이에서도 파일 형식이 바뀐다. 2.1에서 만든 파일을 2.2가 열지 못해, 업그레이드할 때마다 SQL 스크립트로 내보내고 다시 들여와야 한다. 출처: <https://sources.debian.org/data/main/h/h2database/2.1.214-1/src/docsrc/html/migration-to-v2.html>, <https://groups.google.com/g/h2-database/c/d5J3JOVXNj8> (2026-11-27 확인)
+- sqlite는 3.0.0(2004) 이후 파일 형식이 하위 호환이고 2050년까지 지원할 계획이다. 출처: <https://sqlite.org/lts.html>, <https://www.sqlite.org/formatchng.html> (2026-11-27 확인)
+- 앱을 새 버전으로 바꿔도 데이터가 열려야 한다(NFR-4). 그래서 sqlite를 고른다. 비용은 실행 JAR에 붙는 드라이버 12.1MB(위 "배포 크기")와 첫 열기 약 0.3초다.
