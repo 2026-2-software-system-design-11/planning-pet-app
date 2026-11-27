@@ -80,6 +80,21 @@ class ShopTest {
     }
 
     @Test
+    void T_SHOP_11_sellGivesPriceBack() {
+        data.setOwnedItems(Set.of(CUSHION));
+        data.setPlacedItems(Set.of(CUSHION));
+        data.setPoints(100);
+        assertEquals("50, 150P [] []", shop.sell(CUSHION) + ", " + data.getPoints() + "P " + data.getOwnedItems() + " "
+                + data.getPlacedItems());
+    }
+
+    @Test
+    void T_SHOP_12_cannotSellWhatIsNotOwned() {
+        data.setPoints(150);
+        assertEquals("-1, 150P", shop.sell(SOFA) + ", " + data.getPoints() + "P");
+    }
+
+    @Test
     void T_SHOP_7_thirteenItemsSum2210() {
         List<Item> all = shop.find("전체", "", false);
         assertEquals("13 2210", all.size() + " " + all.stream().mapToInt(Item::price).sum());
@@ -117,6 +132,13 @@ class ShopTest {
     void E_SHOP_4_ownedButPutAwayStaysAway() {
         data.setOwnedItems(Set.of(CUSHION));
         assertEquals("ALREADY_OWNED 0, 0P [CUSHION] []", buy(0, CUSHION));
+    }
+
+    @Test
+    void E_SHOP_5_sellPutAwayItemWithNegativePoints() {
+        data.setOwnedItems(Set.of(CUSHION));
+        data.setPoints(-20);
+        assertEquals("50, 30P []", shop.sell(CUSHION) + ", " + data.getPoints() + "P " + data.getOwnedItems());
     }
 
     @Test

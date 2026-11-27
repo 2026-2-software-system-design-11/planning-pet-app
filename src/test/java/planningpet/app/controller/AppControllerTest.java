@@ -22,6 +22,8 @@ import planningpet.schedule.model.Category;
 import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Task;
 import planningpet.schedule.model.TaskDraft;
+import planningpet.shop.model.ItemId;
+import planningpet.shop.model.Shop;
 
 /** 06 22번과 docs/porting/store.md 2절의 E-SAVE 경계. 저장소는 저장한 포인트를 적거나 늘 실패한다(07 실행 모드). */
 class AppControllerTest {
@@ -120,6 +122,14 @@ class AppControllerTest {
         assertEquals("false 30P 0 0", t.isDone() + " " + data.getPoints() + "P " + data.pet(PetKind.CAT).getExp() + " "
                 + data.getRewardCount());
         assertEquals(List.of("할 일 완료 저장에 실패해서 바꾸기 전으로 돌렸어요."), errors);
+    }
+
+    @Test
+    void T_SAVE_2_failedBuyRestores() {
+        data.setPoints(120);
+        failing = true;
+        app.change("아이템 사기", () -> new Shop(data).buy(ItemId.CUSHION));
+        assertEquals("120P [] []", data.getPoints() + "P " + data.getOwnedItems() + " " + data.getPlacedItems());
     }
 
     @Test

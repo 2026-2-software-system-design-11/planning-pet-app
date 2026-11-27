@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Set;
 import planningpet.app.model.AppData;
 
-/** 상점(06 20번): 아이템과 가격, 분류, 사기, 찾기, 방 꾸미기 만족도. 포인트와 아이템은 펫 둘이 함께 쓴다(D-48). */
+/** 상점(06 20번): 아이템과 가격, 분류, 사기, 되팔기, 찾기, 방 꾸미기 만족도. 포인트와 아이템은 펫 둘이 함께 쓴다(D-48). */
 public final class Shop {
     /** D-52의 아이템. `ItemId` 순서라 가격 순이다. */
     private static final List<Item> ITEMS = List.of(
@@ -47,6 +47,24 @@ public final class Shop {
         data.setOwnedItems(with(data.getOwnedItems(), item));
         data.setPlacedItems(with(data.getPlacedItems(), item));
         return new BuyResult(BuyResult.Outcome.BOUGHT, 0);
+    }
+
+    /** 06 20번, D-85. 가진 아이템을 산 값 그대로 되판다. 방에 놓였으면 함께 뺀다. 돌려준 포인트, 가지지 않았으면 -1. */
+    public int sell(ItemId item) {
+        if (!data.getOwnedItems().contains(item)) {
+            return -1;
+        }
+        int price = price(item);
+        data.setPoints(data.getPoints() + price);
+        data.setOwnedItems(without(data.getOwnedItems(), item));
+        data.setPlacedItems(without(data.getPlacedItems(), item));
+        return price;
+    }
+
+    private static Set<ItemId> without(Set<ItemId> items, ItemId item) {
+        Set<ItemId> r = new LinkedHashSet<>(items);
+        r.remove(item);
+        return r;
     }
 
     /** 산 순서를 지키며 하나를 더한 목록. */
