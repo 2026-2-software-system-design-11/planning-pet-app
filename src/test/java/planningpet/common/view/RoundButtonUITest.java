@@ -141,6 +141,27 @@ class RoundButtonUITest {
                 new Rectangle(), b.getIconTextGap());
     }
 
+    private static JToggleButton menu(boolean selected) {
+        JToggleButton t = round(new JToggleButton("", selected));
+        t.putClientProperty(RoundButtonUI.NAV, true);
+        return t;
+    }
+
+    @Test
+    void eBtn12Menu() throws IOException {
+        JToggleButton over = menu(false);
+        over.getModel().setRollover(true);
+        JToggleButton chosen = menu(true);
+        chosen.putClientProperty(RoundButtonUI.PRIMARY, true);
+        JToggleButton off = menu(false);
+        off.setEnabled(false);
+        looks("nav", menu(false));
+        looks("nav-over", over);
+        looks("nav-selected-primary", chosen);
+        looks("nav-disabled", off);
+        assertEquals(List.of(Theme.INK, Theme.INK, Theme.INK_DIM), List.of(ink(menu(false)), ink(chosen), ink(off)));
+    }
+
     @Test
     void eBtn2EmptyText() throws IOException {
         JButton b = round(new JButton(""));

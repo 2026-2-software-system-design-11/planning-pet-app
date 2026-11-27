@@ -14,9 +14,12 @@ import javax.swing.plaf.basic.BasicButtonUI;
 import javax.swing.plaf.basic.BasicGraphicsUtils;
 
 /**
- * 디자인 시스템 5절의 버튼. 기본은 흰 알약에 옅은 그림자, 주 행동(PRIMARY)과 눌린 토글은 민트 채움에 흰 글자다.
+ * 디자인 시스템 5절의 버튼. 기본은 흰 알약에 옅은 그림자, 주 행동(PRIMARY)과 눌린 토글은 민트 채움에 흰 글자,
+ * 내비게이션(NAV)은 바탕 없이 아이콘과 글자만 있고 고르면 연민트 알약이다.
  */
 public final class RoundButtonUI extends BasicButtonUI {
+    /** 내비게이션 버튼에 붙이는 표시. */
+    public static final String NAV = "planningpet.nav";
     /** 화면에서 가장 중요한 행동(상점, 출석, 저장 같은)에 붙이는 표시. */
     public static final String PRIMARY = "planningpet.primary";
     /** 치운 아이템처럼 글자를 흐리게 보일 때 붙이는 표시. */
@@ -37,7 +40,8 @@ public final class RoundButtonUI extends BasicButtonUI {
     }
 
     private static boolean filled(AbstractButton b) {
-        return Boolean.TRUE.equals(b.getClientProperty(PRIMARY)) || (b instanceof JToggleButton && b.isSelected());
+        return !Boolean.TRUE.equals(b.getClientProperty(NAV))
+                && (Boolean.TRUE.equals(b.getClientProperty(PRIMARY)) || (b instanceof JToggleButton && b.isSelected()));
     }
 
     @Override
@@ -45,12 +49,21 @@ public final class RoundButtonUI extends BasicButtonUI {
         AbstractButton b = (AbstractButton) c;
         Graphics2D g = (Graphics2D) graphics.create();
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        boolean nav = Boolean.TRUE.equals(b.getClientProperty(NAV));
         boolean pressed = b.getModel().isPressed() && b.getModel().isArmed();
         boolean over = b.getModel().isRollover() && b.isEnabled();
         int w = b.getWidth() - 4;
         int h = b.getHeight() - 5;
         int arc = Math.min(h, 2 * Theme.BUTTON_RADIUS);
-        if (!b.isEnabled()) {
+        if (nav) {
+            if (b.isSelected()) {
+                g.setColor(Theme.NAV_PILL);
+                g.fillRoundRect(2, 1, w, h, arc, arc);
+            } else if (over) {
+                g.setColor(new Color(255, 255, 255, 170));
+                g.fillRoundRect(2, 1, w, h, arc, arc);
+            }
+        } else if (!b.isEnabled()) {
             g.setColor(new Color(0xEDF3F5));
             g.fillRoundRect(2, 1, w, h, arc, arc);
             g.setColor(Theme.CARD_EDGE);
@@ -70,7 +83,7 @@ public final class RoundButtonUI extends BasicButtonUI {
             g.setColor(over || pressed ? Theme.MINT_LINE : Theme.CARD_EDGE);
             g.drawRoundRect(2, 1, w - 1, h - 1, arc, arc);
         }
-        if (b.isFocusOwner() && b.isFocusPainted() == false && b.isEnabled()) {
+        if (b.isFocusOwner() && b.isFocusPainted() == false && !nav && b.isEnabled()) {
             g.setColor(new Color(0x1F, 0xB9, 0x9C, 110));
             g.drawRoundRect(4, 3, w - 5, h - 5, arc - 4, arc - 4);
         }
