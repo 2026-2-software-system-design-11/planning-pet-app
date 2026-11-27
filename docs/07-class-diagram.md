@@ -27,12 +27,15 @@ D-109의 방향(view에서 controller와 model, controller에서 model, store에
 | 도메인 | 그림 |
 |---|---|
 | 일정 model | ![일정 model](diagrams/class-schedule.png) |
+| 일정 규칙, controller, view | ![일정 규칙](diagrams/class-schedule-rules.png) |
 | 보상 | ![보상](diagrams/class-reward.png) |
 | 앱 | ![앱](diagrams/class-app.png) |
 
 ## 나눈 까닭과 버린 안
 
 - **데이터는 `AppData` 하나에 모은다.** 06 "데이터" 표의 `AppData` 값을 필드로 갖고, 일정은 `TaskBook`, 펫은 `PetState`로 담는다. 파일 하나(D-08)를 그대로 옮긴 꼴이라 저장은 `AppData` 하나를 쓰고 읽는다. 22번의 되돌리기는 `copy`와 `restore`가 한다. 버린 안: 도메인마다 데이터 클래스를 두기. 06 표의 대상과 달라지고, 저장할 때 다시 모아야 한다.
+- **controller는 창을 모른다.** 확인을 묻는 일은 인자로 받는다. `TaskController.add`의 `ask`(3번 겹침 묻기), `clearSamples`의 `confirm`(31번 확인 창), `AppController`의 `errors`(22번 저장 실패 창)는 view가 넘긴 함수다. 버린 안: controller가 `JOptionPane`을 부르기. controller에서 view로 가는 의존이 생기고 창 없이 검사할 수 없다.
+- **30초 타이머는 `app.view.Tray`에 둔다.** 타이머가 `DayWatcher.tick`(23번)과 `AppController.dueReminders`(17번)를 부르고, 받은 알림을 운영체제 알림으로 띄운다. 알림을 띄우는 일이 화면 쪽이라 controller가 view를 부르지 않게 하려는 것이다.
 
 ## 다시 그리기
 
