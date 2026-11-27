@@ -15,7 +15,7 @@
 | 점선과 빈 삼각형 | 실현(인터페이스를 구현한다) |
 
 - 값을 읽기만 하거나 값 하나만 바꾸는 메서드(`getTitle` 같은 것)는 그리지 않았다. view 클래스는 이름만 그렸다. 화면의 글과 동작은 05와 06에 있다. 모든 view가 쓰는 `common.view`(디자인 시스템의 색과 부품)는 둥근 입력칸 `RoundField`만 그렸고, 펫 그림은 `PetArt` 상자 하나로 그렸다.
-- 함수가 돌려주는 값 묶음(`DayPlan`, `Rate` 같은 것)과 연관이 없는 값 목록은 상자 없이 타입으로만 적었다. 내용은 06의 그 함수 출력 절에 있다.
+- 함수가 돌려주는 값 묶음(`DayPlan`, `Rate` 같은 것)과 연관이 없는 값 목록은 상자 없이 타입으로만 적었다. 내용은 06의 그 함수 출력 절에 있다. 메서드를 가진 값 묶음 `TaskDraft`(2번 입력)와 `Overlap`(3번 겹침 묻기의 결과)은 상자로 그렸다.
 - 다른 도메인의 클래스는 `planningpet.app.model.AppData`처럼 패키지 이름을 붙인 상자로 그렸다.
 
 ## 층과 의존 방향
@@ -40,8 +40,11 @@ D-109의 방향(view에서 controller와 model, controller에서 model, store에
 - **규칙 클래스는 `AppData`를 받는다.** `Rewards`, `Visits`, `Shop`, `Room`, `Stats`는 포인트, 출석, 아이템처럼 펫 둘이 함께 쓰는 값을 바꾸거나 센다(D-48). 그래서 이 도메인 model과 `app.model`은 서로를 안다. 버린 안: 값마다 좁은 인터페이스를 두어 끊기. 클래스가 값의 수만큼 늘고 얻는 것이 그림의 화살표 몇 개뿐이다.
 - **펫 말풍선 `Bubble`은 `AppData` 밖에 둔다.** 펫 말은 저장할 데이터가 아니다(06 읽는 법). `AppController`가 22번에서 다시 세기(D-106)를 판단하고, 홈과 나의 방 view가 읽는다. 나의 방 말풍선에 한 번 하는 말(`BOUGHT`, `ADOPTED`)도 `roomLine`에 두어 창 없이 검사한다(D-109). controller가 `AppController.sayInRoom`으로 넣고 다음 변경 때 비우며, `RoomView`는 그 말이 없으면 하트를 그린다.
 - **controller는 창을 모른다.** 확인을 묻는 일은 인자로 받는다. `TaskController.add`, `update`, `placeAt`의 `ask`(3번 겹침 묻기)와 `update`, `placeAt`의 `chooseScope`(반복 사본일 때만 부르는 범위 물음, 취소면 null. 3번이 겹침을 먼저, 범위를 나중에 묻는다), `clearSamples`의 `confirm`(31번 확인 창), `AppController`의 `errors`(22번 저장 실패 창)는 view가 넘긴 함수다. 버린 안: controller가 `JOptionPane`을 부르기. controller에서 view로 가는 의존이 생기고 창 없이 검사할 수 없다.
+- **일정 model은 앱의 오늘을 값으로 받는다.** `TaskBook`은 생성자에서 일정 목록, 넣은 순 번호를 주는 `nextSeq`, 앱의 오늘을 주는 `today`(`AppData.today()`를 부르는 함수)를 받는다. 겹침(`overlap`), 그날 목록(`dayPlan`), 주의 목록(`untimedOfWeek`)은 시간표에 놓인 일정을 `Task.onTimetable(today)`로 고르는데, `overlap(draft, self)`에는 오늘 인자가 없고 `TaskDraft.today`는 끝낸 일과 마감이 지난 일을 고칠 때 `null`이기 때문이다(D-99). `onTimetable`의 인자는 보는 날이 아니라 앱의 오늘이다. 못 끝낸 계획(D-67)은 오늘에 따라 시간표에서 빠진다. 까닭은 [porting/task-add.md](porting/task-add.md)에 있다.
+- **`TaskDraft`는 검사에 쓰는 값을 모두 갖는다.** 06 2번의 입력에 더해 시각을 정해 둔 날 `placed`, 앱의 오늘 `today`, 수정 창의 값인지 `editing`(반복 칸을 검사하지 않는다, D-42), 시각 고치기 창의 값인지 `timeOnly`를 값으로 둔다. 06 2번이 `validate()`를 인자 없이 적었고, `update`는 07 시퀀스(seq-uc05)대로 두 창을 같은 `update(task, draft, scope)`로 받아 `timeOnly`로 가른다. 까닭은 [porting/task-check.md](porting/task-check.md), [porting/repeat.md](porting/repeat.md), [porting/task-edit.md](porting/task-edit.md)에 있다.
+- **겹침 결과 `Overlap`.** 겹친 일정 `other`, 겹친 분 `minutes`, 그 일정이 들어갈 날과 같은 앱 날짜의 일인지 `sameDay`다. `question()`이 3번의 물음 글 "{날}{시각 글} '{제목}'{과/와} {분}분 겹쳐요. 그래도 넣을까요?"를 만들고, `sameDay`가 아니면 앞에 "11/20(금) "을 붙인다(D-94). 시각 글은 6번 `timeText`와 같은 꼴이다. 한 날만 보는 겹침(시각 고치기 창과 끌어 놓기가 쓸 것)은 S5와 C2를 옮길 때 정하므로 그리지 않았다([porting/task-add.md](porting/task-add.md), [porting/task-lists.md](porting/task-lists.md)).
 - **30초 타이머는 `app.view.Tray`에 둔다.** 타이머가 `DayWatcher.tick`(23번)과 `AppController.dueReminders`(17번)를 부르고, 받은 알림을 운영체제 알림으로 띄운다. 알림을 띄우는 일이 화면 쪽이라 controller가 view를 부르지 않게 하려는 것이다.
-- **06에 없는 메서드.** `Task.finish`와 `unfinish`는 `Rewards`가 끝냄과 보상을 적는 길이다(D-109, 필드를 열지 않는다). `AppController.onClose`와 `quit`는 25번, `SettingsController.setAutostart`와 `Autostart`는 25번의 컴퓨터 켤 때 실행이다. `TaskBook`의 `deletedRewarded`는 5번이 남기는 보상 기록이고 06 "데이터" 표에도 있다.
+- **06에 없는 메서드.** `Task.finish`와 `unfinish`는 `Rewards`가 끝냄과 보상을 적는 길이다(D-109, 필드를 열지 않는다). `AppController.onClose`와 `quit`는 25번, `SettingsController.setAutostart`와 `Autostart`는 25번의 컴퓨터 켤 때 실행이다. `TaskBook`의 `deletedRewarded`는 5번이 남기는 보상 기록이고 06 "데이터" 표에도 있다. `TaskBook`이 갖고 `delete`가 채우며 바꿀 수 없는 목록으로 읽힌다. 생성자는 이 값을 받지 않아 `TaskBook`은 늘 빈 기록으로 시작한다. 저장(M8)이 `task` 표의 `deleted` 열에서 읽은 일정을 넣을 길(생성자 인자나 메서드)은 아직 정하지 않았고 M8이 정한다([porting/task-edit.md](porting/task-edit.md)).
 - **고르기 창, 데려오기 창, 로고의 부품.** 반려동물 고르기 창 `PickDialog`는 동물 카드 `PickCard` 둘과 이름 칸 `RoundField`를 갖는다. `PickCard`는 05 입력 항목 1대로 `JRadioButton`이고 카드 모양으로 그린다. `RoundField`는 홈 빠른 추가와 같은 둥근 입력칸이고, 이름 칸에서는 칸 안 오른쪽에 친 글자 수를 "0 / 10"처럼 보인다(05 입력 항목 2, D-113). 하늘 언덕 바탕, 리본, 카드 안 덤불과 데이지는 `PickScene`이 그린다. 펫 데려오기 창은 기본 물음 창 대신 `AdoptDialog`가 `JOptionPane` 안을 채우고, 나의 방의 "+"가 열며, 데려오기를 누르면 `PetController.adopt`(30번)를 부른다. 사이드바(`AppWindow`)와 고르기 창 머리의 로고 고양이 얼굴은 펫을 그리는 `PetArt`가 그린다([디자인 시스템](design-system.md) 10절).
 - **이름이 같은 `Slot` 둘.** `schedule.model.Slot`은 19번 시간표 칸, `pet.model.Slot`은 28번 장신구 칸이다. 06의 이름을 그대로 두었고 패키지가 달라 겹치지 않는다.
 - **프로토타입에서 옮긴 것.** 프로토타입은 옮길 동작의 비교 기준이고, 옮기는 방법은 본 구현으로 옮기기 문서(porting.md, D-107)를 따른다. `Store`의 public 필드는 `AppData`의 private 필드로, `TaskController`가 하던 제목 길이와 지난 날 판단은 `TaskDraft.validate`로 옮긴다(D-109). `Typed`(32번)와 `PetKind`는 Swing을 쓰지 않는 규칙과 값이라 view에서 model로 옮긴다. 18번의 까닭 고르기는 `AutoPlacer.reason`이다.
@@ -53,7 +56,7 @@ D-109의 방향(view에서 controller와 model, controller에서 model, store에
 | 표 | 한 행 | 열 |
 |---|---|---|
 | `app` | 앱 하나(행 하나) | `AppData`의 하나뿐인 값: `points`, `rewardCountDay`, `rewardCount`, `attendanceDay`, `lastOpenDay`, `streak`, `activeKind`, `trayNoticeShown`, `calendarFixed`, `listClickTime`, `weekStart`, `nextSeq` |
-| `task` | 일정 하나 | `Task`의 값 스무 개(`id`가 기본 키)와 `deleted`(`TaskBook.deletedRewarded`에 든 일정이면 1) |
+| `task` | 일정 하나 | `Task`의 값 스무 개(`id`가 기본 키)와 `deleted`(`TaskBook.deletedRewarded`에 든 일정이면 1. 읽은 일정을 `TaskBook`에 넣는 길은 M8이 정한다) |
 | `pet` | 펫 하나 | `kind`(기본 키), `name`, `exp`, `pose`, `ord`(`pets` 안의 순서) |
 | `wear` | 펫의 장신구 칸 하나 | `petKind`, `slot`, `wearId` |
 | `attend_day` | 출석한 날 하나 | `day`(`attendDays`) |

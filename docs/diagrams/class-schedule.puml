@@ -26,17 +26,39 @@ package planningpet.schedule.model {
     + pastCopy(today : LocalDate) : boolean
     + countDay() : LocalDate
     + startMinute() : int
-    + onTimetable(day : LocalDate) : boolean
+    + onTimetable(today : LocalDate) : boolean
     + finish(day : LocalDate, points : int, exp : int, pet : PetKind) : void
     + unfinish() : void
   }
-  class TaskDraft {
+  class TaskDraft <<record>> {
+    - kind : Kind
+    - title : String
+    - category : Category
+    - date : LocalDate
+    - dueDate : LocalDate
+    - startTime : LocalTime
+    - durationMinutes : int
+    - memo : String
+    - repeat : Repeat
+    - repeatEnd : LocalDate
+    - nextDay : boolean
+    - placed : LocalDate
+    - today : LocalDate
+    - editing : boolean
+    - timeOnly : boolean
     + validate() : List<FieldError>
+  }
+  class Overlap <<record>> {
+    - other : Task
+    - minutes : int
+    - sameDay : boolean
+    + question() : String
   }
   class TaskBook {
     - tasks : List<Task>
     - deletedRewarded : List<Task>
     - nextSeq : LongSupplier
+    - today : Supplier<LocalDate>
     + add(draft : TaskDraft) : List<Task>
     + overlap(draft : TaskDraft, self : Task) : Overlap
     + update(task : Task, draft : TaskDraft, scope : EditScope) : void
@@ -55,4 +77,6 @@ package planningpet.schedule.model {
 }
 TaskBook *-- "0..*" Task : tasks
 TaskBook ..> TaskDraft
+TaskBook ..> Overlap
+Overlap --> "1" Task : other
 @enduml
