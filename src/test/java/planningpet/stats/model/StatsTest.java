@@ -10,9 +10,12 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import planningpet.app.model.AppData;
+import planningpet.pet.model.PetKind;
 import planningpet.schedule.model.Category;
+import planningpet.schedule.model.DeleteScope;
 import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Task;
 
@@ -47,6 +50,13 @@ class StatsTest {
     private void open() { open(LocalDateTime.of(2026, 11, 17, 12, 0)); }
 
     private Period week() { return Period.week(data.today(), data.getWeekStart()); }
+
+    /** 날짜 date인 할 일을 rewardDay에 끝내고 10P를 받았다. */
+    private Task rewarded(int date, int rewardDay) {
+        Task t = task(date, false);
+        t.finish(d(rewardDay), 10, 10, PetKind.CAT);
+        return t;
+    }
 
     /** 추이 칸마다 "첫날~끝날 끝낸 수/셀 일정 수". 날은 월-일이다. */
     private String trend(Period p) {
@@ -188,5 +198,39 @@ class StatsTest {
         assertEquals("11-1~11-1 0/0, 11-2~11-8 0/0, 11-9~11-15 0/0, 11-16~11-22 1/2, 11-23~11-29 0/0, 11-30~11-30 0/0",
                 trend(Period.month(d(17))));
         assertEquals(new Rate(1, 2), stats.rate(Period.month(d(17))));
+    }
+
+    @Test
+    void T_STAT_5_T_STAT_7_pointsKeptAfterDelete() {
+        Task first = rewarded(17, 17);
+        rewarded(17, 17);
+        rewarded(16, 17);
+        open();
+        data.setAttendDays(Set.of(d(16), d(17)));
+        assertEquals(70, stats.points(week()));
+        data.getBook().delete(first, DeleteScope.ONLY_THIS);
+        assertEquals(70, stats.points(week()));
+    }
+
+    @Test
+    void E_STAT_7_futureTaskDoneToday() {
+        rewarded(19, 17);
+        open();
+        assertEquals(new Rate(0, 0), stats.rate(week()));
+        assertEquals(List.of(), stats.trend(week()).stream().filter(b -> b.rate().total() > 0).toList());
+        assertEquals(10, stats.points(week()));
+    }
+
+    @Test
+    void E_STAT_10_pointsAtPeriodEnds() {
+        rewarded(15, 15);
+        rewarded(16, 16);
+        rewarded(22, 22);
+        task(16, false).finish(d(16), 0, 0, null);
+        open();
+        data.setAttendDays(Set.of(d(15), d(16), d(22), d(23)));
+        assertEquals(60, stats.points(week()));
+        assertEquals(30, stats.points(week().step(-1)));
+        assertEquals(110, stats.points(Period.month(d(17))));
     }
 }

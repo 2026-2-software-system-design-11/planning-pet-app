@@ -13,7 +13,7 @@ public final class Rewards {
     static final int TASK_POINTS = 10;
     static final int TASK_EXP = 10;
     /** 출석은 20P이고 경험치는 없다(D-18). */
-    static final int ATTEND_POINTS = 20;
+    public static final int ATTEND_POINTS = 20;
 
     private final AppData data;
 

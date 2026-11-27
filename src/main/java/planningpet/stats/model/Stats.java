@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import planningpet.app.model.AppData;
+import planningpet.reward.model.Rewards;
 import planningpet.schedule.model.Category;
 import planningpet.schedule.model.Task;
 
@@ -51,6 +52,14 @@ public final class Stats {
             }
         }
         return out;
+    }
+
+    /** 기간에 얻은 포인트: 받은 날이 기간 안인 완료 보상(지운 일정 것도, D-19)과 기간 안의 출석. */
+    public int points(Period p) {
+        int tasks = data.getBook().rewardHistory().stream().filter(t -> p.contains(t.getRewardDay()))
+                .mapToInt(Task::getRewardPoints).sum();
+        long attend = data.getAttendDays().stream().filter(p::contains).count();
+        return tasks + (int) attend * Rewards.ATTEND_POINTS;
     }
 
     /**
