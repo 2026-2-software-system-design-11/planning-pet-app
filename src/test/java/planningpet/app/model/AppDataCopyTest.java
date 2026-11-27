@@ -11,7 +11,12 @@ import org.junit.jupiter.api.Test;
 class AppDataCopyTest {
     private static final ZoneId ZONE = ZoneId.systemDefault();
     private static final Clock CLOCK = Clock.fixed(LocalDateTime.parse("2026-11-18T10:00").atZone(ZONE).toInstant(), ZONE);
-    private final AppData data = new AppData(CLOCK);
+    private final AppData data = Filled.data(CLOCK);
+
+    @Test
+    void E_APP_16_copyHasSameValues() {
+        assertEquals(Filled.values(data), Filled.values(data.copy()));
+    }
 
     @Test
     void E_APP_21_listenersStay() {

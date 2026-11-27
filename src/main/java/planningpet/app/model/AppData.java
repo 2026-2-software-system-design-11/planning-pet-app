@@ -14,6 +14,7 @@ import java.util.Set;
 import planningpet.common.model.AppDay;
 import planningpet.pet.model.PetKind;
 import planningpet.pet.model.PetState;
+import planningpet.schedule.model.Task;
 import planningpet.schedule.model.TaskBook;
 import planningpet.shop.model.ItemId;
 
@@ -21,7 +22,7 @@ import planningpet.shop.model.ItemId;
 public final class AppData {
     private final Clock clock;
     private long nextSeq = 1;
-    private final TaskBook book = new TaskBook(List.of(), () -> nextSeq++, this::today);
+    private final TaskBook book;
     private int points;
     private LocalDate rewardCountDay;
     private int rewardCount;
@@ -44,7 +45,13 @@ public final class AppData {
 
     /** 06 데이터 절의 처음 값인 앱 데이터. 시계는 Main이 컴퓨터 시계를, 검사가 고정 시계를 넘긴다(07 실행 모드). */
     public AppData(Clock clock) {
+        this(clock, List.of(), List.of());
+    }
+
+    /** 저장에서 읽은 일정과 지운 일의 보상 기록을 담은 앱 데이터. 그 밖의 값은 처음 값이고 읽기가 넣는다. */
+    public AppData(Clock clock, List<Task> tasks, List<Task> deletedRewarded) {
         this.clock = clock;
+        this.book = new TaskBook(tasks, deletedRewarded, () -> nextSeq++, this::today);
     }
 
     /** 앱의 오늘(06 1번, D-15). */
