@@ -1,6 +1,8 @@
 package planningpet.schedule.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -52,5 +54,21 @@ class TaskBookListTest {
         put(Kind.TASK, "F", day(11, 16), null, 30, null, null, day(11, 16));
         put(Kind.FIXED, "E", day(11, 16), 10 * 60 + 30);
         assertEquals(g(List.of(), List.of("C", "E", "D", "A"), List.of("B", "F"), List.of()), groups(day(11, 16)));
+    }
+
+    @Test
+    void T_LIST_3_fixedOnly() {
+        put(Kind.FIXED, "수업", day(11, 16), 9 * 60);
+        put(Kind.FIXED, "알바", day(11, 16), 18 * 60);
+        assertEquals(g(List.of(), List.of("수업", "알바"), List.of(), List.of()), groups(day(11, 16)));
+    }
+
+    @Test
+    void E_LIST_1_emptyDay() {
+        put(Kind.TASK, "P", day(11, 16), null, 30, day(11, 16), day(11, 22), null);
+        TaskBook book = new TaskBook(tasks, () -> 0, () -> today);
+        assertTrue(book.dayPlan(day(11, 10)).isEmpty());
+        assertEquals(today, book.dayPlan(today).date());
+        assertFalse(book.dayPlan(today).isEmpty());
     }
 }
