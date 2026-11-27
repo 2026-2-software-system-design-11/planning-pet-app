@@ -4,9 +4,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.DefaultKeyboardFocusManager;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Insets;
+import java.awt.KeyboardFocusManager;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -139,6 +142,34 @@ class RoundButtonUITest {
         return SwingUtilities.layoutCompoundLabel(b, b.getFontMetrics(b.getFont()), text, null, SwingConstants.CENTER,
                 SwingConstants.CENTER, SwingConstants.CENTER, SwingConstants.TRAILING, view, new Rectangle(),
                 new Rectangle(), b.getIconTextGap());
+    }
+
+    @Test
+    void eBtn15KeyboardFocus() throws IOException {
+        class Focus extends DefaultKeyboardFocusManager {
+            void own(Component c) {
+                setGlobalFocusOwner(c);
+            }
+        }
+        Focus focus = new Focus();
+        KeyboardFocusManager.setCurrentKeyboardFocusManager(focus);
+        try {
+            JButton b = button();
+            focus.own(b);
+            looks("focus", b);
+            b = button();
+            b.setEnabled(false);
+            focus.own(b);
+            looks("focus-disabled", b);
+            b = button(RoundButtonUI.PRIMARY);
+            focus.own(b);
+            looks("focus-primary", b);
+            JToggleButton chosen = menu(true);
+            focus.own(chosen);
+            looks("focus-nav", chosen);
+        } finally {
+            KeyboardFocusManager.setCurrentKeyboardFocusManager(null);
+        }
     }
 
     private static JToggleButton menu(boolean selected) {
