@@ -212,4 +212,52 @@ class AutoPlacerTest {
         task("O", 15, 30);
         assertEquals("L 11-22 09:00 / 못 놓음  / 대상 1", text(run(16, 16, "08:00")));
     }
+
+    @Test
+    void E_AUTO_7_yearChange() {
+        LocalDate first = LocalDate.of(2027, 1, 1);
+        add(Kind.TASK, "Y", first, null, 30, null, null, false);
+        add(Kind.TASK, "Z", LocalDate.of(2026, 12, 30), null, 30, LocalDate.of(2026, 12, 30), first.plusDays(3), false);
+        assertEquals("Z 12-30 09:00, Y 1-1 09:00 / 못 놓음  / 대상 2",
+                text(run(LocalDate.of(2026, 12, 28), LocalDateTime.of(2026, 12, 28, 10, 0))));
+    }
+
+    @Test
+    void E_AUTO_8_dueBeforeDate() {
+        add(Kind.TASK, "R", day(18), null, 30, day(16), day(17), false);
+        assertEquals("R 11-18 09:00 / 못 놓음  / 대상 1", text(run(16, 16, "10:00")));
+    }
+
+    @Test
+    void E_AUTO_9_pastDue() {
+        period("V", 10, 15, 30);
+        assertEquals(" / 못 놓음  / 대상 0", text(run(16, 16, "10:00")));
+    }
+
+    @Test
+    void E_AUTO_10_donePeriodLeavesSlot() {
+        add(Kind.TASK, "P", day(16), "09:00", 60, day(16), day(22), true);
+        task("A", 16, 60);
+        assertEquals("A 11-16 09:00 / 못 놓음  / 대상 1", text(run(16, 16, "08:00")));
+    }
+
+    @Test
+    void E_AUTO_11_afterMidnightTaskOfDay() {
+        add(Kind.TASK, "N", day(16), "+00:00", 60, null, null, false);
+        task("A", 16, 60);
+        assertEquals("A 11-16 23:00 / 못 놓음  / 대상 1", text(run(16, 16, "23:00")));
+    }
+
+    @Test
+    void E_AUTO_12_dateBeforeLength() {
+        task("A", 17, 120);
+        period("P", 16, 17, 30);
+        assertEquals("P 11-17 09:00, A 11-17 09:30 / 못 놓음  / 대상 2", text(run(16, 16, "23:40")));
+    }
+
+    @Test
+    void E_AUTO_13_pastWeek() {
+        task("A", 16, 30);
+        assertEquals(" / 못 놓음  / 대상 0", text(run(9, 16, "08:00")));
+    }
 }
