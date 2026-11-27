@@ -36,4 +36,71 @@ class TimetableLayoutTest {
     void T_TT_2_overlap() {
         assertEquals("A 0/2, B 1/2", layout(task("A", 1, "09:00", 60), task("B", 2, "09:30", 60)));
     }
+
+    @Test
+    void T_TT_3_touching() {
+        assertEquals("A 0/1, B 0/1", layout(task("A", 1, "09:00", 60), task("B", 2, "10:00", 60)));
+    }
+
+    @Test
+    void T_TT_4_freedColumn() {
+        assertEquals("A 0/2, B 1/2, C 1/2",
+                layout(task("A", 1, "09:00", 120), task("B", 2, "09:30", 30), task("C", 3, "10:00", 30)));
+    }
+
+    @Test
+    void T_TT_5_longerFirst() {
+        assertEquals("B 0/2, A 1/2", layout(task("A", 1, "09:00", 60), task("B", 2, "09:00", 90)));
+    }
+
+    @Test
+    void T_TT_6_pastMidnight() {
+        assertEquals("A 0/2, B 1/2", layout(task("A", 1, "23:30", 90), task("B", 2, "00:30", 30, true)));
+    }
+
+    @Test
+    void E_TT_1_empty() {
+        assertEquals("", layout());
+    }
+
+    @Test
+    void E_TT_2_threeAtOnce() {
+        assertEquals("A 0/3, B 1/3, C 2/3",
+                layout(task("A", 1, "09:00", 60), task("B", 2, "09:00", 60), task("C", 3, "09:00", 60)));
+    }
+
+    @Test
+    void E_TT_3_chainedGroup() {
+        assertEquals("A 0/2, B 1/2, C 0/2",
+                layout(task("A", 1, "09:00", 60), task("B", 2, "09:30", 60), task("C", 3, "10:00", 60)));
+    }
+
+    @Test
+    void E_TT_4_afterGroupEnds() {
+        assertEquals("A 0/2, B 1/2, C 0/1",
+                layout(task("A", 1, "09:00", 60), task("B", 2, "09:30", 60), task("C", 3, "10:30", 30)));
+    }
+
+    @Test
+    void E_TT_5_givenOrderIgnored() {
+        assertEquals("A 0/2, B 1/2, C 1/2",
+                layout(task("C", 3, "10:00", 30), task("B", 2, "09:30", 30), task("A", 1, "09:00", 120)));
+    }
+
+    @Test
+    void E_TT_6_sameStartAndLength() {
+        assertEquals("B 0/2, A 1/2", layout(task("A", 2, "09:00", 60), task("B", 1, "09:00", 60)));
+    }
+
+    @Test
+    void E_TT_7_dayEdges() {
+        assertEquals("A 0/1, B 0/1", layout(task("A", 1, "00:00", 60), task("B", 2, "03:00", 60, true)));
+        assertEquals("A 0/2, B 1/2", layout(task("A", 1, "23:00", 300), task("B", 2, "03:30", 30, true)));
+    }
+
+    @Test
+    void E_TT_8_longBesideThree() {
+        assertEquals("A 0/2, B 1/2, C 1/2, D 1/2", layout(task("A", 1, "09:00", 180), task("B", 2, "09:00", 60),
+                task("C", 3, "10:00", 60), task("D", 4, "11:00", 60)));
+    }
 }
