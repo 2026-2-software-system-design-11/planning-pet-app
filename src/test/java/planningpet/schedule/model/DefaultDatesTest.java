@@ -89,4 +89,58 @@ class DefaultDatesTest {
         assertEquals(540, start("11-21", "11-21T01:28"));
         assertEquals(1675, start("11-20", "11-21T03:58"));
     }
+
+    @Test
+    void E_DEF_5_nowOnAndAfterFiveMinutes() {
+        assertEquals(925, start("11-16", "11-16T15:25"));
+        assertEquals(925, start("11-16", "11-16T15:21"));
+    }
+
+    @Test
+    void E_DEF_6_nowWithSeconds() {
+        assertEquals(930, start("11-16", "11-16T15:25:30"));
+    }
+
+    @Test
+    void E_DEF_7_aroundNine() {
+        assertEquals(540, start("11-16", "11-16T08:56"));
+        assertEquals(540, start("11-16", "11-16T09:00"));
+        assertEquals(545, start("11-16", "11-16T09:01"));
+    }
+
+    @Test
+    void E_DEF_8_justBeforeMidnight() {
+        assertEquals(1435, start("11-16", "11-16T23:55"));
+        assertEquals(1440, start("11-16", "11-16T23:59:30"));
+    }
+
+    @Test
+    void E_DEF_9_midnight() {
+        assertEquals(1440, start("11-20", "11-21T00:00"));
+        assertEquals(540, start("11-21", "11-21T00:00"));
+    }
+
+    @Test
+    void E_DEF_10_aroundLastStart() {
+        assertEquals(1670, start("11-20", "11-21T03:50"));
+        assertEquals(1675, start("11-20", "11-21T03:51"));
+        assertEquals(1675, start("11-20", "11-21T03:59:59"));
+    }
+
+    @Test
+    void E_DEF_11_endOfAppDay() {
+        assertEquals(540, start("11-20", "11-21T04:00"));
+        assertEquals(540, start("11-21", "11-21T04:00"));
+    }
+
+    @Test
+    void E_DEF_12_pastDay() {
+        assertEquals(540, start("11-15", "11-16T10:00"));
+        assertEquals(540, start("11-14", "11-16T01:00"));
+    }
+
+    @Test
+    void E_DEF_13_nightAcrossYear() {
+        assertEquals(1470, start("12-31", "2027-01-01T00:30"));
+    }
 }
