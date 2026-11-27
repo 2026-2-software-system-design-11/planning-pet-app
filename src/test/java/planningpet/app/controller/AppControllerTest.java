@@ -15,8 +15,12 @@ import org.junit.jupiter.api.Test;
 import planningpet.app.model.AppData;
 import planningpet.app.model.DataStore;
 import planningpet.app.model.LoadResult;
+import planningpet.pet.model.PetKind;
+import planningpet.pet.model.PetState;
+import planningpet.reward.model.Rewards;
 import planningpet.schedule.model.Category;
 import planningpet.schedule.model.Kind;
+import planningpet.schedule.model.Task;
 import planningpet.schedule.model.TaskDraft;
 
 /** 06 22번과 docs/porting/store.md 2절의 E-SAVE 경계. 저장소는 저장한 포인트를 적거나 늘 실패한다(07 실행 모드). */
@@ -96,5 +100,32 @@ class AppControllerTest {
         assertTrue(data.getBook().getTasks().isEmpty());
         assertEquals(List.of(), saved);
         assertEquals(1, heard.size());
+    }
+
+    /** 할 일 하나와 고른 고양이를 넣고, 그 할 일을 06 8번으로 끝내는 일을 22번으로 감싼다(docs/porting/rewards.md). */
+    private Task completeTask() {
+        addTask();
+        data.addPet(new PetState(PetKind.CAT, "나비"));
+        data.setActiveKind(PetKind.CAT);
+        Task t = data.getBook().getTasks().get(0);
+        app.change("할 일 완료", () -> new Rewards(data).complete(t, data.today()));
+        return t;
+    }
+
+    @Test
+    void T_SAVE_1_failedCompleteRestores() {
+        data.setPoints(30);
+        failing = true;
+        Task t = completeTask();
+        assertEquals("false 30P 0 0", t.isDone() + " " + data.getPoints() + "P " + data.pet(PetKind.CAT).getExp() + " "
+                + data.getRewardCount());
+        assertEquals(List.of("할 일 완료 저장에 실패해서 바꾸기 전으로 돌렸어요."), errors);
+    }
+
+    @Test
+    void T_SAVE_4_completeSavesOnce() {
+        Task t = completeTask();
+        assertEquals(List.of(1), saved);
+        assertTrue(t.isDone());
     }
 }

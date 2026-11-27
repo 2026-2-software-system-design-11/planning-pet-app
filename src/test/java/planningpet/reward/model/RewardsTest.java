@@ -4,25 +4,33 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import planningpet.app.model.AppData;
 import planningpet.pet.model.PetKind;
 import planningpet.pet.model.PetState;
 import planningpet.schedule.model.Category;
 import planningpet.schedule.model.DayPlan;
+import planningpet.schedule.model.DeleteScope;
+import planningpet.schedule.model.EditScope;
 import planningpet.schedule.model.Kind;
+import planningpet.schedule.model.Repeat;
 import planningpet.schedule.model.Task;
+import planningpet.schedule.model.TaskDraft;
 
-/** 06 8번과 docs/porting/rewards.md 2절의 E-RWD 경계. 펫은 고른 고양이 하나이고 complete와 done은 값을 한 줄로 잇는다. */
+/** 06 8, 9, 11번과 docs/porting/rewards.md 2절의 경계. 펫은 고른 고양이 하나이고 complete, undo, attend, done은 값을 잇는다. */
 class RewardsTest {
     private final Task a = task("A", d(16));
     /** 기간 할 일. p는 시각 없이 11-16에 보이기 시작하고, q는 11-18 09:00으로 정해 두었다. */
     private final Task p = make(Kind.TASK, "P", d(16), null, d(22));
     private final Task q = make(Kind.TASK, "Q", d(18), LocalTime.of(9, 0), d(22));
-    private final AppData data = new AppData(Clock.systemDefaultZone(), List.of(a, p, q), List.of());
+    private final AppData data = new AppData(Clock.fixed(Instant.parse("2026-11-16T10:00:00Z"), ZoneOffset.UTC),
+            List.of(a, p, q), List.of());
 
     RewardsTest() {
         data.addPet(new PetState(PetKind.CAT, "나비"));
@@ -45,6 +53,22 @@ class RewardsTest {
         RewardResult r = new Rewards(data).complete(t, today);
         return r.outcome() + " " + r.points() + " " + r.exp() + ", " + data.getPoints() + "P "
                 + data.pet(PetKind.CAT).getExp() + " " + data.getRewardCountDay() + " " + data.getRewardCount();
+    }
+
+    private String undo(Task t, LocalDate today) {
+        new Rewards(data).uncomplete(t, today);
+        return state();
+    }
+
+    /** 보유 포인트, 고양이 경험치, 하루 상한 횟수의 날과 수. */
+    private String state() {
+        return data.getPoints() + "P " + data.pet(PetKind.CAT).getExp() + " " + data.getRewardCountDay() + " "
+                + data.getRewardCount();
+    }
+
+    private String attend(LocalDate today) {
+        return new Rewards(data).attend(today) + " " + data.getPoints() + "P " + data.getAttendanceDay() + " "
+                + data.getAttendDays() + " " + data.pet(PetKind.CAT).getExp() + " " + data.getRewardCount();
     }
 
     private static String done(Task t) {
@@ -158,5 +182,153 @@ class RewardsTest {
         complete(a, d(16));
         assertThrows(IllegalStateException.class, () -> complete(a, d(16)));
         assertEquals("10P 10 1", data.getPoints() + "P " + data.pet(PetKind.CAT).getExp() + " " + data.getRewardCount());
+    }
+
+    @Test
+    void T_UNDO_1_rewardOfToday() {
+        data.setPoints(20);
+        data.pet(PetKind.CAT).setExp(20);
+        data.setRewardCount(d(16), 2);
+        complete(a, d(16));
+        assertEquals("20P 20 2026-11-16 2", undo(a, d(16)));
+        assertEquals("false null 0 0 null null", done(a));
+    }
+
+    @Test
+    void T_UNDO_2_rewardOfYesterday() {
+        complete(a, d(15));
+        data.setPoints(0);
+        data.setRewardCount(d(16), 3);
+        assertEquals("-10P 0 2026-11-16 3", undo(a, d(16)));
+    }
+
+    @Test
+    void T_UNDO_3_cappedTask() {
+        data.setRewardCount(d(16), 20);
+        data.setPoints(50);
+        complete(a, d(16));
+        assertEquals("50P 0 2026-11-16 20", undo(a, d(16)));
+    }
+
+    @Test
+    void T_UNDO_4_levelGoesDown() {
+        data.pet(PetKind.CAT).setExp(45);
+        complete(a, d(16));
+        assertEquals("0P 45 2026-11-16 0", undo(a, d(16)));
+        assertEquals(1, Level.of(data.pet(PetKind.CAT).getExp()).getLevel());
+    }
+
+    @Test
+    void T_UNDO_5_completeAgain() {
+        T_UNDO_1_rewardOfToday();
+        assertEquals("REWARDED 10 10, 30P 30 2026-11-16 3", complete(a, d(16)));
+    }
+
+    @Test
+    void T_UNDO_6_fromPetThatGotIt() {
+        data.addPet(new PetState(PetKind.DOG, "바둑이"));
+        data.setActiveKind(PetKind.DOG);
+        complete(a, d(16));
+        data.setActiveKind(PetKind.CAT);
+        assertEquals("0P 0 2026-11-16 0", undo(a, d(16)));
+        assertEquals("0 null", data.pet(PetKind.DOG).getExp() + " " + a.getRewardPet());
+    }
+
+    @Test
+    void E_UNDO_1_oldDataWithoutPet() {
+        data.addPet(new PetState(PetKind.DOG, "바둑이"));
+        data.setActiveKind(PetKind.DOG);
+        data.pet(PetKind.DOG).setExp(10);
+        data.setPoints(10);
+        Task old = new Task("old", 2, Kind.TASK, "옛 일", d(15), null, 30, "", false, Category.OTHER, null, null, null,
+                null, true, d(15), 10, 10, d(15), null);
+        assertEquals("0P 0 null 0", undo(old, d(16)));
+        assertEquals(0, data.pet(PetKind.DOG).getExp());
+    }
+
+    @Test
+    void T_UNDO_7_periodBackToPlan() {
+        complete(p, d(17));
+        undo(p, d(17));
+        assertEquals("2026-11-16 null 2026-11-22", p.getDate() + " " + p.getDoneDay() + " " + p.getDueDate());
+        assertEquals(List.of("period", "period", "period", "period", "period", "period", "due"),
+                List.of(16, 17, 18, 19, 20, 21, 22).stream().map(day -> where(p, day)).toList());
+        complete(q, d(16));
+        undo(q, d(16));
+        assertEquals(",timed", where(q, 16) + "," + where(q, 18));
+    }
+
+    /** 프로토타입과 일부러 다름: 프로토타입은 알리지 않고 아무것도 바꾸지 않는다. */
+    @Test
+    void E_UNDO_2_notDone() {
+        data.setPoints(10);
+        assertThrows(IllegalStateException.class, () -> undo(a, d(16)));
+        assertEquals("10P 0 null 0 false", data.getPoints() + "P " + data.pet(PetKind.CAT).getExp() + " "
+                + data.getRewardCountDay() + " " + data.getRewardCount() + " " + a.isDone());
+    }
+
+    @Test
+    void T_ATT_1_firstAttend() {
+        assertEquals("true 20P 2026-11-16 [2026-11-16] 0 0", attend(d(16)));
+    }
+
+    @Test
+    void T_ATT_2_twiceOnSameDay() {
+        attend(d(16));
+        assertEquals("false 20P 2026-11-16 [2026-11-16] 0 0", attend(d(16)));
+    }
+
+    @Test
+    void T_ATT_3_nextDay() {
+        data.setAttendanceDay(d(15));
+        data.setAttendDays(Set.of(d(15)));
+        assertEquals("true 20P 2026-11-16 [2026-11-15, 2026-11-16] 0 0", attend(d(16)));
+    }
+
+    @Test
+    void T_ATT_4_fromNegative() {
+        data.setPoints(-10);
+        assertEquals("true 10P 2026-11-16 [2026-11-16] 0 0", attend(d(16)));
+    }
+
+    @Test
+    void T_EDIT_1_editDoneKeepsReward() {
+        complete(a, d(16));
+        data.getBook().update(a, new TaskDraft(Kind.TASK, "A", Category.OTHER, d(20), null, null, 120, "", null, null,
+                false, null, null, true), EditScope.ONLY_THIS);
+        assertEquals("10P 10 2026-11-16 1", state());
+        assertEquals("true 2026-11-16 10 10 2026-11-16 CAT 2026-11-20 120", done(a) + " " + a.getDate() + " "
+                + a.getDurationMinutes());
+    }
+
+    @Test
+    void T_DEL_1_deleteDoneKeepsReward() {
+        data.setPoints(20);
+        complete(a, d(16));
+        data.getBook().delete(a, DeleteScope.ONLY_THIS);
+        assertEquals(List.of(p, q), data.getBook().getTasks());
+        assertEquals(List.of(a), data.getBook().getDeletedRewarded());
+        assertEquals("30P 10 2026-11-16 1", state());
+    }
+
+    /** "영어 단어" 11-16~11-20 매일 21:00의 11-18 사본을 끝낸 뒤(T-EDIT-43) 지운다. 두 번째는 처음 상태로 되돌려서 한다. */
+    @Test
+    void T_EDIT_49_deleteSeriesKeepsReward() {
+        List<Task> copies = data.getBook().add(new TaskDraft(Kind.TASK, "영어 단어", Category.OTHER, d(16), null,
+                LocalTime.of(21, 0), 30, "", Repeat.DAILY, d(20), false, null, null, false));
+        complete(copies.get(2), d(18));
+        AppData before = data.copy();
+        data.getBook().delete(copies.get(1), DeleteScope.THIS_AND_AFTER);
+        assertEquals(List.of(d(16), d(18)), english());
+        assertEquals("10P 10 2026-11-18 1 1", state() + " " + data.getBook().rewardHistory().size());
+        data.restore(before);
+        data.getBook().delete(copies.get(2), DeleteScope.THIS_AND_AFTER);
+        assertEquals(List.of(d(16), d(17)), english());
+        assertEquals("10P 10 2026-11-18 1 1", state() + " " + data.getBook().rewardHistory().size());
+    }
+
+    private List<LocalDate> english() {
+        return data.getBook().getTasks().stream().filter(t -> t.getTitle().equals("영어 단어")).map(Task::getDate)
+                .toList();
     }
 }
