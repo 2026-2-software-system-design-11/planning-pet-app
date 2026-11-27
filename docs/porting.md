@@ -34,7 +34,7 @@
 | M11 | 화면이 쓰는 일정 계산 | `DefaultDates`, `CalendarCell`, `TimetableLayout` | 14번, 19번, 26번 | [docs/porting/screen-calc.md](porting/screen-calc.md) |
 | M12 | 자동 배치 | `AutoPlacer` | 18번 | [docs/porting/auto-place.md](porting/auto-place.md) |
 | M13 | 알림 고르기 | `Reminders` | 17번(프로토타입 기준 없음) | [docs/porting/reminders.md](porting/reminders.md) |
-| M14 | 펫 | `Bond`, `Wardrobe`, `Poses`, `PetState.pat` | 27번, 28번이 쓰는 장신구 표 | `docs/porting/pet.md` |
+| M14 | 펫 | `Bond`, `Wardrobe`, `Poses`, `PetState.pat` | 27번, 28번이 쓰는 장신구 표 | [docs/porting/pet.md](porting/pet.md) |
 | M15 | 상점과 방 | `Shop`, `Item`, `Room` | 20번 | `docs/porting/shop.md` |
 | M16 | 통계 | `Stats` | 29번 | `docs/porting/stats.md` |
 | S1 | 창 틀과 날 바뀜 | `AppWindow`, `AppController.onWindowShown`, `say`, `DayWatcher`, `RewardController.attend` | 11번, 15번, 23번 | `docs/porting/app-window.md` |
