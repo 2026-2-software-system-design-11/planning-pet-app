@@ -1,0 +1,44 @@
+@startuml seq-uc15
+!include seq-common.iuml
+actor 사용자
+$obj(ShopPanel)
+$obj(ShopController)
+$obj(AppController)
+$obj(Shop)
+$obj(PetTalk)
+사용자 -> ShopPanel : 분류 탭을 고르거나 검색 칸에 이름 쓰기
+ShopPanel -> Shop : find(category, query, ownedOnly)
+note right of ShopPanel : 맞는 카드(그림, 이름, 가격)를 가격 순으로.\n1a 왼쪽 메뉴 "보유한 아이템"이면 ownedOnly가 true.\n2b 한 줄에 다 들어가지 않으면 양옆 화살표
+opt 2a 맞는 아이템이 없다
+  note right of ShopPanel : "맞는 아이템이 없어요."\n보유한 아이템에서 가진 것이 없으면\n"아직 가진 아이템이 없어요.\n상점에서 사면 바로 방에 놓여요."
+end
+사용자 -> ShopPanel : 아이템 카드 누르기
+note right of ShopPanel : 카드에 체크 배지, 미리보기 칸에 그 아이템을 놓은 방,\n이름, 가격, "취소"와 "구매하기".\n4a 미리보기 칸이 닫혀 있으면 열린다
+alt 3a 고르기를 푼다
+  사용자 -> ShopPanel : 고른 카드를 다시 누르거나 "취소" 누르기
+  note right of ShopPanel : 미리보기 칸에 "아이템을 골라 보세요"
+else 4b 포인트가 모자란다(음수 포함)
+  note right of ShopPanel : "구매하기"가 흐리고 그 아래에\n"{포인트}P 모자라요"
+else 4c 이미 가진 아이템이다
+  note right of ShopPanel : 가격 자리에 "보유 중",\n"구매하기" 대신 "방에 놓기"나 "방에서 치우기"
+  ref over ShopPanel, ShopController : UC-16 아이템 놓기와 치우기
+else 기본 흐름
+  사용자 -> ShopPanel : "구매하기" 누르기
+  note right of ShopPanel : 창 "아이템 사기" "{아이템}{을/를} {값}P에 살까요?\n남는 포인트 {남는 포인트}P"
+  alt 5a 취소
+    사용자 -> ShopPanel : "취소" 누르거나 창 닫기
+    note right of ShopPanel : 아무것도 사지 않는다
+  else 기본 흐름
+    사용자 -> ShopPanel : 확인 창의 "구매하기" 누르기
+    ShopPanel -> ShopController : buy(item)
+    ShopController -> AppController : change(what, edit)
+    AppController -> ShopController : edit()
+    ShopController -> Shop : buy(item)
+    note right of Shop : BOUGHT. 가격만큼 포인트를 빼고\nownedItems와 placedItems에 넣는다
+    ShopController -> PetTalk : say(BOUGHT, ...)
+    note right of PetTalk : "{아이템} 고마워!"를\n나의 방 말풍선에만 한 번
+    ref over ShopController, Shop : 저장과 되돌리기. 7a 저장 실패면 포인트와 보유 목록을 되돌린다
+    note right of ShopPanel : 보유 포인트, 방 꾸미기 만족도, 배치 아이템이 바뀌고\n카드의 가격 자리가 "보유 중"이 된다
+  end
+end
+@enduml

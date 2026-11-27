@@ -163,6 +163,14 @@
 - 3a와 3b는 펫 수에 따라 그리는 자리만 달라 노트로 적었다. 3c의 한 번 하는 말은 UC-15와 UC-20 그림에 있다.
 - 4c의 한마디는 `PetState.pat`이 돌려준다. 메인 말풍선에 넣지 않으므로 `AppController.say`를 부르지 않는다(06 16번 `PETTED`).
 
+### UC-15 아이템 사기
+
+![UC-15](diagrams/seq-uc15.png)
+
+- 1a(보유한 아이템)와 2b(카드 화살표)는 `find`의 인자와 카드 줄의 모양만 달라 그 메시지의 노트에 적었다. 4a도 카드를 누른 뒤의 노트에 적었다.
+- 확인 창은 view가 띄우고, 구매하기를 고른 뒤에만 `buy`를 부른다(06 20번). 화면이 4b와 4c를 막으므로 `Shop.buy`의 `NOT_ENOUGH`와 `ALREADY_OWNED`는 그리지 않았다.
+- "{아이템} 고마워!"는 나의 방 말풍선에만 한 번 보이고 메인 말풍선은 그대로라 `AppController.say`를 부르지 않는다. 06 16번 표가 `ADOPTED`에만 메인 말풍선을 적고 `BOUGHT`는 나의 방 말풍선만 적었으며, 프로토타입도 같다.
+
 ## 다시 그리기
 
 원본은 [diagrams/](diagrams/) 아래 `seq-*.puml`이고 공통 꾸밈은 `seq-common.iuml`이다. PlantUML로 그린다.
