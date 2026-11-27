@@ -1,6 +1,8 @@
 package planningpet.app.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -80,5 +82,19 @@ class AppControllerTest {
         assertEquals(30, data.getPoints());
         assertTrue(data.getAttendDays().isEmpty());
         assertEquals(List.of(30), heard);
+    }
+
+    /** 06에 없는 길. docs/porting/store.md "07 안에서 정한 것". */
+    @Test
+    void editThrowsRestoresAndRethrows() {
+        IllegalStateException boom = new IllegalStateException("변경 오류");
+        var thrown = assertThrows(IllegalStateException.class, () -> app.change("일정 추가", () -> {
+            addTask();
+            throw boom;
+        }));
+        assertSame(boom, thrown);
+        assertTrue(data.getBook().getTasks().isEmpty());
+        assertEquals(List.of(), saved);
+        assertEquals(1, heard.size());
     }
 }

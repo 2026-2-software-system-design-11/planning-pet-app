@@ -20,11 +20,18 @@ public final class AppController {
 
     /**
      * 06 22번. 복사본을 떠 두고 edit를 적용한 뒤 save를 한 번 부른다. 저장에 실패하면 복사본으로 되돌리고 errors에 창 내용을 넘긴다.
-     * 성공하든 되돌리든 마지막에 데이터 변경 알림을 한 번 보낸다.
+     * edit가 예외를 던지면 되돌리고 저장하지 않고 그 예외를 다시 던진다(docs/porting/store.md). 어느 길이든 마지막에 데이터 변경 알림을 한
+     * 번 보낸다.
      */
     public void change(String what, Runnable edit) {
         AppData before = data.copy();
-        edit.run();
+        try {
+            edit.run();
+        } catch (RuntimeException e) {
+            data.restore(before);
+            data.changed();
+            throw e;
+        }
         try {
             store.save(data);
         } catch (IOException e) {
