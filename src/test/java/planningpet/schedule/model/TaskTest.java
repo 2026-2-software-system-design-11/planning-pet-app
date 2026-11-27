@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.Test;
 
 /** 06 데이터 절의 Task 규칙과 docs/porting/task.md 2절의 경계. 오늘은 11-18(수)이다. */
@@ -185,5 +187,55 @@ class TaskTest {
     @Test
     void E_TASK_28_plannedOnPastDueDay() {
         assertTrue(period(day(17), TEN, day(17)).onTimetable(TODAY));
+    }
+
+    /** 11-14부터 11-22까지 가운데 task가 보이는 날(일). */
+    private static List<Integer> shown(Task task) {
+        return IntStream.rangeClosed(14, 22).filter(d -> task.shownOn(day(d), TODAY)).boxed().toList();
+    }
+
+    @Test
+    void E_TASK_29_plainTask() {
+        assertEquals(List.of(18), shown(make(Kind.TASK, day(18), null, false, 30)));
+    }
+
+    @Test
+    void E_TASK_30_periodEveryDay() {
+        assertEquals(List.of(16, 17, 18, 19, 20), shown(period(day(16), null, day(20))));
+    }
+
+    @Test
+    void E_TASK_31_dueBeforeDate() {
+        assertEquals(List.of(20), shown(period(day(20), null, day(19))));
+    }
+
+    @Test
+    void E_TASK_32_donePeriod() {
+        assertEquals(List.of(17), shown(finished(day(16), null, day(20), day(17))));
+    }
+
+    @Test
+    void E_TASK_33_pastDue() {
+        assertEquals(List.of(17), shown(period(day(15), null, day(17))));
+    }
+
+    @Test
+    void E_TASK_34_missedPlan() {
+        assertEquals(List.of(18, 19, 20), shown(period(day(17), TEN, day(20))));
+    }
+
+    @Test
+    void E_TASK_35_laterPlan() {
+        assertEquals(List.of(19), shown(period(day(19), TEN, day(20))));
+    }
+
+    @Test
+    void E_TASK_36_oldPlanPastDue() {
+        assertEquals(List.of(17), shown(period(day(15), TEN, day(17))));
+    }
+
+    @Test
+    void E_TASK_37_dueToday() {
+        assertEquals(List.of(16, 17, 18), shown(period(day(16), null, day(18))));
     }
 }
