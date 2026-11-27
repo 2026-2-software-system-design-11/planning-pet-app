@@ -35,7 +35,7 @@
 | M12 | 자동 배치 | `AutoPlacer` | 18번 | [docs/porting/auto-place.md](porting/auto-place.md) |
 | M13 | 알림 고르기 | `Reminders` | 17번(프로토타입 기준 없음) | [docs/porting/reminders.md](porting/reminders.md) |
 | M14 | 펫 | `Bond`, `Wardrobe`, `Poses`, `PetState.pat` | 27번, 28번이 쓰는 장신구 표 | [docs/porting/pet.md](porting/pet.md) |
-| M15 | 상점과 방 | `Shop`, `Item`, `Room` | 20번 | `docs/porting/shop.md` |
+| M15 | 상점과 방 | `Shop`, `Item`, `Room` | 20번 | [docs/porting/shop.md](porting/shop.md) |
 | M16 | 통계 | `Stats` | 29번 | `docs/porting/stats.md` |
 | S1 | 창 틀과 날 바뀜 | `AppWindow`, `AppController.onWindowShown`, `say`, `DayWatcher`, `RewardController.attend` | 11번, 15번, 23번 | `docs/porting/app-window.md` |
 | S2 | 반려동물 고르기 창 | `PickDialog`, `PetController.adopt`, `select` | 30번 | `docs/porting/pick.md` |
@@ -113,3 +113,4 @@
 | M9 보상 | 끝낸 할 일의 완료를 화면 밖 길로 다시 부른다(화면의 체크박스는 끝낸 일을 누르면 체크 풀기다) | 보상을 또 받는다. 10P, 경험치 10, 오늘 횟수 하나가 더 붙는다 | 이미 끝낸 일정이면 `IllegalStateException`. 코드를 고침: `complete`가 예외를 던지고 아무것도 바꾸지 않는다 | 06 8번 "오류", [rewards.md](porting/rewards.md) E-RWD-2 |
 | M9 보상 | 끝내지 않은 할 일의 체크 풀기를 화면 밖 길로 부른다(화면의 체크박스는 끝내지 않은 일을 누르면 끝내기다) | 아무것도 바뀌지 않고 알리지도 않는다 | 끝내지 않은 할 일이면 `IllegalStateException`. 코드를 고침: `uncomplete`가 예외를 던진다 | 06 9번 "오류", [rewards.md](porting/rewards.md) E-UNDO-2 |
 | M10 펫 말 | 기간 할 일 "E사 지원서"(마감 11/25)의 시각을 내일 10:00으로 정해 두고, 오늘 할 일이 없는 날 그날 처음 앱을 연다 | 브리핑 "오늘은 할 일이 없어. 내일 'E사 지원서'가 있어." | 내일 문장은 내일 날짜의 보통 할 일(`TASK`, 기간 할 일이 아님)만 말한다. 코드를 고침: 시각을 정한 기간 할 일도 빼고 "오늘은 할 일이 없어. 아래 칸에 하나 적어 볼까?" | 06 16번 5번, D-71, [pet-talk.md](porting/pet-talk.md) E-TALK-10 |
+| M15 상점과 방 | 나의 방에서 사지 않은 아이템의 "방에 놓기"를 화면 밖 길로 부른다(미리보기 칸은 가진 아이템에만 "방에 놓기"를 보인다) | 보유 목록에 없는 아이템이 방에 놓이고 만족도와 배치 아이템 수가 는다 | `toggle`에 사지 않은 아이템이면 `IllegalStateException`. 코드를 고침: `Room.toggle`이 예외를 던지고 아무것도 바꾸지 않는다 | 06 20번 "오류", [shop.md](porting/shop.md) E-ROOM-1 |
