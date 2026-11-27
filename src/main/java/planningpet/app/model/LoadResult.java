@@ -8,7 +8,7 @@ public record LoadResult(Status status, AppData data, Reason reason) {
     public enum Reason {
         /** 앱보다 높은 형식 번호. 새 버전의 플래닝펫에서 만든 파일이다(T-STORE-4). */
         NEWER_VERSION,
-        /** sqlite 파일이 아니거나 플래닝펫의 표가 없는 파일이다(T-STORE-3). */
+        /** sqlite 파일이 아니거나, 형식 번호 0인데 표가 있는 다른 프로그램의 sqlite 파일이다(T-STORE-3). */
         NOT_DATA_FILE,
         /** 낮은 형식 번호의 파일을 옮기다 실패했다. 파일은 옮기기 전 그대로다. */
         UPGRADE_FAILED,
