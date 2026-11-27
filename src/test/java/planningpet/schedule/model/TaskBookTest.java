@@ -172,4 +172,34 @@ class TaskBookTest {
         Repeat how = Repeat.weekly(MONDAY);
         copies(book.add(repeat(Kind.TASK, day(11, 16), null, 30, how, day(11, 16))), how, 1, day(11, 16));
     }
+
+    @Test
+    void E_ADD_7_maxCopies() {
+        List<Task> made = book.add(repeat(Kind.TASK, day(11, 16), null, 30, Repeat.DAILY, LocalDate.of(2027, 3, 15)));
+        assertEquals(List.of(120, LocalDate.of(2027, 3, 15), 120L, 121L),
+                List.of(made.size(), made.get(119).getDate(), made.get(119).getSeq(), next));
+    }
+
+    @Test
+    void E_ADD_8_tooManyCopies() {
+        TaskDraft d = repeat(Kind.TASK, day(11, 16), null, 30, Repeat.DAILY, LocalDate.of(2027, 3, 16));
+        assertThrows(IllegalArgumentException.class, () -> book.add(d));
+        assertEquals(List.of(List.of(), 1L), List.of(book.getTasks(), next));
+    }
+
+    @Test
+    void E_ADD_11_seqContinues() {
+        next = 41;
+        copies(book.add(repeat(Kind.TASK, day(11, 16), null, 30, Repeat.DAILY, day(11, 18))), Repeat.DAILY, 41,
+                day(11, 16), day(11, 17), day(11, 18));
+        assertEquals(44, next);
+    }
+
+    @Test
+    void E_ADD_12_editingDraft() {
+        TaskDraft d = new TaskDraft(Kind.TASK, "과제", Category.OTHER, day(11, 16), null, null, 30, "", Repeat.DAILY,
+                LocalDate.of(2027, 3, 16), false, null, null, true);
+        assertThrows(IllegalArgumentException.class, () -> book.add(d));
+        assertEquals(List.of(List.of(), 1L), List.of(book.getTasks(), next));
+    }
 }

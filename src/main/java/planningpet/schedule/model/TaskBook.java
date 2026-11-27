@@ -25,10 +25,10 @@ public final class TaskBook {
 
     /**
      * 06 3번. 검사(2번)를 통과한 입력으로 일정을 만든다. 반복이면 반복하는 날마다 같은 seriesId의 사본을 날짜 순으로 만든다(D-17,
-     * D-64). 통과하지 않으면 IllegalArgumentException.
+     * D-64). 통과하지 않았거나 수정 창의 값(반복 칸을 검사하지 않은 값, D-42)이면 IllegalArgumentException.
      */
     public List<Task> add(TaskDraft draft) {
-        if (!draft.validate().isEmpty()) {
+        if (draft.editing() || !draft.validate().isEmpty()) {
             throw new IllegalArgumentException("검사를 통과하지 않은 입력");
         }
         String series = draft.repeat() == null ? null : UUID.randomUUID().toString();
