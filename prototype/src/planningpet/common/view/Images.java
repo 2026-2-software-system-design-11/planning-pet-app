@@ -19,8 +19,6 @@ public final class Images {
     public static final BufferedImage MEADOW = load("meadow-corner.png");
     /** 사이드바 아래 구름. 예시에서 잘라 냈다. */
     public static final BufferedImage CLOUD = load("cloud.png");
-    /** 사이드바 위 로고의 청록 선화 고양이 얼굴. 예시에서 잘라 냈다. */
-    public static final BufferedImage LOGO = load("logo-face.png");
     /** pet 화면 상점 버튼 위의 쇼핑백. 예시에서 잘라 냈다. */
     public static final BufferedImage SHOP_BAG = load("shop-bag.png");
     /** 아이템 이름(D-28)과 파일 이름. */
