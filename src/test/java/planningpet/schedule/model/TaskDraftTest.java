@@ -175,4 +175,33 @@ class TaskDraftTest {
         assertEquals(List.of(), errors(timed(Kind.TASK, null, 715)));
         assertEquals(List.of("걸리는 시간: 10분부터 720분까지, 5분 단위예요"), errors(timed(Kind.TASK, null, -5)));
     }
+
+    @Test
+    void T_VAL_21_bothProblems() {
+        String both = "시작 시각: 다음 날 04:00까지 끝나야 해요. 5분 단위로 정해 주세요. ";
+        String duration = "걸리는 시간: 10분부터 720분까지, 5분 단위예요";
+        assertEquals(List.of(both + "03:50(다음 날)이면 둘 다 맞아요"), errors(timed(Kind.TASK, 27 * 60 + 53, 10)));
+        assertEquals(List.of(both + "걸리는 시간 25분이면 03:35(다음 날)이 맞아요", duration),
+                errors(timed(Kind.TASK, 27 * 60 + 53, 27)));
+        assertEquals(List.of(both + "걸리는 시간 720분이면 16:00이 맞아요", duration),
+                errors(timed(Kind.TASK, 27 * 60 + 53, 730)));
+    }
+
+    @Test
+    void T_VAL_14_errorOrder() {
+        TaskDraft d = draft(Kind.TASK, "", day(11, 16), null, 27 * 60 + 30, 40, "", null, null);
+        assertEquals(List.of("제목: 제목을 써 주세요", "시작 시각: 다음 날 04:00까지 끝나야 해요"), errors(d));
+    }
+
+    @Test
+    void E_VAL_13_bothProblemsSameDay() {
+        assertEquals(List.of("시작 시각: 다음 날 04:00까지 끝나야 해요. 5분 단위로 정해 주세요. 16:00이면 둘 다 맞아요"),
+                errors(timed(Kind.TASK, 16 * 60 + 3, 720)));
+    }
+
+    @Test
+    void E_VAL_14_offStepZeroDuration() {
+        assertEquals(List.of("시작 시각: 5분 단위로 정해 주세요", "걸리는 시간: 10분부터 720분까지, 5분 단위예요"),
+                errors(timed(Kind.TASK, 27 * 60 + 53, 0)));
+    }
 }
