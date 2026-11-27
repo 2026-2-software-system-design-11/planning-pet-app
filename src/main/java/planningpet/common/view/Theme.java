@@ -1,6 +1,9 @@
 package planningpet.common.view;
 
 import java.awt.Color;
+import java.awt.Font;
+import java.awt.GraphicsEnvironment;
+import java.util.List;
 
 /** 디자인 시스템(docs/design-system.md)의 값. 이름은 문서의 이름과 같다. */
 public final class Theme {
@@ -86,7 +89,53 @@ public final class Theme {
     public static final int BUBBLE_RADIUS = 16;
     /** 카드 사이 간격(디자인 시스템 4절). */
     public static final int GAP = 12;
+    private static final Font REGULAR = load("Regular");
+    private static final Font MEDIUM = load("Medium");
+    private static final Font BOLD = load("Bold");
+    private static final Font HEAVY = load("ExtraBold");
 
     private Theme() {
+    }
+
+    /** 앱에 넣은 Pretendard(SIL OFL, assets/fonts). 못 읽으면 시스템 글꼴. */
+    private static Font load(String weight) {
+        return load("/assets/fonts/Pretendard-" + weight + ".otf", weight);
+    }
+
+    /** 글꼴 파일을 바꿔 끼우는 검사용 입구(docs/porting/theme.md). */
+    static Font load(String resource, String weight) {
+        try (java.io.InputStream in = Theme.class.getResourceAsStream(resource)) {
+            if (in != null) {
+                Font f = Font.createFont(Font.TRUETYPE_FONT, in);
+                GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(f);
+                return f;
+            }
+        } catch (java.awt.FontFormatException | java.io.IOException e) {
+            // 아래 시스템 글꼴로 간다.
+        }
+        List<String> names = List.of(GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames());
+        String family = names.contains("Malgun Gothic") ? "Malgun Gothic"
+                : names.contains("Apple SD Gothic Neo") ? "Apple SD Gothic Neo" : Font.DIALOG;
+        return new Font(family, weight.equals("Regular") || weight.equals("Medium") ? Font.PLAIN : Font.BOLD, 12);
+    }
+
+    /** 글자 단계. 20 이상은 아주 굵게(제목, 큰 숫자), 그 아래는 중간 굵기(본문). */
+    public static Font font(int size) {
+        return (size >= 20 ? HEAVY : MEDIUM).deriveFont((float) size);
+    }
+
+    /** 굵게(메뉴, 이름, 버튼, 라벨). */
+    public static Font bold(int size) {
+        return BOLD.deriveFont((float) size);
+    }
+
+    /** 아주 굵게(화면 제목, 로고, 레벨과 포인트 숫자). */
+    public static Font heavy(int size) {
+        return HEAVY.deriveFont((float) size);
+    }
+
+    /** 보통(긴 안내 문장). */
+    public static Font regular(int size) {
+        return REGULAR.deriveFont((float) size);
     }
 }
