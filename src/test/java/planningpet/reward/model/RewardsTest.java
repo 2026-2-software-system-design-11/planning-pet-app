@@ -16,7 +16,7 @@ import planningpet.schedule.model.DayPlan;
 import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Task;
 
-/** 06 8번과 docs/porting/rewards.md 2절의 E-RWD 경계. 펫은 고른 고양이 하나이고 complete와 done은 값을 한 줄로 잇는다. */
+/** 06 8번, 9번과 docs/porting/rewards.md 2절의 경계. 펫은 고른 고양이 하나이고 complete, undo, done은 값을 한 줄로 잇는다. */
 class RewardsTest {
     private final Task a = task("A", d(16));
     /** 기간 할 일. p는 시각 없이 11-16에 보이기 시작하고, q는 11-18 09:00으로 정해 두었다. */
@@ -45,6 +45,12 @@ class RewardsTest {
         RewardResult r = new Rewards(data).complete(t, today);
         return r.outcome() + " " + r.points() + " " + r.exp() + ", " + data.getPoints() + "P "
                 + data.pet(PetKind.CAT).getExp() + " " + data.getRewardCountDay() + " " + data.getRewardCount();
+    }
+
+    private String undo(Task t, LocalDate today) {
+        new Rewards(data).uncomplete(t, today);
+        return data.getPoints() + "P " + data.pet(PetKind.CAT).getExp() + " " + data.getRewardCountDay() + " "
+                + data.getRewardCount();
     }
 
     private static String done(Task t) {
@@ -158,5 +164,39 @@ class RewardsTest {
         complete(a, d(16));
         assertThrows(IllegalStateException.class, () -> complete(a, d(16)));
         assertEquals("10P 10 1", data.getPoints() + "P " + data.pet(PetKind.CAT).getExp() + " " + data.getRewardCount());
+    }
+
+    @Test
+    void T_UNDO_1_rewardOfToday() {
+        data.setPoints(20);
+        data.pet(PetKind.CAT).setExp(20);
+        data.setRewardCount(d(16), 2);
+        complete(a, d(16));
+        assertEquals("20P 20 2026-11-16 2", undo(a, d(16)));
+        assertEquals("false null 0 0 null null", done(a));
+    }
+
+    @Test
+    void T_UNDO_2_rewardOfYesterday() {
+        complete(a, d(15));
+        data.setPoints(0);
+        data.setRewardCount(d(16), 3);
+        assertEquals("-10P 0 2026-11-16 3", undo(a, d(16)));
+    }
+
+    @Test
+    void T_UNDO_3_cappedTask() {
+        data.setRewardCount(d(16), 20);
+        data.setPoints(50);
+        complete(a, d(16));
+        assertEquals("50P 0 2026-11-16 20", undo(a, d(16)));
+    }
+
+    @Test
+    void T_UNDO_4_levelGoesDown() {
+        data.pet(PetKind.CAT).setExp(45);
+        complete(a, d(16));
+        assertEquals("0P 45 2026-11-16 0", undo(a, d(16)));
+        assertEquals(1, Level.of(data.pet(PetKind.CAT).getExp()).getLevel());
     }
 }

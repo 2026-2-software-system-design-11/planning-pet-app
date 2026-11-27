@@ -5,7 +5,7 @@ import planningpet.app.model.AppData;
 import planningpet.pet.model.PetState;
 import planningpet.schedule.model.Task;
 
-/** 할 일 끝내기의 보상(06 8번). 보상을 받는 완료는 앱 날짜 하루에 20번까지이고 하나에 10P와 경험치 10이다(D-18). */
+/** 할 일 끝내기의 보상과 체크 풀기(06 8번, 9번). 보상을 받는 완료는 앱 날짜 하루에 20번까지이고 하나에 10P와 경험치 10이다(D-18). */
 public final class Rewards {
     static final int DAILY_CAP = 20;
     static final int TASK_POINTS = 10;
@@ -36,5 +36,22 @@ public final class Rewards {
         pet.setExp(pet.getExp() + TASK_EXP);
         data.setRewardCount(today, data.getRewardCount() + 1);
         return new RewardResult(TASK_POINTS, TASK_EXP, RewardResult.Outcome.REWARDED, before, Level.of(pet.getExp()));
+    }
+
+    /**
+     * 06 9번. 받은 보상만큼 포인트를 빼고(음수가 될 수 있다, D-19) 받은 펫에서 경험치를 뺀다. 받은 펫이 적히지 않은 옛 데이터는 경험치를
+     * 받았으면 고른 펫에서 뺀다(D-48). 오늘 받은 보상이면 오늘 횟수를 하나 줄인다.
+     */
+    public void uncomplete(Task task, LocalDate today) {
+        data.setPoints(data.getPoints() - task.getRewardPoints());
+        PetState pet = task.getRewardPet() != null ? data.pet(task.getRewardPet())
+                : task.getRewardExp() > 0 ? data.activePet() : null;
+        if (pet != null) {
+            pet.setExp(pet.getExp() - task.getRewardExp());
+        }
+        if (today.equals(task.getRewardDay()) && today.equals(data.getRewardCountDay())) {
+            data.setRewardCount(today, data.getRewardCount() - 1);
+        }
+        task.unfinish();
     }
 }
