@@ -28,6 +28,10 @@ public record TaskDraft(Kind kind, String title, Category category, LocalDate da
         } else if (title.strip().length() > 100) {
             out.add(new FieldError("제목", "제목은 100자까지예요"));
         }
+        String due = dueDate == null ? null : dueProblem();
+        if (due != null) {
+            out.add(new FieldError("마감", due));
+        }
         Integer start = startMinute();
         // 화면 칸이 막아도 다른 길로 들어온 값을 여기서 막는다(06 2번, D-100).
         if (start == null && kind == Kind.FIXED) {
@@ -49,6 +53,30 @@ public record TaskDraft(Kind kind, String title, Category category, LocalDate da
             out.add(new FieldError("메모", "메모는 1000자까지예요"));
         }
         return out;
+    }
+
+    /**
+     * 마감 칸의 문장(D-65, D-99). 시작일, 오늘, 정해 둔 날, 정해 둔 날 후의 시작일 순서로 하나만 고른다. 끝낸 기간 할 일도 날짜(기간
+     * 첫날)가 그대로이므로 검사한다(D-66). 맞으면 null.
+     */
+    private String dueProblem() {
+        if (kind == Kind.FIXED) {
+            return "기간은 할 일만 정할 수 있어요";
+        } else if (dueDate.isBefore(date)) {
+            return "마감일이 시작일보다 전이에요";
+        } else if (today != null && dueDate.isBefore(today)) {
+            return "마감일이 오늘보다 전이에요";
+        } else if (placed != null && dueDate.isBefore(placed)) {
+            return "마감일이 시각을 정해 둔 " + monthDay(placed) + "보다 전이에요";
+        } else if (placed != null && date.isAfter(placed)) {
+            return "시작일이 시각을 정해 둔 " + monthDay(placed) + "보다 후예요";
+        }
+        return null;
+    }
+
+    /** "11/19(목)". */
+    private static String monthDay(LocalDate d) {
+        return d.getMonthValue() + "/" + d.getDayOfMonth() + "(" + "월화수목금토일".charAt(d.getDayOfWeek().getValue() - 1) + ")";
     }
 
     /**

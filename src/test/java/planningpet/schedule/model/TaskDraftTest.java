@@ -32,6 +32,10 @@ class TaskDraftTest {
         return draft(kind, "과제", day(11, 16), null, minute, minutes, "", null, null);
     }
 
+    private static TaskDraft due(LocalDate date, LocalDate due, LocalDate placed, LocalDate today) {
+        return draft(Kind.TASK, "과제", date, due, null, 30, "", placed, today);
+    }
+
     private static LocalDate day(int month, int d) {
         return LocalDate.of(2026, month, d);
     }
@@ -203,5 +207,73 @@ class TaskDraftTest {
     void E_VAL_14_offStepZeroDuration() {
         assertEquals(List.of("시작 시각: 5분 단위로 정해 주세요", "걸리는 시간: 10분부터 720분까지, 5분 단위예요"),
                 errors(timed(Kind.TASK, 27 * 60 + 53, 0)));
+    }
+
+    @Test
+    void T_VAL_17_dueBeforeStart() {
+        List<String> before = List.of("마감: 마감일이 시작일보다 전이에요");
+        assertEquals(before, errors(due(day(11, 18), day(11, 17), null, null)));
+        assertEquals(List.of(), errors(due(day(11, 18), day(11, 18), null, null)));
+        assertEquals(before, errors(due(day(11, 18), day(11, 17), null, day(11, 18))));
+    }
+
+    @Test
+    void T_VAL_19_fixedWithDue() {
+        TaskDraft d = draft(Kind.FIXED, "수업", day(11, 16), day(11, 22), 600, 60, "", null, null);
+        assertEquals(List.of("마감: 기간은 할 일만 정할 수 있어요"), errors(d));
+    }
+
+    @Test
+    void T_VAL_22_dueBeforePlaced() {
+        LocalDate placed = day(11, 19);
+        assertEquals(List.of("마감: 마감일이 시각을 정해 둔 11/19(목)보다 전이에요"),
+                errors(due(day(11, 17), day(11, 18), placed, day(11, 18))));
+        assertEquals(List.of(), errors(due(day(11, 17), day(11, 19), placed, day(11, 18))));
+        assertEquals(List.of("마감: 마감일이 시작일보다 전이에요"), errors(due(day(11, 17), day(11, 16), placed, day(11, 18))));
+    }
+
+    @Test
+    void T_VAL_23_dueBeforeToday() {
+        LocalDate today = day(11, 18);
+        List<String> beforeToday = List.of("마감: 마감일이 오늘보다 전이에요");
+        assertEquals(beforeToday, errors(due(day(11, 10), day(11, 17), null, today)));
+        assertEquals(List.of("마감: 마감일이 시작일보다 전이에요"), errors(due(day(11, 10), day(11, 9), null, today)));
+        assertEquals(List.of(), errors(due(day(11, 10), day(11, 18), null, today)));
+        assertEquals(beforeToday, errors(due(day(11, 16), day(11, 17), null, today)));
+        assertEquals(beforeToday, errors(due(day(11, 15), day(11, 16), null, today)));
+        assertEquals(List.of(), errors(due(day(11, 10), day(11, 16), null, null)));
+    }
+
+    @Test
+    void T_VAL_24_startAfterPlaced() {
+        LocalDate placed = day(11, 19);
+        assertEquals(List.of("마감: 시작일이 시각을 정해 둔 11/19(목)보다 후예요"),
+                errors(due(day(11, 20), day(11, 22), placed, day(11, 18))));
+        assertEquals(List.of("마감: 마감일이 시작일보다 전이에요"), errors(due(day(11, 20), day(11, 18), placed, day(11, 18))));
+        assertEquals(List.of(), errors(due(day(11, 19), day(11, 22), placed, day(11, 18))));
+    }
+
+    @Test
+    void E_VAL_16_fixedNoStartWithDue() {
+        TaskDraft d = draft(Kind.FIXED, "수업", day(11, 16), day(11, 22), null, 60, "", null, null);
+        assertEquals(List.of("마감: 기간은 할 일만 정할 수 있어요", "시작 시각: 고정 일정은 시작 시각이 있어야 해요"), errors(d));
+    }
+
+    @Test
+    void E_VAL_17_dueNextYear() {
+        assertEquals(List.of(), errors(due(day(12, 31), LocalDate.of(2027, 1, 1), null, day(12, 31))));
+    }
+
+    @Test
+    void E_VAL_18_placedNextYear() {
+        assertEquals(List.of("마감: 마감일이 시각을 정해 둔 1/2(토)보다 전이에요"),
+                errors(due(day(12, 30), day(12, 31), LocalDate.of(2027, 1, 2), day(12, 30))));
+    }
+
+    @Test
+    void E_VAL_19_everyFieldWrong() {
+        TaskDraft d = draft(Kind.FIXED, "", day(11, 18), day(11, 17), null, 0, "가".repeat(1001), null, null);
+        assertEquals(List.of("제목", "마감", "시작 시각", "걸리는 시간", "메모"),
+                d.validate().stream().map(FieldError::field).toList());
     }
 }
