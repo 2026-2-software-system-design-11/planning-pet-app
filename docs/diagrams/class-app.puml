@@ -98,6 +98,7 @@ AppController ..> Visits
 AppController ..> planningpet.pet.model.PetTalk
 AppController ..> planningpet.schedule.model.Reminders
 AppWindow ..> planningpet.reward.controller.RewardController
+AppWindow ..> planningpet.pet.view.PetArt
 Tray ..> planningpet.home.view.MainScreen
 DayWatcher ..> AppData
 DayWatcher --> "1" AppController

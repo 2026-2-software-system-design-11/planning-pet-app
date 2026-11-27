@@ -2,17 +2,19 @@
 !include seq-common.iuml
 actor 사용자
 $obj(PetScreen)
+$obj(AdoptDialog)
 $obj(PetController)
 $obj(AppController)
 $obj(PetTalk)
 사용자 -> PetScreen : 방 위 펫 칩 옆 "+" 누르기
-note right of PetScreen : 창 "{종류} 데려오기"에 "{종류}를 데려올까요?",\n그 펫 그림, 이름 칸, "취소"와 "데려오기".\n종류는 아직 없는 쪽이다
+note right of PetScreen : AdoptDialog를 연다.\n종류는 아직 없는 쪽이다
+note right of AdoptDialog : 창 "{종류} 데려오기"에 "{종류}를 데려올까요?",\n그 펫 그림, 이름 칸, "취소"와 "데려오기"
 alt 3a 취소
-  사용자 -> PetScreen : "취소" 누르거나 창 닫기
-  note right of PetScreen : 아무것도 만들지 않는다
+  사용자 -> AdoptDialog : "취소" 누르거나 창 닫기
+  note right of AdoptDialog : 아무것도 만들지 않는다
 else 기본 흐름
-  사용자 -> PetScreen : 이름을 쓰고 "데려오기" 누르기
-  PetScreen -> PetController : adopt(kind, name)
+  사용자 -> AdoptDialog : 이름을 쓰고 "데려오기" 누르기
+  AdoptDialog -> PetController : adopt(kind, name)
   PetController -> AppController : change(what, edit)
   AppController -> PetController : edit()
   note right of PetController : 경험치 0, 앉기 자세, 기본 목걸이인 펫을\n만들어 pets에 넣고 activeKind로.\n3b 이름을 비웠으면 고양이는 "나비",\n강아지는 "바둑이"
@@ -21,6 +23,7 @@ else 기본 흐름
   PetController -> AppController : sayInRoom(line)
   note right of AppController : "안녕, 나는 {이름}{이야/야}.\n이제 경험치는 내가 받을게!"\n메인 말풍선에 남고, roomLine으로\n나의 방 말풍선에 한 번
   ref over PetController, AppController : 저장과 되돌리기. 4a 저장 실패면 새 펫과 고른 펫을 되돌린다
-  note right of PetScreen : 창을 닫는다. 방에 두 펫이 함께 보이고\n펫 칩이 둘이 되며 "+"가 사라진다
+  note right of AdoptDialog : 창을 닫는다
+  note right of PetScreen : 방에 두 펫이 함께 보이고\n펫 칩이 둘이 되며 "+"가 사라진다
 end
 @enduml

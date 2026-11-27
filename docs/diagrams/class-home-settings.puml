@@ -41,8 +41,12 @@ package planningpet.common.model {
   }
   class Words
 }
+package planningpet.common.view {
+  class RoundField
+}
 MainScreen *-- CalendarPanel
 MainScreen *-- PetCard
+MainScreen *-- "1" RoundField : quick
 MainScreen ..> HomeController
 MainScreen *-- planningpet.schedule.view.TaskRows
 MainScreen ..> planningpet.schedule.controller.TaskController
@@ -51,6 +55,7 @@ CalendarPanel ..> HomeController
 HomeController ..> planningpet.pet.model.PetTalk
 CalendarPanel ..> planningpet.schedule.model.CalendarCell
 PetCard ..> planningpet.reward.model.DailyProgress
+PetCard ..> planningpet.pet.view.PetArt
 HomeController --> "1" planningpet.app.controller.AppController
 SettingsScreen ..> SettingsController
 SettingsScreen ..> Autostart

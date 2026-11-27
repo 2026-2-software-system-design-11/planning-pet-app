@@ -184,13 +184,14 @@
 
 - 첫 실행에 UC-01의 2a에서 온다. 고르기 창은 `choose`를 한 번 부르고, 펫을 만드는 일과 3a의 예시 일정 넣기(`Examples.fill`)를 22번 `change` 하나로 감싸 한 번 저장한다(06 30번, 31번).
 - `choose`는 펫 말을 하지 않는다. 처음 만난 인사(`FIRST_RUN`)는 메인 창이 뜰 때 UC-01의 `onWindowShown`이 말한다(06 15번).
+- 동물은 `PickCard`(`JRadioButton`)를 누르고 이름은 `RoundField`에 쓴다. 카드 고르기와 글자 수 바뀌기는 view 안의 일이라 노트로 적었고, `PickDialog`는 버튼을 누를 때 두 부품의 값을 읽어 `choose`에 넘긴다(07).
 - 창 닫기와 저장 실패는 02 UC-17에 갈래가 없어 05 반려동물 고르기 창을 근거로 그렸다.
 
 ### UC-20 펫 데려오기
 
 ![UC-20](diagrams/seq-uc20.png)
 
-- "{종류} 데려오기" 창은 나의 방 view가 띄운다. 화면이 펫이 하나일 때만 "+"를 보이므로 `adopt`의 false는 그리지 않았다.
+- "{종류} 데려오기" 창은 나의 방 view(`PetScreen`)가 아직 없는 종류로 여는 `AdoptDialog`다. 창을 여는 일은 view끼리라 노트로 적었고, 데려오기를 누르면 `AdoptDialog`가 `adopt`를 부른다(07). 화면이 펫이 하나일 때만 "+"를 보이므로 `adopt`의 false는 그리지 않았다.
 - 펫 말 `ADOPTED`는 메인 말풍선에 남고 나의 방 말풍선에도 한 번 보인다(06 16번, D-62). 그래서 다른 펫 말처럼 `AppController.say`로 넘기고, 나의 방에 한 번 보이도록 `sayInRoom`도 부른다.
 
 ### UC-21 고른 펫 바꾸기

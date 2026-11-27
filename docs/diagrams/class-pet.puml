@@ -6,6 +6,10 @@ package planningpet.pet.view {
   class RoomView
   class CharacterDialog
   class PickDialog
+  class PickCard
+  class PickScene
+  class AdoptDialog
+  class PetArt
 }
 package planningpet.pet.controller {
   class PetController {
@@ -59,6 +63,24 @@ PetScreen *-- RoomView
 PetScreen ..> PetController
 CharacterDialog ..> PetController
 PickDialog ..> PetController
+PickDialog *-- "2" PickCard
+PickDialog *-- "1" planningpet.common.view.RoundField : name
+PickDialog ..> PickScene
+PickDialog ..> PetArt
+PickCard ..> PickScene
+PickCard ..> PetArt
+PickCard --> "1" PetKind
+PetScreen ..> AdoptDialog
+AdoptDialog *-- "1" planningpet.common.view.RoundField : name
+AdoptDialog --> "1" PetKind
+AdoptDialog ..> PetController
+AdoptDialog ..> PetArt
+PetScreen ..> PetArt
+RoomView ..> PetArt
+CharacterDialog ..> PetArt
+PetArt ..> PetKind
+PetArt ..> Pose
+PetArt ..> WearId
 RoomView ..> Bubble
 RoomView ..> PetState
 PetScreen ..> Bond
