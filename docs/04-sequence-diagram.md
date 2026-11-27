@@ -107,6 +107,21 @@
 - 출석 버튼은 홈, 일정관리, 설정의 화면 머리 오른쪽 카드에 있다(05 창 구조). 그 카드는 창 틀 `AppWindow`의 것으로 보고 그렸다.
 - 펫 말 "출석했어! +20P"는 06 16번의 `ATTENDED`다.
 
+### UC-07 할 일 완료하기
+
+![UC-07](diagrams/seq-uc07.png)
+
+- 체크는 홈 목록, 일정관리 목록(`TaskRows`)과 시간표 블록(`TimetablePanel`) 세 곳이고 그 뒤 흐름이 같아 목록 하나로 그렸다.
+- 끝냄과 보상은 `Rewards`가 `Task.finish`로 적는다(07 "06에 없는 메서드"). 2a는 `finish` 안에서 나뉘어 노트에 적었다.
+- 3a와 3b의 펫 말은 `Rewards.complete`가 돌려준 `RewardResult`로 고른다(06 8번). 여럿에 해당하면 `STAGE_UP`, `LEVEL_UP`, `CAPPED`, `ALL_DONE`, `COMPLETED` 순으로 앞의 것 하나다(06 16번).
+
+### UC-08 할 일 완료 취소하기
+
+![UC-08](diagrams/seq-uc08.png)
+
+- 3a, 3c, 3d는 `Rewards.uncomplete` 안에서 나뉘어 메시지가 같으므로 그 메시지의 노트에 적었다.
+- `uncomplete`는 돌려주는 값이 없다(06 9번). 펫 말의 ", 이제 Lv.{레벨}"(3b)을 고르려고 controller가 바꾸기 전과 뒤에 `Level.of`를 부른다.
+
 ## 다시 그리기
 
 원본은 [diagrams/](diagrams/) 아래 `seq-*.puml`이고 공통 꾸밈은 `seq-common.iuml`이다. PlantUML로 그린다.
