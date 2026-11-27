@@ -2,8 +2,10 @@ package planningpet.pet.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static planningpet.pet.model.Situation.BRIEFING;
+import static planningpet.pet.model.Situation.COMPLETED;
 import static planningpet.pet.model.Situation.FIRST_RUN;
 import static planningpet.pet.model.Situation.OTHER_DATE;
+import static planningpet.pet.model.Situation.UNCOMPLETED;
 import static planningpet.pet.model.Situation.USUAL;
 import static planningpet.pet.model.Situation.WELCOME_BACK;
 
@@ -17,6 +19,8 @@ import java.util.Map;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import planningpet.app.model.AppData;
+import planningpet.reward.model.Level;
+import planningpet.reward.model.Rewards;
 import planningpet.schedule.model.Category;
 import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Repeat;
@@ -67,6 +71,19 @@ class PetTalkTest {
     private static Task done(Task task, int day) {
         task.finish(d(day), 0, 0, null);
         return task;
+    }
+
+    /** 완료하고 펫 말을 돌려준다. 끝내기는 Rewards.complete로 한다. */
+    private String complete(Task task) {
+        return new PetTalk(data).say(COMPLETED, new Rewards(data).complete(task, data.today()), task);
+    }
+
+    /** 완료를 취소하고 펫 말을 돌려준다. 빠질 포인트와 전후 레벨은 controller가 넘길 값이다. */
+    private String uncomplete(Task task) {
+        int points = task.getRewardPoints();
+        Level before = Level.of(data.activePet().getExp());
+        new Rewards(data).uncomplete(task, data.today());
+        return new PetTalk(data).say(UNCOMPLETED, points, before, Level.of(data.activePet().getExp()));
     }
 
     private String say(Situation situation) {
@@ -260,5 +277,34 @@ class PetTalkTest {
         at("11-18", planned(title, 16, 22, 17, 9), task(title, 19));
         assertEquals("오늘은 할 일이 없어. 어제 하기로 한 '2026 하반기 공채 자기…'을 못 했어. 마감은 22일이야. 내일 '2026 하반기 공채 자기…'이 있어.",
                 say(BRIEFING));
+    }
+
+    @Test
+    void T_TALK_5_stageUp() {
+        at("11-16", task("가", 16));
+        data.activePet().setExp(230);
+        assertEquals("잘했어! 레벨이 올랐어. 이제 Lv.4, 나 좀 자란 것 같아.", complete(data.getBook().getTasks().get(0)));
+    }
+
+    @Test
+    void T_TALK_6_allDone() {
+        at("11-16", task("가", 16));
+        assertEquals("오늘 할 일을 다 끝냈어! 푹 쉬어.", complete(data.getBook().getTasks().get(0)));
+    }
+
+    @Test
+    void T_TALK_7_uncompleteLevelDown() {
+        at("11-16", task("가", 16));
+        data.activePet().setExp(45);
+        complete(data.getBook().getTasks().get(0));
+        assertEquals("체크를 풀었어. -10P, 이제 Lv.1", uncomplete(data.getBook().getTasks().get(0)));
+    }
+
+    @Test
+    void T_TALK_8_uncompleteCapped() {
+        at("11-16", task("가", 16), task("나", 16));
+        data.setRewardCount(d(16), 20);
+        complete(data.getBook().getTasks().get(0));
+        assertEquals("체크를 풀었어.", uncomplete(data.getBook().getTasks().get(0)));
     }
 }

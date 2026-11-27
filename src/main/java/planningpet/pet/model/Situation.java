@@ -11,5 +11,9 @@ public enum Situation {
     /** 그날 두 번째부터 창을 열 때, 메인에서 오늘을 다시 고를 때. */
     USUAL,
     /** 메인에서 오늘이 아닌 날을 고름. */
-    OTHER_DATE
+    OTHER_DATE,
+    /** 할 일 완료. 06 16번의 STAGE_UP, LEVEL_UP, CAPPED, ALL_DONE, COMPLETED 가운데 PetTalk가 고른다. */
+    COMPLETED,
+    /** 완료 취소(D-36). */
+    UNCOMPLETED
 }

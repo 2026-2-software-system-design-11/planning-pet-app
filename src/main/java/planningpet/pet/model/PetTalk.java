@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.stream.Stream;
 import planningpet.app.model.AppData;
 import planningpet.common.model.Words;
+import planningpet.reward.model.Level;
+import planningpet.reward.model.RewardResult;
 import planningpet.schedule.model.DayPlan;
 import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Task;
@@ -43,6 +45,42 @@ public final class PetTalk {
         // D-94: 기간 할 일만 있는 날은 목록에 보이는 기간 할 일 수를 덧붙인다.
         int period = data.getBook().dayPlan(day).period().size();
         return date + "은 할 일이 없어." + (period > 0 ? " 기간 할 일 " + period + "개가 있어." : "");
+    }
+
+    /** COMPLETED: 완료 하나가 여러 상황에 들면 STAGE_UP, LEVEL_UP, CAPPED, ALL_DONE, COMPLETED 순으로 앞의 것 하나를 말한다. */
+    public String say(Situation situation, RewardResult result, Task task) {
+        require(situation, Situation.COMPLETED);
+        if (result.stageUp()) {
+            return "잘했어! 레벨이 올랐어. 이제 Lv." + result.after().getLevel() + ", 나 좀 자란 것 같아.";
+        }
+        if (result.levelUp()) {
+            return "잘했어! 레벨이 올랐어. 이제 Lv." + result.after().getLevel();
+        }
+        if (result.outcome() == RewardResult.Outcome.CAPPED) {
+            return "잘했어! 오늘 보상은 다 받았지만 체크는 계속 돼.";
+        }
+        LocalDate today = data.today();
+        if (!task.countDay().equals(today) || !checkables(today).stream().allMatch(Task::isDone)) {
+            return "잘했어! +10P";
+        }
+        // D-70: 기간 안에 할 일이 남았으면 가장 가까운 마감을 함께 말한다.
+        String period = periodLine(null);
+        return period != null ? "오늘 할 일 다 끝냈어! " + period : "오늘 할 일을 다 끝냈어! 푹 쉬어.";
+    }
+
+    /** UNCOMPLETED: 빠진 포인트와 레벨이 내려갔으면 바뀐 레벨을 말한다(D-36). */
+    public String say(Situation situation, int points, Level before, Level after) {
+        require(situation, Situation.UNCOMPLETED);
+        if (points == 0) {
+            return "체크를 풀었어.";
+        }
+        return "체크를 풀었어. -" + points + "P" + (after.getLevel() < before.getLevel() ? ", 이제 Lv." + after.getLevel() : "");
+    }
+
+    private static void require(Situation given, Situation... allowed) {
+        if (!List.of(allowed).contains(given)) {
+            throw new IllegalArgumentException("이 인자를 받지 않는 상황: " + given);
+        }
     }
 
     /** D-74: 처음 만난 인사. 바로 시작이면 수업부터 넣자고 이끌고, 예시로 둘러보기면 예시를 넣어 뒀다고 말한다. */
