@@ -9,6 +9,7 @@ import java.awt.Rectangle;
 import java.io.IOException;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
@@ -64,6 +65,8 @@ class AppWindowTest {
     /** 프로토타입 기준 그림처럼 Main.create의 clear를 걸고 모든 글을 비운 뒤 그린다. install은 검사마다 되돌린다. */
     private static void looksLikePrototype(String name, AppWindow w, int width, int height) throws IOException {
         Theme.clear(w.root());
+        w.streak.set("", "");
+        w.points.set("", "");
         blank(w.root());
         Snap.assertLaidOutLooksLikePrototype(name, w.root(), width, height);
     }
@@ -98,6 +101,33 @@ class AppWindowTest {
             data.changed();
             assertEquals(shown(want[i][0], want[i][1], "출석 +20P", true), shown(w));
         }
+    }
+
+    @Test
+    void eWin6AttendanceDay() throws IOException {
+        AppWindow w = window();
+        data.setAttendanceDay(LocalDate.of(2026, 11, 15));
+        data.changed();
+        assertEquals(shown("0일", "0P", "출석 +20P", true), shown(w));
+        data.setAttendanceDay(LocalDate.of(2026, 11, 17));
+        data.changed();
+        assertEquals(shown("0일", "0P", "출석 +20P", true), shown(w));
+        data.setAttendanceDay(LocalDate.of(2026, 11, 16));
+        data.changed();
+        assertEquals(shown("0일", "0P", "출석 완료", false), shown(w));
+        looksLikePrototype("frame-attended", w, 1000, 680);
+    }
+
+    @Test
+    void eWin8EndOfAppDay() {
+        AppWindow w = window();
+        data.setAttendanceDay(LocalDate.of(2026, 11, 16));
+        now = LocalDateTime.of(2026, 11, 17, 3, 59);
+        data.changed();
+        assertEquals(shown("0일", "0P", "출석 완료", false), shown(w));
+        now = LocalDateTime.of(2026, 11, 17, 4, 0);
+        data.changed();
+        assertEquals(shown("0일", "0P", "출석 +20P", true), shown(w));
     }
 
     @Test
