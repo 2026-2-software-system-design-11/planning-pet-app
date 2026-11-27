@@ -23,7 +23,7 @@
 | M1 | 날짜 규칙 | `AppDay`, `Rules`, `Words` | 1번, 데이터 절 "한 주", 16번의 글자 규칙 | [docs/porting/day-rules.md](porting/day-rules.md) |
 | M2a | 일정 값 | `Task`, 값 목록 `Kind`, `Category`, `PetKind` | 데이터 절 `Task`와 그 절의 규칙(보이는 날 빼고) | [docs/porting/task.md](porting/task.md) |
 | M2b | 일정 입력 검사 | `TaskDraft`, `FieldError` | 2번(반복 칸 빼고) | [docs/porting/task-check.md](porting/task-check.md) |
-| M3 | 반복 | `Repeat`, `TaskDraft.validate`의 반복 칸 | 데이터 절 `repeat`, 2번 T-VAL-11~13, 15, 16, 18 | `docs/porting/repeat.md` |
+| M3 | 반복 | `Repeat`, `TaskDraft.validate`의 반복 칸 | 데이터 절 `repeat`, 2번 T-VAL-11~13, 15, 16, 18 | [docs/porting/repeat.md](porting/repeat.md) |
 | M4 | 일정 넣기와 겹침 | `TaskBook.add`, `overlap` | 3번 | `docs/porting/task-add.md` |
 | M5 | 그날 목록과 주의 목록 | `TaskBook.dayPlan`, `untimedOfWeek`, `timeText`, `dueText`, `periodNote`, `Task.shownOn` | 6번, 7번, 데이터 절 "보이는 날" | `docs/porting/task-lists.md` |
 | M6 | 일정 고치기와 지우기 | `TaskBook.update`, `clearTime`, `delete` | 4번(끌어 놓기 빼고), 5번 | `docs/porting/task-edit.md` |
