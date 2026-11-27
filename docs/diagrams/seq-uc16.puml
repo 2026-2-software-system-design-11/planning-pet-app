@@ -1,0 +1,31 @@
+@startuml seq-uc16
+!include seq-common.iuml
+actor 사용자
+$obj(ShopPanel)
+$obj(ShopController)
+$obj(AppController)
+$obj(Room)
+$obj(Shop)
+사용자 -> ShopPanel : 가진 아이템 카드("보유 중") 누르기
+note right of ShopPanel : 미리보기 칸에 그 아이템을 놓은 방과\n방에 없으면 "방에 놓기", 있으면 "방에서 치우기"
+alt 기본 흐름
+  사용자 -> ShopPanel : "방에 놓기"나 "방에서 치우기" 누르기
+  ShopPanel -> ShopController : toggle(item)
+  ShopController -> AppController : change(what, edit)
+  AppController -> ShopController : edit()
+  ShopController -> Room : toggle(item)
+  note right of Room : 놓인 아이템이면 placedItems에서 빼고,\n아니면 넣는다
+  ref over ShopController, Room : 저장과 되돌리기. 4a 저장 실패면 놓기나 치우기를 되돌린다
+  note right of ShopPanel : 방, 방 꾸미기 만족도, 배치 아이템이\n바뀌고 버튼 글자가 바뀐다
+else 3a 되팔기
+  note right of ShopPanel : 보유한 아이템 탭에서 고른 아이템이면\n두 버튼 아래에 "되팔기 +{값}P"
+  사용자 -> ShopPanel : "되팔기 +{값}P" 누르기
+  ShopPanel -> ShopController : sell(item)
+  ShopController -> AppController : change(what, edit)
+  AppController -> ShopController : edit()
+  ShopController -> Shop : sell(item)
+  note right of Shop : 산 값 그대로 포인트를 더하고\nownedItems와 placedItems에서 뺀다
+  ref over ShopController, Shop : 저장과 되돌리기. 4a 저장 실패면 포인트와 보유 목록, 놓인 아이템을 되돌린다
+  note right of ShopPanel : 보유 포인트, 방 꾸미기 만족도, 배치 아이템이\n바뀌고 그 카드가 보유한 아이템에서 빠진다
+end
+@enduml
