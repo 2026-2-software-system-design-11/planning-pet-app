@@ -477,7 +477,7 @@
 | 18 자동 배치 | T-AUTO-1: UF-1-2(2). T-AUTO-2: UF-8-2(3). T-AUTO-4: UF-1-2(2). T-AUTO-5: UF-8-1(1). T-AUTO-6: UF-4-3(2), UF-8-1(2). T-AUTO-7: UF-8-1(5). T-AUTO-8: UF-4-3(1). T-AUTO-9: UF-8-1(2). T-AUTO-10: UF-2-5(3). T-AUTO-11: UF-2-6(8). T-AUTO-15: UF-4-3(2) | T-AUTO-3 단위(끝낸 일정을 피하는 경우가 흐름에 없음). T-AUTO-12, T-AUTO-13, T-AUTO-14 단위. T-AUTO-16 단위(HomeCheck). T-AUTO-17 단위(PeriodCheck) |
 | 19 시간표 열 | T-TT-1: UF-6-1(5). T-TT-2: UF-3-2(1). T-TT-3: UF-3-2(3). T-TT-8: UF-4-3(1). T-TT-9: UF-4-3(3) | T-TT-4, T-TT-5, T-TT-6, T-TT-7 단위 |
 | 20 상점 | T-SHOP-1: UF-1-3(4). T-SHOP-5: UF-1-3(6). T-SHOP-6: UF-1-3(7), UF-9-3(2). T-SHOP-8: UF-7-1(3). T-SHOP-9: UF-7-4(2). T-SHOP-11: UF-9-3(4) | T-SHOP-2, T-SHOP-3, T-SHOP-4 단위(화면은 구매하기를 막으므로 흐름은 미리보기 칸만 본다. UF-7-4(1), UF-5-3(3), UF-9-3(3)). T-SHOP-7, T-SHOP-10, T-SHOP-12 단위 |
-| 21 저장 | 없음 | T-STORE-1, T-STORE-2, T-STORE-3, T-STORE-4, T-STORE-5, T-STORE-6 수동, 실제 앱 |
+| 21 저장 | 없음 | T-STORE-1, T-STORE-2, T-STORE-3, T-STORE-4, T-STORE-6, T-STORE-7 수동, 실제 앱 |
 | 22 변경과 다시 그리기 | T-SAVE-5: UF-1-1(2) | T-SAVE-1, T-SAVE-2, T-SAVE-3, T-SAVE-4 단위(실패 주입) |
 | 23 날 바뀜 | T-DAYW-1: UF-4-2(2). T-DAYW-2: UF-4-2(2). T-DAYW-4: UF-4-2(2) | T-DAYW-3, T-DAYW-5 수동, 실제 앱 |
 | 24 하나만 실행 | 없음 | T-ONE-1, T-ONE-2, T-ONE-3 수동, 실제 앱 |

@@ -620,19 +620,19 @@
 데이터 파일을 읽고 쓴다.
 
 - **쓰는 곳**: UC-01, 그리고 22번 함수를 거치는 모든 변경
-- **입력**: 데이터 폴더. Windows는 `%APPDATA%\PlanningPet`, macOS는 `~/Library/Application Support/PlanningPet`, 그 밖은 `~/.planningpet`이다. 파일 이름, 형식, 버전 번호와 변환 규칙은 07에서 정한다.
+- **입력**: 데이터 폴더. Windows는 `%APPDATA%\PlanningPet`, macOS는 `~/Library/Application Support/PlanningPet`, 그 밖은 `~/.planningpet`이다. 데이터는 그 폴더의 sqlite 파일 `planningpet.db` 하나다(D-111). 표, 형식 번호와 변환 규칙은 07 저장 형식에 있다.
 - **출력**: `load`는 읽은 데이터, `FIRST_RUN`(파일 없음), `UNREADABLE`(이유와 함께) 중 하나
 - **오류**: `save`는 쓰지 못하면 `IOException`
-- **하는 일**: `save`는 같은 폴더의 임시 파일에 쓰고 fsync한 뒤 원래 파일 자리로 옮긴다(D-08). `load`는 원래 파일만 읽고 남은 임시 파일은 지운다. `UNREADABLE`이면 앱은 파일을 건드리지 않고 이유를 보인 뒤 끝낸다(UC-01 2b).
+- **하는 일**: `save`는 바뀐 값을 sqlite 트랜잭션 하나로 쓴다(D-111). 커밋 전에 꺼지면 sqlite가 다음에 열 때 바꾸기 전으로 되돌린다. `load`는 파일이 없으면 파일을 만들지 않고 `FIRST_RUN`을 돌려준다. 앱보다 낮은 형식 번호의 파일은 07의 규칙대로 사본을 남기고 옮겨 읽는다. `UNREADABLE`이면 앱은 파일을 건드리지 않고 이유를 보인 뒤 끝낸다(UC-01 2b). 임시 파일을 쓰지 않으므로 남은 임시 파일을 지우는 검사(옛 T-STORE-5)는 없앴다. sqlite의 저널 파일은 sqlite가 다루고 앱은 지우지 않는다.
 
 | 검사 | 처음 상태 | 하는 것 | 결과 |
 |---|---|---|---|
 | T-STORE-1 | 데이터 표의 모든 값을 채운 데이터 | `save` 뒤 `load` | 모든 값이 같다 |
 | T-STORE-2 | 폴더 비어 있음 | `load` | `FIRST_RUN` |
-| T-STORE-3 | 형식이 깨진 파일 | `load` | `UNREADABLE`. 파일 바이트가 그대로다 |
-| T-STORE-4 | 앱보다 높은 버전 번호의 파일 | `load` | `UNREADABLE`, "새 버전의 플래닝펫에서 만든 파일이에요". 파일 그대로 |
-| T-STORE-5 | 원래 파일과 남은 임시 파일 | `load` | 원래 파일 값. 임시 파일은 지워짐 |
+| T-STORE-3 | sqlite 파일이 아닌 `planningpet.db` | `load` | `UNREADABLE`. 파일 바이트가 그대로다 |
+| T-STORE-4 | 앱보다 높은 형식 번호의 파일 | `load` | `UNREADABLE`, "새 버전의 플래닝펫에서 만든 파일이에요". 파일 그대로 |
 | T-STORE-6 | 할 일 2만 개 | `save` 도중 프로세스를 강제 종료(`kill -9`), 20번 | 20번 모두 `load`가 바꾸기 전이나 뒤의 값 하나를 온전히 읽는다 |
+| T-STORE-7 | 앱보다 낮은 형식 번호의 파일(형식 2가 생기면 1 파일로 검사한다) | `load` 두 번 | 처음 값으로 새 값을 채워 읽는다. 같은 폴더의 `planningpet.v{옛 번호}.db`가 옮기기 전 바이트와 같고, 두 번째 `load`는 사본을 덮어쓰지 않는다 |
 
 ## 22. `void AppController.change(String what, Runnable edit)`
 
