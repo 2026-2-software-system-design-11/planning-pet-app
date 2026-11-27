@@ -10,12 +10,13 @@ import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Shape;
+import java.awt.geom.Ellipse2D;
 import java.awt.geom.RoundRectangle2D;
 import javax.swing.JRadioButton;
 
 /**
  * 반려동물 고르기 창의 동물 카드(05 입력 항목 1, 디자인 시스템 10절 "고르기 창"). 부품은 05대로 `JRadioButton`이고 모양만 카드로 그린다.
- * 흰 바깥 테 안에 종류별 바탕(고양이 차가운 하늘빛, 강아지 따뜻한 크림), 발자국과 종류 이름, 설명 두 줄. 고른 카드는 민트 테두리다.
+ * 흰 바깥 테 안에 종류별 바탕(고양이 차가운 하늘빛, 강아지 따뜻한 크림), 발자국과 종류 이름, 설명 두 줄. 고른 카드는 민트 테두리와 체크 배지다.
  */
 public final class PickCard extends JRadioButton {
     /** 1배 크기. 창 폭 800에 두 장과 사이 20이 들어간다. */
@@ -112,6 +113,20 @@ public final class PickCard extends JRadioButton {
             g.setStroke(new BasicStroke(over ? 2f : 1.5f));
         }
         g.draw(edge);
+        if (isFocusOwner()) {
+            g.setColor(PickScene.alpha(Theme.MINT_DEEP, 150));
+            g.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1f, new float[] {4f, 4f}, 0f));
+            g.draw(new RoundRectangle2D.Double(x + ring + 4, y + ring + 4, w - ring * 2 - 8, h - ring * 2 - 8, RADIUS - 14, RADIUS - 14));
+        }
+        // 체크 배지: 색이 아니라 모양으로도 고름을 보인다(ICON 바탕은 카드 바탕과 5.7:1).
+        if (on) {
+            int b = 26;
+            int bx = x + w - b - 10;
+            int by = y + 10;
+            g.setColor(Theme.CARD_TOP);
+            g.fill(new Ellipse2D.Double(bx - 2.5, by - 2.5, b + 5, b + 5));
+            Icons.draw(g, Icons.Kind.CHECK, bx, by, b, Theme.ICON);
+        }
         g.dispose();
     }
 }
