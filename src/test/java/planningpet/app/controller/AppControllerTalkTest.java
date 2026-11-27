@@ -216,4 +216,53 @@ class AppControllerTalkTest {
         edit("통계 퀴즈", "통계 퀴즈", 18, 15, 30, true);
         assertEquals("오늘은 할 일이 없어. 내일 '통계 퀴즈'가 있어.|오늘 할 일 1개 남았어. 내일 '통계 퀴즈'가 있어.", said + "|" + line());
     }
+
+    @Test
+    void T_TALK_13_adoptedInRoom() {
+        at(16);
+        app.change("펫 데려오기", () -> {
+            PetState dog = new PetState(PetKind.DOG, "바둑이");
+            data.addPet(dog);
+            app.say(talk.say(Situation.ADOPTED, dog), null);
+            app.sayInRoom(talk.say(Situation.ADOPTED, dog));
+        });
+        String hello = "안녕, 나는 바둑이야. 이제 경험치는 내가 받을게!";
+        assertEquals(hello + "|" + hello, app.getBubble().getRoomLine() + "|" + line());
+    }
+
+    @Test
+    void E_TALK_39_roomLineClears() {
+        T_TALK_13_adoptedInRoom();
+        app.change("포인트", () -> data.setPoints(5));
+        assertEquals(null, app.getBubble().getRoomLine());
+    }
+
+    @Test
+    void E_TALK_33_sameListKeeps() {
+        at(16, "가", 16, "나", 16);
+        pick(16);
+        app.change("포인트", () -> data.setPoints(5));
+        assertEquals("오늘 할 일 2개 남았어. 1", line() + " " + app.getBubble().getNewLines());
+    }
+
+    @Test
+    void E_TALK_34_otherDayFollowsPicked() {
+        at(16, "가", 16, "나", 16, "x", 18);
+        pick(18);
+        complete("가");
+        edit("나", "나나", 16, null, 30, false);
+        String said = line();
+        edit("x", "xx", 18, null, 30, false);
+        assertEquals("잘했어! +10P|11월 18일 할 일은 1개야.", said + "|" + line());
+    }
+
+    @Test
+    void E_TALK_35_addedOtherDay() {
+        at(16, "가", 16);
+        pick(20);
+        add("b", 20);
+        String said = line();
+        edit("b", "bb", 20, null, 30, false);
+        assertEquals("'b' 11/20에 넣었어.|11월 20일 할 일은 1개야.", said + "|" + line());
+    }
 }
