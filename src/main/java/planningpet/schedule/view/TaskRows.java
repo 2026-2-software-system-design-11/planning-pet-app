@@ -58,7 +58,10 @@ public final class TaskRows extends JPanel {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     }
 
-    /** 홈 그날 목록(06 6번, D-31). 일정이 하나도 없는 날은 흐린 안내다(D-33, docs/porting/task-rows.md S3w). */
+    /**
+     * 홈 그날 목록(06 6번, D-31): 맨 위 "오늘 마감"인 기간 할 일, 시각 있는 일정을 시각과 함께 둔다. 일정이 하나도 없는 날은 흐린
+     * 안내다(D-33). 끝낸 일은 빠진다. 체크한 자리에 머물기와 맨 아래 "끝낸 일" 묶음은 #480이다(docs/porting/task-rows.md S3w).
+     */
     public void showPlan(DayPlan plan) {
         removeAll();
         if (plan.isEmpty()) {
@@ -68,6 +71,8 @@ public final class TaskRows extends JPanel {
             none.setBorder(BorderFactory.createEmptyBorder(16, 6, 0, 0));
             add(none);
         }
+        plan.dueToday().forEach(t -> add(row(t, "", plan.date())));
+        plan.timed().stream().filter(t -> !t.isDone()).forEach(t -> add(row(t, data.getBook().timeText(t), plan.date())));
         revalidate();
         repaint();
     }
