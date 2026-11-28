@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.time.DayOfWeek;
 import java.util.function.BiConsumer;
+import java.util.function.BooleanSupplier;
 import java.util.function.IntSupplier;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
@@ -53,6 +54,8 @@ public final class SettingsScreen extends JPanel {
     public IntSupplier samples = () -> 0;
     /** "예시 지우기"를 누르면 부른다(D-74). 확인과 지우기는 C5가 넣는다. */
     public Runnable clearSamples = () -> { };
+    /** 앱 창이 이 화면을 고른 채인지. 아니면 refresh가 운영체제 등록을 읽지 않는다(docs/porting/settings.md S10c). Main이 넣는다. */
+    public BooleanSupplier shown = () -> true;
     /** 데이터 폴더를 파일 탐색기로 연다(05 설정 2번). 검사가 바꿔 끼운다. */
     Opener opener = folder -> Desktop.getDesktop().open(folder.toFile());
     /** 제목과 내용으로 오류 창을 띄우고 확인을 기다린다. 검사가 바꿔 끼운다. */
@@ -98,9 +101,11 @@ public final class SettingsScreen extends JPanel {
         refresh();
     }
 
-    /** 설정 값, 운영체제 등록(06 25번, 부를 때마다 다시 읽는다), 남은 예시 일정을 보인다. */
+    /** 설정 값, 남은 예시 일정, 이 화면을 고른 채면 운영체제 등록(06 25번, 부를 때마다 다시 읽는다)을 보인다. */
     public void refresh() {
-        autostart.setSelected(os.registered());
+        if (shown.getAsBoolean()) {
+            autostart.setSelected(os.registered());
+        }
         calendarFixed.setSelected(data.isCalendarFixed());
         monday.setSelected(data.getWeekStart() == DayOfWeek.MONDAY);
         sunday.setSelected(data.getWeekStart() == DayOfWeek.SUNDAY);
