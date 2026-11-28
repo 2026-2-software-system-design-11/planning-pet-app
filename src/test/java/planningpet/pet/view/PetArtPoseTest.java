@@ -117,6 +117,31 @@ class PetArtPoseTest {
         assertEquals(List.of(209, 201, 208), List.of(pawTop(0), pawTop(0.4), pawTop(0.8)));
     }
 
+    private static final Pose[] LYING = {Pose.SLEEP, Pose.STRETCH};
+
+    /** 반 넘게 칠한(알파 128 이상) 가장 위 줄이 바닥(y=300)에서 떨어진 줄 수. */
+    private static int halfTop(BufferedImage img) {
+        for (int y = 0; ; y++) {
+            for (int x = 0; x < img.getWidth(); x++) {
+                if (img.getRGB(x, y) >>> 24 > 127) {
+                    return 300 - y;
+                }
+            }
+        }
+    }
+
+    /** 누운 자세의 높이 비율은 반 넘게 칠한 위 끝을 320으로 나눠 반올림한 값이다. 조금이라도 칠한 위 끝으로 재면 강아지 기지개는 152라 0.475다. */
+    @Test
+    void ePose7LyingHeightRatio() {
+        for (PetKind kind : KINDS) {
+            for (Pose pose : LYING) {
+                assertEquals(Math.round(halfTop(draw(kind, pose, COLLAR, 0)) / 320.0 * 100) / 100.0, PetArt.heightRatio(kind, pose), kind + " " + pose);
+            }
+        }
+        assertEquals(List.of(163, 198, 161, 151), Arrays.stream(KINDS).flatMap(k -> Arrays.stream(LYING).map(p -> halfTop(draw(k, p, COLLAR, 0)))).toList());
+        assertEquals(-152, box(PetKind.DOG, Pose.STRETCH, 0)[1]);
+    }
+
     /** 자는 펫의 목 장신구는 바닥 아래를 잘라 낸다. 잘라 내지 않은 스카프는 바닥 아래까지 내려오지만, 입혀 그려도 바닥 줄부터 아래는 픽셀이 같다. */
     @Test
     void ePose9SleepNeckClipped() {

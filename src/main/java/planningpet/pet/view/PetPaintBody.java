@@ -39,10 +39,11 @@ final class PetPaintBody extends PetPaintHead {
         };
     }
 
-    /** 자세대로 그린다. 자기는 누운 몸, 나머지는 앉은 몸이다. */
+    /** 자세대로 그린다. 자기와 기지개는 누운 몸, 나머지는 앉은 몸이다. */
     void paint() {
         switch (pose) {
             case SLEEP -> sleep();
+            case STRETCH -> stretch();
             default -> sit();
         }
     }
@@ -197,6 +198,50 @@ final class PetPaintBody extends PetPaintHead {
         g.setClip(clip);
         head(112, 232, -6);
         zzz();
+    }
+
+    /**
+     * 기지개 켜는 펫: 오른쪽 뒷다리로 엉덩이를 들고(고양이는 엉덩이에서 위로 선 꼬리, 강아지는 짧은 꼬리), 앞으로 기운 둥근 몸이 2.8초
+     * 주기로 조금 흔들리며, 왼쪽 앞으로 뻗은 앞다리 위에 기지개 표정의 머리를 둔다.
+     */
+    void stretch() {
+        AffineTransform base = g.getTransform();
+        double sway = wave(t, 2.8, -2, 2, 0);
+        Path2D hind = new Path2D.Double();
+        hind.moveTo(236, 200);
+        hind.lineTo(242, 290);
+        tube(hind, 30, fur);
+        paw(244, 292, 0);
+        Path2D p = new Path2D.Double();
+        p.moveTo(0, 0);
+        if (cat) {
+            push(256, 184, wave(t, 1.8, -6, 8, 0));
+            p.curveTo(26, -20, 22, -70, 6, -96);
+            tube(p, 24, CAT_GREY);
+        } else {
+            push(258, 196, wave(t, 0.5, -14, 18, 0) - 10);
+            p.quadTo(26, -10, 30, -44);
+            tube(p, 24, DOG_FUR);
+            filled(ell(30, -48, 14, 13), DOG_FUR);
+        }
+        g.setTransform(base);
+        push(184, 226, -24 + sway);
+        Shape body = new RoundRectangle2D.Double(-88, -42, 176, 84, 84, 84);
+        filled(body, fur);
+        if (cat) {
+            shadeIn(body, ell(46, -24, 48, 30), CAT_GREY);
+        }
+        shadeIn(body, ell(0, 44, 100, 16), furShade);
+        redraw(body);
+        g.setTransform(base);
+        Path2D front = new Path2D.Double();
+        front.moveTo(118, 262);
+        front.lineTo(60, 292);
+        tube(front, 26, fur);
+        paw(52, 291, 0);
+        paw(84, 292, 0);
+        neckWear(124, 258, -24, 44);
+        head(96, 222, -12 + sway);
     }
 
     /** 밥 먹는 펫 앞의 민트 밥그릇: 사료가 담긴 윗면, 사료 알 일곱, 그릇, 흰 빛, 테두리. 아래 끝(y=306)은 바닥보다 아래다. */
