@@ -4,10 +4,14 @@ import java.awt.Dimension;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.RenderingHints;
 import java.time.LocalDate;
 import java.util.function.BiConsumer;
 import javax.swing.BorderFactory;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import planningpet.common.view.Theme;
@@ -124,5 +128,17 @@ public final class TaskRows extends JPanel {
         tag.setForeground(Theme.INK_SUB);
         tag.setBorder(BorderFactory.createEmptyBorder(2, 7, 2, 7));
         return tag;
+    }
+
+    /** 부품을 가로로 놓고 줄 높이의 가운데에 맞춘다. 둘째부터는 앞과 4 띄운다. 칸은 불투명이고 앱의 Theme.clear가 투명하게 한다. */
+    static JPanel middle(JComponent... parts) {
+        JPanel p = new JPanel(new GridBagLayout());
+        GridBagConstraints k = new GridBagConstraints();
+        for (int i = 0; i < parts.length; i++) {
+            k.gridx = i;
+            k.insets = new Insets(0, i == 0 ? 0 : 4, 0, 0);
+            p.add(parts[i], k);
+        }
+        return p;
     }
 }
