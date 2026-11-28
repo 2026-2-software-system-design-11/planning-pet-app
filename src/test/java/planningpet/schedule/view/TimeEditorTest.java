@@ -193,4 +193,18 @@ class TimeEditorTest {
         TimeEditor wide = open(task("일", d(20)).at("10:00").minutes(725).task(), d(20));
         assertEquals(List.of(725, "10분부터 720분까지, 5분 단위예요"), List.of(wide.minutes.getValue(), wide.check()));
     }
+
+    @Test
+    void eTed14RecheckAfterChange() {
+        TimeEditor e = open(task("독서", d(18)).at("03:30").nextDay().minutes(30).task(), d(18));
+        e.minutes.setValue(60);
+        assertEquals(" ", e.error.getText());
+        e.save.doClick();
+        assertEquals(TaskDraft.END_PROBLEM, e.error.getText());
+        e.minutes.setValue(30);
+        assertEquals(" ", e.error.getText());
+        e.start.setValue("03:35(다음 날)");
+        assertEquals(TaskDraft.END_PROBLEM, e.error.getText());
+        assertEquals(List.of(), calls);
+    }
 }

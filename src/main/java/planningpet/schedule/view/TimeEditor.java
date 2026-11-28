@@ -30,6 +30,11 @@ import planningpet.schedule.model.TaskDraft;
  */
 public final class TimeEditor {
     private static final List<String> FIELDS = List.of("시작 시각", "걸리는 시간");
+    /**
+     * 빨간 글이 뜬 뒤로는 두 칸이 바뀔 때마다 다시 검사해 맞으면 지운다(O4, D-43의 입력 창과 같은 꼴). 거짓이면 프로토타입처럼 다음
+     * 저장까지 남는다. 05, 06이 정하지 않음, 페르소나 투표 전 잠정.
+     */
+    static final boolean RECHECK = true;
     final JSpinner start = new JSpinner(new SpinnerListModel(Times.values()));
     /** 다음 날 새벽 값이면 칸 옆에 실제 날과 시각 "(토 01:30)"(D-77). */
     final JLabel realTime = new JLabel();
@@ -43,6 +48,8 @@ public final class TimeEditor {
     final LocalDate day;
     /** 실제 시각 글의 날. 시간표에 놓인 일은 그 날짜, 아니면 창을 연 날이다. */
     private final LocalDate base;
+    /** 저장을 눌러 빨간 글을 채운 적이 있는지. */
+    private boolean checked;
     private final Task task;
     /**
      * 저장 함수. 할 일과 창 값을 받아 창을 닫아도 되면 참이다. 겹침이나 범위 물음에서 취소하면 거짓이다. S5f가 TaskController.update를
@@ -93,6 +100,9 @@ public final class TimeEditor {
         cancel.addActionListener(e -> close.run());
         save.addActionListener(e -> save());
         clear.addActionListener(e -> clear());
+        for (JSpinner s : new JSpinner[] {start, minutes}) {
+            s.addChangeListener(e -> recheck());
+        }
     }
 
     /**
@@ -119,9 +129,18 @@ public final class TimeEditor {
     private void save() {
         String problem = check();
         if (problem != null) {
+            checked = true;
             error.setText(problem);
         } else if (onSave.test(task, draft())) {
             close.run();
+        }
+    }
+
+    /** 프로토타입과 일부러 다름(E-TED-14): 프로토타입은 빨간 글을 저장을 누를 때만 바꾼다. */
+    private void recheck() {
+        if (RECHECK && checked) {
+            String problem = check();
+            error.setText(problem == null ? " " : problem);
         }
     }
 
