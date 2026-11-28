@@ -42,8 +42,9 @@ import planningpet.schedule.model.Task;
 import planningpet.schedule.model.TaskDraft;
 
 /**
- * 일정 입력 창의 칸(05 일정 입력 창 1~11번). 창 없이 만들 수 있다. 지금은 추가 창의 칸과 처음 값, 칸끼리 켜고 끄기 sync(), 손댄 값
- * 지키기와 날짜 따라가기, 칸에 쓴 값 draft(), 칸 아래 오류 글이 있고, 수정 창은 뒤 몫이 더한다(docs/porting/task-dialog.md S4f~S4i).
+ * 일정 입력 창의 칸(05 일정 입력 창 1~11번). 창 없이 만들 수 있다. 추가 창과 수정 창의 칸과 처음 값, 반복 사본의 반복 칸
+ * showSeries, 칸끼리 켜고 끄기 sync(), 손댄 값 지키기와 날짜 따라가기, 칸에 쓴 값 draft(), 칸 아래 오류 글이 있다. 수정 창의 잠금은 뒤 몫이 더한다(docs/porting/task-dialog.md
+ * S4f~S4j).
  * 쳐 넣은 글 읽기(C1)의 칸 아래 글 줄은 두지 않는다.
  */
 final class TaskForm {
@@ -65,7 +66,8 @@ final class TaskForm {
     final JSpinner start = new JSpinner(new SpinnerListModel(Times.values()));
     /** 다음 날 새벽 값이면 시작 칸 옆에 적는 실제 날과 시각 "(토 01:30)"(D-77). */
     final JLabel realTime = new JLabel();
-    final JSpinner minutes = Ui.minutes(30);
+    /** 걸리는 시간 칸. 수정 창은 저장해 둔 값으로 만든다(5분 단위가 아니어도 연다, E-FORM-13). */
+    final JSpinner minutes;
     final JLabel endLabel = new JLabel();
     /** D-43: 추가 창에서 걸리는 시간이 30일 때만 보인다. */
     final JLabel minutesHint = Ui.hint("안 바꾸면 30분으로 들어가요");
@@ -107,13 +109,31 @@ final class TaskForm {
     private boolean dueTouched;
     /** 마감 기본값이 쓰는 한 주의 시작 요일(D-91). */
     private final DayOfWeek weekStart;
+    /** 수정 창이면 참. 종류와 반복 칸이 비활성이다(05 일정 입력 창 수정 줄). */
+    private final boolean editing;
+    /** 반복 사본을 고치는 중(기간 칸은 꺼진 채 비활성, D-65). */
+    private final boolean copy;
     /** sync 안에서 칸 값을 바꿀 때 다시 sync하지 않는다. */
     private boolean syncing;
     private int row;
 
     /** 추가 창의 칸. date는 06 14번 forAdd가 고른 날, weekStart는 마감 기본값과 요일 단추 차례의 한 주 시작(D-91, D-94). */
     TaskForm(LocalDate date, LocalDateTime now, DayOfWeek weekStart) {
+        this(null, date, now, weekStart);
+    }
+
+    /** 수정 창의 칸. 칸은 t의 값으로 열린다. 반복 사본의 반복 칸은 showSeries가 채운다(D-42). */
+    TaskForm(Task t, LocalDateTime now, DayOfWeek weekStart) {
+        this(t, null, now, weekStart);
+    }
+
+    /** t가 null이면 date로 여는 추가 창이다. */
+    private TaskForm(Task t, LocalDate date, LocalDateTime now, DayOfWeek weekStart) {
         this.weekStart = weekStart;
+        editing = t != null;
+        copy = t != null && t.getSeriesId() != null;
+        // 프로토타입과 일부러 다름(E-FORM-13): setValue는 5분 단위가 아닌 값을 막으므로 칸을 저장해 둔 값으로 만든다(범위 밖도, E-UI-7).
+        minutes = Ui.minutes(t == null ? 30 : t.getDurationMinutes());
         clock = () -> now;
         Ui.limit(title, 100);
         Ui.limit(memo, 1000);
@@ -161,11 +181,34 @@ final class TaskForm {
         line("", repeatHint);
         line("메모", new JScrollPane(memo));
         line("", errors.get("메모"));
-        category.setSelectedItem(Category.OTHER.label());
-        Ui.setDate(this.date, date);
-        Ui.setDate(due, DefaultDates.dueFor(date, weekStart));
-        Ui.setDate(repeatEnd, DefaultDates.repeatEndFor(Kind.TASK, date));
-        start.setValue(Times.value(DefaultDates.defaultStart(date, now)));
+        category.setSelectedItem((t == null ? Category.OTHER : t.getCategory()).label());
+        // D-66: 기간 할 일의 날짜 칸은 기간 첫날이다(계획한 날이 아니다).
+        LocalDate first = t == null ? date : t.period() ? t.getStartDay() : t.getDate();
+        Ui.setDate(this.date, first);
+        // D-96: 수정 창에서 저장해 둔 마감도 고른 마감이다.
+        dueTouched = t != null && t.period();
+        Ui.setDate(due, dueTouched ? t.getDueDate() : DefaultDates.dueFor(first, weekStart));
+        start.setValue(Times.value(DefaultDates.defaultStart(first, now)));
+        if (t != null) {
+            title.setText(t.getTitle());
+            fixed.setSelected(t.getKind() == Kind.FIXED);
+            period.setSelected(t.period());
+            timed.setSelected(t.timed() && !t.period());
+            // D-101: 저장해 둔 시각은 사용자 값이다. 시각 없는 일정의 시작 칸은 앱이 채운 값이라 날짜를 따라간다.
+            startTouched = t.timed();
+            if (t.timed()) {
+                // 프로토타입과 일부러 다름(E-FORM-13): 5분 단위가 아닌 저장 값도 목록의 제자리에 끼워 그 값으로 연다.
+                String stored = Times.value(t.startMinute());
+                List<String> values = new ArrayList<>(Times.values());
+                if (!values.contains(stored)) {
+                    values.add(Math.min(t.startMinute() / 5 + 1, values.size()), stored);
+                    ((SpinnerListModel) start.getModel()).setList(values);
+                }
+                start.setValue(stored);
+            }
+            memo.setText(t.getMemo());
+        }
+        Ui.setDate(repeatEnd, DefaultDates.repeatEndFor(fixed.isSelected() ? Kind.FIXED : Kind.TASK, first));
         for (AbstractButton b : new AbstractButton[] {task, fixed, timed, period}) {
             b.addActionListener(e -> sync());
         }
@@ -219,6 +262,7 @@ final class TaskForm {
     }
 
     /**
+     * 수정 창이면 종류와 반복 칸이 비활성이고 반복 끝이 날짜를 따라가지 않으며 30분 안내가 없다. 반복 사본은 기간이 꺼진 채 비활성이다.
      * 고정 일정이면 시작 시각이 켜진 채 비활성이고 기간은 꺼진 채 비활성이다(D-16, D-65). 반복과 기간은 함께 고를 수 없다(D-65). 기간을
      * 켜면 시작 시각이 꺼진 채 비활성이다(D-68). 시작 시각을 정하면 끝 시각 글과 다음 날 값의 실제 날과 시각을 적고(D-73, D-77),
      * 걸리는 시간이 30이면 30분 안내를 보인다(D-43). 고정 일정, 기간, 반복 때문에 앱이 바꾼 칸은 맥락이 돌아오면 되돌린다(D-101).
@@ -232,9 +276,11 @@ final class TaskForm {
         }
         syncing = true;
         boolean dueShown = due.isVisible();
+        task.setEnabled(!editing);
+        fixed.setEnabled(!editing);
         boolean isFixed = fixed.isSelected();
         // D-101: 고정 일정이라서 앱이 바꾼 칸은 할 일로 돌아오면 사용자가 둔 값으로 되돌린다.
-        if (isFixed && timedBefore == null) {
+        if (isFixed && !editing && timedBefore == null) {
             timedBefore = timedBeforePeriod != null ? timedBeforePeriod : timed.isSelected();
             periodBefore = period.isSelected();
             dueBefore = Ui.dateOf(due);
@@ -245,8 +291,8 @@ final class TaskForm {
             timedBefore = null;
         }
         boolean repeating = repeat.getSelectedIndex() != 0;
-        boolean periodAllowed = !isFixed && !repeating;
-        if (!isFixed && repeating && period.isSelected()) {
+        boolean periodAllowed = !isFixed && !copy && !repeating;
+        if (!isFixed && !copy && repeating && period.isSelected()) {
             dueBeforeRepeat = Ui.dateOf(due);
         } else if (periodAllowed && dueBeforeRepeat != null) {
             period.setSelected(true);
@@ -275,15 +321,15 @@ final class TaskForm {
         start.setEnabled(timed.isSelected());
         period.setEnabled(periodAllowed);
         period.setToolTipText(isFixed ? "기간은 할 일만 정할 수 있어요" : null);
-        periodHint.setVisible(repeating && !isFixed);
+        periodHint.setVisible(repeating && !isFixed && !copy);
         dateLabel.setText(period.isSelected() ? "시작일" : "날짜");
         dueLabel.setVisible(period.isSelected());
         due.setVisible(period.isSelected());
-        repeat.setEnabled(!period.isSelected());
+        repeat.setEnabled(!editing && !period.isSelected());
         for (JToggleButton d : days) {
-            d.setEnabled(repeat.getSelectedIndex() == 2);
+            d.setEnabled(!editing && repeat.getSelectedIndex() == 2);
         }
-        repeatEnd.setEnabled(repeating);
+        repeatEnd.setEnabled(repeating && !editing);
         repeatHint.setVisible(period.isSelected());
         LocalDate day = Ui.dateOf(date);
         boolean opened = start.isEnabled() && !startOpen;
@@ -304,13 +350,13 @@ final class TaskForm {
             }
         }
         // D-79: 끝 날짜를 손대지 않았으면 반복을 고른 뒤에도 시작 날짜를 따라간다.
-        if (!endTouched) {
+        if (!editing && !endTouched) {
             Ui.setDate(repeatEnd, DefaultDates.repeatEndFor(isFixed ? Kind.FIXED : Kind.TASK, day));
         }
         if (!dueTouched) {
             Ui.setDate(due, DefaultDates.dueFor(day, weekStart));
         }
-        minutesHint.setVisible((int) minutes.getValue() == 30);
+        minutesHint.setVisible(!editing && (int) minutes.getValue() == 30);
         Integer s = startTime();
         endLabel.setText(s == null ? "" : Times.endHint(s, (int) minutes.getValue()));
         realTime.setText(s == null ? "" : Times.real(day, s));
@@ -336,7 +382,10 @@ final class TaskForm {
         }
     }
 
-    /** 칸에 쓴 값. 반복이 안 함이면 반복 방식과 끝은 null, 기간 안에 하기가 꺼져 있으면 마감은 null이다. 오늘은 앱의 오늘이다. */
+    /**
+     * 칸에 쓴 값. 반복이 안 함이면 반복 방식과 끝은 null, 기간 안에 하기가 꺼져 있으면 마감은 null이다. 오늘은 앱의 오늘이고 editing은
+     * 수정 창이면 참이다.
+     */
     TaskDraft draft() {
         Repeat how = null;
         if (repeat.getSelectedIndex() == 1) {
@@ -354,7 +403,19 @@ final class TaskForm {
         return new TaskDraft(fixed.isSelected() ? Kind.FIXED : Kind.TASK, title.getText(),
                 Category.values()[category.getSelectedIndex()], Ui.dateOf(date), period.isSelected() ? Ui.dateOf(due) : null,
                 s == null ? null : LocalTime.of(s % Task.DAY / 60, s % 60), (int) minutes.getValue(), memo.getText(), how,
-                how == null ? null : Ui.dateOf(repeatEnd), s != null && s >= Task.DAY, null, AppDay.of(clock.get()), false);
+                how == null ? null : Ui.dateOf(repeatEnd), s != null && s >= Task.DAY, null, AppDay.of(clock.get()), editing);
+    }
+
+    /** D-42: 반복 사본을 고칠 때 반복 칸을 그 반복의 방식인 채(비활성) 그 반복의 마지막 날짜 end와 함께 보인다. */
+    void showSeries(Repeat how, LocalDate end) {
+        syncing = true;
+        repeat.setSelectedIndex(how == null ? 0 : how.daily() ? 1 : 2);
+        for (int i = 0; i < 7; i++) {
+            days[i].setSelected(how != null && how.days().contains(DayOfWeek.of(i + 1)));
+        }
+        Ui.setDate(repeatEnd, end);
+        syncing = false;
+        sync();
     }
 
     /** 검사 결과를 칸 아래에 보인다. 고친 칸의 오류는 지운다. 이 뒤로는 칸을 고칠 때마다 다시 검사한다(D-43). */

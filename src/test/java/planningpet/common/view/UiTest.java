@@ -17,6 +17,7 @@ import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.text.ParseException;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import javax.swing.JButton;
@@ -330,8 +331,19 @@ class UiTest {
             type(t, typed);
             assertEquals(typed.equals("45") ? 45 : 30, t.getValue(), typed);
         }
-        assertThrows(IllegalArgumentException.class, () -> Ui.minutes(5));
         assertEquals(27, Ui.minutes(27).getValue());
+    }
+
+    @Test
+    void eUi7MinutesStartsOutsideRange() {
+        List<Object> got = new ArrayList<>();
+        for (int v : new int[] {5, 7, 723, 725}) {
+            SpinnerNumberModel m = (SpinnerNumberModel) Ui.minutes(v).getModel();
+            got.add(List.of(m.getValue(), m.getMinimum(), m.getMaximum()));
+        }
+        assertEquals(List.of(List.of(5, 5, 720), List.of(7, 7, 720), List.of(723, 10, 723), List.of(725, 10, 725)), got);
+        SpinnerNumberModel m = (SpinnerNumberModel) Ui.minutes(30).getModel();
+        assertEquals(List.of(10, 720), List.of(m.getMinimum(), m.getMaximum()));
     }
 
     @Test
