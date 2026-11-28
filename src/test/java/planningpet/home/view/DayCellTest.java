@@ -118,7 +118,7 @@ class DayCellTest {
             int[] number = ink(img, Theme.INK, 0, h);
             int[] count = ink(img, Theme.TASK_TEXT, 0, h);
             assertTrue(number[3] <= h / 2 && number[1] < alone[1], "숫자는 위로 올라 바닥선 h/2-1");
-            assertTrue(count[1] > number[3] + 2 && count[3] < h, "수는 숫자 아래");
+            assertTrue(count[1] - number[3] >= 4 && count[1] - number[3] <= 6 && count[3] < h, "수는 숫자 바닥선 3 아래(잉크 틈 5)");
             assertTrue(Math.abs(count[0] - (w - 1 - count[2])) <= 2, "수도 가로 가운데");
         }
     }
