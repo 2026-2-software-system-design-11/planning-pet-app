@@ -6,9 +6,13 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.awt.Dimension;
 import java.awt.Insets;
+import java.awt.Rectangle;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.Arrays;
+import javax.swing.JComponent;
+import javax.swing.RepaintManager;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -31,6 +35,28 @@ class RoundFieldTest {
         return img.getRGB(0, 0, img.getWidth(), img.getHeight(), null, 0, img.getWidth());
     }
 
+    /** 창 없이 칸에 마우스가 들어오고 나가는 알림. */
+    private static void mouse(RoundField f, int id) {
+        f.dispatchEvent(new MouseEvent(f, id, 0, 0, 5, 5, 0, false));
+    }
+
+    /** 다시 그리라고 한 자리를 모은다. */
+    private static final class Dirty extends RepaintManager {
+        private Rectangle all;
+
+        @Override
+        public void addDirtyRegion(JComponent c, int x, int y, int w, int h) {
+            Rectangle r = new Rectangle(x, y, w, h);
+            all = all == null ? r : all.union(r);
+        }
+
+        Rectangle after(Runnable action) {
+            all = null;
+            action.run();
+            return all;
+        }
+    }
+
     @Test
     void eRound1Plain() throws IOException {
         RoundField f = pencil();
@@ -45,6 +71,24 @@ class RoundFieldTest {
         assertFalse(f.isOpaque());
         assertEquals(Theme.font(14), f.getFont());
         looks("none", f, 300, 40);
+    }
+
+    @Test
+    void eRound3MouseOver() throws IOException {
+        RoundField f = pencil();
+        mouse(f, MouseEvent.MOUSE_ENTERED);
+        looks("over", f, 300, 40);
+        mouse(f, MouseEvent.MOUSE_EXITED);
+        looks("pencil", f, 300, 40);
+    }
+
+    @Test
+    void eRound5Disabled() throws IOException {
+        RoundField f = pencil();
+        f.setEnabled(false);
+        looks("disabled", f, 300, 40);
+        mouse(f, MouseEvent.MOUSE_ENTERED);
+        looks("disabled-over", f, 300, 40);
     }
 
     @Test
@@ -70,5 +114,21 @@ class RoundFieldTest {
         assertArrayEquals(pixels(pencil(), " "), pixels(p, " "), "공백 하나면 그리지 않는다");
         assertFalse(Arrays.equals(pixels(pencil(), ""), pixels(p, "")), "비우면 다시 그린다");
         assertArrayEquals(pixels(pencil(), ""), pixels(new RoundField(Icons.Kind.PENCIL, ""), ""));
+    }
+
+    @Test
+    void eRound11Repaint() {
+        Dirty d = new Dirty();
+        RepaintManager.setCurrentManager(d);
+        try {
+            RoundField f = pencil();
+            f.setSize(300, 40);
+            Rectangle all = new Rectangle(0, 0, 300, 40);
+            assertEquals(all, d.after(() -> mouse(f, MouseEvent.MOUSE_ENTERED)));
+            assertEquals(all, d.after(() -> mouse(f, MouseEvent.MOUSE_EXITED)));
+            assertEquals(all, d.after(() -> f.replaceSelection("가")));
+        } finally {
+            RepaintManager.setCurrentManager(null);
+        }
     }
 }

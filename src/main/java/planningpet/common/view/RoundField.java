@@ -1,20 +1,24 @@
 package planningpet.common.view;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import javax.swing.BorderFactory;
 import javax.swing.JTextField;
 
 /**
  * 알약 모양 입력칸(디자인 시스템 9절, 07). 흰 바탕에 CARD_LINE 가장자리, 왼쪽에 선 아이콘, 비었을 때 흐린 예시 글.
- * 홈 빠른 추가와 반려동물 이름 칸이 쓴다.
+ * 마우스를 올리면 가장자리가 MINT_LINE이다. 홈 빠른 추가와 반려동물 이름 칸이 쓴다.
  */
 public final class RoundField extends JTextField {
     private final Icons.Kind kind;
     private final String placeholder;
+    private boolean over;
 
     public RoundField(Icons.Kind kind, String placeholder) {
         this.kind = kind;
@@ -22,6 +26,19 @@ public final class RoundField extends JTextField {
         setOpaque(false);
         setFont(Theme.font(14));
         setBorder(BorderFactory.createEmptyBorder(8, kind == null ? 18 : 40, 8, 16));
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                over = true;
+                repaint();
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                over = false;
+                repaint();
+            }
+        });
     }
 
     @Override
@@ -38,9 +55,9 @@ public final class RoundField extends JTextField {
         int w = getWidth() - 1;
         int h = getHeight() - 3;
         Card.shadow(g, 0, 0, w, h, h);
-        g.setColor(Theme.CARD_TOP);
+        g.setColor(isEnabled() ? Theme.CARD_TOP : new Color(0xEDF3F5));
         g.fillRoundRect(0, 0, w, h, h, h);
-        g.setColor(Theme.CARD_LINE);
+        g.setColor(over ? Theme.MINT_LINE : Theme.CARD_LINE);
         g.drawRoundRect(0, 0, w, h, h, h);
         int s = 18;
         if (kind != null) {
