@@ -12,33 +12,18 @@ import java.awt.Insets;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
-import javax.swing.UIManager;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 /**
  * 화면 머리 오른쪽의 수치 카드. 번호는 docs/porting/icons.md 2절. 기준 그림은 프로토타입처럼 Theme.install 뒤에
- * 빈 글로 그렸다. install은 앱 전체 기본값을 바꾸므로 검사마다 되돌린다(ThemeInstallTest와 같다).
+ * 빈 글로 그렸다. install은 앱 전체 기본값을 바꾸므로 검사마다 ThemeOn이 되돌린다.
  */
+@ExtendWith(ThemeOn.class)
 class StatCardTest {
-    @BeforeEach
-    void install() {
-        Theme.install();
-    }
-
-    @AfterEach
-    void undoInstall() {
-        for (Object key : List.copyOf(UIManager.getLookAndFeelDefaults().keySet())) {
-            UIManager.put(key, null);
-        }
-        UIManager.put("swing.boldMetal", null);
-    }
-
     /** 프로토타입 창 틀의 출석 단추와 같은 모양. */
     private static JButton attend(String text) {
         JButton b = new JButton(text);
@@ -134,7 +119,7 @@ class StatCardTest {
             g.drawString("5일", 0, top + 38);
             g.dispose();
             BufferedImage got = Snap.paint(value("연속 접속", "5일"), 80, h);
-            assertArrayEquals(want.getRGB(0, 0, 84, h + 4, null, 0, 84), got.getRGB(0, 0, 84, h + 4, null, 0, 84), "높이 " + h);
+            assertArrayEquals(Snap.pixels(want), Snap.pixels(got), "높이 " + h);
         }
     }
 
