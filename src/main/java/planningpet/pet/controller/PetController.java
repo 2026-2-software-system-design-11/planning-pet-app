@@ -78,4 +78,13 @@ public final class PetController {
         List<PetState> all = data.getPets();
         select(all.get(Math.floorMod(all.indexOf(data.activePet()) + delta, all.size())).getKind());
     }
+
+    /** UC-23(D-57). D-27 규칙으로 이름을 바꾸고 그 펫이 RENAMED를 메인 말풍선에 말한다(D-62). 종류는 바꾸지 않는다. */
+    public void rename(PetKind kind, String name) {
+        PetState pet = data.pet(kind);
+        app.change("펫 이름 바꾸기", () -> {
+            pet.setName(nameOf(kind, name));
+            app.say(talk.say(Situation.RENAMED, pet), null);
+        });
+    }
 }

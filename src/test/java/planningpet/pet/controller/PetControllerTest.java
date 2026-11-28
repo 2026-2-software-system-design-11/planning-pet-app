@@ -286,4 +286,44 @@ class PetControllerTest {
         assertEquals(0, saves);
         assertEquals(0, heard);
     }
+
+    @Test
+    void T_PET_3_renameRule() {
+        oneCat(0);
+        pets.rename(PetKind.CAT, "  ");
+        assertEquals("나비", data.pet(PetKind.CAT).getName());
+        pets.rename(PetKind.CAT, "가나다라마바사아자차카");
+        assertEquals("가나다라마바사아자차", data.pet(PetKind.CAT).getName());
+    }
+
+    @Test
+    void T_PET_7_renamedTalks() {
+        oneCat(0).setName("콩");
+        pets.rename(PetKind.CAT, "보리");
+        assertEquals("보리", data.pet(PetKind.CAT).getName());
+        assertEquals("이제 내 이름은 보리야.", app.getBubble().getLine());
+        assertNull(app.getBubble().getRoomLine());
+        assertEquals(1, saves);
+        assertEquals(1, heard);
+    }
+
+    @Test
+    void E_PET_21_renameSaveFails() {
+        oneCat(0);
+        failing = true;
+        pets.rename(PetKind.CAT, "보리");
+        assertEquals("나비", data.pet(PetKind.CAT).getName());
+        assertEquals("", app.getBubble().getLine());
+        assertEquals(List.of("펫 이름 바꾸기 저장에 실패해서 바꾸기 전으로 돌렸어요."), errors);
+    }
+
+    @Test
+    void E_PET_22_sameName() {
+        oneCat(0);
+        pets.rename(PetKind.CAT, "나비");
+        assertEquals("나비", data.pet(PetKind.CAT).getName());
+        assertEquals("이제 내 이름은 나비야.", app.getBubble().getLine());
+        assertEquals(1, saves);
+        assertEquals(1, heard);
+    }
 }
