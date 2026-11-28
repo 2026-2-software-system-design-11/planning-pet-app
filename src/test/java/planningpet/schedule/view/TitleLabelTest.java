@@ -2,16 +2,21 @@ package planningpet.schedule.view;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.font.FontRenderContext;
 import java.awt.image.BufferedImage;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 import javax.swing.JLabel;
 import org.junit.jupiter.api.Test;
+import planningpet.common.view.Snap;
 import planningpet.common.view.Theme;
+import planningpet.common.view.Ui;
 import planningpet.schedule.model.Category;
 import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Task;
@@ -27,7 +32,7 @@ class TitleLabelTest {
     static TaskRows.TitleLabel label(String title, String memo, boolean done, int w, int h) {
         Task t = new Task("a", 1, Kind.TASK, title, DAY, null, 30, memo, false, Category.OTHER, null, null, null, null, done,
                 done ? DAY : null, 0, 0, null, null);
-        TaskRows.TitleLabel l = new TaskRows.TitleLabel(t);
+        TaskRows.TitleLabel l = new TaskRows.TitleLabel(t, "", false);
         l.setSize(w, h);
         return l;
     }
@@ -65,6 +70,43 @@ class TitleLabelTest {
             }
         }
         assertEquals(0, differ, text + "에서 다른 픽셀 수");
+    }
+
+    /** 일정관리 목록의 줄 앞 날짜 date를 단 폭 200의 "토익 공부" 칸(docs/porting/schedule.md S5a). dim이면 흐린 글이다. */
+    private static TaskRows.TitleLabel dated(String date, String memo, boolean dim) {
+        Task t = new Task("a", 1, Kind.TASK, "토익 공부", DAY, null, 30, memo, false, Category.OTHER, null, null, null, null, false, null,
+                0, 0, null, null);
+        TaskRows.TitleLabel l = new TaskRows.TitleLabel(t, date, dim);
+        l.setSize(200, 24);
+        return l;
+    }
+
+    /** 칸을 그린 그림에서 가장 진한 픽셀의 알파. 흐린 글(INK_DIM)은 그 알파를 넘지 않는다. */
+    private static int darkest(TaskRows.TitleLabel l) {
+        return Arrays.stream(Snap.pixels(Snap.paint(l))).map(p -> p >>> 24).max().orElse(0);
+    }
+
+    @Test
+    void eWrow1DateAndTitleWidth() {
+        TaskRows.TitleLabel l = dated("11/19 ", "단어", false);
+        assertEquals("<html>11/19 토익 공부 <font size='2' color='#8A96A0'>메모</font></html>", l.getText());
+        FontRenderContext frc = l.getFontMetrics(l.getFont()).getFontRenderContext();
+        int date = Ui.width("11/19 ", l.getFont(), frc);
+        int whole = date + Ui.width("토익 공부", l.getFont(), frc) + l.getFontMetrics(Theme.font(11)).stringWidth("메모") + 5;
+        l.setSize(whole, 24);
+        assertEquals("토익 공부", l.shown());
+        l.setSize(whole - 1, 24);
+        assertTrue(l.shown().endsWith("…"));
+        // 날짜는 줄이지 않는다. 날짜 폭뿐이면 제목이 한 글자와 "…"다.
+        l.setSize(date, 24);
+        assertEquals("토…", l.shown());
+        assertEquals("<html>12/1 토익 공부</html>", dated("12/1 ", "", false).getText());
+    }
+
+    @Test
+    void eWrow2Dim() {
+        assertEquals(Theme.INK_DIM.getAlpha(), darkest(dated("11/16 ", "", true)));
+        assertEquals(255, darkest(dated("11/16 ", "", false)));
     }
 
     @Test
@@ -127,7 +169,7 @@ class TitleLabelTest {
         draws(label("가", "", false, 5, 24), "가…", 17, -1, false);
         Task t = new Task("a", 1, Kind.TASK, "토익 공부", DAY, null, 30, "", false, Category.OTHER, null, null, null, null, false, null,
                 0, 0, null, null);
-        assertEquals("토…", new TaskRows.TitleLabel(t).shown());
+        assertEquals("토…", new TaskRows.TitleLabel(t, "", false).shown());
     }
 
     @Test
