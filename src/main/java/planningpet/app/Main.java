@@ -64,8 +64,11 @@ public final class Main {
         /** 고르기 창을 띄운다. 닫기 버튼을 누르면 closed를 부른다. */
         void pick(PickDialog pick, Runnable closed);
 
-        /** 메인 창을 띄운다. */
-        void main(JComponent root);
+        /** 메인 창을 만들기만 한다. 띄우는 일은 front다. 닫기 버튼은 closing을 부른다(06 25번). */
+        void main(JComponent root, Runnable closing);
+
+        /** 메인 창을 숨긴다. */
+        void hide();
 
         /** 트레이 아이콘과 메뉴를 단다. 달았으면 true다(06 25번). */
         boolean tray(Tray tray);
@@ -101,11 +104,11 @@ public final class Main {
             dialog.setVisible(true);
         }
 
-        public void main(JComponent root) {
-            JFrame frame = AppWindow.frame(root);
-            front = frame;
-            frame.setVisible(true);
+        public void main(JComponent root, Runnable closing) {
+            front = AppWindow.frame(root, closing);
         }
+
+        public void hide() { front.setVisible(false); }
 
         /** 신호를 받으면 Swing 스레드에서 부른다(02 UC-01 1a). */
         void signalled() {
@@ -152,7 +155,7 @@ public final class Main {
 
     /**
      * 메인 창과 30초 타이머. 차례는 프로토타입 create와 main과 같다. 화면의 refresh는 Theme.clear보다 먼저 건다(home.md S3ac,
-     * settings.md S10b). 설정은 이 컴퓨터의 운영체제 등록을 읽는다.
+     * settings.md S10b). 설정은 이 컴퓨터의 운영체제 등록을 읽는다. 트레이를 먼저 달아야 창 닫기가 트레이 지원을 안다.
      */
     private static void open(AppData data, AppController app, Path folder, Clock clock, Shell shell) {
         AppWindow window = new AppWindow(data, app);
@@ -169,8 +172,9 @@ public final class Main {
         Theme.clear(window.root());
         Tray tray = new Tray(app, watcher, clock, window, home, shell::front);
         app.setQuit(() -> shell.exit(0)); // 끝내기는 오류가 아니다(docs/porting/tray.md).
-        shell.tray(tray);
-        shell.main(window.root());
+        boolean trayOn = shell.tray(tray);
+        shell.main(window.root(), () -> window.close(trayOn, shell::hide, tray::notice));
+        shell.front();
         app.onWindowShown();
         shell.signal(app::onWindowShown); // 고르기 창일 때의 신호는 15번을 부르지 않는다(E-ONE-5).
         shell.timer(tray);

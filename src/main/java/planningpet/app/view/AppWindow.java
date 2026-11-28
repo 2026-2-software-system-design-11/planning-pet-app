@@ -8,6 +8,8 @@ import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -268,11 +270,17 @@ public final class AppWindow {
         }
     }
 
-    /** 창(05 창 구조, D-47). 창을 띄우는 일은 Main이 한다. 25번(트레이에 남기)은 S11이라 그때까지는 닫으면 끝난다. */
-    public static JFrame frame(JComponent content) {
+    /** 창(05 창 구조, D-47). 닫기 버튼은 closing을 부른다(06 25번). 창을 띄우는 일은 Main이 한다. */
+    public static JFrame frame(JComponent content, Runnable closing) {
         JFrame f = new JFrame(TITLE);
         f.setIconImage(icon());
-        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        f.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        f.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                closing.run();
+            }
+        });
         f.setContentPane(content);
         f.setMinimumSize(new Dimension(1000, 680));
         f.pack();

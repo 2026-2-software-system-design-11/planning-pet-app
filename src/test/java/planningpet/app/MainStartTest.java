@@ -67,6 +67,10 @@ class MainStartTest {
     private Runnable signalled;
     /** 타이머를 켠 트레이. */
     private Tray tray;
+    /** 트레이를 달았는지(shell.tray가 돌려줄 값). */
+    private boolean trayOn;
+    /** 메인 창의 닫기 버튼과 Cmd+Q에 이은 일. */
+    private Runnable closing;
     private final Main.Shell shell = new Main.Shell() {
         public void unreadable(Reason r, Path f) { calls.add("못 읽음 창 " + r + " " + f); }
 
@@ -76,14 +80,17 @@ class MainStartTest {
             calls.add("고르기 창");
         }
 
-        public void main(JComponent r) {
+        public void main(JComponent r, Runnable c) {
             root = r;
+            closing = c;
             calls.add("메인 창");
         }
 
+        public void hide() { calls.add("숨기기"); }
+
         public boolean tray(Tray tray) {
             calls.add("트레이");
-            return false;
+            return trayOn;
         }
 
         public void timer(Tray t) {
@@ -179,7 +186,7 @@ class MainStartTest {
     void eMain11Loaded() {
         AppData data = saved();
         Main.start(store(LoadResult.loaded(data), false), folder, CLOCK, shell);
-        assertEquals(List.of("트레이", "메인 창", "저장", "타이머"), calls);
+        assertEquals(List.of("트레이", "메인 창", "앞으로", "저장", "타이머"), calls);
         assertEquals(List.of(6, LocalDate.of(2026, 11, 16)), List.of(data.getStreak(), data.getLastOpenDay()));
         List<JPanel> panels = panels(root, new ArrayList<>());
         panels.forEach(p -> assertFalse(p.isOpaque(), p.toString()));
@@ -195,7 +202,7 @@ class MainStartTest {
         int[] heard = {0};
         data.onChange(() -> heard[0]++);
         signalled.run();
-        assertEquals(List.of("트레이", "메인 창", "저장", "타이머"), calls);
+        assertEquals(List.of("트레이", "메인 창", "앞으로", "저장", "타이머"), calls);
         assertEquals(List.of(1, 6), List.of(heard[0], data.getStreak()));
     }
 
@@ -203,7 +210,14 @@ class MainStartTest {
     void eTray8MenuQuitEndsApp() {
         Main.start(store(LoadResult.loaded(saved()), false), folder, CLOCK, shell);
         tray.menu().get("끝내기").run();
-        assertEquals(List.of("트레이", "메인 창", "저장", "타이머", "끝내기 0"), calls);
+        assertEquals(List.of("트레이", "메인 창", "앞으로", "저장", "타이머", "끝내기 0"), calls);
+    }
+
+    @Test
+    void eMain23CloseWithoutTrayEndsApp() {
+        Main.start(store(LoadResult.loaded(saved()), false), folder, CLOCK, shell);
+        closing.run();
+        assertEquals(List.of("트레이", "메인 창", "앞으로", "저장", "타이머", "끝내기 0"), calls);
     }
 
     @Test
@@ -217,7 +231,7 @@ class MainStartTest {
     void eMain12LoadedSaveFails() {
         AppData data = saved();
         Main.start(store(LoadResult.loaded(data), true), folder, CLOCK, shell);
-        assertEquals(List.of("트레이", "메인 창", "연속 접속 저장에 실패해서 바꾸기 전으로 돌렸어요.", "타이머"), calls);
+        assertEquals(List.of("트레이", "메인 창", "앞으로", "연속 접속 저장에 실패해서 바꾸기 전으로 돌렸어요.", "타이머"), calls);
         assertEquals(List.of(5, LocalDate.of(2026, 11, 15)), List.of(data.getStreak(), data.getLastOpenDay()));
     }
 
@@ -233,7 +247,7 @@ class MainStartTest {
         run();
         pick.dog.doClick();
         pick.start.doClick();
-        assertEquals(List.of("고르기 창", "트레이", "메인 창", "타이머"), calls);
+        assertEquals(List.of("고르기 창", "트레이", "메인 창", "앞으로", "타이머"), calls);
         AppData read = new SqliteDataStore(folder, CLOCK).load().data();
         assertEquals(List.of("DOG 바둑이"), read.getPets().stream().map(p -> p.getKind() + " " + p.getName()).toList());
         assertEquals(List.of(1, LocalDate.of(2026, 11, 16)), List.of(read.getStreak(), read.getLastOpenDay()));
