@@ -9,19 +9,27 @@ import static planningpet.schedule.model.Tasks.task;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Insets;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.IntStream;
 import javax.swing.AbstractButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import org.junit.jupiter.api.Test;
+import planningpet.pet.model.PetKind;
+import planningpet.pet.model.PetState;
+import planningpet.pet.model.Pose;
 import planningpet.app.controller.AppController;
 import planningpet.app.model.AppData;
 import planningpet.app.model.Apps;
@@ -32,10 +40,12 @@ import planningpet.common.view.Theme;
 import planningpet.reward.controller.RewardController;
 import planningpet.schedule.model.Task;
 
-/** 일정관리 화면. 번호는 docs/porting/schedule.md S5c 2절과 S5c2 2절. 따로 적지 않으면 지금은 11-18(수) 10:00이다. */
+/** 일정관리 화면. 번호는 docs/porting/schedule.md S5c 2절, S5c2 2절, S5d 2절. 따로 적지 않으면 지금은 11-18(수) 10:00이다. */
 class ScheduleScreenTest {
     private AppData data;
     private ScheduleScreen screen;
+    private AppController app;
+    private RewardController reward;
     /** 함수 필드가 받은 것. */
     private final List<String> heard = new ArrayList<>();
     /** 화면 높이. */
@@ -44,8 +54,9 @@ class ScheduleScreenTest {
     /** now의 앱 데이터에 tasks를 둔 화면을 1000 x height로 배치하고 데이터 변경에 refresh를 건다. */
     private ScheduleScreen open(String now, Task... tasks) {
         data = Apps.data(now, tasks);
-        RewardController reward = new RewardController(data, new AppController(data, new MemoryStore(), e -> { }));
-        screen = new ScheduleScreen(data, reward, Apps.clock(now));
+        app = new AppController(data, new MemoryStore(), e -> { });
+        reward = new RewardController(data, app);
+        screen = new ScheduleScreen(data, app, reward, Apps.clock(now));
         screen.onEdit = t -> heard.add("수정 " + t.getTitle());
         screen.onDelete = t -> heard.add("삭제 " + t.getTitle());
         screen.onTime = (t, day, at) -> heard.add("시각 " + t.getTitle() + " " + day);
@@ -231,5 +242,116 @@ class ScheduleScreenTest {
         assertEquals(Math.round((1232 - view) * 60.0 / 44), screen.topMinute());
         screen.scrollTo(61);
         assertEquals(List.of(44, 60), List.of(screen.scroll.getViewport().getViewPosition().y, screen.topMinute()));
+    }
+
+    /** 말풍선 글: 폭 150의 줄바꿈 칸에 꺾쇠를 바꾼 글. */
+    private static String said(String line) {
+        return "<html><div style='width:150px'>" + line.replace("<", "&lt;").replace(">", "&gt;") + "</div></html>";
+    }
+
+    private static String hint(int n) {
+        return said(n > 0 ? "이번 주 남은 날의 시각 없는 할 일이 " + n + "개 있어. 자동 배치를 눌러 볼래?" : "지금 자동 배치할 할 일은 없어.");
+    }
+
+    /** 06 16번 SCHEDULE_HINT의 대상 수 3과 0을 오른쪽 카드 아래 말풍선으로 본다(pet-talk.md E-TALK-31의 화면 몫). 주를 옮겨도 힌트다. */
+    @Test
+    void eTalk31HintCounts() {
+        assertEquals(hint(3), open(task("가", d(18)).task(), task("나", d(19)).task(), task("다", d(20)).task()).bubble.getText());
+        screen.next.doClick();
+        assertEquals(hint(0), screen.bubble.getText());
+        assertEquals(hint(0), open().bubble.getText());
+        Card side = (Card) ((BorderLayout) screen.getLayout()).getLayoutComponent(BorderLayout.EAST);
+        JPanel corner = (JPanel) ((BorderLayout) side.getLayout()).getLayoutComponent(BorderLayout.SOUTH);
+        assertEquals(screen.bubble, ((BorderLayout) corner.getLayout()).getLayoutComponent(BorderLayout.NORTH));
+    }
+
+    /** 보이는 중에 새 말이 생기면 그 말, 새 말 없이 바뀌면 힌트다. 다시 쓴 말은 새 말이 아니다(D-39, D-106). */
+    @Test
+    void eSch10NewLineWhileShown() {
+        Task homework = task("과제", d(18)).task();
+        open(homework, task("빨래", d(19)).task());
+        assertEquals(hint(2), screen.bubble.getText());
+        reward.complete(homework);
+        assertFalse(app.getBubble().getLine().isBlank());
+        assertEquals(said(app.getBubble().getLine()), screen.bubble.getText());
+        app.getBubble().retell("오늘 할 일 1개 남았어.");
+        data.changed();
+        assertEquals(hint(1), screen.bubble.getText());
+    }
+
+    /** 숨은 동안은 글을 바꾸지 않고, 다시 보이거나 주를 옮기면 새 말이 있어도 힌트다. */
+    @Test
+    void eSch11HiddenAndReopen() {
+        Task homework = task("과제", d(18)).task();
+        open(homework);
+        boolean[] on = {false};
+        screen.shown = () -> on[0];
+        reward.complete(homework);
+        assertEquals(hint(1), screen.bubble.getText());
+        on[0] = true;
+        screen.refresh();
+        assertEquals(hint(0), screen.bubble.getText());
+        app.say("새 말", null);
+        assertEquals(said("새 말"), screen.bubble.getText());
+        app.say("또 새 말", null);
+        screen.next.doClick();
+        assertEquals(hint(0), screen.bubble.getText());
+    }
+
+    /** 말풍선 글의 꺾쇠와 &를 글자로 보인다. */
+    @Test
+    void eSch12BubbleText() {
+        open();
+        app.say("<b>안녕</b> & 잘 가", null);
+        assertEquals("<html><div style='width:150px'>&lt;b&gt;안녕&lt;/b&gt; &amp; 잘 가</div></html>", screen.bubble.getText());
+    }
+
+    /** 펫 칸 80x60을 그린 그림에 색 rgb의 픽셀이 있는가. */
+    private boolean petHas(int rgb) {
+        return Arrays.stream(Snap.pixels(Snap.paint(screen.pet, 80, 60))).anyMatch(p -> p == rgb);
+    }
+
+    /** 펫 칸 80x60을 그린 그림에서 칠한 줄의 수(펫 그림의 높이). */
+    private int petHeight() {
+        BufferedImage img = Snap.paint(screen.pet, 80, 60);
+        return (int) IntStream.range(0, 60).filter(y -> IntStream.range(0, 80).anyMatch(x -> img.getRGB(x, y) >>> 24 > 0)).count();
+    }
+
+    /** 말풍선 아래 펫 칸은 고른 펫(고양이, 강아지)을 저장된 자세와 모습 단계 크기로 그린다(D-50). 1단계는 3단계의 0.72배다. */
+    @Test
+    void eSch13PetSpot() {
+        open();
+        assertEquals(new Dimension(80, 60), screen.pet.getPreferredSize());
+        assertEquals(screen.pet, ((JComponent) screen.bubble.getParent()).getComponent(1));
+        int dogFur = 0xFFFEF1CF;
+        assertFalse(petHas(dogFur));
+        int small = petHeight();
+        data.activePet().setExp(990);
+        assertEquals(small / 0.72, petHeight(), 2);
+        data.addPet(new PetState(PetKind.DOG, "바둑이"));
+        data.setActiveKind(PetKind.DOG);
+        assertTrue(petHas(dogFur));
+        int bowl = 0xFF9ED9C0;
+        assertFalse(petHas(bowl));
+        data.activePet().setPose(Pose.EAT);
+        assertTrue(petHas(bowl));
+    }
+
+    /** 06 19번 T-TT-9의 화면 몫: 자동 배치가 09:00에 놓은 A, B를 보이면 맨 위 08:00과 진하게, 2초 뒤 보통이다. 놓인 일이 없으면 그대로다. */
+    @Test
+    void tTt9ShowPlaced() {
+        Task a = task("A", d(18)).at("09:00").minutes(30).task();
+        Task b = task("B", d(20)).at("09:00").minutes(60).task();
+        open("2026-11-18T09:00", a, b);
+        screen.scrollTo(0);
+        screen.showPlaced(List.of());
+        assertEquals(List.of(0, Set.of()), List.of(screen.topMinute(), screen.table.flashing()));
+        screen.showPlaced(List.of(b, a));
+        assertEquals(List.of(480, Set.of(a, b)), List.of(screen.topMinute(), screen.table.flashing()));
+        screen.table.flashTimer().stop();
+        for (ActionListener l : screen.table.flashTimer().getActionListeners()) {
+            l.actionPerformed(null);
+        }
+        assertEquals(Set.of(), screen.table.flashing());
     }
 }

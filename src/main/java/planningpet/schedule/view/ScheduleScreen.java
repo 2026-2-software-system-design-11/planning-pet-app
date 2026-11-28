@@ -5,26 +5,38 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.Point;
+import java.awt.RenderingHints;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.List;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
+import planningpet.app.controller.AppController;
 import planningpet.app.model.AppData;
 import planningpet.common.model.Rules;
 import planningpet.common.view.Card;
 import planningpet.common.view.Theme;
 import planningpet.common.view.Ui;
+import planningpet.pet.model.Bubble;
+import planningpet.pet.model.PetState;
+import planningpet.pet.model.PetTalk;
+import planningpet.pet.model.Situation;
+import planningpet.pet.view.PetArt;
 import planningpet.reward.controller.RewardController;
+import planningpet.reward.model.Level;
 import planningpet.schedule.model.AutoPlacer;
 import planningpet.schedule.model.DefaultDates;
 import planningpet.schedule.model.Screen;
@@ -33,13 +45,15 @@ import planningpet.schedule.model.TimetableLayout;
 
 /**
  * 일정관리(05 일정관리, UC-10, UC-11). 위 줄, 가운데 시간표, 오른쪽 "시각 없는 할 일" 카드다. 옮기는 몫은
- * docs/porting/schedule.md S5c와 S5c2(시간표 누르기, 처음 보이는 자리). 말풍선, 펫 자리, 놓인 블록 보이기, 앱 창에 붙이기는
- * S5d가 더한다.
+ * docs/porting/schedule.md S5c, S5c2(시간표 누르기, 처음 보이는 자리), S5d(말풍선, 펫 자리, 놓인 블록 보이기).
  */
 public final class ScheduleScreen extends JPanel {
     private static final String WEEK = "월화수목금토일";
     private final AppData data;
     private final Clock clock;
+    /** 펫 말(AppController.getBubble()). 보이는 중에 새 말이 생겼는지 본다. */
+    private final Bubble talk;
+    private final PetTalk words;
     final TimetablePanel table;
     final JPanel header = new JPanel(new GridLayout(1, 7));
     final JLabel range = new JLabel("", SwingConstants.CENTER);
@@ -51,6 +65,13 @@ public final class ScheduleScreen extends JPanel {
     final JButton add = new JButton("일정 추가");
     final TaskRows untimed;
     final JScrollPane scroll;
+    /** 오른쪽 카드 아래 펫 말풍선(D-39, 06 16번 SCHEDULE_HINT). */
+    final JLabel bubble = Ui.bubble();
+    final PetSpot pet;
+    /** 마지막 refresh에서 본 새 말 수. */
+    private int lastTalk;
+    /** 주를 옮겨 다음 말을 SCHEDULE_HINT로 해야 한다. */
+    private boolean showHint = true;
     /** 보이는 주의 첫날(06 데이터 절의 한 주, D-91). */
     private LocalDate start;
     private boolean wasShown;
@@ -69,11 +90,16 @@ public final class ScheduleScreen extends JPanel {
     /** 앱 창이 이 화면을 고른 채인지(settings.md S10c와 같은 꼴). Main이 넣는다. */
     public BooleanSupplier shown = () -> true;
 
-    /** clock은 처음 보이는 자리와 자동 배치의 지금이다. 데이터 변경 알림에 refresh를 거는 일은 화면을 넣는 쪽(Main)이 한다. */
-    public ScheduleScreen(AppData data, RewardController reward, Clock clock) {
+    /**
+     * app은 말풍선이 읽는 펫 말, clock은 처음 보이는 자리와 자동 배치의 지금이다. 데이터 변경 알림에 refresh를 거는 일은 화면을 넣는
+     * 쪽(Main)이 한다.
+     */
+    public ScheduleScreen(AppData data, AppController app, RewardController reward, Clock clock) {
         super(new BorderLayout(8, 8));
         this.data = data;
         this.clock = clock;
+        this.talk = app.getBubble();
+        this.words = new PetTalk(data);
         setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 12));
         start = thisWeekStart();
         table = new TimetablePanel(data, reward, t -> onEdit.accept(t), t -> onDelete.accept(t));
@@ -105,7 +131,11 @@ public final class ScheduleScreen extends JPanel {
                 JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         sideScroll.setBorder(BorderFactory.createEmptyBorder());
         side.add(sideScroll, BorderLayout.CENTER);
-        // 말풍선과 펫 자리(side의 SOUTH)는 S5d가 더한다.
+        JPanel petCorner = new JPanel(new BorderLayout());
+        petCorner.add(bubble, BorderLayout.NORTH);
+        pet = new PetSpot(data);
+        petCorner.add(pet, BorderLayout.CENTER);
+        side.add(petCorner, BorderLayout.SOUTH);
         add(side, BorderLayout.EAST);
     }
 
@@ -125,6 +155,18 @@ public final class ScheduleScreen extends JPanel {
     /** 시간표 맨 위의 앱 하루의 분. */
     public int topMinute() {
         return (int) Math.round(scroll.getViewport().getViewPosition().y * 60.0 / TimetablePanel.HOUR);
+    }
+
+    /**
+     * 자동 배치로 놓인 블록을 보인다(D-89): 가장 이른 블록의 60분 앞으로 내리고 2초 동안 진하게 그린다. 놓인 일이 없으면 그대로다.
+     * 자동 배치 결과 창(S6)이 적용한 뒤 부른다.
+     */
+    public void showPlaced(List<Task> placed) {
+        if (placed.isEmpty()) {
+            return;
+        }
+        scrollTo(placed.stream().mapToInt(Task::startMinute).min().getAsInt() - 60);
+        table.flash(placed);
     }
 
     /** 오늘이 든 주의 첫날(설정의 한 주 시작, D-91). */
@@ -160,6 +202,7 @@ public final class ScheduleScreen extends JPanel {
     /** 보이는 주를 newStart로 옮기고 다시 그린다. 다음 refresh가 처음 보이는 자리로 내린다(D-89). */
     public void move(LocalDate newStart) {
         start = newStart;
+        showHint = true;
         scrollPending = true;
         redraw.run();
     }
@@ -188,15 +231,48 @@ public final class ScheduleScreen extends JPanel {
         }
         untimed.show(data.getBook().untimedOfWeek(start));
         LocalDateTime now = LocalDateTime.now(clock);
-        autoPlace.setEnabled(AutoPlacer.place(data.getBook(), start, now).count() > 0);
-        // D-89: 화면을 열거나 주를 옮기면 처음 보이는 자리로 내린다. 데이터만 바뀌면 그대로다.
+        int targets = AutoPlacer.place(data.getBook(), start, now).count();
+        autoPlace.setEnabled(targets > 0);
         boolean visible = shown.getAsBoolean();
+        // D-39: 화면을 열거나 주를 옮기면 SCHEDULE_HINT, 보이는 중에 바뀌면 새 펫 말이 있을 때 그 말, 없으면 SCHEDULE_HINT다. 다시 쓴
+        // 말은 새 말이 아니다(D-106). 숨은 동안은 글을 두되 본 말 수는 따라간다. 새 말은 일정 밖의 말(출석, 브리핑)도 보인다(열린 선택
+        // O3, 05, 06이 정하지 않음, 페르소나 투표 전 잠정, docs/pages/schedule.md).
+        boolean newTalk = talk.getNewLines() != lastTalk;
+        lastTalk = talk.getNewLines();
+        if (visible) {
+            String text = !wasShown || showHint || !newTalk ? words.say(Situation.SCHEDULE_HINT, targets) : talk.getLine();
+            bubble.setText("<html><div style='width:150px'>" + Ui.esc(text) + "</div></html>");
+            showHint = false;
+        }
+        // D-89: 화면을 열거나 주를 옮기면 처음 보이는 자리로 내린다. 데이터만 바뀌면 그대로다.
         if (visible && (!wasShown || scrollPending)) {
             scrollTo(TimetableLayout.top(start, now));
             scrollPending = false;
         }
         wasShown = visible;
         table.repaint();
+        pet.repaint();
         header.revalidate();
+    }
+
+    /** 말풍선 아래 펫(프로토타입 PetView): 고른 펫을 저장된 자세와 장신구, 모습 단계 크기(D-50)로 80x60 칸 가운데에 앉힌다. */
+    static final class PetSpot extends JComponent {
+        private final AppData data;
+
+        PetSpot(AppData data) {
+            this.data = data;
+            setPreferredSize(new Dimension(80, 60));
+        }
+
+        @Override
+        protected void paintComponent(Graphics graphics) {
+            Graphics2D g = (Graphics2D) graphics.create();
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            PetState p = data.activePet();
+            double box = (Math.min(getWidth(), getHeight()) - 8) * PetArt.stageScale(Level.of(p.getExp()).getStage());
+            PetArt.drawAt(g, p.getKind(), p.getPose(), new HashSet<>(p.getWear().values()), 0, 99, getWidth() / 2,
+                    getHeight() - 4, box);
+            g.dispose();
+        }
     }
 }

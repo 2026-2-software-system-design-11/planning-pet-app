@@ -13,10 +13,13 @@ import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.IllegalComponentStateException;
 import java.awt.Rectangle;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import javax.swing.Timer;
 import org.junit.jupiter.api.Test;
 import planningpet.app.controller.AppController;
 import planningpet.app.model.AppData;
@@ -29,7 +32,7 @@ import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Task;
 import planningpet.schedule.model.Tasks.Spec;
 
-/** 일정관리 시간표. 번호는 docs/porting/schedule.md S5b 2절. 오늘은 11-18(수) 10:00, 보이는 주는 11-16부터, 날 칸 폭은 100이다. */
+/** 일정관리 시간표. 번호는 docs/porting/schedule.md S5b 2절과 S5d 2절(E-TT-13). 오늘은 11-18(수) 10:00, 보이는 주는 11-16부터, 날 칸 폭은 100이다. */
 class TimetablePanelTest {
     private static final int H = TimetablePanel.HOUR * TimetablePanel.HOURS;
     private AppData data;
@@ -315,5 +318,41 @@ class TimetablePanelTest {
         }
         press(MouseEvent.MOUSE_PRESSED, 300, 425, MouseEvent.BUTTON3, 1, false);
         assertEquals(List.of(), heard);
+    }
+
+    /** 놓인 블록은 MINT_SELECTED 바탕과 굵기 2.5의 MINT_DEEP 테두리로 그리고, 2초 타이머가 울리면 보통 블록이다(D-89). */
+    @Test
+    void eTt13FlashColors() {
+        Task a = at("A", "09:00", 60).task();
+        show(a, task("B", d(19)).at("09:00").minutes(60).task());
+        panel.flash(List.of(a));
+        BufferedImage img = Snap.paint(panel, 752, H);
+        assertEquals(List.of(Theme.MINT_SELECTED.getRGB(), Theme.MINT_DEEP.getRGB(), Theme.MINT_LINE.getRGB(), Theme.MINT_SOFT.getRGB()),
+                List.of(img.getRGB(301, 436), img.getRGB(301, 439), img.getRGB(401, 439), img.getRGB(401, 438)));
+        assertTrue(img.getRGB(301, 438) != Theme.MINT_SELECTED.getRGB(), "굵은 테두리는 한 줄 위까지 칠한다");
+        Timer timer = panel.flashTimer();
+        assertEquals(List.of(TimetablePanel.FLASH_MILLIS, 2000, false, true), List.of(timer.getDelay(), timer.getInitialDelay(),
+                timer.isRepeats(), timer.isRunning()));
+        for (ActionListener l : timer.getActionListeners()) {
+            l.actionPerformed(null);
+        }
+        timer.stop();
+        assertEquals(Set.of(), panel.flashing());
+        assertEquals(List.of(Theme.MINT_SOFT.getRGB(), Theme.MINT_LINE.getRGB()), List.of(Snap.paint(panel, 752, H).getRGB(301, 436),
+                Snap.paint(panel, 752, H).getRGB(301, 439)));
+    }
+
+    /** 진하게 보이기를 다시 부르면 앞의 타이머를 멈추고 새 2초 타이머로 새 블록만 진하게 그린다. */
+    @Test
+    void eTt13FlashAgain() {
+        Task a = at("A", "09:00", 60).task();
+        Task b = at("B", "11:00", 60).task();
+        show(a, b);
+        panel.flash(List.of(a));
+        Timer first = panel.flashTimer();
+        panel.flash(List.of(b));
+        Timer second = panel.flashTimer();
+        second.stop();
+        assertEquals(List.of(false, true, Set.of(b)), List.of(first.isRunning(), first != second, panel.flashing()));
     }
 }

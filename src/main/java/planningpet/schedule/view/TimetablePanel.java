@@ -1,5 +1,6 @@
 package planningpet.schedule.view;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -9,6 +10,8 @@ import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.time.LocalDate;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -18,6 +21,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import planningpet.app.model.AppData;
 import planningpet.common.view.Theme;
 import planningpet.common.view.Ui;
@@ -29,7 +33,7 @@ import planningpet.schedule.model.TimetableLayout;
 
 /**
  * 일정관리의 일주일 시간표(07, 05 일정관리). 0시부터 다음 날 4시(28:00)까지 그린다(D-77). 옮기는 몫은 docs/porting/schedule.md
- * S5b와 S5c2(누르기). 끌어 놓기는 C2, 자동 배치 뒤 진하게 보이기는 S5d가 더한다.
+ * S5b, S5c2(누르기), S5d(자동 배치 뒤 진하게 보이기). 끌어 놓기는 C2다.
  */
 public final class TimetablePanel extends JComponent {
     /** 한 시간의 높이. */
@@ -40,6 +44,8 @@ public final class TimetablePanel extends JComponent {
     public static final int HOURS = Task.DAY_END / 60;
     /** 자정 아래 "다음 날" 칸의 바탕(D-77). */
     private static final Color NIGHT = new Color(0x1B, 0x22, 0x38, 14);
+    /** 놓인 블록을 진하게 그리는 시간(D-89). */
+    public static final int FLASH_MILLIS = 2000;
     private final AppData data;
     /** 보이는 주의 첫날(D-91). 일정관리 화면(S5c)이 주를 옮길 때 정한다. */
     LocalDate monday;
@@ -48,6 +54,9 @@ public final class TimetablePanel extends JComponent {
     private final Map<Rectangle, Task> boxes = new LinkedHashMap<>();
     /** 열을 나눴거나 제목이 잘린 블록(D-87). 마지막으로 그린 모양이다. */
     private final Set<Task> narrow = new HashSet<>();
+    /** 지금 진하게 그리는 블록과 그것을 끝내는 타이머(아직 없으면 null). */
+    private final Set<Task> flashing = new HashSet<>();
+    private Timer flashTimer;
 
     /**
      * 체크 칸은 reward의 complete와 uncomplete를 부르고, 두 번 누르기와 오른쪽 버튼 메뉴는 onEdit, onDelete에 알린다. 여는 창은
@@ -103,6 +112,30 @@ public final class TimetablePanel extends JComponent {
     /** h번째 시각 줄의 글. 자정 아래는 00:00부터 다시 적는다(D-77). */
     static String hourText(int h) {
         return String.format("%02d:00", h % 24);
+    }
+
+    /** 놓인 블록을 2초 동안 진하게 그린다(D-89). 다시 부르면 앞의 타이머를 멈추고 그때부터 2초다. */
+    public void flash(Collection<Task> placed) {
+        flashing.clear();
+        flashing.addAll(placed);
+        if (flashTimer != null) {
+            flashTimer.stop();
+        }
+        flashTimer = new Timer(FLASH_MILLIS, e -> {
+            flashing.clear();
+            repaint();
+        });
+        flashTimer.setRepeats(false);
+        flashTimer.start();
+        repaint();
+    }
+
+    Timer flashTimer() {
+        return flashTimer;
+    }
+
+    Set<Task> flashing() {
+        return Collections.unmodifiableSet(flashing);
     }
 
     /** 마지막으로 그린 블록의 자리와 일정. 그린 차례다. */
@@ -204,13 +237,16 @@ public final class TimetablePanel extends JComponent {
         g.dispose();
     }
 
-    /** 블록 하나: 바탕과 테두리(D-44), 체크 칸(D-35), 제목과 끝낸 일의 취소선. 좁은 블록을 적는다(D-87). */
+    /** 블록 하나: 바탕과 테두리(D-44, 진하게 보이는 중이면 D-89), 체크 칸(D-35), 제목과 끝낸 일의 취소선. 좁은 블록을 적는다(D-87). */
     private void block(Graphics2D g, Rectangle r, Task t, Slot s) {
         boolean plain = t.isDone() || t.getKind() == Kind.FIXED;
-        g.setColor(t.isDone() ? Theme.DAY : plain ? Theme.TRACK : Theme.MINT_SOFT);
+        boolean lit = flashing.contains(t);
+        g.setColor(lit ? Theme.MINT_SELECTED : t.isDone() ? Theme.DAY : plain ? Theme.TRACK : Theme.MINT_SOFT);
         g.fillRoundRect(r.x, r.y, r.width, r.height, 10, 10);
-        g.setColor(plain ? Theme.CARD_LINE : Theme.MINT_LINE);
+        g.setColor(lit ? Theme.MINT_DEEP : plain ? Theme.CARD_LINE : Theme.MINT_LINE);
+        g.setStroke(new BasicStroke(lit ? 2.5f : 1f));
         g.drawRoundRect(r.x, r.y, r.width - 1, r.height - 1, 10, 10);
+        g.setStroke(new BasicStroke(1f));
         Graphics2D text = (Graphics2D) g.create();
         text.clipRect(r.x, r.y, r.width, r.height);
         // D-35: 고정 일정 블록에도 체크 칸을 둔다. 좁은 블록에서는 블록 안으로 잘린다.

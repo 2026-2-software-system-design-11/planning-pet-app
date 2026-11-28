@@ -13,8 +13,10 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.FontMetrics;
+import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
+import java.awt.image.BufferedImage;
 import java.text.ParseException;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -36,7 +38,7 @@ import org.junit.jupiter.api.Test;
 
 /**
  * 입력칸과 칸 글, HTML 글자, 입력 창 칸의 도우미. 번호는 docs/porting/pick.md 2절, home.md S3d 2절(E-FIT), S3q 2절(E-ESC), task-dialog.md S4b 2절(E-UI), S4i 2절(E-LINE),
- * character.md S8d2 2절(E-UI-8).
+ * character.md S8d2 2절(E-UI-8), schedule.md S5d 2절(E-BUB-8).
  */
 class UiTest {
     private static final String TEN = "가나다라마바사아자차";
@@ -443,5 +445,16 @@ class UiTest {
         });
         SwingUtilities.invokeAndWait(() -> { });
         assertEquals(1, asked[0]);
+    }
+
+    /** 일정관리 펫 말풍선: 흰 둥근 상자와 CARD_LINE 테두리, 여백 8, 14, 8, 14. 둥근 모서리 밖은 칠하지 않는다. */
+    @Test
+    void eBub8Bubble() {
+        JLabel l = Ui.bubble();
+        assertEquals(List.of(new Insets(8, 14, 8, 14), false), List.of(l.getInsets(), l.isOpaque()));
+        BufferedImage img = Snap.paint(l, 100, 40);
+        assertEquals(List.of(0, Theme.CARD_TOP.getRGB(), Theme.CARD_LINE.getRGB(), Theme.CARD_LINE.getRGB()),
+                List.of(img.getRGB(0, 0), img.getRGB(50, 20), img.getRGB(0, 20), img.getRGB(50, 39)));
+        assertEquals(0, img.getRGB(100, 20));
     }
 }
