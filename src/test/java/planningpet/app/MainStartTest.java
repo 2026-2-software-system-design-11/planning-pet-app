@@ -64,6 +64,8 @@ class MainStartTest {
     private Runnable closed;
     /** 메인 창이 넣은 신호 뒤의 일. */
     private Runnable signalled;
+    /** 타이머를 켠 트레이. */
+    private Tray tray;
     private final Main.Shell shell = new Main.Shell() {
         public void unreadable(Reason r, Path f) { calls.add("못 읽음 창 " + r + " " + f); }
 
@@ -83,7 +85,10 @@ class MainStartTest {
             return false;
         }
 
-        public void timer(Tray tray) { calls.add("타이머"); }
+        public void timer(Tray t) {
+            tray = t;
+            calls.add("타이머");
+        }
 
         public void saveFailed(String text) { calls.add(text); }
 
@@ -191,6 +196,13 @@ class MainStartTest {
         signalled.run();
         assertEquals(List.of("트레이", "메인 창", "저장", "타이머"), calls);
         assertEquals(List.of(1, 6), List.of(heard[0], data.getStreak()));
+    }
+
+    @Test
+    void eTray8MenuQuitEndsApp() {
+        Main.start(store(LoadResult.loaded(saved()), false), folder, CLOCK, shell);
+        tray.menu().get("끝내기").run();
+        assertEquals(List.of("트레이", "메인 창", "저장", "타이머", "끝내기 0"), calls);
     }
 
     @Test

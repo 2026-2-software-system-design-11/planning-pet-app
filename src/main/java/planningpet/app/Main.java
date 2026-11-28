@@ -157,6 +157,7 @@ public final class Main {
         window.watch(() -> Theme.clear(window.root()));
         Theme.clear(window.root());
         Tray tray = new Tray(app, watcher, clock, window, home, shell::front);
+        app.setQuit(() -> shell.exit(0)); // 끝내기는 오류가 아니다(docs/porting/tray.md).
         shell.tray(tray);
         shell.main(window.root());
         app.onWindowShown();
