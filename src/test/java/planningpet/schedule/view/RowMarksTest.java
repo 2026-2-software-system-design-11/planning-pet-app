@@ -2,20 +2,23 @@ package planningpet.schedule.view;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.awt.Dimension;
 import java.awt.Insets;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import javax.swing.JLabel;
 import org.junit.jupiter.api.Test;
+import planningpet.common.view.Snap;
 import planningpet.common.view.Theme;
 import planningpet.schedule.model.Category;
 import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Task;
 
-/** 목록 줄의 둘째 줄 표시와 "고정" 꼬리표. 번호는 docs/porting/task-rows.md S3u 2절. */
+/** 목록 줄의 둘째 줄 표시와 "고정" 꼬리표. 번호는 docs/porting/task-rows.md S3u 2절. 꼬리표의 기준 그림은 proto/fixtag-*.png이고 글이 없다. */
 class RowMarksTest {
     private static final String GRAY = "<font color='#8A96A0'>";
     private static final String RED = "<font color='#C0392B'>";
@@ -117,5 +120,21 @@ class RowMarksTest {
         assertNull(TaskRows.dueTag(task(Kind.TASK, d(11, 16), null, d(11, 22), true), d(11, 22), d(11, 22)));
         assertNull(TaskRows.dueTag(task(Kind.TASK, d(11, 22), null, null, false), d(11, 22), d(11, 22)));
         assertNull(TaskRows.dueTag(task(Kind.FIXED, d(11, 22), LocalTime.of(9, 0), null, false), d(11, 22), d(11, 22)));
+    }
+
+    @Test
+    void eFix1FixedTag() throws IOException {
+        JLabel tag = TaskRows.fixedTag();
+        assertEquals("고정", tag.getText());
+        assertEquals(Theme.bold(11), tag.getFont());
+        assertEquals(Theme.INK_SUB, tag.getForeground());
+        assertEquals(new Insets(2, 7, 2, 7), tag.getInsets());
+        assertEquals(new Dimension(34, 18), tag.getPreferredSize());
+        assertFalse(tag.isOpaque());
+        assertNotSame(tag, TaskRows.fixedTag());
+        Snap.blank(tag);
+        for (int[] s : new int[][] {{34, 18}, {60, 30}, {10, 6}, {0, 0}}) {
+            Snap.assertLaidOutLooksLikePrototype("fixtag-" + s[0] + "x" + s[1], tag, s[0], s[1]);
+        }
     }
 }

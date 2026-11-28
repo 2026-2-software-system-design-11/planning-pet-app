@@ -104,4 +104,25 @@ public final class TaskRows extends JPanel {
         }
         return listDay.equals(today) ? "오늘 마감" : listDay.isAfter(today) ? "마감" : null;
     }
+
+    /** 고정 일정 줄의 "고정" 꼬리표(D-35): TRACK 바탕, CARD_LINE 테두리의 작은 둥근 꼬리표다. 부를 때마다 새 라벨이다. */
+    static JLabel fixedTag() {
+        JLabel tag = new JLabel("고정") {
+            @Override
+            protected void paintComponent(Graphics graphics) {
+                Graphics2D g = (Graphics2D) graphics.create();
+                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g.setColor(Theme.TRACK);
+                g.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 10, 10);
+                g.setColor(Theme.CARD_LINE);
+                g.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 10, 10);
+                g.dispose();
+                super.paintComponent(graphics);
+            }
+        };
+        tag.setFont(Theme.bold(11));
+        tag.setForeground(Theme.INK_SUB);
+        tag.setBorder(BorderFactory.createEmptyBorder(2, 7, 2, 7));
+        return tag;
+    }
 }
