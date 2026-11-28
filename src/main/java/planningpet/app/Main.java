@@ -111,6 +111,7 @@ public final class Main {
         DayWatcher watcher = new DayWatcher(data, app);
         OsAutostart os = OsAutostart.here();
         SettingsScreen settings = new SettingsScreen(data, new SettingsController(data, app, os), os, folder);
+        settings.shown = () -> window.current().equals("설정");
         window.watch(settings::refresh);
         window.addScreen("설정", "플래닝펫을 내게 맞게 바꿔요.", settings);
         window.watch(() -> Theme.clear(window.root()));

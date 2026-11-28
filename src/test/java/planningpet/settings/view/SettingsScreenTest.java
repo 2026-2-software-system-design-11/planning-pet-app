@@ -19,6 +19,7 @@ import planningpet.app.controller.AppController;
 import planningpet.app.model.AppData;
 import planningpet.app.model.Apps;
 import planningpet.app.model.MemoryStore;
+import planningpet.app.view.AppWindow;
 import planningpet.common.view.ThemeOn;
 import planningpet.settings.controller.SettingsController;
 import planningpet.settings.model.Autostart;
@@ -40,9 +41,14 @@ class SettingsScreenTest {
         boolean installed = true;
         boolean on;
         IOException refuse;
+        /** registered()를 부른 수. */
+        int reads;
 
         public boolean available() { return installed; }
-        public boolean registered() { return on; }
+        public boolean registered() {
+            reads++;
+            return on;
+        }
         public void set(boolean on) throws IOException {
             if (refuse != null) {
                 throw refuse;
@@ -188,5 +194,28 @@ class SettingsScreenTest {
         }
         assertEquals(List.of("시작", "데이터 위치", "달력", "켜면 수업 같은 고정 일정도 홈 달력 칸의 수에 들어가요",
                 "한 주 시작", "달력, 일정관리, 통계의 한 주가 이 요일부터 시작해요", "예시 일정", "버전", "0.1.0"), labels);
+    }
+
+    /** 번호는 docs/porting/settings.md S10c 2절. */
+    @Test
+    void eSet15ReadsOsOnlyWhenShown() {
+        AppWindow window = new AppWindow(data, new AppController(data, store, errors::add));
+        window.addScreen("홈", "", new JLabel());
+        SettingsScreen s = screen();
+        s.shown = () -> window.current().equals("설정");
+        window.addScreen("설정", "", s);
+        window.watch(s::refresh);
+        os.reads = 0;
+        os.on = true;
+        data.changed();
+        assertEquals(List.of(0, false), List.of(os.reads, s.autostart.isSelected()));
+        window.show("설정");
+        assertEquals(List.of(1, true), List.of(os.reads, s.autostart.isSelected()));
+        s.autostart.doClick();
+        assertEquals(List.of(2, false), List.of(os.reads, s.autostart.isSelected()));
+        window.show("홈");
+        int before = os.reads;
+        data.changed();
+        assertEquals(before, os.reads);
     }
 }
