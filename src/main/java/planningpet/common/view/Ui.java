@@ -1,5 +1,6 @@
 package planningpet.common.view;
 
+import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.FontMetrics;
@@ -9,9 +10,13 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.function.ToIntFunction;
+import java.util.stream.Stream;
 import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
@@ -28,7 +33,7 @@ import javax.swing.text.DocumentFilter;
 import javax.swing.text.JTextComponent;
 
 /**
- * 화면 여러 곳이 같이 쓰는 작은 부품. 입력칸과 칸 글이 쓰는 것, 툴팁의 HTML 글자 바꾸기, 일정 입력 창의 칸 도우미만 옮겼고, 나머지는 그것을
+ * 화면 여러 곳이 같이 쓰는 작은 부품. 입력칸과 칸 글이 쓰는 것, 툴팁의 HTML 글자 바꾸기, 일정 입력 창의 칸 도우미와 오류 글 줄 바꾸기만 옮겼고, 나머지는 그것을
  * 쓰는 화면의 단위가 더한다(docs/porting/pick.md, home.md, task-dialog.md).
  */
 public final class Ui {
@@ -97,6 +102,52 @@ public final class Ui {
             cut = cut.substring(0, cut.offsetByCodePoints(cut.length(), -1));
         }
         return cut.strip() + "…";
+    }
+
+    /**
+     * room 폭을 넘는 글은 그 폭에서 줄을 바꿔 잘리지 않게 한다. 줄은 빈칸에서 바꾸고, 빈칸 없이 폭을 넘는 낱말만 글자에서 끊는다.
+     * 괄호 묶음("03:55(다음 날)로")은 한 낱말로 보아 괄호 안의 빈칸에서 줄을 바꾸지 않는다(S162). 묶음이 room보다 넓을 때만 그 안에서
+     * 바꾼다. 입력 창 오류 글(D-100)이 쓴다. 폭은 라벨 글꼴로 잰다. 폭 안이면 글 그대로다. Swing HTML은 글자색의 알파를 버리므로, 접은
+     * 글은 라벨 글자색을 흰 바탕에 섞은 불투명 색으로 적어 흐린 글(INK_DIM)도 흐리게 보인다(docs/porting/task-dialog.md S4i).
+     */
+    public static String wrap(String text, JLabel label, int room) {
+        FontMetrics fm = label.getFontMetrics(label.getFont());
+        if (fm.stringWidth(text) <= room) {
+            return text;
+        }
+        List<String> lines = new ArrayList<>();
+        String line = "";
+        List<String> words = new ArrayList<>();
+        int depth = 0;
+        for (String word : text.split(" ")) {
+            words.add(depth > 0 ? words.remove(words.size() - 1) + " " + word : word);
+            depth = Math.max(0, depth + (int) word.chars().filter(c -> c == '(').count() - (int) word.chars().filter(c -> c == ')').count());
+        }
+        words = words.stream().flatMap(w -> fm.stringWidth(w) > room ? Arrays.stream(w.split(" ")) : Stream.of(w)).toList();
+        for (String word : words) {
+            String next = line.isEmpty() ? word : line + " " + word;
+            if (fm.stringWidth(next) <= room) {
+                line = next;
+                continue;
+            }
+            if (!line.isEmpty()) {
+                lines.add(line);
+            }
+            line = word;
+            while (fm.stringWidth(line) > room && line.length() > 1) {
+                int cut = line.length() - 1;
+                while (cut > 1 && fm.stringWidth(line.substring(0, cut)) > room) {
+                    cut--;
+                }
+                lines.add(line.substring(0, cut));
+                line = line.substring(cut);
+            }
+        }
+        lines.add(line);
+        Color c = label.getForeground();
+        int a = c.getAlpha();
+        int rgb = (c.getRed() * a / 255 + 255 - a) << 16 | (c.getGreen() * a / 255 + 255 - a) << 8 | (c.getBlue() * a / 255 + 255 - a);
+        return String.format("<html><font color='#%06x'>", rgb) + String.join("<br>", lines.stream().map(Ui::esc).toList()) + "</font></html>";
     }
 
     /** 한 줄에 왼쪽부터 사이 4로 놓는 판. 일정 입력 창의 칸 줄과 단추 줄이 쓴다. */

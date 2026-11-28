@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -29,7 +30,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.text.BadLocationException;
 import org.junit.jupiter.api.Test;
 
-/** 입력칸과 칸 글, HTML 글자, 입력 창 칸의 도우미. 번호는 docs/porting/pick.md 2절, home.md S3d 2절(E-FIT), S3q 2절(E-ESC), task-dialog.md S4b 2절(E-UI). */
+/** 입력칸과 칸 글, HTML 글자, 입력 창 칸의 도우미. 번호는 docs/porting/pick.md 2절, home.md S3d 2절(E-FIT), S3q 2절(E-ESC), task-dialog.md S4b 2절(E-UI), S4i 2절(E-LINE). */
 class UiTest {
     private static final String TEN = "가나다라마바사아자차";
     private static final String SMILE = "😀";
@@ -198,6 +199,57 @@ class UiTest {
         assertEquals("a&amp;&amp;b&gt;&gt;", Ui.esc("a&&b>>"));
         assertEquals("plain 글", Ui.esc("plain 글"));
         assertThrows(NullPointerException.class, () -> Ui.esc(null));
+    }
+
+    /** 글자색이 color이고 TEN_EACH로 재는 라벨에 text를 room 폭으로 접는다. */
+    private static String wrap(String text, int room, Color color) {
+        JLabel l = new JLabel() {
+            @Override
+            public FontMetrics getFontMetrics(Font font) {
+                return TEN_EACH;
+            }
+        };
+        l.setForeground(color);
+        return Ui.wrap(text, l, room);
+    }
+
+    /** 검은 글자로 접은 글의 앞과 뒤. */
+    private static final String BLACK = "<html><font color='#000000'>";
+    private static final String END = "</font></html>";
+
+    @Test
+    void eLine1FitsAsIs() {
+        assertEquals("가나다", wrap("가나다", 30, Color.BLACK));
+        assertEquals("가나다", wrap("가나다", 100, Color.BLACK));
+        assertEquals("", wrap("", 0, Color.BLACK));
+        assertEquals("a<b", wrap("a<b", 100, Color.BLACK));
+    }
+
+    @Test
+    void eLine2BreaksAtSpaces() {
+        assertEquals(BLACK + "가나 다라<br>마바" + END, wrap("가나 다라 마바", 50, Color.BLACK));
+        assertEquals(BLACK + "가나<br>다라<br>마바" + END, wrap("가나 다라 마바", 49, Color.BLACK));
+    }
+
+    @Test
+    void eLine3CutsLongWords() {
+        assertEquals(BLACK + "가나다라<br>마바" + END, wrap("가나다라마바", 40, Color.BLACK));
+        assertEquals(BLACK + "가<br>나다라마<br>바사" + END, wrap("가 나다라마바사", 40, Color.BLACK));
+        assertEquals(BLACK + "가<br>나<br>다" + END, wrap("가나다", 5, Color.BLACK));
+        assertEquals(BLACK + "가<br>나<br>다" + END, wrap("가나다", -5, Color.BLACK));
+    }
+
+    @Test
+    void eLine4KeepsBrackets() {
+        assertEquals(BLACK + "끝<br>03:35(다음 날)이<br>맞아요" + END, wrap("끝 03:35(다음 날)이 맞아요", 130, Color.BLACK));
+        assertEquals(BLACK + "끝 03:35(다음<br>날)이 맞아요" + END, wrap("끝 03:35(다음 날)이 맞아요", 100, Color.BLACK));
+        assertEquals(BLACK + "가<br>(나 다" + END, wrap("가 (나 다", 40, Color.BLACK));
+    }
+
+    @Test
+    void eLine5BlendsColorAndEscapes() {
+        assertEquals("<html><font color='#a3a6af'>a&lt;b<br>&amp;<br>c&gt;d</font></html>", wrap("a<b & c>d", 40, Theme.INK_DIM));
+        assertEquals("<html><font color='#e55c64'>a&lt;b<br>&amp;<br>c&gt;d</font></html>", wrap("a<b & c>d", 40, Theme.SUNDAY));
     }
 
     private static final LocalDate NOV16 = LocalDate.of(2026, 11, 16);

@@ -8,6 +8,8 @@ import static planningpet.schedule.model.Tasks.d;
 
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -33,7 +35,7 @@ import planningpet.schedule.model.Repeat;
 import planningpet.schedule.model.TaskDraft;
 import planningpet.schedule.model.Tasks;
 
-/** 일정 입력 창의 칸, 추가 창의 처음 값, 칸끼리 켜고 끄기, 손댄 값 지키기와 날짜 따라가기. 번호는 docs/porting/task-dialog.md S4f, S4g, S4h 2절. */
+/** 일정 입력 창의 칸, 추가 창의 처음 값, 칸끼리 켜고 끄기, 손댄 값 지키기와 날짜 따라가기, 칸 아래 오류 글. 번호는 docs/porting/task-dialog.md S4f~S4i 2절. */
 class TaskFormTest {
     private static final LocalDateTime NOW = LocalDateTime.of(2026, 11, 18, 10, 7);
     private static final String SMILE = new String(Character.toChars(0x1F600));
@@ -489,5 +491,130 @@ class TaskFormTest {
         assertEquals(List.of("2026-11-29", List.of()), List.of(text(f.due), f.draft().validate()));
         Ui.setDate(f.date, d(25));
         assertEquals(List.of("2026-11-29", List.of()), List.of(text(f.due), f.draft().validate()));
+    }
+
+    /** 11-18에 연 창. 빈 제목, 정하기를 켜고 "03:30(다음 날)", 40분(T-VAL-14). */
+    private static TaskForm lateStart() {
+        TaskForm f = form(d(18));
+        f.timed.doClick();
+        f.start.setValue(Times.value(27 * 60 + 30));
+        f.minutes.setValue(40);
+        return f;
+    }
+
+    @Test
+    void tVal14ErrorsInFieldOrder() {
+        TaskForm f = lateStart();
+        assertEquals("", f.errorText());
+        f.showErrors(f.draft().validate());
+        assertEquals("제목을 써 주세요 / 다음 날 04:00까지 끝나야 해요", f.errorText());
+        assertEquals(List.of(true, false, true, false, false, false), f.errors.values().stream().map(JLabel::isVisible).toList());
+    }
+
+    /** 06 T-VAL-21의 27분 시작 시각 글. */
+    private static final String TWO_PROBLEMS = "다음 날 04:00까지 끝나야 해요. 5분 단위로 정해 주세요. 걸리는 시간 25분이면 03:35(다음 날)이 맞아요";
+
+    /** 칸을 놓은 11-16 창에 T-VAL-21의 값(시작 03:53(다음 날), 27분)을 저장한 오류 글을 보인다. */
+    private static TaskForm twoProblems() {
+        TaskForm f = form(d(16));
+        f.panel.setSize(f.panel.getPreferredSize());
+        f.panel.doLayout();
+        f.showErrors(Tasks.task("일", d(16)).at("03:53").nextDay().minutes(27).draft().validate());
+        return f;
+    }
+
+    @Test
+    void tVal21LongErrorWrapsInTitleWidth() {
+        TaskForm f = twoProblems();
+        JLabel l = f.errors.get("시작 시각");
+        for (Font font : new Font[] {l.getFont(), new Font(Font.DIALOG, Font.PLAIN, 12), new Font(Font.DIALOG, Font.BOLD, 16)}) {
+            l.setFont(font);
+            f.showErrors(Tasks.task("일", d(16)).at("03:53").nextDay().minutes(27).draft().validate());
+            List<String> lines = List.of(l.getText().replaceAll("^<html><font[^>]*>|</font></html>$", "").split("<br>"));
+            FontMetrics fm = l.getFontMetrics(font);
+            assertTrue(lines.size() > 1, font.toString());
+            assertTrue(lines.stream().allMatch(line -> fm.stringWidth(line) <= f.title.getWidth()), lines.toString());
+            assertEquals(TWO_PROBLEMS, String.join(" ", lines));
+        }
+    }
+
+    @Test
+    void eForm10ErrorKeepsSentence() {
+        TaskForm f = twoProblems();
+        assertEquals(List.of(TWO_PROBLEMS, ""), List.of(f.error("시작 시각"), f.error("제목")));
+        assertEquals(TWO_PROBLEMS + " / 10분부터 720분까지, 5분 단위예요", f.errorText());
+        assertEquals("10분부터 720분까지, 5분 단위예요", f.errors.get("걸리는 시간").getText());
+    }
+
+    @Test
+    void eForm9FixedFieldsClearAfterSave() {
+        TaskForm f = lateStart();
+        f.showErrors(f.draft().validate());
+        f.title.setText("운동");
+        assertEquals(List.of("다음 날 04:00까지 끝나야 해요", false), List.of(f.errorText(), f.errors.get("제목").isVisible()));
+        f.minutes.setValue(30);
+        assertEquals(List.of("", false), List.of(f.errorText(), f.errors.get("시작 시각").isVisible()));
+    }
+
+    /** 11-18에 연 창에서 "보고서", 기간을 켜고 picked면 마감 11-25를 고른 뒤 고정 일정에서 날짜 11-30, 할 일로 돌아옴(T-DEF-22). */
+    private static TaskForm movedPastDue(boolean picked) {
+        TaskForm f = form(d(18));
+        f.title.setText("보고서");
+        f.period.doClick();
+        if (picked) {
+            Ui.setDate(f.due, d(25));
+        }
+        f.fixed.doClick();
+        Ui.setDate(f.date, d(30));
+        f.task.doClick();
+        return f;
+    }
+
+    @Test
+    void tDef22DueCheckedBeforeSave() {
+        TaskForm f = movedPastDue(true);
+        assertEquals(List.of("2026-11-25", "마감일이 시작일보다 전이에요"), List.of(text(f.due), f.errorText()));
+        Ui.setDate(f.due, d(12, 1));
+        assertEquals(List.of("", false), List.of(f.errorText(), f.errors.get("마감").isVisible()));
+        Ui.setDate(f.date, d(12, 2));
+        assertEquals("마감일이 시작일보다 전이에요", f.errorText());
+        TaskForm g = movedPastDue(false);
+        assertEquals(List.of("2026-12-06", ""), List.of(text(g.due), g.errorText()));
+        TaskForm h = form(d(18));
+        h.period.doClick();
+        Ui.setDate(h.due, d(20));
+        Ui.setDate(h.date, d(23));
+        assertEquals("마감일이 시작일보다 전이에요", h.errorText());
+    }
+
+    @Test
+    void tVal23DueBeforeToday() {
+        TaskForm f = form(d(10));
+        f.period.doClick();
+        assertEquals(List.of("2026-11-15", "마감일이 오늘보다 전이에요"), List.of(text(f.due), f.errorText()));
+        Ui.setDate(f.due, d(17));
+        assertEquals("마감일이 오늘보다 전이에요", f.errorText());
+        Ui.setDate(f.due, d(9));
+        assertEquals("마감일이 시작일보다 전이에요", f.errorText());
+        Ui.setDate(f.due, d(18));
+        assertEquals("", f.errorText());
+    }
+
+    @Test
+    void eForm15Relayout() {
+        TaskForm f = form(d(18));
+        int[] runs = new int[1];
+        f.relayout = () -> runs[0]++;
+        f.title.setText("운동");
+        assertEquals(0, runs[0]);
+        f.period.doClick();
+        assertEquals(1, runs[0]);
+        f.period.doClick();
+        f.title.setText("");
+        assertEquals(2, runs[0]);
+        f.showErrors(f.draft().validate());
+        assertEquals(3, runs[0]);
+        f.title.setText("운동");
+        assertEquals(4, runs[0]);
     }
 }
