@@ -3,6 +3,7 @@ package planningpet.app;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.awt.Component;
 import java.awt.Container;
@@ -61,6 +62,8 @@ class MainStartTest {
     private JComponent root;
     private PickDialog pick;
     private Runnable closed;
+    /** 메인 창이 넣은 신호 뒤의 일. */
+    private Runnable signalled;
     private final Main.Shell shell = new Main.Shell() {
         public void unreadable(Reason r, Path f) { calls.add("못 읽음 창 " + r + " " + f); }
 
@@ -80,6 +83,8 @@ class MainStartTest {
         public void saveFailed(String text) { calls.add(text); }
 
         public void exit(int code) { calls.add("끝내기 " + code); }
+
+        public void signal(Runnable shown) { signalled = shown; }
     };
 
     /** Main.main처럼 부품을 만들기 전에 Theme를 건다. 검사마다 되돌린다. */
@@ -168,6 +173,24 @@ class MainStartTest {
         panels.get(1).setOpaque(true);
         data.changed();
         assertFalse(panels.get(1).isOpaque(), "알림마다 Theme.clear를 다시 건다");
+    }
+
+    @Test
+    void eMain20SignalAfterMain() {
+        AppData data = saved();
+        Main.start(store(LoadResult.loaded(data), false), folder, CLOCK, shell);
+        int[] heard = {0};
+        data.onChange(() -> heard[0]++);
+        signalled.run();
+        assertEquals(List.of("메인 창", "저장", "타이머"), calls);
+        assertEquals(List.of(1, 6), List.of(heard[0], data.getStreak()));
+    }
+
+    @Test
+    void eOne5SignalDuringPick() {
+        run();
+        assertEquals(List.of("고르기 창"), calls);
+        assertNull(signalled);
     }
 
     @Test

@@ -2,7 +2,7 @@
 
 [본 구현으로 옮기기](../porting.md) 1절 표의 단위 S2 가운데 `Main` 잇기(#434)다. `Main`이 06 21번 `load`로 데이터를 읽고 결과에 따라 메인 창, 반려동물 고르기 창, 못 읽음 창으로 갈린다(02 UC-01). 기준은 02 UC-01과 UC-17, 06 15번, 21번, 22번, 23번, 30번, 07 실행 모드, [seq-uc01](../diagrams/seq-uc01.puml), [seq-uc17](../diagrams/seq-uc17.puml), 프로토타입 `app/Main`의 `main`과 `create`다. 프로토타입은 목 데이터만 읽어 `load`가 없으므로 읽기 갈래는 비교 기준이 없고(porting.md "프로토타입과 본 구현") 06 검사 줄과 아래 경계 줄이 기준이다. 갈래가 띄우는 창은 앞 단위가 만들었다. 메인 창 틀은 S1d([frame.md](frame.md)), 30초 타이머는 S1([app-window.md](app-window.md)), 고르기 창과 저장 실패 창은 S2m(#435, [pick.md](pick.md)), 못 읽음 창은 S2l([unreadable.md](unreadable.md))이다.
 
-이 단위가 옮기지 않는 것: `--autostart`로 창 없이 트레이로 시작하기와 하나만 실행(24번 `SingleInstance`)은 S11이다. 그때까지 `--autostart`도 창을 띄운다. 메인 창 닫기는 25번이 S11이라 그때까지 앱을 끝낸다([frame.md](frame.md)). 예시로 둘러보기는 C5다.
+이 단위가 옮기지 않는 것: `--autostart`로 창 없이 트레이로 시작하기는 S11b(#524)다. 그때까지 `--autostart`도 창을 띄운다. 하나만 실행(24번 `SingleInstance`)은 S11a(#522, [tray.md](tray.md))가 `main`에 이었다. 메인 창 닫기는 25번이 S11이라 그때까지 앱을 끝낸다([frame.md](frame.md)). 예시로 둘러보기는 C5다.
 
 07 안에서 정한 것과 그 까닭:
 

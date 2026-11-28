@@ -1,9 +1,13 @@
 package planningpet.app;
 
+import java.awt.Frame;
+import java.awt.Window;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.util.Map;
 import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import planningpet.app.controller.AppController;
 import planningpet.app.controller.DayWatcher;
@@ -38,10 +42,15 @@ public final class Main {
             System.exit(2);
             return;
         }
-        // --autostart는 S11에서 트레이와 함께 창을 띄우지 않게 한다. 지금은 창을 띄운다. 하나만 실행(24번)도 S11이다.
+        Swing swing = new Swing();
+        if (!new SingleInstance(folder, () -> SwingUtilities.invokeLater(swing::signalled)).acquire()) {
+            System.exit(0); // 06 24번: 실행 중인 앱에 신호를 보냈다.
+            return;
+        }
+        // --autostart는 S11b(#524)에서 트레이와 함께 창을 띄우지 않게 한다. 지금은 창을 띄운다.
         Theme.install(); // 부품을 만들기 전에 건다(프로토타입 Main).
         Clock clock = Clock.systemDefaultZone();
-        SwingUtilities.invokeLater(() -> start(new SqliteDataStore(folder, clock), folder, clock, new Swing()));
+        SwingUtilities.invokeLater(() -> start(new SqliteDataStore(folder, clock), folder, clock, swing));
     }
 
     /** 창을 띄우고 앱을 끝내는 일. 검사가 창 없이 바꿔 끼운다(docs/porting/main.md). */
@@ -63,13 +72,44 @@ public final class Main {
 
         /** 앱을 끝낸다. */
         void exit(int code);
+
+        /** 두 번째 실행의 신호를 받으면 지금 창을 앞으로 가져온 뒤 shown을 부른다(06 24번, docs/porting/tray.md). */
+        void signal(Runnable shown);
     }
 
     /** 실제 창을 띄운다. 창이 떠야 해서 검사하지 않는다. */
     private static final class Swing implements Shell {
+        /** 지금 떠 있는 창(고르기 창이나 메인 창). */
+        private Window front;
+        private Runnable shown = () -> { };
+
         public void unreadable(Reason reason, Path file) { UnreadableDialog.show(null, reason, file); }
-        public void pick(PickDialog pick, Runnable closed) { pick.dialog(closed).setVisible(true); }
-        public void main(JComponent root) { AppWindow.frame(root).setVisible(true); }
+        public void signal(Runnable shown) { this.shown = shown; }
+
+        public void pick(PickDialog pick, Runnable closed) {
+            JDialog dialog = pick.dialog(closed);
+            front = dialog;
+            dialog.setVisible(true);
+        }
+
+        public void main(JComponent root) {
+            JFrame frame = AppWindow.frame(root);
+            front = frame;
+            frame.setVisible(true);
+        }
+
+        /** 신호를 받으면 Swing 스레드에서 부른다. 내려 둔 창도 펴서 앞으로 가져온다(02 UC-01 1a). */
+        void signalled() {
+            if (front == null) {
+                return;
+            }
+            if (front instanceof Frame f) {
+                f.setExtendedState(f.getExtendedState() & ~Frame.ICONIFIED);
+            }
+            front.setVisible(true);
+            front.toFront();
+            shown.run();
+        }
         public void timer(Tray tray) { tray.start(); }
         public void saveFailed(String text) { AppWindow.saveFailed(text); }
         public void exit(int code) { System.exit(code); }
@@ -107,6 +147,7 @@ public final class Main {
         Theme.clear(window.root());
         shell.main(window.root());
         app.onWindowShown();
+        shell.signal(app::onWindowShown); // 고르기 창일 때의 신호는 15번을 부르지 않는다(E-ONE-5).
         shell.timer(new Tray(watcher, clock));
     }
 
