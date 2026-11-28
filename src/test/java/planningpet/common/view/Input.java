@@ -3,11 +3,16 @@ package planningpet.common.view;
 import java.awt.Component;
 import java.awt.DefaultKeyboardFocusManager;
 import java.awt.KeyboardFocusManager;
+import java.awt.Rectangle;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.util.ArrayList;
+import java.util.List;
+import javax.swing.JComponent;
+import javax.swing.RepaintManager;
 
-/** 테스트가 함께 쓰는 창 없는 마우스 누르기와 초점(#520). */
+/** 테스트가 함께 쓰는 창 없는 누르기, 초점, 다시 그리기 자리 모으기(#520). */
 public final class Input {
     private Input() {
     }
@@ -50,6 +55,44 @@ public final class Input {
         public void close() {
             setGlobalFocusOwner(null);
             KeyboardFocusManager.setCurrentKeyboardFocusManager(null);
+        }
+    }
+
+    /** 다시 그리라고 한 부품과 자리를 모으는 관리자를 건다. try-with-resources로 쓰면 끝날 때 앞의 관리자로 돌린다. */
+    public static Dirty dirty() {
+        Dirty d = new Dirty(RepaintManager.currentManager((Component) null));
+        RepaintManager.setCurrentManager(d);
+        return d;
+    }
+
+    /** 다시 그리라고 한 부품과 자리를 받은 차례대로 모은다. 그리지는 않는다. */
+    public static final class Dirty extends RepaintManager implements AutoCloseable {
+        private final RepaintManager before;
+        private final List<JComponent> who = new ArrayList<>();
+        private final List<Rectangle> where = new ArrayList<>();
+
+        private Dirty(RepaintManager before) {
+            this.before = before;
+        }
+
+        @Override
+        public void addDirtyRegion(JComponent c, int x, int y, int w, int h) {
+            who.add(c);
+            where.add(new Rectangle(x, y, w, h));
+        }
+
+        public List<JComponent> who() { return List.copyOf(who); }
+
+        public List<Rectangle> where() { return List.copyOf(where); }
+
+        /** 모은 자리를 모두 덮는 가장 작은 네모. 하나도 없으면 null이다. */
+        public Rectangle union() {
+            return where.stream().reduce(Rectangle::union).orElse(null);
+        }
+
+        @Override
+        public void close() {
+            RepaintManager.setCurrentManager(before);
         }
     }
 }
