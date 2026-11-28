@@ -44,6 +44,8 @@ abstract class PetPaintBase {
     static final Color STRAW = new Color(0xF4D58A);
     static final Color STRAW_SHADE = new Color(0xD9B160);
     static final Color BERET = new Color(0xE8737A);
+    static final Color CAPE = new Color(0x7A6FD0);
+    static final Color CAPE_INNER = new Color(0xE8483C);
     /** 큰 그림의 선 굵기. 작게 그릴 때는 부르는 쪽이 line을 굵게 바꾼다. */
     static final float LINE = 6f;
 

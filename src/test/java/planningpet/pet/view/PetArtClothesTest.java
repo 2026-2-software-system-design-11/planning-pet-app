@@ -38,4 +38,9 @@ class PetArtClothesTest {
     void eClo1Vest() throws IOException {
         assertOneX("vest", WearId.VEST);
     }
+
+    @Test
+    void eClo1Cape() throws IOException {
+        assertOneX("cape", WearId.CAPE);
+    }
 }

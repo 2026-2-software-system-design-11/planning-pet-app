@@ -34,7 +34,7 @@ abstract class PetPaintWear extends PetPaintBase {
     /**
      * 목 둘레를 목 가운데 (x, y), 목 반폭 w로 그린다. 스카프는 목에 두른 빨간 천이 가슴 가운데로 뾰족하게 내려오고 오른쪽에 매듭과
      * 끝자락이 있다. 목걸이는 스카프 위에 띠가 아래로 둥글게 걸치고 그 가운데 아래에 장식이 달린다. 기본은 청록 띠에 금색 방울, 리본은
-     * 분홍 띠에 연분홍 리본, 별은 파랑 띠에 금색 별, 왕관은 금색 띠에 금색 왕관이다.
+     * 분홍 띠에 연분홍 리본, 별은 파랑 띠에 금색 별, 왕관은 금색 띠에 금색 왕관이다. 망토는 그 위 목 가운데에 금색 고리를 단다.
      */
     void neckWear(double x, double y, double w) {
         AffineTransform old = g.getTransform();
@@ -80,6 +80,9 @@ abstract class PetPaintWear extends PetPaintBase {
                 case STAR_NECKLACE -> filled(star(0, py + 12, 15, 7), GOLD);
                 default -> filled(crown(0, py + 14, 30, 22), GOLD);
             }
+        }
+        if (has(WearId.CAPE)) {
+            filled(ell(0, -2, 9, 9), GOLD);
         }
         g.setTransform(old);
     }
@@ -169,6 +172,20 @@ abstract class PetPaintWear extends PetPaintBase {
         redraw(body);
         filled(ell(160, 232, 5, 5), GOLD);
         filled(ell(160, 248, 5, 5), GOLD);
+    }
+
+    /** 앉은 자세의 망토 뒤판: 목 가운데 (x, y), 목 반폭 w에서 몸 뒤로 넓게 퍼지고 아랫단 안쪽이 빨갛다. */
+    void capeBehind(double x, double y, double w) {
+        Path2D c = new Path2D.Double();
+        c.moveTo(x - w, y - 6);
+        c.quadTo(x, y + 6, x + w, y - 6);
+        c.curveTo(x + w * 1.7, y + 40, x + w * 1.9, y + 90, x + w * 1.75, y + 112);
+        c.quadTo(x, y + 124, x - w * 1.75, y + 112);
+        c.curveTo(x - w * 1.9, y + 90, x - w * 1.7, y + 40, x - w, y - 6);
+        c.closePath();
+        filled(c, CAPE);
+        shadeIn(c, ell(x, y + 120, w * 1.5, 18), CAPE_INNER);
+        redraw(c);
     }
 
     /** 가운데가 (x, y)이고 k배인 리본: 양쪽 고리와 가운데 매듭을 c로 칠한다. */
