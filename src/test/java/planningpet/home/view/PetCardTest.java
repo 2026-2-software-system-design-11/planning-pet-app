@@ -296,20 +296,21 @@ class PetCardTest {
     void ePtoday4To6Bubble() throws IOException {
         String w6 = String.join(" ", java.util.Collections.nCopies(6, "가나다라마바사아자차"));
         String[][] talks = {{"one", "잘했어! +10P"}, {"six", w6}, {"blank", "   "}};
-        int[][] heights = {{33, 33, 33, 33, 33}, {67, 33, 50, 84, 50}, null};
-        boolean[][] cuts = {{false, false, false, false, false}, {true, true, false, true, true}, {false, false, false, false, false}};
+        int[][] heights = {{33, 33, 33, 33, 33, 33, 33}, {67, 33, 50, 84, 50, 67, 50}, null};
+        boolean[] six = {true, true, false, true, true, true, true};
+        // 360x232와 360x233은 말풍선 아래(틀 아래 - 12)가 213, 214라 긴 말이 2줄과 3줄로 갈리는 경계다.
         int[][] sizes = {{360, 240, 152, 147, 192}, {300, 210, 128, 147, 156}, {800, 500, 270, 227, 514}, {360, 600, 152, 261, 192},
-            {360, 240, 152, 165, 192}};
+            {360, 232, 152, 147, 192}, {360, 233, 152, 147, 192}, {360, 240, 152, 165, 192}};
         for (int t = 0; t < talks.length; t++) {
             for (int i = 0; i < sizes.length; i++) {
                 Bubble said = new Bubble();
                 said.say(talks[t][1]);
-                boolean period = i == 4; // 마지막은 기간 할 일 줄이 있어 작은 카드가 70이다.
+                boolean period = i == sizes.length - 1; // 마지막은 기간 할 일 줄이 있어 작은 카드가 70이다.
                 PetCard c = new PetCard(period ? data(PetKind.CAT, 0, task("E사 지원서", 16, 22, false)) : data(PetKind.CAT, 0), said);
                 int[] s = sizes[i];
                 assertCovered("talk-" + talks[t][0] + (period ? "-period-" : "-") + s[0] + "x" + s[1], c, s[0], s[1]);
                 assertEquals(heights[t] == null ? null : new Rectangle(s[2], s[3], s[4], heights[t][i]), c.bubbleBox);
-                assertEquals(cuts[t][i], c.bubbleCut);
+                assertEquals(t == 1 && six[i], c.bubbleCut);
             }
         }
     }
