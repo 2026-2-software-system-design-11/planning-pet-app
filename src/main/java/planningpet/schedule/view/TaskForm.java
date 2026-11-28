@@ -3,6 +3,7 @@ package planningpet.schedule.view;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.time.DayOfWeek;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -13,9 +14,13 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.JToggleButton;
 import javax.swing.SpinnerDateModel;
+import javax.swing.SpinnerListModel;
 import planningpet.common.view.Theme;
 import planningpet.common.view.Ui;
 import planningpet.schedule.model.Category;
@@ -39,16 +44,36 @@ final class TaskForm {
     final JLabel periodHint = Ui.hint("반복 일정은 기간을 정할 수 없어요");
     final JLabel dueLabel = new JLabel("마감일");
     final JSpinner due = new JSpinner(new SpinnerDateModel());
+    final JCheckBox timed = new JCheckBox("정하기");
+    final JSpinner start = new JSpinner(new SpinnerListModel(Times.values()));
+    /** 다음 날 새벽 값이면 시작 칸 옆에 적는 실제 날과 시각 "(토 01:30)"(D-77). */
+    final JLabel realTime = new JLabel();
+    final JSpinner minutes = Ui.minutes(30);
+    final JLabel endLabel = new JLabel();
+    /** D-43: 추가 창에서 걸리는 시간이 30일 때만 보인다. */
+    final JLabel minutesHint = Ui.hint("안 바꾸면 30분으로 들어가요");
+    /** 7번 반복(D-64): 안 함, 매일, 요일. 요일 단추 days[i]는 월요일부터다(DayOfWeek.of(i + 1)). */
+    final JComboBox<String> repeat = new JComboBox<>(new String[] {"안 함", "매일", "요일"});
+    final JToggleButton[] days = new JToggleButton[7];
+    final JSpinner repeatEnd = new JSpinner(new SpinnerDateModel());
+    final JLabel repeatHint = Ui.hint("기간 안에 하는 할 일은 반복할 수 없어요");
+    final JTextArea memo = new JTextArea(3, 22);
     /** 칸 아래 빨간 오류 글(05). 칸 차례다. */
     final Map<String, JLabel> errors = new LinkedHashMap<>();
     private int row;
 
-    TaskForm() {
+    /** weekStart는 요일 단추 차례의 한 주 시작(D-94). */
+    TaskForm(DayOfWeek weekStart) {
         ButtonGroup kinds = new ButtonGroup();
         kinds.add(task);
         kinds.add(fixed);
-        Ui.dayEditor(this.date, "yyyy-MM-dd (E)");
+        Ui.dayEditor(date, "yyyy-MM-dd (E)");
+        Ui.dayEditor(repeatEnd, "yyyy-MM-dd");
         Ui.dayEditor(due, "yyyy-MM-dd");
+        for (int i = 0; i < 7; i++) {
+            days[i] = new JToggleButton(String.valueOf("월화수목금토일".charAt(i)));
+            days[i].setMargin(new Insets(1, 4, 1, 4));
+        }
         for (String k : new String[] {"제목", "마감", "시작 시각", "걸리는 시간", "메모", "반복"}) {
             JLabel l = new JLabel();
             l.setForeground(Theme.SUNDAY);
@@ -59,9 +84,26 @@ final class TaskForm {
         line("제목", title);
         line("", errors.get("제목"));
         line("유형", Ui.flow(category));
-        dateLabel = line("날짜", this.date);
+        dateLabel = line("날짜", date);
         line("기간", Ui.flow(period, periodHint, dueLabel, due));
         line("", errors.get("마감"));
+        line("시작 시각", Ui.flow(timed, start, realTime));
+        line("", errors.get("시작 시각"));
+        line("걸리는 시간 (분)", Ui.flow(minutes, endLabel));
+        line("", errors.get("걸리는 시간"));
+        line("", minutesHint);
+        JComponent[] repeatParts = new JComponent[8];
+        repeatParts[0] = repeat;
+        // D-94: 요일 단추는 한 주 시작 요일부터 놓는다.
+        for (int k = 0; k < 7; k++) {
+            repeatParts[k + 1] = days[(weekStart.getValue() - 1 + k) % 7];
+        }
+        line("반복", Ui.flow(repeatParts));
+        line("", Ui.flow(new JLabel("반복 끝나는 날"), repeatEnd));
+        line("", errors.get("반복"));
+        line("", repeatHint);
+        line("메모", new JScrollPane(memo));
+        line("", errors.get("메모"));
     }
 
     /** 이름 칸과 칸을 한 줄에 놓는다. 이름 칸을 돌려준다. */
