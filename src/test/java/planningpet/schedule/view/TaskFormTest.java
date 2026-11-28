@@ -231,7 +231,8 @@ class TaskFormTest {
         assertEquals(List.of(false, "기간은 할 일만 정할 수 있어요"), List.of(f.periodHint.isVisible(), f.period.getToolTipText()));
         f.repeat.setSelectedIndex(0);
         f.task.doClick();
-        assertEquals(List.of(true, true, true, true), List.of(f.task.isEnabled(), f.fixed.isEnabled(), f.timed.isEnabled(),
+        // 고정 일정 앞의 기간 할 일로 돌아와 정하기는 꺼진 채 비활성이다(D-101, S4h).
+        assertEquals(List.of(true, true, false, true), List.of(f.task.isEnabled(), f.fixed.isEnabled(), f.timed.isEnabled(),
                 f.period.isEnabled()));
         assertNull(f.period.getToolTipText());
     }
@@ -302,5 +303,48 @@ class TaskFormTest {
         f.start.setValue("02:00(다음 날)");
         Ui.setDate(f.date, d(21));
         assertEquals(List.of("(일 02:00)", "02:30(다음 날)에 끝나요"), List.of(f.realTime.getText(), f.endLabel.getText()));
+    }
+
+    @Test
+    void tDef20BackFromFixedRestoresTask() {
+        TaskForm f = form(d(18));
+        f.fixed.doClick();
+        f.task.doClick();
+        assertEquals(List.of(false, true), List.of(f.timed.isSelected(), f.timed.isEnabled()));
+        f.timed.doClick();
+        f.start.setValue("10:00");
+        f.fixed.doClick();
+        f.start.setValue("11:00");
+        f.task.doClick();
+        assertEquals(List.of(true, "11:00"), List.of(f.timed.isSelected(), f.start.getValue()));
+        f.timed.doClick();
+        f.period.doClick();
+        Ui.setDate(f.due, d(25));
+        f.fixed.doClick();
+        assertEquals(List.of(true, false, true), List.of(f.timed.isSelected(), f.timed.isEnabled(), f.start.isEnabled()));
+        f.task.doClick();
+        assertEquals(List.of(true, "2026-11-25", false, false), List.of(f.period.isSelected(), text(f.due),
+                f.timed.isSelected(), f.timed.isEnabled()));
+    }
+
+    @Test
+    void tDef21PeriodAndRepeatRestoreFields() {
+        TaskForm f = form(d(18));
+        f.timed.doClick();
+        f.start.setValue("10:00");
+        f.period.doClick();
+        f.period.doClick();
+        assertEquals(List.of(true, "10:00"), List.of(f.timed.isSelected(), f.start.getValue()));
+        f.period.doClick();
+        Ui.setDate(f.due, d(25));
+        f.fixed.doClick();
+        f.repeat.setSelectedIndex(1);
+        f.task.doClick();
+        assertEquals(List.of(false, false), List.of(f.period.isSelected(), f.period.isEnabled()));
+        f.repeat.setSelectedIndex(0);
+        assertEquals(List.of(true, "2026-11-25", false, false), List.of(f.period.isSelected(), text(f.due),
+                f.timed.isSelected(), f.timed.isEnabled()));
+        f.period.doClick();
+        assertEquals(List.of(true, "10:00"), List.of(f.timed.isSelected(), f.start.getValue()));
     }
 }

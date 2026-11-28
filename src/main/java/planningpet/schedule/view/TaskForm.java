@@ -76,6 +76,14 @@ final class TaskForm {
     final Map<String, JLabel> errors = new LinkedHashMap<>();
     /** 날짜를 바꾼 그 순간의 시계(D-101). 처음은 창을 연 때다. */
     Supplier<LocalDateTime> clock;
+    /** D-101: 고정 일정으로 가기 앞의 시작 시각 정하기, 기간 안에 하기, 마감. 할 일로 돌아오면 되돌리고 null이 된다. */
+    private Boolean timedBefore;
+    private boolean periodBefore;
+    private LocalDate dueBefore;
+    /** D-101: 기간 때문에 앱이 끄기 앞의 정하기. 기간을 끄면 되돌리고 null이 된다. */
+    private Boolean timedBeforePeriod;
+    /** D-101: 반복 때문에 앱이 끈 기간 할 일의 마감. 반복을 안 함으로 되돌리면 기간과 함께 되돌리고 null이 된다. */
+    private LocalDate dueBeforeRepeat;
     private int row;
 
     /** 추가 창의 칸. date는 06 14번 forAdd가 고른 날, weekStart는 마감 기본값과 요일 단추 차례의 한 주 시작(D-91, D-94). */
@@ -141,18 +149,43 @@ final class TaskForm {
     /**
      * 고정 일정이면 시작 시각이 켜진 채 비활성이고 기간은 꺼진 채 비활성이다(D-16, D-65). 반복과 기간은 함께 고를 수 없다(D-65). 기간을
      * 켜면 시작 시각이 꺼진 채 비활성이다(D-68). 시작 시각을 정하면 끝 시각 글과 다음 날 값의 실제 날과 시각을 적고(D-73, D-77),
-     * 걸리는 시간이 30이면 30분 안내를 보인다(D-43). 앱이 끈 값을 되돌리기와 날짜 따라가기(D-101)는 S4h다.
+     * 걸리는 시간이 30이면 30분 안내를 보인다(D-43). 고정 일정, 기간, 반복 때문에 앱이 바꾼 칸은 맥락이 돌아오면 되돌린다(D-101).
      */
     void sync() {
         boolean isFixed = fixed.isSelected();
+        // D-101: 고정 일정이라서 앱이 바꾼 칸은 할 일로 돌아오면 사용자가 둔 값으로 되돌린다.
+        if (isFixed && timedBefore == null) {
+            timedBefore = timedBeforePeriod != null ? timedBeforePeriod : timed.isSelected();
+            periodBefore = period.isSelected();
+            dueBefore = Ui.dateOf(due);
+        } else if (!isFixed && timedBefore != null) {
+            timed.setSelected(timedBefore);
+            period.setSelected(periodBefore);
+            Ui.setDate(due, dueBefore);
+            timedBefore = null;
+        }
         boolean repeating = repeat.getSelectedIndex() != 0;
         boolean periodAllowed = !isFixed && !repeating;
+        if (!isFixed && repeating && period.isSelected()) {
+            dueBeforeRepeat = Ui.dateOf(due);
+        } else if (periodAllowed && dueBeforeRepeat != null) {
+            period.setSelected(true);
+            Ui.setDate(due, dueBeforeRepeat);
+            dueBeforeRepeat = null;
+        }
         // 기간을 먼저 끈다. 기간 할 일에서 고정 일정으로 가도 정하기가 켜진다(05 일정 입력 창 4번).
         if (!periodAllowed) {
             period.setSelected(false);
         }
+        // D-68: 기간 할 일의 시각은 목록의 "시각 정하기"와 자동 배치로만 정한다. 기간을 끄면 앞의 정하기로 되돌린다(D-101).
         if (period.isSelected()) {
+            if (timedBeforePeriod == null) {
+                timedBeforePeriod = timed.isSelected();
+            }
             timed.setSelected(false);
+        } else if (timedBeforePeriod != null) {
+            timed.setSelected(timedBeforePeriod);
+            timedBeforePeriod = null;
         }
         if (isFixed) {
             timed.setSelected(true);
