@@ -5,6 +5,8 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.util.function.BiConsumer;
+import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import planningpet.common.view.Theme;
@@ -60,5 +62,29 @@ public final class TaskRows extends JPanel {
             }
             g.dispose();
         }
+    }
+
+    /**
+     * 제목 아래 둘째 줄 왼쪽의 표시(D-94). 흐린 마감 글("~11/22까지", D-65)과 하려던 일("17일에 하려던 일", D-67), 빨간 "오늘 마감"이나
+     * "마감"(D-70, D-93) 순이다. 하나도 없으면 null(docs/porting/task-rows.md S3u).
+     */
+    static JLabel marks(String due, String note, String tag) {
+        StringBuilder html = new StringBuilder();
+        BiConsumer<String, String> part = (text, color) -> {
+            if (text != null) {
+                html.append(html.length() == 0 ? "" : " ").append("<font color='").append(color).append("'>").append(text)
+                        .append("</font>");
+            }
+        };
+        part.accept(due, "#8A96A0");
+        part.accept(note, "#8A96A0");
+        part.accept(tag, "#C0392B");
+        if (html.length() == 0) {
+            return null;
+        }
+        JLabel label = new JLabel("<html>" + html + "</html>");
+        label.setFont(Theme.font(12));
+        label.setBorder(BorderFactory.createEmptyBorder(0, RoundCheck.SIZE + 10, 0, 0));
+        return label;
     }
 }
