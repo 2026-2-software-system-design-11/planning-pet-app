@@ -6,6 +6,12 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.Dimension;
+import java.awt.Rectangle;
+import java.util.HashSet;
+import java.util.Set;
+import javax.swing.ButtonGroup;
+import javax.swing.JComponent;
+import javax.swing.RepaintManager;
 import org.junit.jupiter.api.Test;
 import planningpet.common.view.Theme;
 import planningpet.pet.model.PetKind;
@@ -17,6 +23,16 @@ import planningpet.pet.model.PetKind;
 class PickCardTest {
     private static final String CAT_ABOUT = "조용하고 편안한 성격으로\n언제나 곁에서 응원해요!";
     private static final String DOG_ABOUT = "활발하고 다정한 성격으로\n항상 힘이 되어줘요!";
+
+    /** 다시 그리라고 한 자리를 모은다. */
+    private static final class Dirty extends RepaintManager {
+        private final Set<Rectangle> all = new HashSet<>();
+
+        @Override
+        public void addDirtyRegion(JComponent c, int x, int y, int w, int h) {
+            all.add(new Rectangle(x, y, w, h));
+        }
+    }
 
     private static String described(String about) {
         return new PickCard("x", PetKind.CAT, false, about).getAccessibleContext().getAccessibleDescription();
@@ -60,5 +76,38 @@ class PickCardTest {
             c.setMinimumSize(new Dimension(10, 10));
             c.setMaximumSize(new Dimension(1000, 1000));
         }
+    }
+
+    @Test
+    void eCard9GroupAndClick() {
+        PickCard cat = new PickCard("고양이", PetKind.CAT, true, CAT_ABOUT);
+        PickCard dog = new PickCard("강아지", PetKind.DOG, false, DOG_ABOUT);
+        cat.setSize(248, 262);
+        dog.setSize(248, 262);
+        ButtonGroup group = new ButtonGroup();
+        group.add(cat);
+        group.add(dog);
+        Dirty dirty = new Dirty();
+        RepaintManager.setCurrentManager(dirty);
+        try {
+            dog.doClick(0);
+            assertTrue(dog.isSelected() && !cat.isSelected());
+            dog.doClick(0);
+            assertTrue(dog.isSelected() && !cat.isSelected());
+            cat.doClick(0);
+            assertTrue(cat.isSelected() && !dog.isSelected());
+            assertEquals(Set.of(new Rectangle(0, 0, 248, 262)), dirty.all);
+        } finally {
+            RepaintManager.setCurrentManager(null);
+        }
+        PickCard lone = new PickCard("", PetKind.CAT, false, "");
+        lone.doClick(0);
+        assertTrue(lone.isSelected());
+        lone.doClick(0);
+        assertFalse(lone.isSelected());
+        PickCard off = new PickCard("", PetKind.DOG, false, "");
+        off.setEnabled(false);
+        off.doClick(0);
+        assertFalse(off.isSelected());
     }
 }

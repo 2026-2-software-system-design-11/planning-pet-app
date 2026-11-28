@@ -24,6 +24,7 @@ public final class PickCard extends JRadioButton {
         setRolloverEnabled(true);
         setFont(Theme.heavy(22));
         getAccessibleContext().setAccessibleDescription(about.replace("\n", " "));
+        addItemListener(e -> repaint());
     }
 
     @Override
