@@ -140,7 +140,8 @@ final class TaskForm {
 
     /**
      * 고정 일정이면 시작 시각이 켜진 채 비활성이고 기간은 꺼진 채 비활성이다(D-16, D-65). 반복과 기간은 함께 고를 수 없다(D-65). 기간을
-     * 켜면 시작 시각이 꺼진 채 비활성이다(D-68). 앱이 끈 값을 되돌리기와 날짜 따라가기(D-101)는 S4h다.
+     * 켜면 시작 시각이 꺼진 채 비활성이다(D-68). 시작 시각을 정하면 끝 시각 글과 다음 날 값의 실제 날과 시각을 적고(D-73, D-77),
+     * 걸리는 시간이 30이면 30분 안내를 보인다(D-43). 앱이 끈 값을 되돌리기와 날짜 따라가기(D-101)는 S4h다.
      */
     void sync() {
         boolean isFixed = fixed.isSelected();
@@ -171,6 +172,10 @@ final class TaskForm {
         }
         repeatEnd.setEnabled(repeating);
         repeatHint.setVisible(period.isSelected());
+        minutesHint.setVisible((int) minutes.getValue() == 30);
+        Integer s = startTime();
+        endLabel.setText(s == null ? "" : Times.endHint(s, (int) minutes.getValue()));
+        realTime.setText(s == null ? "" : Times.real(Ui.dateOf(date), s));
     }
 
     /** 칸에 쓴 값. 반복이 안 함이면 반복 방식과 끝은 null, 기간 안에 하기가 꺼져 있으면 마감은 null이다. 오늘은 앱의 오늘이다. */
@@ -187,11 +192,16 @@ final class TaskForm {
             }
             how = Repeat.weekly(picked.toArray(DayOfWeek[]::new));
         }
-        Integer s = timed.isSelected() ? Times.minuteOf(start.getValue()) : null;
+        Integer s = startTime();
         return new TaskDraft(fixed.isSelected() ? Kind.FIXED : Kind.TASK, title.getText(),
                 Category.values()[category.getSelectedIndex()], Ui.dateOf(date), period.isSelected() ? Ui.dateOf(due) : null,
                 s == null ? null : LocalTime.of(s % Task.DAY / 60, s % 60), (int) minutes.getValue(), memo.getText(), how,
                 how == null ? null : Ui.dateOf(repeatEnd), s != null && s >= Task.DAY, null, AppDay.of(clock.get()), false);
+    }
+
+    /** 시작 칸의 앱 하루의 분(D-77). 시각을 정하지 않았으면 null. */
+    private Integer startTime() {
+        return timed.isSelected() ? Times.minuteOf(start.getValue()) : null;
     }
 
     /** 이름 칸과 칸을 한 줄에 놓는다. 이름 칸을 돌려준다. */

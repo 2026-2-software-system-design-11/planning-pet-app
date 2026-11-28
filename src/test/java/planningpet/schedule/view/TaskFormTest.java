@@ -267,4 +267,40 @@ class TaskFormTest {
         assertNull(x.startTime());
         assertEquals(d(22), x.dueDate());
     }
+
+    @Test
+    void eForm8ThirtyMinuteHintOnlyAtThirty() {
+        TaskForm f = form(d(20));
+        assertEquals(List.of(true, ""), List.of(f.minutesHint.isVisible(), f.endLabel.getText()));
+        f.minutes.setValue(45);
+        assertFalse(f.minutesHint.isVisible());
+        f.minutes.setValue(30);
+        assertTrue(f.minutesHint.isVisible());
+    }
+
+    @Test
+    void tDef13NamesFollowPeriodAndRepeat() {
+        TaskForm f = form(d(16));
+        f.period.doClick();
+        assertEquals(List.of("시작일", "마감일", true), List.of(f.dateLabel.getText(), f.dueLabel.getText(), f.due.isVisible()));
+        f.period.doClick();
+        f.repeat.setSelectedIndex(1);
+        f.timed.doClick();
+        f.start.setValue("10:00");
+        f.minutes.setValue(45);
+        JLabel endName = (JLabel) f.repeatEnd.getParent().getComponent(0);
+        assertEquals(List.of("날짜", true, "반복 끝나는 날", "10:45에 끝나요", ""), List.of(f.dateLabel.getText(),
+                f.periodHint.isVisible(), endName.getText(), f.endLabel.getText(), f.realTime.getText()));
+    }
+
+    @Test
+    void tDef14NightStartShowsRealDay() {
+        TaskForm f = new TaskForm(d(20), LocalDateTime.of(2026, 11, 21, 1, 28), DayOfWeek.MONDAY);
+        f.timed.doClick();
+        assertEquals(List.of("2026-11-20 (금)", "01:30(다음 날)", "(토 01:30)", "02:00(다음 날)에 끝나요"),
+                List.of(text(f.date), f.start.getValue(), f.realTime.getText(), f.endLabel.getText()));
+        f.start.setValue("02:00(다음 날)");
+        Ui.setDate(f.date, d(21));
+        assertEquals(List.of("(일 02:00)", "02:30(다음 날)에 끝나요"), List.of(f.realTime.getText(), f.endLabel.getText()));
+    }
 }
