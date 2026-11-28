@@ -555,4 +555,66 @@ class TaskFormTest {
         f.minutes.setValue(30);
         assertEquals(List.of("", false), List.of(f.errorText(), f.errors.get("시작 시각").isVisible()));
     }
+
+    /** 11-18에 연 창에서 "보고서", 기간을 켜고 picked면 마감 11-25를 고른 뒤 고정 일정에서 날짜 11-30, 할 일로 돌아옴(T-DEF-22). */
+    private static TaskForm movedPastDue(boolean picked) {
+        TaskForm f = form(d(18));
+        f.title.setText("보고서");
+        f.period.doClick();
+        if (picked) {
+            Ui.setDate(f.due, d(25));
+        }
+        f.fixed.doClick();
+        Ui.setDate(f.date, d(30));
+        f.task.doClick();
+        return f;
+    }
+
+    @Test
+    void tDef22DueCheckedBeforeSave() {
+        TaskForm f = movedPastDue(true);
+        assertEquals(List.of("2026-11-25", "마감일이 시작일보다 전이에요"), List.of(text(f.due), f.errorText()));
+        Ui.setDate(f.due, d(12, 1));
+        assertEquals(List.of("", false), List.of(f.errorText(), f.errors.get("마감").isVisible()));
+        Ui.setDate(f.date, d(12, 2));
+        assertEquals("마감일이 시작일보다 전이에요", f.errorText());
+        TaskForm g = movedPastDue(false);
+        assertEquals(List.of("2026-12-06", ""), List.of(text(g.due), g.errorText()));
+        TaskForm h = form(d(18));
+        h.period.doClick();
+        Ui.setDate(h.due, d(20));
+        Ui.setDate(h.date, d(23));
+        assertEquals("마감일이 시작일보다 전이에요", h.errorText());
+    }
+
+    @Test
+    void tVal23DueBeforeToday() {
+        TaskForm f = form(d(10));
+        f.period.doClick();
+        assertEquals(List.of("2026-11-15", "마감일이 오늘보다 전이에요"), List.of(text(f.due), f.errorText()));
+        Ui.setDate(f.due, d(17));
+        assertEquals("마감일이 오늘보다 전이에요", f.errorText());
+        Ui.setDate(f.due, d(9));
+        assertEquals("마감일이 시작일보다 전이에요", f.errorText());
+        Ui.setDate(f.due, d(18));
+        assertEquals("", f.errorText());
+    }
+
+    @Test
+    void eForm15Relayout() {
+        TaskForm f = form(d(18));
+        int[] runs = new int[1];
+        f.relayout = () -> runs[0]++;
+        f.title.setText("운동");
+        assertEquals(0, runs[0]);
+        f.period.doClick();
+        assertEquals(1, runs[0]);
+        f.period.doClick();
+        f.title.setText("");
+        assertEquals(2, runs[0]);
+        f.showErrors(f.draft().validate());
+        assertEquals(3, runs[0]);
+        f.title.setText("운동");
+        assertEquals(4, runs[0]);
+    }
 }

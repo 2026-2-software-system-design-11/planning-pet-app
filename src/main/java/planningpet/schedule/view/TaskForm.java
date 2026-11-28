@@ -224,12 +224,14 @@ final class TaskForm {
      * 걸리는 시간이 30이면 30분 안내를 보인다(D-43). 고정 일정, 기간, 반복 때문에 앱이 바꾼 칸은 맥락이 돌아오면 되돌린다(D-101).
      * 손대지 않은 시작 시각은 날짜를 바꾸거나 시작 칸이 열리는 그 순간의 시계로 다시 잰다(D-101). 앱이 골라 준 요일, 손대지 않은 반복
      * 끝(D-79), 고르지 않은 마감(D-96)도 날짜를 따라간다. 저장을 누른 뒤에는 다시 검사해 칸 아래 글을 고친다(D-43).
+     * 마감 칸만은 저장 전에도 값이 바뀔 때마다 바로 검사한다(D-101). 오류 줄이나 마감 칸이 나타나고 사라지면 창 크기를 다시 맞춘다.
      */
     void sync() {
         if (syncing) {
             return;
         }
         syncing = true;
+        boolean dueShown = due.isVisible();
         boolean isFixed = fixed.isSelected();
         // D-101: 고정 일정이라서 앱이 바꾼 칸은 할 일로 돌아오면 사용자가 둔 값으로 되돌린다.
         if (isFixed && timedBefore == null) {
@@ -315,6 +317,16 @@ final class TaskForm {
         syncing = false;
         if (checked) {
             showErrors(draft().validate());
+            return;
+        }
+        // 기간이 켜져 있으면 종류는 늘 할 일이라, 마감 오류는 마감이 시작일, 오늘, 정해 둔 날보다 전일 때만 난다(M2b).
+        JLabel dueError = errors.get("마감");
+        String late = draft().validate().stream().filter(p -> p.field().equals("마감")).map(FieldError::message).findFirst().orElse("");
+        if (!late.isEmpty() || dueError.isVisible()) {
+            fill(dueError, late);
+            relayout.run();
+        } else if (dueShown != due.isVisible()) {
+            relayout.run();
         }
     }
 
