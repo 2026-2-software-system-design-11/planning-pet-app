@@ -1,13 +1,25 @@
 package planningpet.common.view;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Graphics2D;
+import java.awt.HeadlessException;
+import java.awt.Rectangle;
+import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.List;
+import javax.swing.Icon;
+import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.UIManager;
+import javax.swing.plaf.basic.BasicButtonUI;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,6 +53,15 @@ class ComboUITest {
         Snap.assertLaidOutLooksLikePrototype(name, c, w, h);
     }
 
+    /** 아이콘을 16x16 그림의 (2, 2)에 그린 픽셀. */
+    private static int[] pixels(Icon icon) {
+        BufferedImage img = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = img.createGraphics();
+        icon.paintIcon(null, g, 2, 2);
+        g.dispose();
+        return img.getRGB(0, 0, 16, 16, null, 0, 16);
+    }
+
     @Test
     void eCombo1Look() throws IOException {
         for (int[] s : new int[][] {{120, 24}, {200, 40}, {0, 0}, {20, 10}}) {
@@ -50,5 +71,44 @@ class ComboUITest {
         assertSame(UIManager.getBorder("TextField.border"), c.getBorder());
         assertEquals(Theme.CARD_TOP, c.getBackground());
         assertEquals(new Dimension(53, 24), c.getPreferredSize());
+    }
+
+    @Test
+    void eCombo4ArrowButton() {
+        JComboBox<String> c = combo("안 함");
+        Snap.layOut(c, 120, 30);
+        JButton arrow = (JButton) c.getComponent(0);
+        assertEquals("ComboBox.arrowButton", arrow.getName());
+        assertEquals(new Rectangle(92, 2, 26, 26), arrow.getBounds());
+        assertEquals(BasicButtonUI.class, arrow.getUI().getClass());
+        assertEquals(List.of(false, false, true, false), List.of(arrow.isContentAreaFilled(), arrow.isOpaque(), arrow.isFocusable(),
+                arrow.isRequestFocusEnabled()));
+        assertArrayEquals(pixels(Icons.icon(Icons.Kind.DOWN, 12, Theme.ICON)), pixels(arrow.getIcon()));
+        assertArrayEquals(pixels(Icons.icon(Icons.Kind.DOWN, 12, Theme.INK_DIM)), pixels(arrow.getDisabledIcon()));
+    }
+
+    /** 칸을 (x, y)에서 누른다. */
+    private static void press(Component c, int x, int y, int button) {
+        c.dispatchEvent(new MouseEvent(c, MouseEvent.MOUSE_PRESSED, 0, 0, x, y, 1, false, button));
+    }
+
+    /** 창 없는 칸은 누르기를 받지 않아 보인다고 답하게 한다. 그러면 목록을 띄우려다 화면 크기를 몰라 예외가 난다. */
+    @Test
+    void eCombo5PressAnywhereOpensList() {
+        JComboBox<String> c = new JComboBox<>(new String[] {"안 함", "매일", "요일"}) {
+            @Override
+            public boolean isShowing() {
+                return true;
+            }
+        };
+        c.setUI(new ComboUI());
+        Snap.layOut(c, 120, 24);
+        assertThrows(HeadlessException.class, () -> press(c, 20, 12, MouseEvent.BUTTON1));
+        assertThrows(HeadlessException.class, () -> press(c.getComponent(0), 5, 5, MouseEvent.BUTTON1));
+        press(c, 20, 12, MouseEvent.BUTTON3);
+        c.setEnabled(false);
+        press(c, 20, 12, MouseEvent.BUTTON1);
+        press(c.getComponent(0), 5, 5, MouseEvent.BUTTON1);
+        assertFalse(c.isPopupVisible());
     }
 }
