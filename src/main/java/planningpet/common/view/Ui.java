@@ -159,9 +159,12 @@ public final class Ui {
         return p;
     }
 
-    /** 걸리는 시간 칸(D-38). 10분부터 720분, 5분 단위다. 5분 단위가 아닌 값은 받지 않아 쳐 넣으면 이전 값으로 돌아간다. */
+    /**
+     * 걸리는 시간 칸(D-38). 10분부터 720분, 5분 단위다. 5분 단위가 아닌 값은 받지 않아 쳐 넣으면 이전 값으로 돌아간다. 처음 값이 범위 밖이면
+     * 범위를 그 값까지 넓혀 그대로 연다. 프로토타입과 일부러 다름(수정 창의 저장 값, docs/porting/task-dialog.md E-UI-7).
+     */
     public static JSpinner minutes(int value) {
-        return new JSpinner(new SpinnerNumberModel(value, 10, 720, 5) {
+        return new JSpinner(new SpinnerNumberModel(value, Math.min(10, value), Math.max(720, value), 5) {
             @Override
             public void setValue(Object v) {
                 if (v instanceof Number n && n.intValue() % 5 != 0) {

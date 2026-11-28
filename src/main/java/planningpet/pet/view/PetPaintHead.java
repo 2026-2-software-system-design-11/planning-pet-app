@@ -17,6 +17,9 @@ import planningpet.pet.model.WearId;
  * 얼굴 폭이 230이다.
  */
 class PetPaintHead extends PetPaintWear {
+    /** 그릴 표정. 몸이 자세에서 고르고, 얼굴만 그릴 때는 웃음이다. */
+    Face face = Face.HAPPY;
+
     PetPaintHead(Graphics2D g, PetKind kind, Set<WearId> wear, double t) {
         super(g, kind, wear, t);
     }
@@ -131,11 +134,13 @@ class PetPaintHead extends PetPaintWear {
     }
 
     /**
-     * 웃는 얼굴 부품: 감고 웃는 눈, 분홍 볼, 코, 입. 고양이는 세모 코, 닫은 입, 수염이고 강아지는 둥근 코와 혀가 보이게 벌린 입이다.
+     * 얼굴 부품: 감고 웃는 눈, 분홍 볼, 코, 입. 고양이는 세모 코, 닫은 입, 수염이고 강아지는 둥근 코와 혀가 보이게 벌린 입이다.
+     * 노래하는 고양이는 입을 벌리고 먹는 고양이는 0.35초마다 벌렸다 닫는다. 노래하면 입이 0.5초 주기로 커졌다 작아진다(t).
      * 눈은 선 굵기의 0.85배, 닫은 입은 그 0.75배, 수염은 0.42배다.
      */
     void faceParts() {
         float w = line * 0.85f;
+        double mouth = face == Face.SING ? wave(t, 0.5, 12, 18, 0) : 12;
         stroke(new QuadCurve2D.Double(-54, 2, -40, -14, -26, 2), w, ink);
         stroke(new QuadCurve2D.Double(26, 2, 40, -14, 54, 2), w, ink);
         g.setColor(BLUSH);
@@ -146,7 +151,7 @@ class PetPaintHead extends PetPaintWear {
             g.fill(ell(0, 14, 11, 8));
             g.setColor(new Color(255, 255, 255, 170));
             g.fill(ell(-4, 11, 3.5, 2));
-            openMouth(w);
+            openMouth(w, mouth);
             return;
         }
         Path2D n = new Path2D.Double();
@@ -157,9 +162,13 @@ class PetPaintHead extends PetPaintWear {
         n.closePath();
         g.setColor(NOSE);
         g.fill(n);
-        stroke(new Line2D.Double(0, 20, 0, 25), w * 0.75f, ink);
-        stroke(new QuadCurve2D.Double(-14, 24, -7, 33, 0, 25), w * 0.75f, ink);
-        stroke(new QuadCurve2D.Double(0, 25, 7, 33, 14, 24), w * 0.75f, ink);
+        if (face == Face.SING || face == Face.EAT && Math.sin(t * Math.PI / 0.35) > 0) {
+            openMouth(w, mouth);
+        } else {
+            stroke(new Line2D.Double(0, 20, 0, 25), w * 0.75f, ink);
+            stroke(new QuadCurve2D.Double(-14, 24, -7, 33, 0, 25), w * 0.75f, ink);
+            stroke(new QuadCurve2D.Double(0, 25, 7, 33, 14, 24), w * 0.75f, ink);
+        }
         float ww = line * 0.42f;
         for (int s : new int[] {-1, 1}) {
             stroke(new Line2D.Double(s * 82, 10, s * 124, 2), ww, ink);
@@ -167,9 +176,8 @@ class PetPaintHead extends PetPaintWear {
         }
     }
 
-    /** 강아지의 벌린 입: 짙은 빨강 입 안 아래에 혀, 코에서 입으로 내려오는 선. */
-    private void openMouth(float w) {
-        double h = 12;
+    /** 벌린 입: 짙은 빨강 입 안 아래에 혀, 코에서 입으로 내려오는 선. h는 입 높이다. */
+    private void openMouth(float w, double h) {
         Path2D m = new Path2D.Double();
         m.moveTo(-13, 26);
         m.quadTo(0, 30, 13, 26);

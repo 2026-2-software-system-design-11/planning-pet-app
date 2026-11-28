@@ -18,6 +18,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import javax.swing.AbstractButton;
 import javax.swing.JLabel;
@@ -29,13 +30,19 @@ import org.junit.jupiter.api.Test;
 import planningpet.common.view.Theme;
 import planningpet.common.view.Ui;
 import planningpet.schedule.model.Category;
+import planningpet.schedule.model.EditScope;
 import planningpet.schedule.model.FieldError;
 import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Repeat;
+import planningpet.schedule.model.Task;
+import planningpet.schedule.model.TaskBook;
 import planningpet.schedule.model.TaskDraft;
 import planningpet.schedule.model.Tasks;
 
-/** 일정 입력 창의 칸, 추가 창의 처음 값, 칸끼리 켜고 끄기, 손댄 값 지키기와 날짜 따라가기, 칸 아래 오류 글. 번호는 docs/porting/task-dialog.md S4f~S4i 2절. */
+/**
+ * 일정 입력 창의 칸, 추가 창과 수정 창의 처음 값, 칸끼리 켜고 끄기, 손댄 값 지키기와 날짜 따라가기, 칸 아래 오류 글. 번호는
+ * docs/porting/task-dialog.md S4f~S4j 2절.
+ */
 class TaskFormTest {
     private static final LocalDateTime NOW = LocalDateTime.of(2026, 11, 18, 10, 7);
     private static final String SMILE = new String(Character.toChars(0x1F600));
@@ -616,5 +623,133 @@ class TaskFormTest {
         assertEquals(3, runs[0]);
         f.title.setText("운동");
         assertEquals(4, runs[0]);
+    }
+
+    private static TaskForm edit(Tasks.Spec spec) {
+        return new TaskForm(spec.task(), NOW, DayOfWeek.MONDAY);
+    }
+
+    @Test
+    void eForm11EditStartValues() {
+        TaskForm f = edit(Tasks.task("운동", d(20)).at("10:00").minutes(45).category(Category.EXERCISE).memo("스트레칭"));
+        assertEquals(List.of(true, "운동", "운동", "2026-11-20 (금)", false, true, "10:00", 45, "스트레칭"),
+                List.of(f.task.isSelected(), f.title.getText(), f.category.getSelectedItem(), text(f.date), f.period.isSelected(),
+                        f.timed.isSelected(), f.start.getValue(), f.minutes.getValue(), f.memo.getText()));
+        Ui.setDate(f.date, d(21));
+        assertEquals("10:00", f.start.getValue());
+        assertTrue(f.draft().editing());
+        TaskForm p = edit(Tasks.task("보고서", d(18)).at("09:00").period(d(16), d(22)));
+        assertEquals(List.of("시작일", "2026-11-16 (월)", true, "2026-11-22", false, false), List.of(p.dateLabel.getText(),
+                text(p.date), p.period.isSelected(), text(p.due), p.timed.isSelected(), p.timed.isEnabled()));
+        TaskForm fixed = edit(Tasks.task("수업", d(20)).kind(Kind.FIXED).at("13:00").minutes(75));
+        assertEquals(List.of(true, true, false, "13:00", 75), List.of(fixed.fixed.isSelected(), fixed.timed.isSelected(),
+                fixed.timed.isEnabled(), fixed.start.getValue(), fixed.minutes.getValue()));
+        TaskForm untimed = edit(Tasks.task("빨래", d(18)));
+        assertEquals(List.of(false, "10:10"), List.of(untimed.timed.isSelected(), untimed.start.getValue()));
+        Ui.setDate(untimed.date, d(19));
+        assertEquals("09:00", untimed.start.getValue());
+    }
+
+    @Test
+    void eForm11EditLocksKindAndRepeat() {
+        TaskForm f = edit(Tasks.task("보고서", d(18)).period(d(16), d(22)));
+        String end = text(f.repeatEnd);
+        Ui.setDate(f.date, d(17));
+        assertEquals(List.of(false, false, false, false, false, false, end), List.of(f.task.isEnabled(), f.fixed.isEnabled(),
+                f.repeat.isEnabled(), f.days[0].isEnabled(), f.repeatEnd.isEnabled(), f.minutesHint.isVisible(), text(f.repeatEnd)));
+        assertTrue(form(d(18)).minutesHint.isVisible());
+        TaskForm copy = edit(Tasks.task("영어", d(18)).series("S", Repeat.DAILY));
+        assertEquals(List.of(false, false, false), List.of(copy.period.isSelected(), copy.period.isEnabled(), copy.periodHint.isVisible()));
+        assertTrue(edit(Tasks.task("빨래", d(18))).period.isEnabled());
+    }
+
+    @Test
+    void tDef17StoredDueStays() {
+        TaskForm f = edit(Tasks.task("보고서", d(16)).period(d(16), d(12, 10)));
+        f.period.doClick();
+        Ui.setDate(f.date, d(20));
+        f.period.doClick();
+        assertEquals("2026-12-10", text(f.due));
+        Ui.setDate(f.date, d(12, 12));
+        assertEquals(List.of("2026-12-10", "마감일이 시작일보다 전이에요"), List.of(text(f.due), saveError(f, "마감")));
+    }
+
+    /** 창이 만든 draft()를 넣을 일정 묶음. 오늘은 today다. */
+    private static TaskBook book(Task t, LocalDate today) {
+        return new TaskBook(new ArrayList<>(List.of(t)), () -> 2, () -> today);
+    }
+
+    @Test
+    void tEdit11DueThenPeriodOffFromWindow() {
+        Task t = Tasks.task("P", d(16)).period(d(16), d(22)).task();
+        TaskBook book = book(t, d(16));
+        LocalDateTime now = LocalDateTime.of(2026, 11, 16, 10, 0);
+        TaskForm f = new TaskForm(t, now, DayOfWeek.MONDAY);
+        Ui.setDate(f.due, d(29));
+        book.update(t, f.draft(), EditScope.ONLY_THIS);
+        assertEquals(List.of(d(16), d(29)), List.of(t.getStartDay(), t.getDueDate()));
+        f = new TaskForm(t, now, DayOfWeek.MONDAY);
+        f.period.doClick();
+        assertNull(f.draft().dueDate());
+        book.update(t, f.draft(), EditScope.ONLY_THIS);
+        assertEquals(Arrays.asList(null, null), Arrays.asList(t.getStartDay(), t.getDueDate()));
+    }
+
+    @Test
+    void tEdit14LaterDueFromWindow() {
+        Task t = Tasks.task("P", d(18)).at("09:00").minutes(90).memo("초안").period(d(16), d(22)).task();
+        TaskForm f = new TaskForm(t, LocalDateTime.of(2026, 11, 17, 10, 0), DayOfWeek.MONDAY);
+        Ui.setDate(f.due, d(24));
+        TaskDraft got = f.draft();
+        assertEquals(Arrays.asList(d(16), d(24), null, 90, "초안", true), Arrays.asList(got.date(), got.dueDate(),
+                got.startTime(), got.durationMinutes(), got.memo(), got.editing()));
+        book(t, d(17)).update(t, got, EditScope.ONLY_THIS);
+        assertEquals(List.of(d(18), LocalTime.of(9, 0), d(16), d(24)), List.of(t.getDate(), t.getStartTime(),
+                t.getStartDay(), t.getDueDate()));
+    }
+
+    @Test
+    void eForm12SeriesCopyShowsItsRepeat() {
+        Repeat monWed = Repeat.weekly(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY);
+        List<Task> copies = new ArrayList<>();
+        for (int day : new int[] {16, 18, 23}) {
+            copies.add(Tasks.task("영어", d(day)).id("e" + day).series("S", monWed).done(day == 23 ? d(23) : null).task());
+        }
+        Task t = copies.get(1);
+        TaskForm f = new TaskForm(t, NOW, DayOfWeek.MONDAY);
+        f.showSeries(t.getRepeat(), new TaskBook(copies, () -> 4, () -> d(18)).seriesEnd(t));
+        Ui.setDate(f.date, d(19));
+        assertEquals(List.of("요일", "월, 수", false, false, false, "2026-11-23"), List.of(f.repeat.getSelectedItem(), picked(f),
+                f.repeat.isEnabled(), f.days[0].isEnabled(), f.repeatEnd.isEnabled(), text(f.repeatEnd)));
+        assertEquals(List.of(false, false, false), List.of(f.period.isSelected(), f.period.isEnabled(), f.periodHint.isVisible()));
+        TaskDraft got = f.draft();
+        assertEquals(List.of(monWed, d(23), ""), List.of(got.repeat(), got.repeatEnd(), saveError(f, "반복")));
+        TaskForm daily = edit(Tasks.task("운동", d(18)).series("D", Repeat.DAILY));
+        daily.showSeries(Repeat.DAILY, d(20));
+        assertEquals("매일", daily.repeat.getSelectedItem());
+    }
+
+    @Test
+    void eForm13OffStepStoredValuesOpenAsStored() {
+        TaskForm f = edit(Tasks.task("운동", d(20)).at("09:03").minutes(27));
+        assertEquals(List.of("09:03", 27, "09:05", "09:00"), List.of(f.start.getValue(), f.minutes.getValue(),
+                f.start.getNextValue(), f.start.getPreviousValue()));
+        f.title.setText("달리기");
+        Ui.setDate(f.date, d(21));
+        assertEquals(List.of(LocalTime.of(9, 3), 27), List.of(f.draft().startTime(), f.draft().durationMinutes()));
+        assertEquals(List.of("5분 단위로 정해 주세요", "10분부터 720분까지, 5분 단위예요"),
+                List.of(saveError(f, "시작 시각"), saveError(f, "걸리는 시간")));
+        f.start.setValue("09:05");
+        f.minutes.setValue(30);
+        assertTrue(f.draft().validate().isEmpty());
+        assertEquals("01:03(다음 날)", edit(Tasks.task("야식", d(20)).at("01:03").nextDay()).start.getValue());
+        List<Object> got = new ArrayList<>();
+        for (int v : new int[] {7, 723, 725}) {
+            TaskForm g = edit(Tasks.task("일", d(20)).minutes(v));
+            got.add(List.of(g.minutes.getValue(), saveError(g, "걸리는 시간")));
+        }
+        String range = "10분부터 720분까지, 5분 단위예요";
+        assertEquals(List.of(List.of(7, range), List.of(723, range), List.of(725, range)), got);
+        assertEquals(30, form(d(20)).minutes.getValue());
     }
 }

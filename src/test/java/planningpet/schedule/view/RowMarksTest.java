@@ -44,36 +44,45 @@ class RowMarksTest {
 
     @Test
     void eMark1None() {
-        assertNull(TaskRows.marks(null, null, null));
+        assertNull(TaskRows.marks(null, null, null, false));
     }
 
     @Test
     void eMark2DueOnly() {
-        mark(TaskRows.marks("~11/22까지", null, null), GRAY + "~11/22까지</font>", 86, 15);
+        mark(TaskRows.marks("~11/22까지", null, null, false), GRAY + "~11/22까지</font>", 86, 15);
     }
 
     @Test
     void eMark3DueAndNote() {
-        mark(TaskRows.marks("~11/22까지", "17일에 하려던 일", null), GRAY + "~11/22까지</font> " + GRAY + "17일에 하려던 일</font>", 167, 15);
+        mark(TaskRows.marks("~11/22까지", "17일에 하려던 일", null, false), GRAY + "~11/22까지</font> " + GRAY + "17일에 하려던 일</font>", 167, 15);
     }
 
     @Test
     void eMark4DueAndTag() {
-        mark(TaskRows.marks("~11/22까지", null, "오늘 마감"), GRAY + "~11/22까지</font> " + RED + "오늘 마감</font>", 132, 15);
-        mark(TaskRows.marks("~11/22까지", null, "마감"), GRAY + "~11/22까지</font> " + RED + "마감</font>", 109, 15);
+        mark(TaskRows.marks("~11/22까지", null, "오늘 마감", false), GRAY + "~11/22까지</font> " + RED + "오늘 마감</font>", 132, 15);
+        mark(TaskRows.marks("~11/22까지", null, "마감", false), GRAY + "~11/22까지</font> " + RED + "마감</font>", 109, 15);
     }
 
     @Test
     void eMark5All() {
-        mark(TaskRows.marks("~11/22까지", "17일에 하려던 일", "오늘 마감"),
+        mark(TaskRows.marks("~11/22까지", "17일에 하려던 일", "오늘 마감", false),
                 GRAY + "~11/22까지</font> " + GRAY + "17일에 하려던 일</font> " + RED + "오늘 마감</font>", 213, 15);
     }
 
     @Test
     void eMark6EmptyFront() {
-        mark(TaskRows.marks(null, null, "마감"), RED + "마감</font>", 50, 15);
-        mark(TaskRows.marks(null, "17일에 하려던 일", null), GRAY + "17일에 하려던 일</font>", 108, 15);
-        mark(TaskRows.marks("", null, null), GRAY + "</font>", 30, 0);
+        mark(TaskRows.marks(null, null, "마감", false), RED + "마감</font>", 50, 15);
+        mark(TaskRows.marks(null, "17일에 하려던 일", null, false), GRAY + "17일에 하려던 일</font>", 108, 15);
+        mark(TaskRows.marks("", null, null, false), GRAY + "</font>", 30, 0);
+    }
+
+    /** 일정관리 목록의 빨간 "지난 날"은 다른 표시 뒤다(docs/porting/schedule.md S5a). */
+    @Test
+    void eWrow3PastMark() {
+        assertEquals("<html>" + RED + "지난 날</font></html>", TaskRows.marks(null, null, null, true).getText());
+        assertEquals("<html>" + GRAY + "~11/16까지</font> " + RED + "지난 날</font></html>",
+                TaskRows.marks("~11/16까지", null, null, true).getText());
+        assertNull(TaskRows.marks(null, null, null, false));
     }
 
     @Test

@@ -104,9 +104,9 @@ final class PetCardArt {
         return (int) Math.min(petWidth(f) * 1.7, (ground(f) - f.y - 14) / 0.97);
     }
 
-    /** 홈 카드 비율(D-93)로 키운 상자에 그린 앉은 펫의 높이. 장신구는 보지 않는다(home.md S3m E-PCARD-3). */
+    /** 홈 카드 비율(D-93)로 키운 상자에 그린 펫의 저장된 자세의 높이. 장신구는 보지 않는다(home.md S3m E-PCARD-3). */
     static int drawnHeight(PetState p, int size) {
-        return (int) (size * PetArt.cardScale(Level.of(p.getExp()).getStage()) * PetArt.heightRatio(p.getKind()));
+        return (int) (size * PetArt.cardScale(Level.of(p.getExp()).getStage()) * PetArt.heightRatio(p.getKind(), p.getPose()));
     }
 
     /** 펫 그림 높이를 카드 칸(틀 위에서 땅 선까지) 높이로 나눈 값. 1단계도 3분의 2를 넘는다(D-93). */
@@ -116,7 +116,7 @@ final class PetCardArt {
 
     /**
      * 펫: 틀 왼쪽 펫 칸에 발을 땅 선에 붙이고, 발 아래 옅은 그림자와 오른쪽 귀 옆 강조선을 그린다. 단계는 상자 안의 크기로 보인다(D-93).
-     * t는 움직임 시각(초)이다. 자세는 앉기만 그린다(home.md S3m).
+     * t는 움직임 시각(초)이다. 펫은 저장된 자세(D-50)로 그린다(character.md S8b).
      */
     static void pet(Graphics2D g, PetState p, Rectangle f, double t) {
         int ground = ground(f);
@@ -125,7 +125,7 @@ final class PetCardArt {
         g.setColor(new Color(0x5E, 0x8A, 0x3C, 45));
         g.fillOval(cx - size * 3 / 10, ground - size / 26, size * 3 / 5, size / 13);
         double box = size * PetArt.cardScale(Level.of(p.getExp()).getStage());
-        PetArt.drawAt(g, p.getKind(), new HashSet<>(p.getWear().values()), t, 99, cx, ground, box);
+        PetArt.drawAt(g, p.getKind(), p.getPose(), new HashSet<>(p.getWear().values()), t, 99, cx, ground, box);
         // 강조선은 오른쪽 귀 옆에 작게 둔다. 더 오른쪽은 이름과 흰 작은 카드 자리다.
         int sp = Math.max(14, size / 8);
         int infoX = f.x + petWidth(f) + GAP;

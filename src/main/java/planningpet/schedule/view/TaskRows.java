@@ -224,14 +224,19 @@ public final class TaskRows extends JPanel implements Scrollable {
     /**
      * 제목 칸. 글(getText)은 HTML(화면 읽기 프로그램이 읽는다)이고, 그림은 한 줄로 그려 칸 폭을 넘으면 "…"로 줄인다. HTML 라벨은 좁으면
      * 두 줄로 꺾여 줄 높이를 넘었다. 끝낸 일은 흐린 글에 취소선, 메모가 있으면 끝에 흐린 "메모"다(docs/porting/task-rows.md S3t).
+     * 일정관리 목록은 줄 앞 날짜 date("11/14 ")를 줄이지 않고 제목이 그 뒤 남는 폭을 받는다. dim이면 흐린 글이다(D-69, D-94).
      */
     public static final class TitleLabel extends JLabel {
         private final Task t;
+        private final String date;
+        private final boolean dim;
 
-        TitleLabel(Task t) {
-            super("<html>" + (t.isDone() ? "<s>" + Ui.esc(t.getTitle()) + "</s>" : Ui.esc(t.getTitle()))
+        TitleLabel(Task t, String date, boolean dim) {
+            super("<html>" + date + (t.isDone() ? "<s>" + Ui.esc(t.getTitle()) + "</s>" : Ui.esc(t.getTitle()))
                     + (t.getMemo().isBlank() ? "" : " <font size='2' color='#8A96A0'>메모</font>") + "</html>");
             this.t = t;
+            this.date = date;
+            this.dim = dim;
             setFont(Theme.font(14));
             setMinimumSize(new Dimension(0, 0));
             setPreferredSize(new Dimension(40, 24));
@@ -241,10 +246,11 @@ public final class TaskRows extends JPanel implements Scrollable {
             return t.getMemo().isBlank() ? 0 : sm.stringWidth("메모") + 5;
         }
 
-        /** 지금 폭에서 그리는 제목 글("…"로 줄였으면 그 글). 검사가 읽는다(T-LIST-9). */
+        /** 지금 폭에서 그리는 제목 글(날짜 뒤, "…"로 줄였으면 그 글). 검사가 읽는다(T-LIST-9). */
         public String shown() {
             FontRenderContext frc = getFontMetrics(getFont()).getFontRenderContext();
-            return Ui.fit(t.getTitle(), getFont(), frc, getWidth() - memoWidth(getFontMetrics(Theme.font(11))));
+            int max = getWidth() - Ui.width(date, getFont(), frc) - memoWidth(getFontMetrics(Theme.font(11)));
+            return Ui.fit(t.getTitle(), getFont(), frc, max);
         }
 
         @Override
@@ -255,11 +261,12 @@ public final class TaskRows extends JPanel implements Scrollable {
             String text = shown();
             int y = (getHeight() + fm.getAscent() - fm.getDescent()) / 2;
             g.setFont(getFont());
-            g.setColor(t.isDone() ? Theme.INK_DIM : Theme.INK);
-            g.drawString(text, 0, y);
-            int tw = Ui.width(text, getFont(), g.getFontRenderContext());
+            g.setColor(t.isDone() || dim ? Theme.INK_DIM : Theme.INK);
+            g.drawString(date + text, 0, y);
+            int dx = Ui.width(date, getFont(), g.getFontRenderContext());
+            int tw = dx + Ui.width(text, getFont(), g.getFontRenderContext());
             if (t.isDone()) {
-                g.fillRect(0, y - fm.getAscent() / 3 - 1, tw, 1);
+                g.fillRect(dx, y - fm.getAscent() / 3 - 1, tw - dx, 1);
             }
             if (!t.getMemo().isBlank()) {
                 g.setFont(Theme.font(11));
@@ -272,9 +279,9 @@ public final class TaskRows extends JPanel implements Scrollable {
 
     /**
      * 제목 아래 둘째 줄 왼쪽의 표시(D-94). 흐린 마감 글("~11/22까지", D-65)과 하려던 일("17일에 하려던 일", D-67), 빨간 "오늘 마감"이나
-     * "마감"(D-70, D-93) 순이다. 하나도 없으면 null(docs/porting/task-rows.md S3u).
+     * "마감"(D-70, D-93), 빨간 "지난 날"(D-44, 일정관리 목록) 순이다. 하나도 없으면 null(docs/porting/task-rows.md S3u).
      */
-    static JLabel marks(String due, String note, String tag) {
+    static JLabel marks(String due, String note, String tag, boolean past) {
         StringBuilder html = new StringBuilder();
         BiConsumer<String, String> part = (text, color) -> {
             if (text != null) {
@@ -285,6 +292,7 @@ public final class TaskRows extends JPanel implements Scrollable {
         part.accept(due, "#8A96A0");
         part.accept(note, "#8A96A0");
         part.accept(tag, "#C0392B");
+        part.accept(past ? "지난 날" : null, "#C0392B");
         if (html.length() == 0) {
             return null;
         }
@@ -385,7 +393,7 @@ public final class TaskRows extends JPanel implements Scrollable {
         when.addActionListener(e -> onTime.open(t, listDay, when));
         // D-35: 고정 일정도 체크한다. 체크 옆에 "고정" 꼬리표를 둔다.
         row.add(t.getKind() == Kind.FIXED ? middle(box, fixedTag()) : middle(box), BorderLayout.WEST);
-        TitleLabel label = new TitleLabel(t);
+        TitleLabel label = new TitleLabel(t, "", false);
         // D-33: 메모가 있으면 제목이나 줄 빈 곳에 마우스를 올렸을 때 보인다.
         String tip = memoTip(t);
         label.setToolTipText(tip);
@@ -393,7 +401,7 @@ public final class TaskRows extends JPanel implements Scrollable {
         row.add(label, BorderLayout.CENTER);
         row.add(middle(when, minutes, pencil, trash), BorderLayout.EAST);
         // D-94: 마감 글, 하려던 일, "오늘 마감"과 "마감"은 제목 아래 둘째 줄 왼쪽이다. 제목이 줄의 폭을 먼저 받는다.
-        JLabel marks = marks(data.getBook().dueText(t), missedNote(t, today), dueTag(t, listDay, today));
+        JLabel marks = marks(data.getBook().dueText(t), missedNote(t, today), dueTag(t, listDay, today), false);
         if (marks != null) {
             row.add(marks, BorderLayout.SOUTH);
         }
@@ -440,6 +448,13 @@ public final class TaskRows extends JPanel implements Scrollable {
         // 줄과 줄 안 버튼 위에 있는 동안이다. 듣는이가 없는 걸리는 시간, 둘째 줄, "고정" 위의 마우스는 줄이 받는다.
         List.of(row, label, box, pencil, trash, when).forEach(c -> c.addMouseListener(hover));
         return row;
+    }
+
+    /** 일정관리 목록의 마감이 지난 줄의 툴팁(D-99). 메모가 있으면 그 아래에 memoTip과 같은 꼴로 잇는다(docs/porting/schedule.md S5a). */
+    static String lockedTip(Task t) {
+        String why = "마감이 지난 일은 옮길 수 없어요";
+        String memo = memoTip(t);
+        return memo == null ? why : memo.replace("<div style='width:280px'>", "<div style='width:280px'>" + why + "<br>");
     }
 
     /** 메모가 있으면 마우스를 올렸을 때 200자까지 보인다(D-33). 글자 수는 코드 포인트로 센다(06 읽는 법). 공백뿐이면 null(docs/porting/task-rows.md S3aa). */
