@@ -11,6 +11,7 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Insets;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.time.DayOfWeek;
@@ -18,6 +19,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.IntStream;
 import javax.swing.AbstractButton;
 import javax.swing.JComponent;
@@ -333,5 +335,23 @@ class ScheduleScreenTest {
         assertFalse(petHas(bowl));
         data.activePet().setPose(Pose.EAT);
         assertTrue(petHas(bowl));
+    }
+
+    /** 06 19번 T-TT-9의 화면 몫: 자동 배치가 09:00에 놓은 A, B를 보이면 맨 위 08:00과 진하게, 2초 뒤 보통이다. 놓인 일이 없으면 그대로다. */
+    @Test
+    void tTt9ShowPlaced() {
+        Task a = task("A", d(18)).at("09:00").minutes(30).task();
+        Task b = task("B", d(20)).at("09:00").minutes(60).task();
+        open("2026-11-18T09:00", a, b);
+        screen.scrollTo(0);
+        screen.showPlaced(List.of());
+        assertEquals(List.of(0, Set.of()), List.of(screen.topMinute(), screen.table.flashing()));
+        screen.showPlaced(List.of(b, a));
+        assertEquals(List.of(480, Set.of(a, b)), List.of(screen.topMinute(), screen.table.flashing()));
+        screen.table.flashTimer().stop();
+        for (ActionListener l : screen.table.flashTimer().getActionListeners()) {
+            l.actionPerformed(null);
+        }
+        assertEquals(Set.of(), screen.table.flashing());
     }
 }

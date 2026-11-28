@@ -13,6 +13,7 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import javax.swing.BorderFactory;
@@ -154,6 +155,18 @@ public final class ScheduleScreen extends JPanel {
     /** 시간표 맨 위의 앱 하루의 분. */
     public int topMinute() {
         return (int) Math.round(scroll.getViewport().getViewPosition().y * 60.0 / TimetablePanel.HOUR);
+    }
+
+    /**
+     * 자동 배치로 놓인 블록을 보인다(D-89): 가장 이른 블록의 60분 앞으로 내리고 2초 동안 진하게 그린다. 놓인 일이 없으면 그대로다.
+     * 자동 배치 결과 창(S6)이 적용한 뒤 부른다.
+     */
+    public void showPlaced(List<Task> placed) {
+        if (placed.isEmpty()) {
+            return;
+        }
+        scrollTo(placed.stream().mapToInt(Task::startMinute).min().getAsInt() - 60);
+        table.flash(placed);
     }
 
     /** 오늘이 든 주의 첫날(설정의 한 주 시작, D-91). */
