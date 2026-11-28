@@ -163,4 +163,17 @@ class CharacterScreenTest {
         // 방 그림, 러그, 펫, 털실 공, 하트를 그려도 멈추지 않고 무대 가운데가 칠해진다(그림 비교는 하지 않는다).
         assertTrue(Snap.paint(screen().stage, 400, 300).getRGB(200, 150) >>> 24 > 0);
     }
+
+    /** 펫 탭 줄이 왼쪽 열 폭을 나눈다. 프로토타입과 일부러 다름(docs/porting.md 4절 S8e). 304는 최소 창의 왼쪽 열 폭이다. */
+    @Test
+    void eChr11TabsShareLeftColumn() {
+        CharacterScreen one = screen();
+        Snap.layOut(one.left, 304, 400);
+        assertEquals(List.of(new Rectangle(0, 0, 304, 58)), tabs(one).stream().map(Pill::getBounds).toList());
+        CharacterScreen two = withDog();
+        Snap.layOut(two.left, 304, 400);
+        assertEquals(new Rectangle(0, 0, 304, 58), two.petTabs.getBounds());
+        assertEquals(List.of(new Rectangle(0, 0, 148, 58), new Rectangle(156, 0, 148, 58)),
+                tabs(two).stream().map(Pill::getBounds).toList());
+    }
 }

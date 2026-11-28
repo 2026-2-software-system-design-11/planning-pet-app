@@ -3,9 +3,9 @@ package planningpet.pet.view;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GridLayout;
 import java.awt.RenderingHints;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
@@ -40,8 +40,12 @@ import planningpet.shop.model.ItemId;
 final class CharacterScreen extends JPanel {
     private final AppData data;
     private final PetController pets;
-    /** 펫 탭 줄. 고양이, 강아지 차례다. */
-    final JPanel petTabs = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+    /**
+     * 펫 탭 줄. 고양이, 강아지 차례이고 왼쪽 열 폭을 똑같이 나눈다(나의 방 펫 탭과 같은 꼴). 프로토타입과 일부러 다름: 프로토타입은
+     * FlowLayout(사이 10)이라 작은 창에서 둘째 탭이 둘째 줄로 넘어가 보이지 않았다(05 "펫마다 하나", docs/porting.md 4절 S8e).
+     * 05, 06이 정하지 않음, 페르소나 투표 전 잠정.
+     */
+    final JPanel petTabs = new JPanel(new GridLayout(1, 0, 8, 0));
     /** 아직 적용하지 않은 장신구(D-51). draftKind의 펫 것이다. */
     final Map<Slot, WearId> draft = new EnumMap<>(Slot.class);
     private PetKind draftKind;
