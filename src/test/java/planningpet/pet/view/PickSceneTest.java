@@ -1,5 +1,8 @@
 package planningpet.pet.view;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -29,6 +32,28 @@ class PickSceneTest {
             PickScene.bud(g, 100, 20, 4);
             PickScene.bud(g, 120, 20, 0);
             PickScene.bud(g, 140, 20, 12);
+        });
+    }
+
+    @Test
+    void ePick2AlphaAndMix() {
+        assertEquals(new Color(1, 2, 3, 9), PickScene.alpha(new Color(1, 2, 3, 200), 9));
+        assertEquals(new Color(127, 127, 127), PickScene.mix(Color.BLACK, Color.WHITE, 0.5));
+        assertEquals(255, PickScene.mix(new Color(10, 20, 30, 100), Color.WHITE, 0).getAlpha());
+        assertEquals(new Color(254, 254, 254), PickScene.mix(Color.BLACK, Color.WHITE, 0.999));
+    }
+
+    @Test
+    void ePick3DaisyAndBush() throws IOException {
+        same("pick-scene-flowers", 360, 80, g -> {
+            PickScene.daisy(g, 20, 40, 7, 0.2);
+            PickScene.daisy(g, 50, 40, 6.5, -0.3);
+            PickScene.daisy(g, 90, 40, 14, 0);
+            PickScene.daisy(g, 120, 40, 2, 0);
+            PickScene.daisy(g, 140, 40, 0, 0);
+            PickScene.bush(g, 190, 70, 46);
+            PickScene.bush(g, 260, 70, 40);
+            PickScene.bush(g, 330, 70, 0);
         });
     }
 }
