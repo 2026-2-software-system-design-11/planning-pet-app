@@ -1,5 +1,8 @@
 package planningpet.pet.view;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -122,5 +125,44 @@ class PetArtWearTest {
         Snap.assertLooksLikePrototype("pet-sit-neg140", one(PetKind.CAT, Set.of(), 80, 10, -140));
         Snap.assertLooksLikePrototype("pet-sit-moved", one(PetKind.DOG, null, 77.5, 150.25, 140));
         Snap.assertLooksLikePrototype("pet-sit-moved", one(PetKind.DOG, Set.of(), 77.5, 150.25, 140));
+    }
+
+    /** 크기 size의 얼굴을 한 변 size x 2인 그림 가운데에 그린 픽셀. */
+    private static int[] face(PetKind kind, Set<WearId> wear, int size) {
+        BufferedImage img = new BufferedImage(size * 2, size * 2, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = img.createGraphics();
+        PetArt.drawFace(g, kind, wear, size, size, size);
+        g.dispose();
+        return img.getRGB(0, 0, size * 2, size * 2, null, 0, size * 2);
+    }
+
+    @Test
+    void eWear7FaceHasNoCollar() {
+        for (PetKind kind : KINDS) {
+            for (WearId collar : COLLARS) {
+                for (int size : new int[] {30, 76, 230}) {
+                    assertArrayEquals(face(kind, Set.of(), size), face(kind, Set.of(collar), size),
+                            kind + " " + collar + " " + size);
+                }
+            }
+        }
+    }
+
+    @Test
+    void eWear8PaintedBox() {
+        String[][] want = {{"-147 -282 125 7", "-64 -124 54 3"}, {"-116 -247 110 5", "-51 -108 48 2"}};
+        double[] sizes = {320, 140};
+        for (int k = 0; k < KINDS.length; k++) {
+            for (WearId collar : COLLARS) {
+                for (int i = 0; i < sizes.length; i++) {
+                    BufferedImage img = new BufferedImage(800, 800, BufferedImage.TYPE_INT_ARGB);
+                    Graphics2D g = img.createGraphics();
+                    PetArt.drawAt(g, KINDS[k], Set.of(collar), 0, 99, 400, 600, sizes[i]);
+                    g.dispose();
+                    assertEquals(want[k][i], PetArtTest.paintedBox(img, 400, 600),
+                            KINDS[k] + " " + collar + " " + sizes[i]);
+                }
+            }
+        }
     }
 }
