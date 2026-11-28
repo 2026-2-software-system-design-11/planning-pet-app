@@ -1,23 +1,27 @@
 package planningpet.home.view;
 
 import java.awt.BorderLayout;
+import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.function.Consumer;
 import javax.swing.BorderFactory;
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import planningpet.app.model.AppData;
+import planningpet.common.view.CircleButton;
+import planningpet.common.view.Icons;
 import planningpet.common.view.Theme;
 import planningpet.schedule.model.CalendarCell;
 
 /**
- * 홈 달력(05 홈 "달력", UC-09). 한 주는 설정의 한 주 시작(처음은 월요일)부터 7일이고 요일 줄과 칸이 그 요일부터 놓인다(D-91).
- * 날짜 칸은 그날 일의 수와 마감 점을 보인다(D-86, 06 26번). 제목 줄과 달 옮기기는 S3g, 누른 날 고르기와 다시 그리기 알림은
- * S3h가 더한다(docs/porting/home.md S3f, S3g).
+ * 홈 달력(05 홈 "달력", UC-09). 한 주는 설정의 한 주 시작(처음은 월요일)부터 7일이다(D-91). 제목 줄 왼쪽에 달 제목, 오른쪽에
+ * "오늘" 버튼과 이전 달, 다음 달 꺾쇠가 있다(D-60). 날짜 칸은 그날 일의 수와 마감 점을 보인다(D-86, 06 26번).
+ * 달 옮기기는 S3g, 누른 날 고르기와 다시 그리기 알림은 S3h가 더한다(docs/porting/home.md S3f, S3g).
  */
 public final class CalendarPanel extends JPanel {
     private static final String DAYS = "일월화수목금토";
@@ -27,6 +31,11 @@ public final class CalendarPanel extends JPanel {
     final JPanel grid = new JPanel(new GridLayout(0, 7, 2, 2));
     /** 요일 줄. 한 주 시작(D-91)이 바뀌면 다시 놓는다. */
     final JPanel week = new JPanel(new GridLayout(1, 7, 2, 0));
+    final JLabel title = new JLabel();
+    final CircleButton prev = new CircleButton(Icons.Kind.LEFT, 32, "이전 달", false);
+    final CircleButton next = new CircleButton(Icons.Kind.RIGHT, 32, "다음 달", false);
+    /** D-60. 누르는 일은 S3h가 더한다. */
+    final JButton today = new JButton("오늘");
     private DayOfWeek shownStart;
     private final YearMonth month;
     private final LocalDate selected;
@@ -38,7 +47,22 @@ public final class CalendarPanel extends JPanel {
         this.onPick = onPick;
         this.selected = data.today();
         this.month = YearMonth.from(selected);
+        today.setFont(Theme.bold(12));
+        today.setBorder(BorderFactory.createEmptyBorder(5, 12, 7, 12));
+        title.setIcon(Icons.icon(Icons.Kind.CALENDAR, 24, Theme.ICON));
+        title.setIconTextGap(8);
+        title.setFont(Theme.heavy(21));
+        JPanel arrows = new JPanel(new FlowLayout(FlowLayout.RIGHT, 4, 0));
+        arrows.add(today);
+        arrows.add(prev);
+        arrows.add(next);
+        JPanel head = new JPanel(new BorderLayout());
+        head.add(title, BorderLayout.CENTER);
+        head.add(arrows, BorderLayout.EAST);
+        head.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Theme.CARD_EDGE),
+                BorderFactory.createEmptyBorder(0, 0, 8, 0)));
         JPanel top = new JPanel(new BorderLayout());
+        top.add(head, BorderLayout.NORTH);
         top.add(week, BorderLayout.SOUTH);
         weekRow();
         add(top, BorderLayout.NORTH);
@@ -80,8 +104,9 @@ public final class CalendarPanel extends JPanel {
     /** 한 주 시작, 고정 일정 설정, 일정이 바뀌면 부른다. 보이는 달의 칸을 다시 놓는다. 다른 달 자리는 빈 칸이다. */
     public void refresh() {
         weekRow();
-        grid.removeAll();
+        title.setText(month.getYear() + "년 " + month.getMonthValue() + "월");
         LocalDate today = data.today();
+        grid.removeAll();
         int offset = Math.floorMod(month.atDay(1).getDayOfWeek().getValue() - data.getWeekStart().getValue(), 7);
         int cells = (offset + month.lengthOfMonth() + 6) / 7 * 7;
         for (int cell = 0; cell < cells; cell++) {

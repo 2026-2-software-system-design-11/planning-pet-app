@@ -5,8 +5,12 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.IOException;
@@ -19,7 +23,11 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.SwingConstants;
+import javax.swing.UIManager;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import planningpet.app.model.AppData;
 import planningpet.common.view.Snap;
@@ -34,6 +42,19 @@ class CalendarPanelTest {
     private final List<Task> tasks = new ArrayList<>();
     private final List<LocalDate> picks = new ArrayList<>();
     private AppData data;
+
+    @BeforeEach
+    void install() {
+        Theme.install();
+    }
+
+    @AfterEach
+    void undoInstall() {
+        for (Object key : List.copyOf(UIManager.getLookAndFeelDefaults().keySet())) {
+            UIManager.put(key, null);
+        }
+        UIManager.put("swing.boldMetal", null);
+    }
 
     private CalendarPanel panel(String now, DayOfWeek start, boolean fixed) {
         data = new AppData(Clock.fixed(LocalDateTime.parse(now).atZone(ZONE).toInstant(), ZONE), tasks, List.of());
@@ -201,5 +222,39 @@ class CalendarPanelTest {
             assertEquals("<html><center>22 <font size='2' color='#C0392B'>마감</font></center></html>", cell(c, 22).getText());
             assertEquals("E사 지원서 마감, F사 서류 마감", cell(c, 20).getToolTipText());
         }
+    }
+
+    @Test
+    void eHead1TitleRow() {
+        CalendarPanel c = panel("2026-11-16T10:00", DayOfWeek.MONDAY);
+        assertEquals("2026년 11월", c.title.getText());
+        assertEquals(Theme.heavy(21), c.title.getFont());
+        assertEquals("24 8", c.title.getIcon().getIconWidth() + " " + c.title.getIconTextGap());
+        JPanel head = (JPanel) c.title.getParent();
+        assertEquals(new Insets(0, 0, 9, 0), head.getInsets());
+        JPanel arrows = (JPanel) head.getComponent(1);
+        assertEquals(List.of(c.today, c.prev, c.next), List.of(arrows.getComponents()));
+        FlowLayout flow = (FlowLayout) arrows.getLayout();
+        assertEquals(FlowLayout.RIGHT + " 4 0", flow.getAlignment() + " " + flow.getHgap() + " " + flow.getVgap());
+        assertEquals(Theme.bold(12), c.today.getFont());
+        assertEquals(new Insets(5, 12, 7, 12), c.today.getInsets());
+        assertEquals(new Dimension(44, 27), c.today.getPreferredSize());
+        assertEquals(new Dimension(32, 32), c.prev.getPreferredSize());
+        Snap.layOut(c, 328, 300);
+        assertEquals(new Rectangle(0, 0, 328, 41), head.getBounds());
+        assertEquals(new Rectangle(0, 41, 328, 25), c.week.getBounds());
+        assertEquals(new Rectangle(0, 70, 328, 230), c.grid.getBounds());
+        assertEquals("4,2 52,0 88,0", c.today.getX() + "," + c.today.getY() + " " + c.prev.getX() + "," + c.prev.getY() + " "
+                + c.next.getX() + "," + c.next.getY());
+    }
+
+    @Test
+    void eHead5Names() {
+        CalendarPanel c = panel("2026-11-16T10:00", DayOfWeek.MONDAY);
+        assertEquals("이전 달 이전 달 다음 달 다음 달 오늘", c.prev.getToolTipText() + " " + c.prev.getAccessibleContext().getAccessibleName()
+                + " " + c.next.getToolTipText() + " " + c.next.getAccessibleContext().getAccessibleName() + " "
+                + c.today.getAccessibleContext().getAccessibleName());
+        assertEquals(Cursor.HAND_CURSOR, c.prev.getCursor().getType());
+        assertEquals(0, c.today.getActionListeners().length);
     }
 }
