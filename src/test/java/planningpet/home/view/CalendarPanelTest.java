@@ -1,8 +1,12 @@
 package planningpet.home.view;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
+import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.GridLayout;
+import java.awt.Insets;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.IOException;
@@ -15,6 +19,7 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JLabel;
+import javax.swing.SwingConstants;
 import org.junit.jupiter.api.Test;
 import planningpet.app.model.AppData;
 import planningpet.common.view.Snap;
@@ -81,12 +86,14 @@ class CalendarPanelTest {
     void eMon1MondayStart() {
         CalendarPanel c = panel("2026-11-16T10:00", DayOfWeek.MONDAY);
         assertEquals("42 empty [0, 1, 2, 3, 4, 5, 36, 37, 38, 39, 40, 41]", layout(c));
+        assertEquals("월화수목금토일", c.weekText());
     }
 
     @Test
     void eMon2SundayStart() {
         CalendarPanel c = panel("2026-11-16T10:00", DayOfWeek.SUNDAY);
         assertEquals("35 empty [30, 31, 32, 33, 34]", layout(c));
+        assertEquals("일월화수목금토", c.weekText());
     }
 
     @Test
@@ -113,6 +120,37 @@ class CalendarPanelTest {
             l.mouseClicked(new MouseEvent(c, MouseEvent.MOUSE_CLICKED, 0, 0, 5, 5, 1, false));
         }
         assertEquals(List.of(LocalDate.of(2026, 11, 18)), picks);
+    }
+
+    @Test
+    void eMon4WeekStartChanged() {
+        CalendarPanel c = panel("2026-11-16T10:00", DayOfWeek.MONDAY);
+        data.setWeekStart(DayOfWeek.SUNDAY);
+        assertEquals("월화수목금토일", c.weekText());
+        assertEquals(42, c.grid.getComponentCount());
+        c.refresh();
+        assertEquals("일월화수목금토", c.weekText());
+        assertEquals("35 empty [30, 31, 32, 33, 34]", layout(c));
+    }
+
+    @Test
+    void eMon5WeekRowAndLayout() {
+        CalendarPanel c = panel("2026-11-16T10:00", DayOfWeek.MONDAY);
+        Component[] days = c.week.getComponents();
+        for (int i = 0; i < 7; i++) {
+            JLabel l = (JLabel) days[i];
+            assertEquals(i == 5 ? Theme.SATURDAY : i == 6 ? Theme.SUNDAY : Theme.INK_SUB, l.getForeground());
+            assertEquals(Theme.bold(13), l.getFont());
+            assertEquals(new Insets(6, 0, 2, 0), l.getInsets());
+            assertEquals(SwingConstants.CENTER, l.getHorizontalAlignment());
+        }
+        assertEquals(25, c.week.getPreferredSize().height);
+        GridLayout week = (GridLayout) c.week.getLayout();
+        assertEquals("1 7 2 0", week.getRows() + " " + week.getColumns() + " " + week.getHgap() + " " + week.getVgap());
+        GridLayout grid = (GridLayout) c.grid.getLayout();
+        assertEquals("0 7 2 2", grid.getRows() + " " + grid.getColumns() + " " + grid.getHgap() + " " + grid.getVgap());
+        assertEquals(4, ((BorderLayout) c.getLayout()).getVgap());
+        assertFalse(c.isOpaque() || c.grid.isOpaque() || c.week.isOpaque());
     }
 
     @Test
