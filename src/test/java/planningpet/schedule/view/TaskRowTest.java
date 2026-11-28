@@ -325,4 +325,44 @@ class TaskRowTest {
         mouse(kids[0], MouseEvent.MOUSE_ENTERED);
         assertEquals(Theme.DAY.getRGB(), edge(p));
     }
+
+    private static final String DIV = "<html><div style='width:280px'>";
+    private static final String END = "</div></html>";
+
+    /** 메모 m을 든 할 일의 memoTip이 want이고, 그 줄과 제목 칸에 같은 툴팁이 걸린다. */
+    private void tip(String m, String want) {
+        Task t = new Task("m", 1, Kind.TASK, "메모 일", TODAY, null, 30, m, false, Category.OTHER, null, null, null, null, false, null, 0,
+                0, null, null);
+        assertEquals(want, TaskRows.memoTip(t));
+        JPanel p = row(t, "", TODAY, 480);
+        assertEquals(want, p.getToolTipText());
+        assertEquals(want, ((JLabel) p.getComponent(1)).getToolTipText());
+    }
+
+    @Test
+    void eMemo1None() {
+        tip("", null);
+        tip("   ", null);
+    }
+
+    @Test
+    void eMemo2Short() {
+        tip("단어 50개", DIV + "단어 50개" + END);
+        tip("첫 줄\n둘째 <b>A&B</b>", DIV + "첫 줄<br>둘째 &lt;b&gt;A&amp;B&lt;/b&gt;" + END);
+    }
+
+    @Test
+    void eMemo3Limit() {
+        tip("가".repeat(200), DIV + "가".repeat(200) + END);
+        tip("가".repeat(201), DIV + "가".repeat(200) + "…" + END);
+    }
+
+    @Test
+    void eMemo4Emoji() {
+        String e = "\uD83D\uDE00";
+        tip("가".repeat(199) + e + "나", DIV + "가".repeat(199) + e + "…" + END);
+        tip(e.repeat(100), DIV + e.repeat(100) + END);
+        tip(e.repeat(101), DIV + e.repeat(101) + END);
+        tip(e.repeat(201), DIV + e.repeat(200) + "…" + END);
+    }
 }
