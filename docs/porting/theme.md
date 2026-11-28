@@ -58,9 +58,9 @@ PR 하나의 크기 한도(1절) 때문에 셋으로 나눠 옮긴다. 이 기�
 | E-BTN-15 | 키보드 초점 | 기본, 누를 수 없음, `NAV` 고름, `PRIMARY`에 초점 | 기본과 `PRIMARY`는 안쪽에 반투명 민트 선(`#1FB99C`, 알파 110), 누를 수 없음과 `NAV`는 선 없음 | 같음. 픽셀 같음. 창 없이 초점을 주려고 `setGlobalFocusOwner`를 여는 `KeyboardFocusManager`를 검사 동안만 건다 |
 | E-BTN-16 | 모서리 상한 | "저장" 160x49, 160x50 | 둘 다 호 지름 44(높이에서 5를 뺀 44와 45, 상한 44) | 같음. 픽셀 같음 |
 | E-BTN-17 | 크기 0과 아주 작은 크기 | 0x0, 4x5 | 0x0은 아무것도 그리지 않고, 4x5는 그림자 조각만 그린다. 예외 없음 | 같음. 픽셀 같음 |
-| E-THEME-3 | 기본값 걸기 | `install()` 뒤 새 단추, 토글, 글 | 단추와 토글의 UI가 `RoundButtonUI`, 모든 `.font`가 `font(14)`, 단추와 토글은 `bold(14)`, `.foreground`가 `INK`(`ProgressBar`는 `MINT`), `Panel`, `CheckBox`, `RadioButton`, `OptionPane`의 바탕이 `BG`, `ProgressBar.background`가 `TRACK` | 같음. install 뒤 기본값(글꼴, 글자색, 바탕, UI)을 모두 적어 비교하면 고르는 칸 여섯 값만 다르다(E-THEME-5) |
+| E-THEME-3 | 기본값 걸기 | `install()` 뒤 새 단추, 토글, 글 | 단추와 토글의 UI가 `RoundButtonUI`, 모든 `.font`가 `font(14)`, 단추와 토글은 `bold(14)`, `.foreground`가 `INK`(`ProgressBar`는 `MINT`), `Panel`, `CheckBox`, `RadioButton`, `OptionPane`의 바탕이 `BG`, `ProgressBar.background`가 `TRACK` | 같음. install 뒤 기본값(글꼴, 글자색, 바탕, UI)을 모두 적어 비교하면 모두 같다. 고르는 칸 여섯 값은 S4c(#506)부터 같다(E-THEME-5) |
 | E-THEME-4 | 두 번 걸기 | `install()` 두 번 | 한 번과 같다 | 같음 |
-| E-THEME-5 | 고르는 칸 | `install()` 뒤 `JComboBox` | `ComboUI`, 바탕 `CARD_TOP` | S4가 옮긴다. 이 단위가 끝난 뒤의 `JComboBox`는 Swing 기본 모양이다 |
+| E-THEME-5 | 고르는 칸 | `install()` 뒤 `JComboBox` | `ComboUI`, 바탕 `CARD_TOP` | 같음. S4c(#506)가 옮겼다. 그 전까지 `JComboBox`는 Swing 기본 모양이었다. 색 다섯과 칸 모양은 [task-dialog.md](task-dialog.md) S4c |
 | E-THEME-6 | 투명하게 하기 | 패널 안 패널, 카드와 그 안 패널, Swing 기본 토글, 둥근 토글, 스크롤 칸, 불투명 글 | 패널, 카드 안 패널, 기본 토글, 스크롤 칸과 그 보이는 칸이 투명해진다. 카드, 둥근 토글, 글은 그대로 | 같음 |
 | E-THEME-7 | 빈 부품 | `clear(null)` | 아무것도 하지 않는다 | 같음 |
 
