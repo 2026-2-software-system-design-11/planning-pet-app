@@ -51,7 +51,8 @@
 | S2h | 동물 카드 | `PickCard`(움직이지 않는 카드 #418, 마우스 올림과 초점 모양, 움직임 #424), 강조선 자리 `PetArt.heightRatio`(앉기) | 없음([디자인 시스템](design-system.md) 10절, 05 입력 항목 1) | [docs/porting/pick.md](porting/pick.md) |
 | S2i | 고르기 창 위쪽 줄 | `PickDialog`의 창 내용(바탕 패널, 로고, 부제, 동물 카드 줄, #419) | 없음(05 반려동물 고르기 창, [디자인 시스템](design-system.md) 10절) | [docs/porting/pick.md](porting/pick.md) |
 | S2j | 고르기 창 리본과 아래쪽 줄 | `PickDialog`의 리본 제목, 이름 줄 카드(`nameBar`, 10자로 막은 이름 칸 `name`), 안내, 버튼 줄(#427) | 없음(05 반려동물 고르기 창과 입력 항목 2, 3, [디자인 시스템](design-system.md) 10절) | [docs/porting/pick.md](porting/pick.md) |
-| S2 | 반려동물 고르기 창 | `PickDialog`, `PetController.adopt`, `select`, `Main` 잇기(읽기, 못 읽음 창, 첫 실행 갈래, 창과 타이머 잇기) | 30번, 21번의 시작할 때 읽기 | [docs/porting/pick.md](porting/pick.md) |
+| S2k | 펫 만들기와 고르기 controller | `PetController.choose`(바로 시작 갈래, `examples` 인자는 C5), `adopt`, `select`(#430) | 30번(`step`, `rename`, `pose`는 S8), 15번 T-BRF-6, 16번 `ADOPTED`, `SELECTED` | [docs/porting/pet-controller.md](porting/pet-controller.md) |
+| S2 | 반려동물 고르기 창 | `PickDialog`, `PetController.adopt`, `select`(S2k가 옮긴다), `Main` 잇기(읽기, 못 읽음 창, 첫 실행 갈래, 창과 타이머 잇기) | 30번, 21번의 시작할 때 읽기 | [docs/porting/pick.md](porting/pick.md) |
 | S3 | 홈 목록 | `MainScreen`, `PetCard`, `CalendarPanel`, `HomeController`, `RewardController.complete`, `uncomplete` | 6번, 8번, 9번, 13번, 16번, 26번 | `docs/porting/home.md` |
 | S4 | 일정 입력 창 | `TaskDialog`, `TaskController.add`, `update`, `delete`, 고르는 칸 `ComboUI`와 그것을 거는 `Theme.install`의 줄([theme.md](porting/theme.md)) | 2~5번, 14번 | `docs/porting/task-dialog.md` |
 | S5 | 일정관리 | `ScheduleScreen`, `TimetablePanel`, `TaskRows`, `TimeEditor`, `TaskController.clearTime` | 4번의 시각 고치기 창, 7번, 19번 | `docs/porting/schedule.md` |
