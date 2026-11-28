@@ -6,6 +6,7 @@ import planningpet.app.model.AppData;
 import planningpet.pet.model.PetKind;
 import planningpet.pet.model.PetState;
 import planningpet.pet.model.PetTalk;
+import planningpet.pet.model.Pose;
 import planningpet.pet.model.Situation;
 
 /**
@@ -86,5 +87,14 @@ public final class PetController {
             pet.setName(nameOf(kind, name));
             app.say(talk.say(Situation.RENAMED, pet), null);
         });
+    }
+
+    /** UC-22(D-50). 다섯 자세 가운데 하나일 때만 바꾼다. 다섯 밖의 값은 Pose로 넘길 수 없어 null이 그 자리이고 아무것도 하지 않는다. */
+    public void pose(PetKind kind, Pose pose) {
+        if (pose == null) {
+            return;
+        }
+        PetState pet = data.pet(kind);
+        app.change("자세 고르기", () -> pet.setPose(pose));
     }
 }

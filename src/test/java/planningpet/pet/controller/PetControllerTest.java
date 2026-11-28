@@ -326,4 +326,32 @@ class PetControllerTest {
         assertEquals(1, saves);
         assertEquals(1, heard);
     }
+
+    @Test
+    void T_PET_4_pose() {
+        oneCat(0);
+        pets.pose(PetKind.CAT, Pose.SLEEP);
+        pets.pose(PetKind.CAT, null); // 06의 "춤" 자리. 다섯 자세 밖의 값은 Pose로 넘길 수 없다
+        assertEquals(Pose.SLEEP, data.pet(PetKind.CAT).getPose());
+        assertEquals(1, saves);
+        assertEquals(1, heard);
+    }
+
+    @Test
+    void E_PET_23_samePose() {
+        oneCat(0);
+        pets.pose(PetKind.CAT, Pose.SIT);
+        assertEquals(Pose.SIT, data.pet(PetKind.CAT).getPose());
+        assertEquals(1, saves);
+        assertEquals(1, heard);
+    }
+
+    @Test
+    void E_PET_24_poseSaveFails() {
+        oneCat(0);
+        failing = true;
+        pets.pose(PetKind.CAT, Pose.SLEEP);
+        assertEquals(Pose.SIT, data.pet(PetKind.CAT).getPose());
+        assertEquals(List.of("자세 고르기 저장에 실패해서 바꾸기 전으로 돌렸어요."), errors);
+    }
 }
