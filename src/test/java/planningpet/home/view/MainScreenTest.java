@@ -7,6 +7,8 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Insets;
 import java.awt.Rectangle;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -25,13 +27,15 @@ class MainScreenTest {
     private static final ZoneId ZONE = ZoneId.systemDefault();
     private AppData data;
 
-    /** 오늘 11-14 15:23, 고른 고양이 나비의 홈 화면. */
+    /** 오늘 11-14 15:23, 고른 고양이 나비의 홈 화면. Main처럼 데이터 변경 알림에 refresh를 건다. */
     private MainScreen screen() {
         data = new AppData(Clock.fixed(LocalDateTime.of(2026, 11, 14, 15, 23).atZone(ZONE).toInstant(), ZONE), List.of(), List.of());
         data.addPet(new PetState(PetKind.CAT, "나비"));
         data.setActiveKind(PetKind.CAT);
         AppController app = new AppController(data, null, e -> { });
-        return new MainScreen(data, app, new HomeController(data, app));
+        MainScreen m = new MainScreen(data, app, new HomeController(data, app));
+        data.onChange(m::refresh);
+        return m;
     }
 
     private static String parts(MainScreen m, int w, int h) {
@@ -46,6 +50,18 @@ class MainScreenTest {
 
     private static String at(Rectangle r) {
         return r.x + "," + r.y + " " + r.width + "x" + r.height;
+    }
+
+    private static void press(MainScreen m, int day) {
+        for (Component k : m.calendar.grid.getComponents()) {
+            if (k instanceof DayCell d && d.getText().matches("<html><center>(<b>)?" + day + "(</b>)?(<br>.*)?</center></html>")) {
+                for (MouseListener l : d.getMouseListeners()) {
+                    l.mouseClicked(new MouseEvent(d, MouseEvent.MOUSE_CLICKED, 0, 0, 5, 5, 1, false));
+                }
+                return;
+            }
+        }
+        throw new AssertionError(day);
     }
 
     @Test
@@ -79,5 +95,24 @@ class MainScreenTest {
         MainScreen m = screen();
         assertEquals("0,0 360x236 | 0,248 360x-48 | 372,0 -72x200", parts(m, 300, 200));
         assertEquals("0,0 360x236 | 0,248 360x-248 | 372,0 -372x0", parts(m, 0, 0));
+    }
+
+    @Test
+    void eScreen6Titles() {
+        MainScreen m = screen();
+        data.changed();
+        List<String> got = new ArrayList<>(List.of(m.listTitle.getText()));
+        for (int day : new int[] {15, 16, 1, 30, 18}) {
+            press(m, day);
+            got.add(m.listTitle.getText());
+        }
+        m.calendar.next.doClick();
+        press(m, 1);
+        got.add(m.listTitle.getText());
+        m.calendar.next.doClick();
+        press(m, 3);
+        got.add(m.listTitle.getText());
+        assertEquals(List.of("11월 14일 (토) 할 일", "11월 15일 (일) 할 일", "11월 16일 (월) 할 일", "11월 1일 (일) 할 일", "11월 30일 (월) 할 일",
+                "11월 18일 (수) 할 일", "12월 1일 (화) 할 일", "1월 3일 (일) 할 일"), got);
     }
 }
