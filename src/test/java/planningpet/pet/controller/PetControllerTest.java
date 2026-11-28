@@ -16,6 +16,7 @@ import planningpet.app.model.AppData;
 import planningpet.app.model.DataStore;
 import planningpet.app.model.LoadResult;
 import planningpet.pet.model.PetKind;
+import planningpet.pet.model.PetState;
 import planningpet.pet.model.Pose;
 import planningpet.pet.model.Slot;
 import planningpet.pet.model.WearId;
@@ -107,6 +108,17 @@ class PetControllerTest {
         assertEquals(0, app.getBubble().getNewLines());
         assertEquals(1, saves);
         assertEquals(1, heard);
+    }
+
+    @Test
+    void E_PET_12_chooseReplacesPets() {
+        data.addPet(new PetState(PetKind.CAT, "나비"));
+        data.addPet(new PetState(PetKind.DOG, "바둑이"));
+        data.setActiveKind(PetKind.DOG);
+        pets.choose(PetKind.CAT, "콩");
+        assertEquals(1, data.getPets().size());
+        assertEquals("콩", data.pet(PetKind.CAT).getName());
+        assertEquals(PetKind.CAT, data.getActiveKind());
     }
 
     @Test

@@ -25,9 +25,10 @@ public final class PetController {
         return !picked.isEmpty() ? picked : kind == PetKind.DOG ? "바둑이" : "나비";
     }
 
-    /** UC-17 바로 시작. 펫을 만들어 넣고 고른다. 말하지 않는다(첫 말은 15번 FIRST_RUN). */
+    /** UC-17 바로 시작. 펫 목록을 이 펫 하나로 바꾸고 고른다(프로토타입과 같다). 말하지 않는다(첫 말은 15번 FIRST_RUN). */
     public void choose(PetKind kind, String name) {
         app.change("반려동물 고르기", () -> {
+            data.clearPets();
             data.addPet(new PetState(kind, nameOf(kind, name)));
             data.setActiveKind(kind);
         });
