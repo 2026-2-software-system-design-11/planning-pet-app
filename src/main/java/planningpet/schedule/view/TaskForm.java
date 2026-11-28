@@ -28,6 +28,8 @@ import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.SpinnerDateModel;
 import javax.swing.SpinnerListModel;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import planningpet.common.model.AppDay;
 import planningpet.common.view.Theme;
 import planningpet.common.view.Ui;
@@ -77,6 +79,8 @@ final class TaskForm {
     final Map<String, JLabel> errors = new LinkedHashMap<>();
     /** 오류 글이 늘거나 줄면 창 크기를 다시 맞춘다. 창 없이 만들 때는 아무것도 하지 않는다. */
     Runnable relayout = () -> { };
+    /** 저장을 한 번 누른 뒤에는 칸을 고칠 때마다 다시 검사한다(D-43). */
+    private boolean checked;
     /** 날짜를 바꾼 그 순간의 시계(D-101). 처음은 창을 연 때다. */
     Supplier<LocalDateTime> clock;
     /** D-101: 고정 일정으로 가기 앞의 시작 시각 정하기, 기간 안에 하기, 마감. 할 일로 돌아오면 되돌리고 null이 된다. */
@@ -195,6 +199,22 @@ final class TaskForm {
         for (JSpinner s : new JSpinner[] {this.date, minutes}) {
             s.addChangeListener(e -> sync());
         }
+        title.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                sync();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                sync();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                sync();
+            }
+        });
         sync();
     }
 
@@ -203,7 +223,7 @@ final class TaskForm {
      * 켜면 시작 시각이 꺼진 채 비활성이다(D-68). 시작 시각을 정하면 끝 시각 글과 다음 날 값의 실제 날과 시각을 적고(D-73, D-77),
      * 걸리는 시간이 30이면 30분 안내를 보인다(D-43). 고정 일정, 기간, 반복 때문에 앱이 바꾼 칸은 맥락이 돌아오면 되돌린다(D-101).
      * 손대지 않은 시작 시각은 날짜를 바꾸거나 시작 칸이 열리는 그 순간의 시계로 다시 잰다(D-101). 앱이 골라 준 요일, 손대지 않은 반복
-     * 끝(D-79), 고르지 않은 마감(D-96)도 날짜를 따라간다.
+     * 끝(D-79), 고르지 않은 마감(D-96)도 날짜를 따라간다. 저장을 누른 뒤에는 다시 검사해 칸 아래 글을 고친다(D-43).
      */
     void sync() {
         if (syncing) {
@@ -293,6 +313,9 @@ final class TaskForm {
         endLabel.setText(s == null ? "" : Times.endHint(s, (int) minutes.getValue()));
         realTime.setText(s == null ? "" : Times.real(day, s));
         syncing = false;
+        if (checked) {
+            showErrors(draft().validate());
+        }
     }
 
     private void pick(DayOfWeek d) {
@@ -322,8 +345,9 @@ final class TaskForm {
                 how == null ? null : Ui.dateOf(repeatEnd), s != null && s >= Task.DAY, null, AppDay.of(clock.get()), false);
     }
 
-    /** 검사 결과를 칸 아래에 보인다. 고친 칸의 오류는 지운다. */
+    /** 검사 결과를 칸 아래에 보인다. 고친 칸의 오류는 지운다. 이 뒤로는 칸을 고칠 때마다 다시 검사한다(D-43). */
     void showErrors(List<FieldError> problems) {
+        checked = true;
         errors.values().forEach(l -> fill(l, ""));
         for (FieldError p : problems) {
             fill(errors.get(p.field()), p.message());

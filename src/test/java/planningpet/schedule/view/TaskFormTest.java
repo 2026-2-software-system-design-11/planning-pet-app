@@ -545,4 +545,14 @@ class TaskFormTest {
         assertEquals(TWO_PROBLEMS + " / 10분부터 720분까지, 5분 단위예요", f.errorText());
         assertEquals("10분부터 720분까지, 5분 단위예요", f.errors.get("걸리는 시간").getText());
     }
+
+    @Test
+    void eForm9FixedFieldsClearAfterSave() {
+        TaskForm f = lateStart();
+        f.showErrors(f.draft().validate());
+        f.title.setText("운동");
+        assertEquals(List.of("다음 날 04:00까지 끝나야 해요", false), List.of(f.errorText(), f.errors.get("제목").isVisible()));
+        f.minutes.setValue(30);
+        assertEquals(List.of("", false), List.of(f.errorText(), f.errors.get("시작 시각").isVisible()));
+    }
 }
