@@ -1,5 +1,6 @@
 package planningpet.pet.view;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -14,12 +15,14 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import planningpet.common.view.Card;
 import planningpet.common.view.Icons;
+import planningpet.common.view.RoundButtonUI;
 import planningpet.common.view.RoundField;
 import planningpet.common.view.Theme;
 import planningpet.common.view.Ui;
@@ -35,12 +38,15 @@ public final class PickDialog {
     static final String SUBTITLE = "선택한 친구와 함께 일정을 관리하고,\n계획을 실천하며 성장할 수 있어요!";
     /** 이름 칸 라벨(05, 11-23 예시 글). */
     static final String NAME_LABEL = "반려동물의 이름을 지어주세요!";
-    /** 줄 폭: 카드 둘과 사이. 이름 줄 카드도 이 폭이다. */
+    /** 줄 폭: 카드 둘과 사이. 이름 줄 카드와 버튼 줄도 이 폭이다. */
     private static final int ROW = PickCard.W * 2 + 20;
 
     public final PickCard cat = new PickCard("고양이", PetKind.CAT, true, "조용하고 편안한 성격으로\n언제나 곁에서 응원해요!");
     public final PickCard dog = new PickCard("강아지", PetKind.DOG, false, "활발하고 다정한 성격으로\n항상 힘이 되어줘요!");
     public final RoundField name = new RoundField(null, "예시) 모찌, 코코, 하루").count(10);
+    /** D-74: 펫을 고른 다음 예시로 둘러볼지 바로 시작할지 고른다. 바로 시작이 주 행동이고 Enter와 같다. */
+    public final JButton examples = new JButton("예시로 둘러보기");
+    public final JButton start = new JButton("바로 시작");
     public final JPanel panel = new Backdrop();
 
     public PickDialog() {
@@ -69,6 +75,24 @@ public final class PickDialog {
         panel.add(animals);
         panel.add(Box.createVerticalStrut(12));
         panel.add(center(nameBar()));
+        panel.add(Box.createVerticalStrut(10));
+        JLabel later = Ui.hint("예시는 나중에 '예시 지우기'로 한 번에 지울 수 있어요");
+        JPanel choose = clear(new BorderLayout(0, 6));
+        later.setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 6));
+        later.setHorizontalAlignment(SwingConstants.CENTER);
+        choose.add(later, BorderLayout.NORTH);
+        JPanel buttons = clear(new FlowLayout(FlowLayout.CENTER, 10, 0));
+        big(examples);
+        big(start);
+        start.putClientProperty(RoundButtonUI.PRIMARY, Boolean.TRUE);
+        start.setIcon(Icons.icon(Icons.Kind.PAW, 18, Color.WHITE));
+        start.setIconTextGap(8);
+        buttons.add(examples);
+        buttons.add(start);
+        choose.add(buttons, BorderLayout.CENTER);
+        choose.setMaximumSize(new Dimension(ROW, Integer.MAX_VALUE));
+        choose.setPreferredSize(new Dimension(ROW, choose.getPreferredSize().height));
+        panel.add(center(choose));
         panel.add(Box.createVerticalGlue());
     }
 
@@ -120,6 +144,12 @@ public final class PickDialog {
         bar.setPreferredSize(new Dimension(ROW, bar.getPreferredSize().height));
         bar.setMaximumSize(bar.getPreferredSize());
         return bar;
+    }
+
+    /** 큰 알약 버튼(예시의 시작 버튼 크기를 창 크기에 맞춤). */
+    private static void big(JButton b) {
+        b.setFont(Theme.bold(16));
+        b.setBorder(BorderFactory.createEmptyBorder(12, 26, 13, 26));
     }
 
     private static JPanel clear(LayoutManager layout) {

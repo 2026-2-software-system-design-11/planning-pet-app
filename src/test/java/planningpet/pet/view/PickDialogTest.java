@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.BasicStroke;
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
@@ -26,6 +27,7 @@ import java.util.List;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultButtonModel;
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
@@ -33,6 +35,7 @@ import javax.swing.UIManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import planningpet.common.view.RoundButtonUI;
 import planningpet.common.view.RoundField;
 import planningpet.common.view.Snap;
 import planningpet.common.view.Theme;
@@ -106,7 +109,7 @@ class PickDialogTest {
         assertTrue(d.panel.isOpaque());
         assertEquals(BoxLayout.Y_AXIS, ((BoxLayout) d.panel.getLayout()).getAxis());
         assertEquals(new Insets(16, 0, 22, 0), d.panel.getInsets());
-        assertEquals(11, d.panel.getComponentCount());
+        assertEquals(13, d.panel.getComponentCount());
         JPanel row = (JPanel) d.cat.getParent();
         FlowLayout flow = (FlowLayout) row.getLayout();
         assertEquals(List.of(FlowLayout.CENTER, 20, 0), List.of(flow.getAlignment(), flow.getHgap(), flow.getVgap()));
@@ -156,29 +159,31 @@ class PickDialogTest {
     @Test
     void eDlg3DefaultSize() throws IOException {
         PickDialog d = new PickDialog();
-        assertEquals(List.of(new Dimension(800, 575), new Dimension(556, 491)),
+        assertEquals(List.of(new Dimension(800, 651), new Dimension(556, 567)),
                 List.of(d.panel.getPreferredSize(), d.panel.getMinimumSize()));
         assertEquals(rects(0, 16, 800, 60, 0, 80, 800, 62, 0, 144, 800, 40, 285, 0, 230, 40, 0, 196, 800, 262, 142, 0, 248, 262,
-                410, 0, 248, 262, 0, 470, 800, 83, 142, 0, 516, 83), places(800, 575));
-        looksLikePrototype("800x575", 800, 575);
+                410, 0, 248, 262, 0, 470, 800, 83, 142, 0, 516, 83, 0, 563, 800, 66, 142, 0, 516, 66), places(800, 651));
+        looksLikePrototype("800x651", 800, 651);
     }
 
     @Test
     void eDlg4BigWindow() throws IOException {
-        assertEquals(rects(0, 178, 1200, 60, 0, 242, 1200, 62, 0, 306, 1200, 40, 485, 0, 230, 40, 0, 358, 1200, 262, 342, 0, 248, 262,
-                610, 0, 248, 262, 0, 632, 1200, 83, 342, 0, 516, 83), places(1200, 900));
+        assertEquals(rects(0, 140, 1200, 60, 0, 204, 1200, 62, 0, 268, 1200, 40, 485, 0, 230, 40, 0, 320, 1200, 262, 342, 0, 248, 262,
+                610, 0, 248, 262, 0, 594, 1200, 83, 342, 0, 516, 83, 0, 687, 1200, 66, 342, 0, 516, 66), places(1200, 900));
         looksLikePrototype("1200x900", 1200, 900);
     }
 
     @Test
     void eDlg5SmallWindows() throws IOException {
         assertEquals(rects(0, 16, 800, 18, 0, 38, 800, 26, 0, 66, 800, 40, 285, 0, 230, 40, 0, 118, 800, 262, 142, 0, 248, 262,
-                410, 0, 248, 262, 0, 392, 800, 77, 142, 0, 516, 83), places(800, 300));
-        assertEquals(rects(42, 0, 248, 262, 310, 0, 248, 262, 0, 470, 600, 83, 42, 0, 516, 83), places(600, 575).subList(5, 9));
-        assertEquals(rects(-124, 0, 248, 262, -124, 262, 248, 262, 0, 470, 0, 83, -258, 0, 516, 83), places(0, 575).subList(5, 9));
+                410, 0, 248, 262, 0, 392, 800, 77, 142, 0, 516, 83, 0, 479, 800, 66, 142, 0, 516, 66), places(800, 300));
+        assertEquals(rects(42, 0, 248, 262, 310, 0, 248, 262, 0, 470, 600, 83, 42, 0, 516, 83, 0, 563, 600, 66, 42, 0, 516, 66),
+                places(600, 651).subList(5, 11));
+        assertEquals(rects(-124, 0, 248, 262, -124, 262, 248, 262, 0, 470, 0, 83, -258, 0, 516, 83, 0, 563, 0, 66, -258, 0, 516, 66),
+                places(0, 651).subList(5, 11));
         looksLikePrototype("800x300", 800, 300);
-        looksLikePrototype("600x575", 600, 575);
-        looksLikePrototype("0x575", 0, 575);
+        looksLikePrototype("600x651", 600, 651);
+        looksLikePrototype("0x651", 0, 651);
         looksLikePrototype("1x1", 1, 1);
     }
 
@@ -186,7 +191,7 @@ class PickDialogTest {
     void eDlg6BlankPreferredSize() {
         PickDialog d = new PickDialog();
         Snap.blank(d.panel);
-        assertEquals(new Dimension(800, 535), d.panel.getPreferredSize());
+        assertEquals(new Dimension(800, 611), d.panel.getPreferredSize());
     }
 
     @Test
@@ -234,7 +239,7 @@ class PickDialogTest {
         PickDialog d = new PickDialog();
         Dimension wide = new Dimension(1000, 5);
         d.panel.add(new Box.Filler(wide, wide, wide));
-        assertEquals(new Dimension(1000, 580), d.panel.getPreferredSize());
+        assertEquals(new Dimension(1000, 656), d.panel.getPreferredSize());
         PickDialog narrow = new PickDialog();
         narrow.panel.remove(1);
         assertEquals(800, narrow.panel.getPreferredSize().width);
@@ -279,6 +284,32 @@ class PickDialogTest {
         name.setText("");
         name.replaceSelection("\uD83D\uDE00".repeat(11));
         assertEquals(List.of("\uD83D\uDE00".repeat(10), "10 / 10"), List.of(name.getText(), name.countText()));
+    }
+
+    @Test
+    void eDlg14HintAndButtons() {
+        PickDialog d = new PickDialog();
+        Snap.layOut(d.panel, 800, 651);
+        JPanel buttons = (JPanel) d.start.getParent();
+        JPanel choose = (JPanel) buttons.getParent();
+        BorderLayout border = (BorderLayout) choose.getLayout();
+        JLabel later = (JLabel) border.getLayoutComponent(BorderLayout.NORTH);
+        assertEquals(List.of(0, 6, false, new Dimension(516, 66), 516, d.panel.getComponent(11), buttons), List.of(border.getHgap(),
+                border.getVgap(), choose.isOpaque(), choose.getPreferredSize(), choose.getMaximumSize().width, choose.getParent(),
+                border.getLayoutComponent(BorderLayout.CENTER)));
+        assertEquals(List.of("예시는 나중에 '예시 지우기'로 한 번에 지울 수 있어요", SwingConstants.CENTER, new Insets(0, 6, 0, 6)),
+                List.of(later.getText(), later.getHorizontalAlignment(), later.getInsets()));
+        FlowLayout flow = (FlowLayout) buttons.getLayout();
+        assertEquals(List.of(FlowLayout.CENTER, 10, 0, false, List.of(d.examples, d.start)), List.of(flow.getAlignment(),
+                flow.getHgap(), flow.getVgap(), buttons.isOpaque(), List.of(buttons.getComponents())));
+        for (JButton b : List.of(d.examples, d.start)) {
+            assertEquals(List.of(Theme.bold(16), new Insets(12, 26, 13, 26)), List.of(b.getFont(), b.getInsets()));
+        }
+        assertEquals(List.of("예시로 둘러보기", "바로 시작", true, 18, 8), List.of(d.examples.getText(), d.start.getText(),
+                d.start.getClientProperty(RoundButtonUI.PRIMARY), d.start.getIcon().getIconWidth(), d.start.getIconTextGap()));
+        assertEquals(null, d.examples.getClientProperty(RoundButtonUI.PRIMARY));
+        assertEquals(rects(0, 0, 516, 15, 0, 21, 516, 45, 107, 0, 154, 45, 271, 0, 138, 45),
+                List.of(later.getBounds(), buttons.getBounds(), d.examples.getBounds(), d.start.getBounds()));
     }
 
     private static List<Object> state(Graphics2D g) {
