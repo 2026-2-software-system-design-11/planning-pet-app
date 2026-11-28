@@ -3,6 +3,7 @@ package planningpet.home.view;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -13,6 +14,7 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import planningpet.common.view.Snap;
@@ -193,5 +195,39 @@ class PetCardArtTest {
         assertEquals(List.of(SMILE, SMILE, SMILE), wrap("😀😀😀", 25));
         assertEquals(List.of("가", SMILE, SMILE), wrap("가 😀😀", 30));
         assertEquals(List.of("가나", SMILE), wrap("가나😀", 30));
+    }
+
+    /**
+     * TEN_EACH처럼 재되, 100000번 넘게 재면 예외를 던진다. 끝나지 않는 wrap을 멈추려는 것이다. Java 21은 도는 스레드를 멈출 수
+     * 없어 시간 제한만 두면 제한 뒤에도 빈 줄을 더하며 메모리를 먹는다(home.md S3k 2절).
+     */
+    private static FontMetrics counting() {
+        return new FontMetrics(new Font(Font.DIALOG, Font.PLAIN, 10)) {
+            private int calls;
+
+            @Override
+            public int stringWidth(String s) {
+                if (++calls > 100_000) {
+                    throw new IllegalStateException("100000번 넘게 재었다");
+                }
+                return 10 * s.length();
+            }
+        };
+    }
+
+    /** 끝나지 않으면 재기만 되풀이하다 counting의 예외가 난다. */
+    private static void endless(String text, int max) {
+        assertThrows(IllegalStateException.class,
+                () -> assertTimeoutPreemptively(Duration.ofSeconds(5), () -> PetCardArt.wrap(text, counting(), max)));
+    }
+
+    @Test
+    void eWrap6NarrowerThanOneLetter() {
+        endless("가", 5);
+        endless("가", 0);
+        endless("가", -5);
+        endless("가나", 9);
+        endless("가 나", 5);
+        assertThrows(IndexOutOfBoundsException.class, () -> wrap(" 가", -5));
     }
 }
