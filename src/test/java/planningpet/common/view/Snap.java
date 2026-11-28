@@ -8,7 +8,9 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import javax.imageio.ImageIO;
+import javax.swing.AbstractButton;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
 
 /**
  * 부품을 창 없이 w x h로 두고 (w+4) x (h+4) 그림에 그려, 프로토타입이 같은 방법으로 그린 기준 그림
@@ -34,9 +36,14 @@ public final class Snap {
 
     /** 창 없이는 배치가 돌지 않아 자식까지 배치한 뒤 기준 그림과 맞춘다(자식이 든 부품). */
     public static void assertLaidOutLooksLikePrototype(String name, JComponent c, int w, int h) throws IOException {
+        layOut(c, w, h);
+        assertLooksLikePrototype(name, c, w, h);
+    }
+
+    /** 부품을 w x h로 두고 창 없이 자식까지 배치한다. */
+    public static void layOut(Component c, int w, int h) {
         c.setSize(w, h);
         layOut(c);
-        assertLooksLikePrototype(name, c, w, h);
     }
 
     private static void layOut(Component c) {
@@ -44,6 +51,21 @@ public final class Snap {
             k.doLayout();
             for (Component child : k.getComponents()) {
                 layOut(child);
+            }
+        }
+    }
+
+    /** 운영체제마다 픽셀이 다른 글을 그리지 않도록 라벨과 버튼의 글을 자식까지 모두 비운다. */
+    public static void blank(Component c) {
+        if (c instanceof JLabel l) {
+            l.setText("");
+        }
+        if (c instanceof AbstractButton b) {
+            b.setText("");
+        }
+        if (c instanceof Container k) {
+            for (Component child : k.getComponents()) {
+                blank(child);
             }
         }
     }
