@@ -43,7 +43,7 @@ class PetPaintHead extends PetPaintWear {
 
     /**
      * 머리를 (x, y)에 rot도 기울여 그린다. 고양이는 귀 둘, 흰 머리와 위의 회색 얼룩(이마 가운데는 흰 무늬), 강아지는 크림색 머리와
-     * 늘어진 귀다. 아래 그림자, 하이라이트, 웃는 얼굴은 같이 그린다. 고양이 오른쪽 귀는 4.4초마다 한 번 까딱인다(t).
+     * 늘어진 귀다. 아래 그림자, 하이라이트, 웃는 얼굴, 입은 머리 장신구는 같이 그린다. 고양이 오른쪽 귀는 4.4초마다 한 번 까딱인다(t).
      */
     void head(double x, double y, double rot) {
         AffineTransform old = g.getTransform();
@@ -68,6 +68,7 @@ class PetPaintHead extends PetPaintWear {
             dogEar(1);
         }
         faceParts();
+        headWear();
         g.setTransform(old);
     }
 

@@ -6,11 +6,13 @@ import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
+import java.awt.geom.QuadCurve2D;
+import java.awt.geom.Rectangle2D;
 import java.util.Set;
 import planningpet.pet.model.PetKind;
 import planningpet.pet.model.WearId;
 
-/** PetArt 펫 그림의 장신구(D-51): 목걸이와 그 장식(docs/porting/pet-art.md 5절). 머리와 몸이 이것을 물려받아 입힌다. */
+/** PetArt 펫 그림의 장신구(D-51): 목걸이와 그 장식, 머리 장신구(docs/porting/pet-art.md 5절, 6절). 머리와 몸이 이것을 물려받아 입힌다. */
 abstract class PetPaintWear extends PetPaintBase {
     PetPaintWear(Graphics2D g, PetKind kind, Set<WearId> wear, double t) {
         super(g, kind, wear, t);
@@ -59,6 +61,73 @@ abstract class PetPaintWear extends PetPaintBase {
             }
         }
         g.setTransform(old);
+    }
+
+    /**
+     * 머리 장신구를 머리 좌표에 입은 것 모두 차례로 그린다: 두 눈의 안경, 오른쪽 머리 위 꽃 핀, 왼쪽 머리 위 리본 핀, 빨간 띠를 두른
+     * 밀짚모자, 꼭지가 달린 베레모, 빨간 보석이 박힌 왕관. 뒤의 것이 앞의 것을 덮는다.
+     */
+    void headWear() {
+        AffineTransform old = g.getTransform();
+        if (has(WearId.GLASSES)) {
+            for (int s : new int[] {-1, 1}) {
+                g.setColor(new Color(255, 255, 255, 60));
+                g.fill(ell(s * 40, -3, 23, 21));
+                stroke(ell(s * 40, -3, 23, 21), line * 0.8f, ink);
+            }
+            stroke(new QuadCurve2D.Double(-17, -6, 0, -14, 17, -6), line * 0.8f, ink);
+        }
+        if (has(WearId.FLOWER_PIN)) {
+            push(cat ? 56 : 54, cat ? -56 : -58, 0);
+            for (int i = 0; i < 5; i++) {
+                double a = i * Math.PI * 2 / 5 - Math.PI / 2;
+                filled(ell(Math.cos(a) * 12, Math.sin(a) * 12, 9, 9), PINK_LIGHT);
+            }
+            filled(ell(0, 0, 7, 7), GOLD);
+            g.setTransform(old);
+        }
+        if (has(WearId.RIBBON_PIN)) {
+            bow(cat ? -56 : -54, cat ? -58 : -60, 1.3, PINK);
+        }
+        if (has(WearId.STRAW_HAT)) {
+            push(0, -62, -4);
+            filled(ell(0, 0, 96, 22), STRAW);
+            Path2D dome = new Path2D.Double();
+            dome.moveTo(-50, 2);
+            dome.curveTo(-50, -58, 50, -58, 50, 2);
+            dome.quadTo(0, 12, -50, 2);
+            dome.closePath();
+            filled(dome, STRAW);
+            shadeIn(dome, ell(26, -18, 22, 30), STRAW_SHADE);
+            Path2D band = new Path2D.Double();
+            band.moveTo(-49, -10);
+            band.quadTo(0, 0, 49, -10);
+            tube(band, 11, RED);
+            redraw(dome);
+            g.setTransform(old);
+        }
+        if (has(WearId.BERET)) {
+            push(14, -70, 12);
+            Path2D b = new Path2D.Double();
+            b.moveTo(-74, 8);
+            b.curveTo(-80, -30, 70, -40, 76, 4);
+            b.quadTo(0, 22, -74, 8);
+            b.closePath();
+            filled(b, BERET);
+            shadeIn(b, ell(0, 14, 80, 10), new Color(0, 0, 0, 30));
+            redraw(b);
+            stroke(new Line2D.Double(0, -26, 2, -38), line * 1.2f, ink);
+            g.setTransform(old);
+        }
+        if (has(WearId.CROWN)) {
+            push(22, -78, 12);
+            Shape c = crown(0, 0, 70, 46);
+            filled(c, GOLD);
+            shadeIn(c, new Rectangle2D.Double(-40, 8, 80, 20), GOLD_SHADE);
+            redraw(c);
+            filled(ell(0, 6, 7, 7), RED);
+            g.setTransform(old);
+        }
     }
 
     /** 가운데가 (x, y)이고 k배인 리본: 양쪽 고리와 가운데 매듭을 c로 칠한다. */

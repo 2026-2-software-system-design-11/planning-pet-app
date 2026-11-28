@@ -58,7 +58,7 @@ class PetArtWearTest {
     }
 
     /** 160x160 그림의 (x, ground)에 크기 size로 그린다. 4.2절 기준 그림과 같은 배치다. */
-    private static BufferedImage one(PetKind kind, Set<WearId> wear, double x, double ground, double size) {
+    static BufferedImage one(PetKind kind, Set<WearId> wear, double x, double ground, double size) {
         BufferedImage img = new BufferedImage(160, 160, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = img.createGraphics();
         PetArt.drawAt(g, kind, wear, 0, 99, x, ground, size);
@@ -78,7 +78,7 @@ class PetArtWearTest {
     }
 
     /** 크기 140의 펫을 칸 148x148에 한 줄로 그린다. 칸 i는 wears와 ts의 i번째(모자라면 마지막) 묶음과 (t, since)다. */
-    private static BufferedImage row(PetKind kind, List<Set<WearId>> wears, double[]... ts) {
+    static BufferedImage row(PetKind kind, List<Set<WearId>> wears, double[]... ts) {
         int n = Math.max(wears.size(), ts.length);
         BufferedImage img = new BufferedImage(148 * n, 148, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = img.createGraphics();
