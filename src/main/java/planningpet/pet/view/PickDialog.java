@@ -10,8 +10,10 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 import planningpet.common.view.Icons;
 import planningpet.common.view.Theme;
 import planningpet.pet.model.PetKind;
@@ -22,6 +24,9 @@ import planningpet.pet.model.PetKind;
  * 가운데 한 줄로 둔다. 부품 종류, 글, 기본값은 05 그대로다.
  */
 public final class PickDialog {
+    /** 리본 아래 부제(05, 11-23 예시 글). */
+    static final String SUBTITLE = "선택한 친구와 함께 일정을 관리하고,\n계획을 실천하며 성장할 수 있어요!";
+
     public final PickCard cat = new PickCard("고양이", PetKind.CAT, true, "조용하고 편안한 성격으로\n언제나 곁에서 응원해요!");
     public final PickCard dog = new PickCard("강아지", PetKind.DOG, false, "활발하고 다정한 성격으로\n항상 힘이 되어줘요!");
     public final JPanel panel = new Backdrop();
@@ -36,6 +41,12 @@ public final class PickDialog {
         panel.add(Box.createVerticalGlue());
         panel.add(new Logo("플래닝펫", "Planning Pet"));
         panel.add(Box.createVerticalStrut(4));
+        JLabel sub = new JLabel("<html><div style='text-align:center'>" + SUBTITLE.replace("\n", "<br>") + "</div></html>",
+                SwingConstants.CENTER);
+        sub.setFont(Theme.font(16));
+        sub.setForeground(Theme.INK_SUB);
+        panel.add(center(sub));
+        panel.add(Box.createVerticalStrut(12));
         JPanel animals = clear(new FlowLayout(FlowLayout.CENTER, 20, 0));
         animals.add(cat);
         animals.add(dog);
@@ -48,6 +59,13 @@ public final class PickDialog {
         JPanel p = new JPanel(layout);
         p.setOpaque(false);
         p.setAlignmentX(0.5f);
+        return p;
+    }
+
+    private static JPanel center(JComponent c) {
+        JPanel p = clear(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        p.add(c);
+        p.setMaximumSize(new Dimension(Integer.MAX_VALUE, c.getPreferredSize().height));
         return p;
     }
 

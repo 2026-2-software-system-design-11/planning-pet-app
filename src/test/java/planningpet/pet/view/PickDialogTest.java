@@ -18,6 +18,7 @@ import javax.swing.BoxLayout;
 import javax.swing.DefaultButtonModel;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -82,7 +83,7 @@ class PickDialogTest {
         assertTrue(d.panel.isOpaque());
         assertEquals(BoxLayout.Y_AXIS, ((BoxLayout) d.panel.getLayout()).getAxis());
         assertEquals(new Insets(16, 0, 22, 0), d.panel.getInsets());
-        assertEquals(5, d.panel.getComponentCount());
+        assertEquals(7, d.panel.getComponentCount());
         JPanel row = (JPanel) d.cat.getParent();
         FlowLayout flow = (FlowLayout) row.getLayout();
         assertEquals(List.of(FlowLayout.CENTER, 20, 0), List.of(flow.getAlignment(), flow.getHgap(), flow.getVgap()));
@@ -106,8 +107,8 @@ class PickDialogTest {
 
     @Test
     void eDlg3DefaultSize() throws IOException {
-        assertEquals(new Dimension(800, 364), new PickDialog().panel.getPreferredSize());
-        looksLikePrototype("800x364", 800, 364);
+        assertEquals(new Dimension(800, 416), new PickDialog().panel.getPreferredSize());
+        looksLikePrototype("800x416", 800, 416);
     }
 
     @Test
@@ -121,10 +122,22 @@ class PickDialogTest {
     }
 
     @Test
+    void eDlg9Subtitle() {
+        JPanel line = (JPanel) new PickDialog().panel.getComponent(3);
+        JLabel sub = (JLabel) line.getComponent(0);
+        assertEquals(List.of("<html><div style='text-align:center'>선택한 친구와 함께 일정을 관리하고,<br>계획을 실천하며 성장할 수 있어요!"
+                + "</div></html>", Theme.font(16), Theme.INK_SUB, SwingConstants.CENTER, new Dimension(230, 40)),
+                List.of(sub.getText(), sub.getFont(), sub.getForeground(), sub.getHorizontalAlignment(), sub.getPreferredSize()));
+        FlowLayout flow = (FlowLayout) line.getLayout();
+        assertEquals(List.of(FlowLayout.CENTER, 0, 0, false, 0.5f, 40), List.of(flow.getAlignment(), flow.getHgap(),
+                flow.getVgap(), line.isOpaque(), line.getAlignmentX(), line.getMaximumSize().height));
+    }
+
+    @Test
     void eDlg10BackdropWidth() {
         PickDialog d = new PickDialog();
         Dimension wide = new Dimension(1000, 5);
         d.panel.add(new Box.Filler(wide, wide, wide));
-        assertEquals(new Dimension(1000, 369), d.panel.getPreferredSize());
+        assertEquals(new Dimension(1000, 421), d.panel.getPreferredSize());
     }
 }
