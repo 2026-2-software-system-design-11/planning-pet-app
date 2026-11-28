@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -258,6 +259,33 @@ class PetCardArtTest {
         Snap.assertLooksLikePrototype("bubble-" + name, d.img());
     }
 
+    /** 줄 line(위 y+8에서 17씩)의 글 자리에 INK 잉크가 있는지. 운영체제마다 다른 글자 픽셀 대신 줄이 있는지만 본다. */
+    private static boolean inked(Drawn d, int line) {
+        for (int y = d.box().y + 8 + 17 * line; y < d.box().y + 25 + 17 * line; y++) {
+            for (int x = d.box().x + 30; x < d.box().x + d.box().width - 4; x++) {
+                int p = d.img().getRGB(x, y);
+                int dist = Math.abs((p >> 16 & 255) - Theme.INK.getRed()) + Math.abs((p >> 8 & 255) - Theme.INK.getGreen())
+                        + Math.abs((p & 255) - Theme.INK.getBlue());
+                if (p >>> 24 == 255 && dist < 60) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    @Test
+    void eBub1Blank() throws IOException {
+        Font usual = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB).createGraphics().getFont();
+        for (String text : new String[] {"", "   "}) {
+            Drawn d = bubble(text, 152, 147, 192, 221, 360, 240);
+            assertNull(d.box());
+            assertFalse(d.cut());
+            assertEquals(usual, d.font());
+            Snap.assertLooksLikePrototype("bubble-blank", d.img());
+        }
+    }
+
     @Test
     void eBub2OneLine() throws IOException {
         int[][] cards = {{360, 240, 152, 147, 192, 221}, {300, 210, 128, 147, 156, 191}, {800, 500, 270, 227, 514, 481}};
@@ -265,9 +293,28 @@ class PetCardArtTest {
             Drawn d = bubble("잘했어! +10P", c[2], c[3], c[4], c[5], c[0], c[1]);
             assertEquals(new Rectangle(c[2], c[3], c[4], 33), d.box());
             assertFalse(d.cut());
+            assertTrue(inked(d, 0));
+            assertFalse(inked(d, 1));
             assertEquals(Theme.bold(13), d.font());
             assertEquals(Theme.INK, d.color());
             looks("one-" + c[0] + "x" + c[1], d);
         }
+    }
+
+    private static final String W2 = "가나다라마 바사아자차 카타파하거너";
+    private static final String W3 = W2 + " 저처커터퍼허고노도로";
+
+    @Test
+    void eBub3Lines() throws IOException {
+        Drawn two = bubble(W2, 152, 147, 192, 221, 360, 240);
+        assertEquals(new Rectangle(152, 147, 192, 50), two.box());
+        assertTrue(inked(two, 1));
+        assertFalse(inked(two, 2));
+        looks("two", two);
+        Drawn three = bubble(W3, 152, 147, 192, 221, 360, 240);
+        assertEquals(new Rectangle(152, 147, 192, 67), three.box());
+        assertTrue(inked(three, 2));
+        assertFalse(three.cut());
+        looks("three", three);
     }
 }
