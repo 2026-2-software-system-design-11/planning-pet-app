@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -341,8 +342,8 @@ public final class TaskRows extends JPanel implements Scrollable {
 
     /**
      * 할 일 한 줄. time이 ""이면 "시각 정하기", listDay는 이 줄이 보이는 목록의 날이다(D-65). 순서는 D-59, 아래에 가는 선, 끝낸 줄은
-     * 민트빛 바탕. rowDay가 있으면 일정관리 목록 줄이라 줄 앞에 그 날짜를 붙이고 시각 단추는
-     * 작은 시계 단추다(time은 쓰지 않는다, D-102, docs/porting/schedule.md S5a2). 홈 목록은 null이다.
+     * 민트빛 바탕. rowDay가 있으면 일정관리 목록 줄이라 줄 앞에 그 날짜를 붙이고 작은 시계
+     * 단추와 연필, 휴지통을 둘째 줄에 둔다(time은 쓰지 않는다, D-102, docs/porting/schedule.md S5a2). 홈 목록은 null이다.
      */
     JPanel row(Task t, String time, LocalDate rowDay, LocalDate listDay) {
         boolean withDate = rowDay != null;
@@ -361,9 +362,15 @@ public final class TaskRows extends JPanel implements Scrollable {
                 g.fillRect(6, getHeight() - 1, getWidth() - 12, 1);
                 g.dispose();
             }
+
+            @Override
+            public Dimension getMaximumSize() {
+                // 일정관리 목록 줄은 둘째 줄이 한 줄인지 두 줄인지(D-94)에 따라 높이가 바뀐다.
+                return withDate ? new Dimension(Integer.MAX_VALUE, getPreferredSize().height) : super.getMaximumSize();
+            }
         };
         row.setOpaque(false);
-        row.setBorder(BorderFactory.createEmptyBorder(5, 6, 6, 4));
+        row.setBorder(withDate ? BorderFactory.createEmptyBorder(3, 6, 3, 4) : BorderFactory.createEmptyBorder(5, 6, 6, 4));
         row.setAlignmentX(LEFT_ALIGNMENT);
         JCheckBox box = RoundCheck.style(new JCheckBox());
         box.setSelected(t.isDone());
@@ -387,9 +394,10 @@ public final class TaskRows extends JPanel implements Scrollable {
         minutes.setFont(Theme.font(13));
         minutes.setForeground(t.isDone() ? Theme.INK_DIM : Theme.INK_SUB);
         minutes.setPreferredSize(new Dimension(Math.max(34, minutes.getPreferredSize().width), 20));
-        CircleButton pencil = new CircleButton(Icons.Kind.PENCIL, 28, "수정", true);
+        int iconButton = withDate ? 26 : 28;
+        CircleButton pencil = new CircleButton(Icons.Kind.PENCIL, iconButton, "수정", true);
         pencil.addActionListener(e -> onEdit.accept(t));
-        CircleButton trash = new CircleButton(Icons.Kind.TRASH, 28, "삭제", true);
+        CircleButton trash = new CircleButton(Icons.Kind.TRASH, iconButton, "삭제", true);
         trash.addActionListener(e -> onDelete.accept(t));
         // D-94: 끝낸 줄과 지난 날 목록의 기간 할 일은 시각을 정하지 않는다.
         LocalDate today = data.today();
@@ -407,13 +415,23 @@ public final class TaskRows extends JPanel implements Scrollable {
         label.setToolTipText(tip);
         row.setToolTipText(tip);
         row.add(label, BorderLayout.CENTER);
-        row.add(middle(when, minutes, pencil, trash), BorderLayout.EAST);
         // D-94: 마감 글, 하려던 일, "오늘 마감"과 "마감"은 제목 아래 둘째 줄 왼쪽이다. 제목이 줄의 폭을 먼저 받는다.
         JLabel marks = marks(data.getBook().dueText(t), missedNote(t, today), dueTag(t, listDay, today), false);
-        if (marks != null) {
-            row.add(marks, BorderLayout.SOUTH);
+        if (withDate) {
+            // 일정관리 오른쪽 목록은 좁아서 걸리는 시간만 첫 줄 오른쪽이고 단추는 둘째 줄 오른쪽에 틈 없이 둔다(D-102).
+            row.add(middle(minutes), BorderLayout.EAST);
+            JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+            buttons.add(when);
+            buttons.add(pencil);
+            buttons.add(trash);
+            row.add(SecondLine.of(marks, buttons), BorderLayout.SOUTH);
+        } else {
+            row.add(middle(when, minutes, pencil, trash), BorderLayout.EAST);
+            if (marks != null) {
+                row.add(marks, BorderLayout.SOUTH);
+            }
+            row.setMaximumSize(new Dimension(Integer.MAX_VALUE, marks == null ? 44 : 62));
         }
-        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, marks == null ? 44 : 62));
         // 줄과 제목 칸을 오른쪽 버튼으로 누르면 수정, 삭제 메뉴다(05 홈 "할 일 고치기와 지우기", docs/porting/task-rows.md S3y).
         // 운영체제마다 누를 때나 뗄 때 팝업 깃발이 서서 둘 다 본다. 빨리 두 번 누르면 수정이다.
         MouseAdapter mouse = new MouseAdapter() {
