@@ -47,6 +47,7 @@
 | S2d | 펫 목걸이 | `PetArt.drawAt`, `drawFace`의 장신구 인자(`WearId`), `PetPaintWear`의 목걸이 넷(#409) | 없음(D-51, [디자인 시스템](design-system.md) 10절) | [docs/porting/pet-art.md](porting/pet-art.md) |
 | S2e | 고르기 창 그림 도구 | `PickScene`(하늘 언덕 바탕, 리본, 덤불, 데이지, 별, #416) | 없음([디자인 시스템](design-system.md) 10절) | [docs/porting/pick.md](porting/pick.md) |
 | S2f | 입력 도우미와 아이콘 셋 | `common.view`의 `Ui`(`hint`, `limit`), `Icons`의 `PENCIL`, `CHECK`, `SPARK`(#417) | 06 읽는 법의 글자 수(이름 10자) | [docs/porting/pick.md](porting/pick.md) |
+| S2g | 둥근 입력칸 | `common.view`의 `RoundField`(알약 칸, 왼쪽 아이콘, 흐린 예시 글, 칸 안 글자 수 `count`, `countText`, #421) | 06 읽는 법의 글자 수(이름 10자) | [docs/porting/pick.md](porting/pick.md) |
 | S2 | 반려동물 고르기 창 | `PickDialog`, `PetController.adopt`, `select`, `Main` 잇기(읽기, 못 읽음 창, 첫 실행 갈래, 창과 타이머 잇기) | 30번, 21번의 시작할 때 읽기 | [docs/porting/pick.md](porting/pick.md) |
 | S3 | 홈 목록 | `MainScreen`, `PetCard`, `CalendarPanel`, `HomeController`, `RewardController.complete`, `uncomplete` | 6번, 8번, 9번, 13번, 16번, 26번 | `docs/porting/home.md` |
 | S4 | 일정 입력 창 | `TaskDialog`, `TaskController.add`, `update`, `delete`, 고르는 칸 `ComboUI`와 그것을 거는 `Theme.install`의 줄([theme.md](porting/theme.md)) | 2~5번, 14번 | `docs/porting/task-dialog.md` |
