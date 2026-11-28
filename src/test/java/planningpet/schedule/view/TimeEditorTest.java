@@ -2,6 +2,7 @@ package planningpet.schedule.view;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static planningpet.schedule.model.Tasks.d;
@@ -12,12 +13,15 @@ import java.awt.Container;
 import java.awt.Insets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JLabel;
 import org.junit.jupiter.api.Test;
 import planningpet.common.view.Theme;
 import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Task;
+import planningpet.schedule.model.TaskDraft;
 
 /** 시각 고치기 창 내용. 번호는 docs/porting/schedule.md S5e 2절. 오늘은 11-18(수)이고 창은 띄우지 않는다. */
 class TimeEditorTest {
@@ -28,11 +32,18 @@ class TimeEditorTest {
         return (at == null ? task("보고서", placedOn) : task("보고서", placedOn).at(at)).period(d(16), d(22)).task();
     }
 
-    private static TimeEditor open(Task t, LocalDate day, LocalDateTime now) {
-        return new TimeEditor(t, day, now);
+    /** 저장 함수가 받은 값과 "닫음"을 차례로 적는다. */
+    private final List<Object> calls = new ArrayList<>();
+    /** 저장 함수가 돌려줄 값. */
+    private boolean answer = true;
+
+    private TimeEditor open(Task t, LocalDate day, LocalDateTime now) {
+        TimeEditor e = new TimeEditor(t, day, now, (x, v) -> calls.add(v) && answer);
+        e.close = () -> calls.add("닫음");
+        return e;
     }
 
-    private static TimeEditor open(Task t, LocalDate day) {
+    private TimeEditor open(Task t, LocalDate day) {
         return open(t, day, NOW);
     }
 
@@ -99,5 +110,45 @@ class TimeEditorTest {
         assertSame(e.save.getParent(), layout(buttons).getLayoutComponent(BorderLayout.EAST));
         assertEquals(List.of(e.cancel, e.save), List.of(e.save.getParent().getComponents()));
         assertEquals(List.of("시각 빼기", "취소", "저장"), List.of(e.clear.getText(), e.cancel.getText(), e.save.getText()));
+    }
+
+    @Test
+    void eTed5EndCheck() {
+        TimeEditor e = open(task("독서", d(18)).at("03:00").nextDay().minutes(60).task(), d(18));
+        assertNull(e.check());
+        e.minutes.setValue(65);
+        assertEquals("다음 날 04:00까지 끝나야 해요", e.check());
+        e.start.setValue("23:30");
+        assertNull(e.check());
+    }
+
+    @Test
+    void eTed6SaveAndCancel() {
+        TimeEditor e = open(task("독서", d(18)).at("03:30").nextDay().minutes(60).task(), d(18));
+        e.save.doClick();
+        assertEquals(List.of(TaskDraft.END_PROBLEM, List.of()), List.of(e.error.getText(), calls));
+        e.start.setValue("03:00(다음 날)");
+        answer = false;
+        e.save.doClick();
+        assertEquals(List.of(e.draft()), calls);
+        answer = true;
+        e.save.doClick();
+        assertEquals(List.of(e.draft(), e.draft(), "닫음"), calls);
+        calls.clear();
+        e.cancel.doClick();
+        assertEquals(List.of("닫음"), calls);
+    }
+
+    @Test
+    void eTed7SavedDateAndDue() {
+        TaskDraft run = open(task("운동", d(20)).at("10:00").task(), d(20)).draft();
+        assertEquals(List.of(d(20), LocalTime.of(10, 0), false, true), List.of(run.date(), run.startTime(), run.nextDay(), run.timeOnly()));
+        // 기간 할 일은 창을 연 날로 옮기고 마감 칸은 비운다. 지난 날 줄에서 연 창은 오늘 11-18로 연다.
+        TimeEditor p = open(report(d(16), null), d(19));
+        p.start.setValue("01:30(다음 날)");
+        TaskDraft v = p.draft();
+        assertEquals(List.of(d(19), LocalTime.of(1, 30), true, 30), List.of(v.date(), v.startTime(), v.nextDay(), v.durationMinutes()));
+        assertNull(v.dueDate());
+        assertEquals(d(18), open(report(d(16), null), d(18)).draft().date());
     }
 }
