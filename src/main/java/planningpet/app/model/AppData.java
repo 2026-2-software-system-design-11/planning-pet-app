@@ -112,6 +112,8 @@ public final class AppData {
 
     /** 펫을 넣는다. 종류마다 하나인지는 06 30번이 본다. */
     public void addPet(PetState pet) { pets.add(pet); }
+    /** 펫을 모두 뺀다. 06 30번 choose가 프로토타입처럼 목록을 새 펫 하나로 바꿀 때 쓴다(docs/porting/pet-controller.md). */
+    public void clearPets() { pets.clear(); }
     public void setActiveKind(PetKind kind) { activeKind = kind; }
 
     /** 그 종류의 펫. 없으면 null. */
