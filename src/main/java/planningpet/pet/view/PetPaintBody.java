@@ -7,6 +7,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.QuadCurve2D;
+import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 import java.util.Set;
 import planningpet.pet.model.PetKind;
@@ -14,8 +15,8 @@ import planningpet.pet.model.Pose;
 import planningpet.pet.model.WearId;
 
 /**
- * PetArt 펫 그림의 몸: 앉은 자세들(D-50의 앉기, 밥 먹기, 노래)의 몸, 앞발, 꼬리와 그 위의 머리, 밥그릇과 음표
- * (docs/porting/pet-art.md 4절, docs/porting/character.md S8b). 좌표는 320x320 상자이고 발이 닿는 바닥은 y=300, 가운데는 x=160이다.
+ * PetArt 펫 그림의 몸: 다섯 자세(D-50)의 몸, 앞발, 꼬리와 그 위의 머리, 밥그릇과 음표와 Zzz(docs/porting/pet-art.md 4절,
+ * docs/porting/character.md S8b, S8c). 좌표는 320x320 상자이고 발이 닿는 바닥은 y=300, 가운데는 x=160이다.
  */
 final class PetPaintBody extends PetPaintHead {
     final Pose pose;
@@ -36,6 +37,14 @@ final class PetPaintBody extends PetPaintHead {
             case EAT -> Face.EAT;
             case SING -> Face.SING;
         };
+    }
+
+    /** 자세대로 그린다. 자기는 누운 몸, 나머지는 앉은 몸이다. */
+    void paint() {
+        switch (pose) {
+            case SLEEP -> sleep();
+            default -> sit();
+        }
     }
 
     /**
@@ -154,6 +163,40 @@ final class PetPaintBody extends PetPaintHead {
             filled(ell(30, -48, 14, 13), DOG_FUR);
         }
         g.setTransform(old);
+    }
+
+    /**
+     * 자는 펫: 옆으로 엎드린 몸이 3.6초 주기로 숨쉬고, 누운 꼬리, 앞발 둘, 왼쪽에 기울인 잠든 머리와 오른쪽 위 Zzz.
+     * 목 장신구는 바닥(y=300) 아래를 잘라 그린다.
+     */
+    void sleep() {
+        AffineTransform base = g.getTransform();
+        double breathe = wave(t, 3.6, 1.0, 1.035, 0);
+        Path2D body = new Path2D.Double();
+        body.moveTo(80, 302);
+        body.curveTo(56, 262, 100, 196, 186, 196);
+        body.curveTo(256, 196, 292, 240, 286, 284);
+        body.quadTo(284, 302, 264, 302);
+        body.closePath();
+        g.translate(170, 302);
+        g.scale(1, breathe);
+        g.translate(-170, -302);
+        filled(body, fur);
+        if (cat) {
+            shadeIn(body, ell(226, 210, 62, 34), CAT_GREY);
+        }
+        shadeIn(body, ell(170, 304, 120, 14), furShade);
+        redraw(body);
+        g.setTransform(base);
+        lyingTail();
+        paw(150, 290, 0);
+        paw(104, 292, 0);
+        Shape clip = g.getClip();
+        g.clip(new Rectangle2D.Double(0, 0, 320, 300));
+        neckWear(116, 280, -6, 46);
+        g.setClip(clip);
+        head(112, 232, -6);
+        zzz();
     }
 
     /** 밥 먹는 펫 앞의 민트 밥그릇: 사료가 담긴 윗면, 사료 알 일곱, 그릇, 흰 빛, 테두리. 아래 끝(y=306)은 바닥보다 아래다. */

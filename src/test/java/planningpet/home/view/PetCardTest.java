@@ -143,14 +143,21 @@ class PetCardTest {
         return Arrays.stream(Snap.pixels(Snap.paint(card(d, new Bubble()), 360, 240))).anyMatch(p -> p == 0xFF9ED9C0);
     }
 
-    /** 저장된 자세로 그리고 그 자세의 높이로 강조선 자리를 잡는다(character.md S8b E-PCARD-6). 누운 그림은 S8c가 더한다. */
+    /** 360x240 카드에 Zzz 색(0x6C8EE0) 픽셀이 있는지. */
+    private static boolean zzz(AppData d) {
+        return Arrays.stream(Snap.pixels(Snap.paint(card(d, new Bubble()), 360, 240))).anyMatch(p -> p == 0xFF6C8EE0);
+    }
+
+    /** 저장된 자세로 그리고 그 자세의 높이로 강조선 자리를 잡는다(character.md S8b E-PCARD-6). 자기는 누운 그림에 Zzz다(S8c). */
     @Test
     void ePcard6SavedPose() {
         AppData d = data(PetKind.CAT, 0);
         Rectangle f = new Rectangle(2, 1, 356, 232);
         assertFalse(bowl(d));
+        assertFalse(zzz(d));
         d.activePet().setPose(Pose.SLEEP);
         assertEquals(0.4597, PetCardArt.petFill(d.activePet(), f), 0.00005);
+        assertTrue(zzz(d));
         d.activePet().setPose(Pose.EAT);
         assertEquals(0.7488, PetCardArt.petFill(d.activePet(), f), 0.00005);
         assertTrue(bowl(d));

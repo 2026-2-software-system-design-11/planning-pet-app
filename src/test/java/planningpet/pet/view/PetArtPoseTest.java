@@ -117,6 +117,23 @@ class PetArtPoseTest {
         assertEquals(List.of(209, 201, 208), List.of(pawTop(0), pawTop(0.4), pawTop(0.8)));
     }
 
+    /** 자는 펫의 목 장신구는 바닥 아래를 잘라 낸다. 잘라 내지 않은 스카프는 바닥 아래까지 내려오지만, 입혀 그려도 바닥 줄부터 아래는 픽셀이 같다. */
+    @Test
+    void ePose9SleepNeckClipped() {
+        BufferedImage alone = new BufferedImage(320, 340, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = alone.createGraphics();
+        new PetPaintBody(g, PetKind.CAT, Pose.SLEEP, Set.of(WearId.SCARF), 0).neckWear(116, 280, -6, 46);
+        g.dispose();
+        assertTrue(Integer.parseInt(PetArtTest.paintedBox(alone, 0, 300).split(" ")[3]) > 0);
+        for (PetKind kind : KINDS) {
+            int[] bare = Snap.pixels(draw(kind, Pose.SLEEP, Set.of(), 0));
+            for (WearId wear : new WearId[] {WearId.SCARF, WearId.CROWN_NECKLACE}) {
+                int[] worn = Snap.pixels(draw(kind, Pose.SLEEP, Set.of(wear), 0));
+                assertArrayEquals(Arrays.copyOfRange(bare, 320 * 300, bare.length), Arrays.copyOfRange(worn, 320 * 300, worn.length), kind + " " + wear);
+            }
+        }
+    }
+
     /** Z 셋만 320x320 그림에 상자 좌표 그대로 그린다. */
     private static BufferedImage zzz(double t) {
         BufferedImage img = new BufferedImage(320, 320, BufferedImage.TYPE_INT_ARGB);
