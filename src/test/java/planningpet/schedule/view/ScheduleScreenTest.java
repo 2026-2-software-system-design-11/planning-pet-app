@@ -1,18 +1,22 @@
 package planningpet.schedule.view;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static planningpet.schedule.model.Tasks.d;
+import static planningpet.schedule.model.Tasks.task;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Insets;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import javax.swing.AbstractButton;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -31,12 +35,19 @@ import planningpet.schedule.model.Task;
 class ScheduleScreenTest {
     private AppData data;
     private ScheduleScreen screen;
+    /** 함수 필드가 받은 것. */
+    private final List<String> heard = new ArrayList<>();
 
     /** now의 앱 데이터에 tasks를 둔 화면을 1000 x 600으로 배치하고 데이터 변경에 refresh를 건다. */
     private ScheduleScreen open(String now, Task... tasks) {
         data = Apps.data(now, tasks);
         RewardController reward = new RewardController(data, new AppController(data, new MemoryStore(), e -> { }));
         screen = new ScheduleScreen(data, reward, Apps.clock(now));
+        screen.onEdit = t -> heard.add("수정 " + t.getTitle());
+        screen.onDelete = t -> heard.add("삭제 " + t.getTitle());
+        screen.onTime = (t, day, at) -> heard.add("시각 " + t.getTitle() + " " + day);
+        screen.openAdd = day -> heard.add("추가 " + day);
+        screen.openAutoPlace = start -> heard.add("자동 배치 " + start);
         data.onChange(screen::refresh);
         Snap.layOut(screen, 1000, 600);
         screen.refresh();
@@ -135,5 +146,54 @@ class ScheduleScreenTest {
         data.setWeekStart(DayOfWeek.MONDAY);
         screen.refresh();
         assertEquals(d(16), screen.weekStart());
+    }
+
+    @Test
+    void eSch7List() {
+        open(task("과제", d(18)).task(), task("빨래", d(24)).task(), task("수업", d(18)).at("09:00").task());
+        assertEquals(1, screen.untimed.getComponentCount());
+        screen.next.doClick();
+        assertEquals(1, screen.untimed.getComponentCount());
+        screen.next.doClick();
+        assertEquals("이번 주에 시각 없는 할 일이 없어요.", ((JLabel) screen.untimed.getComponent(0)).getText());
+    }
+
+    /** 목록 줄 둘째 줄의 단추(시계, 연필, 휴지통)와 "자동 배치"를 누른다. */
+    @Test
+    void eSch8Hooks() {
+        open(task("과제", d(18)).task());
+        JPanel line = (JPanel) ((JComponent) screen.untimed.getComponent(0)).getComponent(3);
+        JPanel buttons = (JPanel) line.getComponent(line.getComponentCount() - 1);
+        for (Component b : buttons.getComponents()) {
+            ((AbstractButton) b).doClick();
+        }
+        screen.autoPlace.doClick();
+        assertEquals(List.of("시각 과제 2026-11-18", "수정 과제", "삭제 과제", "자동 배치 2026-11-16"), heard);
+    }
+
+    /** 06 14번: 일정관리 "일정 추가"가 넘기는 날. */
+    @Test
+    void tDef2to4AddDay() {
+        open().add.doClick();
+        screen.next.doClick();
+        screen.add.doClick();
+        screen.move(LocalDate.of(2026, 11, 9));
+        screen.add.doClick();
+        assertEquals(List.of("추가 2026-11-18", "추가 2026-11-23", "추가 2026-11-09"), heard);
+    }
+
+    @Test
+    void tDef15SundayAddDay() {
+        open();
+        data.setWeekStart(DayOfWeek.SUNDAY);
+        screen.next.doClick();
+        screen.add.doClick();
+        assertEquals(List.of(d(22), List.of("추가 2026-11-22")), List.of(screen.weekStart(), heard));
+    }
+
+    @Test
+    void tAuto8Button() {
+        assertFalse(open(task("빨래", d(16)).done(d(16)).task()).autoPlace.isEnabled());
+        assertTrue(open(task("과제", d(19)).task()).autoPlace.isEnabled());
     }
 }

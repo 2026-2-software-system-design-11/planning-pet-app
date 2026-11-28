@@ -48,6 +48,7 @@ import planningpet.reward.controller.RewardController;
 import planningpet.schedule.model.DayPlan;
 import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Task;
+import planningpet.schedule.model.WeekRow;
 
 /** 할 일 줄 목록(07). 홈의 그날 목록과 일정관리 오른쪽 목록이 같이 쓴다. 옮기는 몫은 docs/porting/task-rows.md. */
 public final class TaskRows extends JPanel implements Scrollable {
@@ -149,6 +150,17 @@ public final class TaskRows extends JPanel implements Scrollable {
                 done.forEach(t -> add(row(t, t.onTimetable(data.today()) ? data.getBook().timeText(t) : "", null, plan.date())));
             }
         }
+        revalidate();
+        repaint();
+    }
+
+    /** 일정관리 목록(06 7번): 줄마다 그 줄의 날을 줄 앞 날짜와 목록의 날로 넘긴다. 줄이 없으면 흐린 안내다(05 일정관리). */
+    public void show(List<WeekRow> rows) {
+        removeAll();
+        if (rows.isEmpty()) {
+            add(Ui.hint("이번 주에 시각 없는 할 일이 없어요."));
+        }
+        rows.forEach(r -> add(row(r.task(), null, r.day(), r.day())));
         revalidate();
         repaint();
     }

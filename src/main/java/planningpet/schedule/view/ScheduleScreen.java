@@ -9,6 +9,7 @@ import java.awt.GridLayout;
 import java.awt.Point;
 import java.time.Clock;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.function.Consumer;
 import javax.swing.BorderFactory;
 import javax.swing.Icon;
@@ -23,6 +24,9 @@ import planningpet.common.view.Card;
 import planningpet.common.view.Theme;
 import planningpet.common.view.Ui;
 import planningpet.reward.controller.RewardController;
+import planningpet.schedule.model.AutoPlacer;
+import planningpet.schedule.model.DefaultDates;
+import planningpet.schedule.model.Screen;
 import planningpet.schedule.model.Task;
 
 /**
@@ -51,6 +55,10 @@ public final class ScheduleScreen extends JPanel {
     public Consumer<Task> onEdit = t -> { };
     public Consumer<Task> onDelete = t -> { };
     public TaskRows.TimeOpener onTime = (t, day, at) -> { };
+    /** "일정 추가"를 누르면 06 14번의 날을 받는다. 일정 입력 창은 S5f가 넣는다. */
+    public Consumer<LocalDate> openAdd = day -> { };
+    /** "자동 배치"를 누르면 보이는 주의 첫날을 받는다. 결과 창은 S6이 넣는다. */
+    public Consumer<LocalDate> openAutoPlace = start -> { };
     /** 주를 옮긴 뒤 다시 그린다. Main이 앱 창의 redraw를 넣는다(Theme.clear까지 돈다). */
     public Runnable redraw = this::refresh;
 
@@ -66,6 +74,8 @@ public final class ScheduleScreen extends JPanel {
         prev.addActionListener(e -> move(start.minusWeeks(1)));
         next.addActionListener(e -> move(start.plusWeeks(1)));
         today.addActionListener(e -> move(thisWeekStart()));
+        autoPlace.addActionListener(e -> openAutoPlace.accept(start));
+        add.addActionListener(e -> openAdd.accept(DefaultDates.forAdd(Screen.SCHEDULE, null, start, data.today())));
         JPanel bar = new JPanel(new BorderLayout());
         bar.add(Ui.flow(prev, range, next, today), BorderLayout.WEST);
         bar.add(Ui.flow(autoPlace, add), BorderLayout.EAST);
@@ -133,7 +143,7 @@ public final class ScheduleScreen extends JPanel {
         redraw.run();
     }
 
-    /** 기간 글, 요일 머리, "오늘" 단추, 시간표를 보이는 주로 다시 그린다. */
+    /** 기간 글, 요일 머리, "오늘"과 "자동 배치" 단추, 오른쪽 목록, 시간표를 보이는 주로 다시 그린다. */
     public void refresh() {
         // D-91: 한 주 시작을 바꾸면 보던 주의 첫날이 든 새 주로 바꾼다.
         start = Rules.weekStart(start, data.getWeekStart());
@@ -155,6 +165,8 @@ public final class ScheduleScreen extends JPanel {
             }
             header.add(label);
         }
+        untimed.show(data.getBook().untimedOfWeek(start));
+        autoPlace.setEnabled(AutoPlacer.place(data.getBook(), start, LocalDateTime.now(clock)).count() > 0);
         table.repaint();
         header.revalidate();
     }
