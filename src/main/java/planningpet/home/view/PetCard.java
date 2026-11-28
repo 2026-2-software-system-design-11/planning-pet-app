@@ -8,6 +8,7 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.geom.RoundRectangle2D;
 import javax.swing.JComponent;
+import javax.swing.Timer;
 import planningpet.app.model.AppData;
 import planningpet.common.view.Card;
 import planningpet.common.view.Theme;
@@ -18,6 +19,11 @@ import planningpet.common.view.Theme;
  */
 public final class PetCard extends JComponent {
     private final AppData data;
+    /** 펫 숨쉬기 시계. 처음 화면에 붙을 때 만들고 붙어 보이는 동안 40밀리초마다 펫 자리를 다시 그린다. */
+    Timer clock;
+    /** 시계를 만든 때(System.nanoTime 값)와 그 뒤 지난 초(PetArt의 움직임 시각). 창 없이 그릴 때는 0이다. */
+    long start;
+    double t;
 
     /** 고른 펫을 그리고 데이터 변경 알림마다 다시 그린다. 메인 창은 펫을 고른 뒤 열려 고른 펫이 늘 있다(S3m). */
     public PetCard(AppData data) {
@@ -33,6 +39,35 @@ public final class PetCard extends JComponent {
     @Override
     public Dimension getMinimumSize() {
         return new Dimension(300, 210);
+    }
+
+    @Override
+    public void addNotify() {
+        super.addNotify();
+        if (clock == null) {
+            start = System.nanoTime();
+            clock = new Timer(40, e -> {
+                if (isShowing()) {
+                    tick(System.nanoTime());
+                    Rectangle f = frame();
+                    repaint(f.x, f.y, PetCardArt.petWidth(f) + 24, f.height);
+                }
+            });
+        }
+        clock.start();
+    }
+
+    @Override
+    public void removeNotify() {
+        if (clock != null) {
+            clock.stop();
+        }
+        super.removeNotify();
+    }
+
+    /** now(System.nanoTime 값) 때의 움직임 시각을 센다. */
+    void tick(long now) {
+        t = (now - start) / 1e9;
     }
 
     /** 카드 틀(그림자 자리를 뺀 것). Card와 같다. */
@@ -52,7 +87,7 @@ public final class PetCard extends JComponent {
         Graphics2D s = (Graphics2D) g.create();
         s.clip(new RoundRectangle2D.Double(f.x, f.y, f.width, f.height, r, r));
         PetCardArt.scene(s, f, PetCardArt.ground(f));
-        PetCardArt.pet(s, data.activePet(), f, 0);
+        PetCardArt.pet(s, data.activePet(), f, t);
         s.dispose();
         g.setColor(Theme.CARD_EDGE);
         g.setStroke(new BasicStroke(1.2f));
