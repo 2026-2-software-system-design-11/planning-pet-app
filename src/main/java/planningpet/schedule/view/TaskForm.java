@@ -84,6 +84,14 @@ final class TaskForm {
     private Boolean timedBeforePeriod;
     /** D-101: 반복 때문에 앱이 끈 기간 할 일의 마감. 반복을 안 함으로 되돌리면 기간과 함께 되돌리고 null이 된다. */
     private LocalDate dueBeforeRepeat;
+    /** D-101: 사용자가 시작 시각을 만졌는지. 만지기 전에는 날짜의 기본 시작 시각을 따라간다. */
+    private boolean startTouched;
+    /** 시작 시각을 마지막으로 잰 날짜. 날짜가 바뀐 때만 다시 잰다. 처음 sync에서 잰다. */
+    private LocalDate startDay;
+    /** 지난 sync에서 시작 칸을 쓸 수 있었는지. 쓸 수 있게 되는 순간에도 다시 잰다(D-101). */
+    private boolean startOpen;
+    /** sync 안에서 칸 값을 바꿀 때 다시 sync하지 않는다. */
+    private boolean syncing;
     private int row;
 
     /** 추가 창의 칸. date는 06 14번 forAdd가 고른 날, weekStart는 마감 기본값과 요일 단추 차례의 한 주 시작(D-91, D-94). */
@@ -140,7 +148,13 @@ final class TaskForm {
             b.addActionListener(e -> sync());
         }
         repeat.addActionListener(e -> sync());
-        for (JSpinner s : new JSpinner[] {this.date, start, minutes}) {
+        start.addChangeListener(e -> {
+            if (!syncing) {
+                startTouched = true;
+            }
+            sync();
+        });
+        for (JSpinner s : new JSpinner[] {this.date, minutes}) {
             s.addChangeListener(e -> sync());
         }
         sync();
@@ -150,8 +164,13 @@ final class TaskForm {
      * 고정 일정이면 시작 시각이 켜진 채 비활성이고 기간은 꺼진 채 비활성이다(D-16, D-65). 반복과 기간은 함께 고를 수 없다(D-65). 기간을
      * 켜면 시작 시각이 꺼진 채 비활성이다(D-68). 시작 시각을 정하면 끝 시각 글과 다음 날 값의 실제 날과 시각을 적고(D-73, D-77),
      * 걸리는 시간이 30이면 30분 안내를 보인다(D-43). 고정 일정, 기간, 반복 때문에 앱이 바꾼 칸은 맥락이 돌아오면 되돌린다(D-101).
+     * 손대지 않은 시작 시각은 날짜를 바꾸거나 시작 칸이 열리는 그 순간의 시계로 다시 잰다(D-101).
      */
     void sync() {
+        if (syncing) {
+            return;
+        }
+        syncing = true;
         boolean isFixed = fixed.isSelected();
         // D-101: 고정 일정이라서 앱이 바꾼 칸은 할 일로 돌아오면 사용자가 둔 값으로 되돌린다.
         if (isFixed && timedBefore == null) {
@@ -205,10 +224,18 @@ final class TaskForm {
         }
         repeatEnd.setEnabled(repeating);
         repeatHint.setVisible(period.isSelected());
+        LocalDate day = Ui.dateOf(date);
+        boolean opened = start.isEnabled() && !startOpen;
+        startOpen = start.isEnabled();
+        if (!startTouched && (!day.equals(startDay) || opened)) {
+            start.setValue(Times.value(DefaultDates.defaultStart(day, clock.get())));
+        }
+        startDay = day;
         minutesHint.setVisible((int) minutes.getValue() == 30);
         Integer s = startTime();
         endLabel.setText(s == null ? "" : Times.endHint(s, (int) minutes.getValue()));
-        realTime.setText(s == null ? "" : Times.real(Ui.dateOf(date), s));
+        realTime.setText(s == null ? "" : Times.real(day, s));
+        syncing = false;
     }
 
     /** 칸에 쓴 값. 반복이 안 함이면 반복 방식과 끝은 null, 기간 안에 하기가 꺼져 있으면 마감은 null이다. 오늘은 앱의 오늘이다. */

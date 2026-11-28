@@ -347,4 +347,53 @@ class TaskFormTest {
         f.period.doClick();
         assertEquals(List.of(true, "10:00"), List.of(f.timed.isSelected(), f.start.getValue()));
     }
+
+    /** 11-17 14:12에 연 11-17 추가 창. */
+    private static TaskForm at1412() {
+        return new TaskForm(d(17), LocalDateTime.of(2026, 11, 17, 14, 12), DayOfWeek.MONDAY);
+    }
+
+    /** 앱 시계를 11-17 14:41로 옮긴다. */
+    private static TaskForm at1441(TaskForm f) {
+        f.clock = () -> LocalDateTime.of(2026, 11, 17, 14, 41);
+        return f;
+    }
+
+    @Test
+    void tDef23UntouchedStartFollowsDate() {
+        TaskForm f = at1412();
+        List<Object> got = new ArrayList<>(List.of(f.start.getValue()));
+        Ui.setDate(f.date, d(18));
+        got.add(f.start.getValue());
+        Ui.setDate(f.date, d(17));
+        got.add(f.start.getValue());
+        f.start.setValue("15:00");
+        Ui.setDate(f.date, d(18));
+        got.add(f.start.getValue());
+        assertEquals(List.of("14:15", "09:00", "14:15", "15:00"), got);
+    }
+
+    @Test
+    void tDef23StartTakesClockWhenDateChangesOrFieldOpens() {
+        TaskForm f = at1441(at1412());
+        f.title.setText("빨래");
+        f.minutes.setValue(45);
+        assertEquals("14:15", f.start.getValue());
+        Ui.setDate(f.date, d(18));
+        Ui.setDate(f.date, d(17));
+        assertEquals("14:45", f.start.getValue());
+        TaskForm timedLater = at1441(at1412());
+        timedLater.timed.doClick();
+        TaskForm timedFirst = at1412();
+        timedFirst.timed.doClick();
+        at1441(timedFirst).title.setText("운동");
+        TaskForm fixedLater = at1441(at1412());
+        fixedLater.fixed.doClick();
+        TaskForm periodOff = at1412();
+        periodOff.timed.doClick();
+        periodOff.period.doClick();
+        at1441(periodOff).period.doClick();
+        assertEquals(List.of("14:45", "14:15", "14:45", "14:45"), List.of(timedLater.start.getValue(),
+                timedFirst.start.getValue(), fixedLater.start.getValue(), periodOff.start.getValue()));
+    }
 }
