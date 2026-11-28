@@ -73,6 +73,7 @@
 | S3n | 펫 카드 이름 줄과 경험치 줄 | `PetCard`의 오른쪽 열 이름 줄(발자국, 이름, 작은 종류, "Lv. 3")과 경험치 줄(알약, 자식 `Bar`, 수), `PetKind`의 `label`(#466). 흰 작은 카드와 말풍선 놓기는 #469 | 10번을 그린다(05 홈 "펫 카드", D-48, D-81, [디자인 시스템](design-system.md) 10절 홈) | [docs/porting/home.md](porting/home.md) |
 | S3o | 펫 카드 흰 작은 카드와 말풍선 놓기 | `PetCard`의 흰 작은 카드("오늘 끝낸 일", 발자국과 수, 자식 칸 `Bar`, 기간 할 일 줄), 말풍선 놓기와 생성자의 `Bubble`(#469). 누르기와 상태는 #467, 화면 읽기와 툴팁은 #472 | 13번을 그린다(05 홈 "펫 카드", D-35, D-59, D-70, 16번의 펫 말, [디자인 시스템](design-system.md) 10절 홈) | [docs/porting/home.md](porting/home.md) |
 | S3p | 펫 카드 누르기와 상태 테두리 | `PetCard`의 생성자 누름 알림(`Runnable`), 마우스 왼쪽 단추로 누르고 떼기, Enter와 Space, 손 커서, 키보드 초점, 마우스 올림과 누름 테두리, 포커스 고리(#467). 화면 읽기와 툴팁은 #472 | 없음(05 홈 "펫 카드", 입력 항목 9, D-58) | [docs/porting/home.md](porting/home.md) |
+| S3q | 펫 카드 화면 읽기와 툴팁 | `PetCard`의 화면 읽기 단추 역할과 이름과 설명, 툴팁(줄인 말풍선이면 펫 말 전체, 아니면 "캐릭터 창 열기"), `common.view`의 `Ui.esc`(#472) | 없음(05 홈 "펫 카드", 입력 항목 9) | [docs/porting/home.md](porting/home.md) |
 | S3 | 홈 목록 | `MainScreen`, `PetCard`, `CalendarPanel`, `TaskRows`(홈 목록이 쓰므로 S5에서 당겨 온다). `RewardController.complete`, `uncomplete`는 S3a, `HomeController`는 S3b | 6번, 13번, 16번, 26번 | [docs/porting/home.md](porting/home.md) |
 | S4 | 일정 입력 창 | `TaskDialog`, `TaskController.add`, `update`, `delete`, 고르는 칸 `ComboUI`와 그것을 거는 `Theme.install`의 줄([theme.md](porting/theme.md)) | 2~5번, 14번 | `docs/porting/task-dialog.md` |
 | S5 | 일정관리 | `ScheduleScreen`, `TimetablePanel`, `TimeEditor`, `TaskController.clearTime` | 4번의 시각 고치기 창, 7번, 19번 | `docs/porting/schedule.md` |
