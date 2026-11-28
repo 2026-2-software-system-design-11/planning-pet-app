@@ -174,4 +174,15 @@ class PetArtTest {
             Snap.assertLooksLikePrototype("pet-dog-face-parts-" + (int) line, img);
         }
     }
+
+    @Test
+    void eDog4Head() throws IOException {
+        BufferedImage img = new BufferedImage(260, 240, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = img.createGraphics();
+        PetPaintBase.hints(g);
+        g.translate(130, 120);
+        new PetPaintHead(g, PetKind.DOG).head();
+        g.dispose();
+        Snap.assertLooksLikePrototype("pet-dog-head", img);
+    }
 }

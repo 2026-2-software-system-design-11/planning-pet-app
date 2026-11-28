@@ -10,14 +10,26 @@ import java.awt.geom.Path2D;
 import java.awt.geom.QuadCurve2D;
 import planningpet.pet.model.PetKind;
 
-/** PetArt 펫 그림의 머리: 고양이 머리 모양, 귀, 웃는 얼굴(docs/porting/pet-art.md). 좌표는 머리 가운데가 (0, 0)이고 얼굴 폭이 230이다. */
+/**
+ * PetArt 펫 그림의 머리: 고양이와 강아지의 머리 모양, 귀, 웃는 얼굴(docs/porting/pet-art.md). 좌표는 머리 가운데가 (0, 0)이고
+ * 얼굴 폭이 230이다.
+ */
 class PetPaintHead extends PetPaintBase {
     PetPaintHead(Graphics2D g, PetKind kind) {
         super(g, kind);
     }
 
-    static Shape headShape() {
+    Shape headShape() {
         Path2D p = new Path2D.Double();
+        if (!cat) {
+            p.moveTo(0, -78);
+            p.curveTo(64, -78, 94, -44, 94, -2);
+            p.curveTo(94, 44, 62, 70, 0, 70);
+            p.curveTo(-62, 70, -94, 44, -94, -2);
+            p.curveTo(-94, -44, -64, -78, 0, -78);
+            p.closePath();
+            return p;
+        }
         p.moveTo(0, -74);
         p.curveTo(62, -74, 98, -46, 98, -4);
         p.curveTo(98, 42, 66, 70, 0, 70);
@@ -27,12 +39,35 @@ class PetPaintHead extends PetPaintBase {
         return p;
     }
 
-    /** 머리를 (0, 0)에 그린다: 귀 둘, 흰 머리와 위의 회색 얼룩(이마 가운데는 흰 무늬), 아래 그림자, 하이라이트, 웃는 얼굴. */
+    /**
+     * 머리를 (0, 0)에 그린다. 고양이는 귀 둘, 흰 머리와 위의 회색 얼룩(이마 가운데는 흰 무늬), 강아지는 크림색 머리와 늘어진 귀다.
+     * 아래 그림자, 하이라이트, 웃는 얼굴은 같이 그린다.
+     */
     void head() {
         Shape head = headShape();
-        ear(-1);
-        ear(1);
-        filled(head, CAT_WHITE);
+        if (cat) {
+            ear(-1);
+            ear(1);
+        }
+        filled(head, fur);
+        if (cat) {
+            shadeIn(head, catCap(), CAT_GREY);
+            shadeIn(head, ell(0, 76, 92, 22), CAT_WHITE_SHADE);
+        } else {
+            shadeIn(head, ell(0, 78, 92, 22), DOG_FUR_SHADE);
+        }
+        g.setColor(new Color(255, 255, 255, 150));
+        g.fill(ell(-52, -46, 16, 8));
+        redraw(head);
+        if (!cat) {
+            dogEar(-1);
+            dogEar(1);
+        }
+        faceParts();
+    }
+
+    /** 고양이 머리 위 회색 얼룩. 이마 가운데는 흰 무늬가 아래로 넓어지며 갈라진다. */
+    private static Area catCap() {
         Path2D cap = new Path2D.Double();
         cap.moveTo(-110, -100);
         cap.lineTo(110, -100);
@@ -48,12 +83,7 @@ class PetPaintHead extends PetPaintBase {
         blaze.curveTo(-20, -30, -4, -50, 4, -80);
         blaze.closePath();
         grey.subtract(new Area(blaze));
-        shadeIn(head, grey, CAT_GREY);
-        shadeIn(head, ell(0, 76, 92, 22), CAT_WHITE_SHADE);
-        g.setColor(new Color(255, 255, 255, 150));
-        g.fill(ell(-52, -46, 16, 8));
-        redraw(head);
-        faceParts();
+        return grey;
     }
 
     /** 고양이 귀 하나. side는 왼쪽 -1, 오른쪽 1이다. 회색 귀에 분홍 안쪽이다. */
