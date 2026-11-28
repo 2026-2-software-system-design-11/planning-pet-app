@@ -1,6 +1,14 @@
 package planningpet.pet.view;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
+
+import java.awt.BasicStroke;
+import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import org.junit.jupiter.api.Test;
@@ -108,5 +116,43 @@ class PetArtSitTest {
         for (PetKind kind : KINDS) {
             Snap.assertLooksLikePrototype("pet-sit-since-" + name(kind), row(kind, false, 0, 0.1, 0.2, 0.3499, 0.35, 99, -1));
         }
+    }
+
+    /** 800x800 그림의 (400, 600)에 크기 size로 그려 칠한 픽셀의 상자를 (x, 바닥)에서 잰다. */
+    private static String box(PetKind kind, double size) {
+        BufferedImage img = new BufferedImage(800, 800, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = img.createGraphics();
+        PetArt.drawAt(g, kind, 0, 99, 400, 600, size);
+        g.dispose();
+        return PetArtTest.paintedBox(img, 400, 600);
+    }
+
+    @Test
+    void eSit5PaintedBox() {
+        assertEquals("-147 -282 125 7", box(PetKind.CAT, 320));
+        assertEquals("-64 -124 54 3", box(PetKind.CAT, 140));
+        assertEquals("-116 -247 110 5", box(PetKind.DOG, 320));
+        assertEquals("-51 -108 48 2", box(PetKind.DOG, 140));
+    }
+
+    @Test
+    void eSit6CallerStateKept() throws IOException {
+        BufferedImage img = new BufferedImage(200, 200, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = img.createGraphics();
+        g.setColor(Color.RED);
+        BasicStroke stroke = new BasicStroke(5);
+        g.setStroke(stroke);
+        g.translate(3, 4);
+        g.clipRect(10, 10, 100, 100);
+        AffineTransform before = g.getTransform();
+        Object aa = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+        PetArt.drawAt(g, PetKind.DOG, 1.3, 0.1, 80, 150, 140);
+        assertEquals(Color.RED, g.getColor());
+        assertSame(stroke, g.getStroke());
+        assertEquals(before, g.getTransform());
+        assertEquals(aa, g.getRenderingHint(RenderingHints.KEY_ANTIALIASING));
+        assertEquals(new Rectangle(10, 10, 100, 100), g.getClipBounds());
+        g.dispose();
+        Snap.assertLooksLikePrototype("pet-sit-clipped", img);
     }
 }

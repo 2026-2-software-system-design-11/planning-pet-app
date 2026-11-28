@@ -68,21 +68,26 @@ class PetArtTest {
         Snap.assertLooksLikePrototype("pet-face-neg48", img);
     }
 
-    /** 크기 230 얼굴을 (300, 300)에 그려 칠한 픽셀을 모두 담는 상자를 가운데에서 잰 "왼쪽 위 오른쪽 아래". */
-    private static String face230Box(PetKind kind) {
-        BufferedImage img = new BufferedImage(600, 600, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g = img.createGraphics();
-        PetArt.drawFace(g, kind, 300, 300, 230);
-        g.dispose();
-        int[] box = {600, 600, -1, -1};
-        for (int y = 0; y < 600; y++) {
-            for (int x = 0; x < 600; x++) {
+    /** 칠한(알파가 0이 아닌) 픽셀을 모두 담는 상자를 (ox, oy)에서 잰 "왼쪽 위 오른쪽 아래". */
+    static String paintedBox(BufferedImage img, int ox, int oy) {
+        int[] box = {img.getWidth(), img.getHeight(), -1, -1};
+        for (int y = 0; y < img.getHeight(); y++) {
+            for (int x = 0; x < img.getWidth(); x++) {
                 if (img.getRGB(x, y) >>> 24 != 0) {
                     box = new int[] {Math.min(box[0], x), Math.min(box[1], y), Math.max(box[2], x), Math.max(box[3], y)};
                 }
             }
         }
-        return (box[0] - 300) + " " + (box[1] - 300) + " " + (box[2] - 300) + " " + (box[3] - 300);
+        return (box[0] - ox) + " " + (box[1] - oy) + " " + (box[2] - ox) + " " + (box[3] - oy);
+    }
+
+    /** 크기 230 얼굴을 (300, 300)에 그려 칠한 픽셀의 상자를 가운데에서 잰다. */
+    private static String face230Box(PetKind kind) {
+        BufferedImage img = new BufferedImage(600, 600, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = img.createGraphics();
+        PetArt.drawFace(g, kind, 300, 300, 230);
+        g.dispose();
+        return paintedBox(img, 300, 300);
     }
 
     @Test
