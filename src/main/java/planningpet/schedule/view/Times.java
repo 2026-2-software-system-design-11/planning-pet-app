@@ -1,5 +1,6 @@
 package planningpet.schedule.view;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.stream.IntStream;
@@ -28,5 +29,27 @@ final class Times {
         boolean next = text.endsWith(NEXT_DAY);
         LocalTime t = LocalTime.parse(next ? text.substring(0, text.length() - NEXT_DAY.length()) : text);
         return (next ? Task.DAY : 0) + t.getHour() * 60 + t.getMinute();
+    }
+
+    /** 다음 날 값이면 칸 옆에 적는 실제 날과 시각 "(토 01:30)"(D-77). 아니면 빈 글. */
+    static String real(LocalDate date, int minute) {
+        if (minute < Task.DAY) {
+            return "";
+        }
+        LocalDate day = date.plusDays(1);
+        return "(" + "월화수목금토일".charAt(day.getDayOfWeek().getValue() - 1) + " " + Task.hhmm(minute) + ")";
+    }
+
+    /** 끝 시각 안내 "15:30에 끝나요", 자정을 넘으면 "01:00(다음 날)에 끝나요"(D-73, D-77). */
+    static String endHint(int start, int minutes) {
+        return endText(start + minutes) + "에 끝나요";
+    }
+
+    /** 끝 시각 글. 꼭 24시간이면 "24:00", 넘으면 "01:00(다음 날)"이다. 프로토타입 Task.endText다. */
+    static String endText(int minute) {
+        if (minute == Task.DAY) {
+            return "24:00";
+        }
+        return minute > Task.DAY ? Task.hhmm(minute) + NEXT_DAY : Task.hhmm(minute);
     }
 }
