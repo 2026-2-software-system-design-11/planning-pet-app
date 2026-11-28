@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Insets;
@@ -19,7 +20,9 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.BorderFactory;
+import javax.swing.AbstractButton;
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -27,6 +30,7 @@ import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
 import org.junit.jupiter.api.Test;
 import planningpet.app.model.AppData;
+import planningpet.common.view.RoundButtonUI;
 import planningpet.common.view.Snap;
 import planningpet.common.view.Theme;
 import planningpet.schedule.model.Category;
@@ -68,13 +72,15 @@ class TaskPlanTest {
         return rows;
     }
 
-    /** 자식마다 자리와 크기, 줄이면 제목과 알약 글, 라벨이면 [글]. */
+    /** 자식마다 자리와 크기, 줄이면 제목과 알약 글, 라벨이면 [글], 단추면 <글>과 자리. */
     private static String kids(JPanel rows) {
         List<String> out = new ArrayList<>();
         for (Component c : rows.getComponents()) {
             String at = " " + c.getX() + "," + c.getY() + " " + c.getWidth() + "x" + c.getHeight();
             if (c instanceof JLabel l) {
                 out.add("[" + l.getText() + "]" + at);
+            } else if (c instanceof AbstractButton b) {
+                out.add("<" + b.getText() + "> " + c.getX() + "," + c.getY());
             } else {
                 JPanel row = (JPanel) c;
                 Task t = (Task) ((JComponent) ((JPanel) row.getComponent(0)).getComponent(0)).getClientProperty(Task.class);
@@ -156,7 +162,24 @@ class TaskPlanTest {
         TaskRows rows = plan(day(18).atTime(10, 0), day(18),
                 task(1, Kind.TASK, "빨래", day(18), LocalTime.of(10, 0), 60, null, true),
                 task(2, Kind.TASK, "청소", day(18), null, 30, null, true));
-        assertEquals(0, rows.getComponentCount());
+        assertEquals("<끝낸 일 2개> 0,0, 빨래 10:00~11:00 0,33 480x39, 청소 시각 정하기 0,72 480x39", kids(rows));
+    }
+
+    @Test
+    void eDone1Group() {
+        Task job = new Task("지원서", 2, Kind.TASK, "지원서", day(16), null, 60, "", false, Category.OTHER, null, null, day(22),
+                day(16), true, day(18), 0, 0, null, null);
+        TaskRows rows = plan(day(18).atTime(10, 0), day(18),
+                task(1, Kind.TASK, "빨래", day(18), LocalTime.of(10, 0), 60, null, true), job);
+        assertEquals("<끝낸 일 2개> 0,0, 빨래 10:00~11:00 0,33 480x39, 지원서 시각 정하기 0,72 480x54", kids(rows));
+        JButton head = rows.doneHead;
+        assertEquals(Theme.bold(12), head.getFont());
+        assertEquals(Theme.INK_SUB, head.getForeground());
+        assertEquals(SwingConstants.LEFT, head.getHorizontalAlignment());
+        assertEquals(new Insets(14, 6, 4, 0), head.getInsets());
+        assertEquals(0f, head.getAlignmentX());
+        assertEquals(Cursor.HAND_CURSOR, head.getCursor().getType());
+        assertEquals(Boolean.TRUE, head.getClientProperty(RoundButtonUI.NAV));
     }
 
     @Test
@@ -194,9 +217,8 @@ class TaskPlanTest {
                 task(2, Kind.TASK, "D", day(16), LocalTime.of(15, 0), 30, null, false),
                 task(6, Kind.FIXED, "E", day(16), LocalTime.of(10, 30), 30, null, false),
                 task(5, Kind.TASK, "F", day(16), null, 30, null, true));
-        // 끝낸 F는 "끝낸 일" 묶음(#480) 전에는 빠진다(docs/porting/task-rows.md S3w).
         assertEquals("C 09:00~09:30 0,0 480x39, E 10:30~11:00 0,39 480x39, D 15:00~15:30 0,78 480x39, A 15:00~15:30 0,117 480x39, "
-                + "[시각 없는 할 일] 0,156 75x33, B 시각 정하기 0,189 480x39", kids(rows));
+                + "[시각 없는 할 일] 0,156 75x33, B 시각 정하기 0,189 480x39, <끝낸 일 1개> 0,228, F 시각 정하기 0,261 480x39", kids(rows));
     }
 
     @Test

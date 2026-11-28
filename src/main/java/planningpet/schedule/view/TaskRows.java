@@ -2,6 +2,7 @@ package planningpet.schedule.view;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
@@ -14,19 +15,23 @@ import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.Scrollable;
+import javax.swing.SwingConstants;
 import planningpet.app.model.AppData;
 import planningpet.common.view.CircleButton;
 import planningpet.common.view.Icons;
+import planningpet.common.view.RoundButtonUI;
 import planningpet.common.view.Theme;
 import planningpet.common.view.Ui;
 import planningpet.reward.controller.RewardController;
@@ -46,6 +51,8 @@ public final class TaskRows extends JPanel implements Scrollable {
     private final Consumer<Task> onEdit;
     private final Consumer<Task> onDelete;
     private final TimeOpener onTime;
+    /** "끝낸 일 {수}개" 묶음 제목. 묶음이 없으면 목록에 없다. */
+    public final JButton doneHead = new JButton();
 
     /**
      * 둥근 체크는 reward의 complete와 uncomplete를 부르고, 연필, 휴지통, 시각 알약은 누르면 onEdit, onDelete, onTime에 알린다. 그것이
@@ -58,11 +65,18 @@ public final class TaskRows extends JPanel implements Scrollable {
         this.onDelete = onDelete;
         this.onTime = onTime;
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+        doneHead.putClientProperty(RoundButtonUI.NAV, Boolean.TRUE);
+        doneHead.setFont(Theme.bold(12));
+        doneHead.setForeground(Theme.INK_SUB);
+        doneHead.setHorizontalAlignment(SwingConstants.LEFT);
+        doneHead.setBorder(BorderFactory.createEmptyBorder(14, 6, 4, 0));
+        doneHead.setAlignmentX(LEFT_ALIGNMENT);
+        doneHead.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     }
 
     /**
      * 홈 그날 목록(06 6번, D-31): 맨 위 "오늘 마감"인 기간 할 일, 시각 있는 일정을 시각과 함께, 그 아래 "시각 없는 할 일"(D-41), 맨
-     * 아래 "기간 안에 할 일"(D-70). 일정이 하나도 없는 날은 흐린 안내다(D-33). 끝낸 일은 빠진다. 체크한 자리에 머물기와 맨 아래 "끝낸 일" 묶음은 #480이다(docs/porting/task-rows.md S3w).
+     * 아래 "기간 안에 할 일"(D-70), 맨 아래 "끝낸 일"(D-88). 일정이 하나도 없는 날은 흐린 안내다(D-33, docs/porting/task-rows.md S3w, S3x).
      */
     public void showPlan(DayPlan plan) {
         removeAll();
@@ -77,6 +91,14 @@ public final class TaskRows extends JPanel implements Scrollable {
         plan.timed().stream().filter(t -> !t.isDone()).forEach(t -> add(row(t, data.getBook().timeText(t), plan.date())));
         group("시각 없는 할 일", plan.untimed().stream().filter(t -> !t.isDone()).toList(), plan.date());
         group("기간 안에 할 일", plan.period(), plan.date());
+        // D-88: 끝낸 일은 맨 아래 "끝낸 일" 묶음에 timed, untimed 순으로 모인다.
+        List<Task> done = new ArrayList<>(plan.timed().stream().filter(Task::isDone).toList());
+        done.addAll(plan.untimed().stream().filter(Task::isDone).toList());
+        if (!done.isEmpty()) {
+            doneHead.setText("끝낸 일 " + done.size() + "개");
+            add(doneHead);
+            done.forEach(t -> add(row(t, t.onTimetable(data.today()) ? data.getBook().timeText(t) : "", plan.date())));
+        }
         revalidate();
         repaint();
     }
