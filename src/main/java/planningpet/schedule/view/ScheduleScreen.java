@@ -8,6 +8,7 @@ import java.awt.Graphics;
 import java.awt.GridLayout;
 import java.awt.Point;
 import java.time.Clock;
+import java.time.LocalDate;
 import java.util.function.Consumer;
 import javax.swing.BorderFactory;
 import javax.swing.Icon;
@@ -17,6 +18,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
 import planningpet.app.model.AppData;
+import planningpet.common.model.Rules;
 import planningpet.common.view.Card;
 import planningpet.common.view.Theme;
 import planningpet.common.view.Ui;
@@ -42,10 +44,14 @@ public final class ScheduleScreen extends JPanel {
     final JButton add = new JButton("일정 추가");
     final TaskRows untimed;
     final JScrollPane scroll;
+    /** 보이는 주의 첫날(06 데이터 절의 한 주, D-91). */
+    private LocalDate start;
     /** 목록 줄의 연필, 휴지통, 시계 단추. 창은 S4와 S5f가 넣는다. 시간표 블록의 누르기는 S5c2가 잇는다. */
     public Consumer<Task> onEdit = t -> { };
     public Consumer<Task> onDelete = t -> { };
     public TaskRows.TimeOpener onTime = (t, day, at) -> { };
+    /** 주를 옮긴 뒤 다시 그린다. Main이 앱 창의 redraw를 넣는다(Theme.clear까지 돈다). */
+    public Runnable redraw = this::refresh;
 
     /** clock은 자동 배치 단추가 세는 지금이다. 데이터 변경 알림에 refresh를 거는 일은 화면을 넣는 쪽(Main)이 한다. */
     public ScheduleScreen(AppData data, RewardController reward, Clock clock) {
@@ -53,8 +59,11 @@ public final class ScheduleScreen extends JPanel {
         this.data = data;
         this.clock = clock;
         setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 12));
+        start = thisWeekStart();
         table = new TimetablePanel(data);
         untimed = new TaskRows(data, reward, t -> onEdit.accept(t), t -> onDelete.accept(t), (t, day, at) -> onTime.open(t, day, at));
+        prev.addActionListener(e -> move(start.minusWeeks(1)));
+        next.addActionListener(e -> move(start.plusWeeks(1)));
         JPanel bar = new JPanel(new BorderLayout());
         bar.add(Ui.flow(prev, range, next, today), BorderLayout.WEST);
         bar.add(Ui.flow(autoPlace, add), BorderLayout.EAST);
@@ -81,6 +90,16 @@ public final class ScheduleScreen extends JPanel {
         add(side, BorderLayout.EAST);
     }
 
+    /** 보이는 주의 첫날. */
+    public LocalDate weekStart() {
+        return start;
+    }
+
+    /** 오늘이 든 주의 첫날(설정의 한 주 시작, D-91). */
+    private LocalDate thisWeekStart() {
+        return Rules.weekStart(data.today(), data.getWeekStart());
+    }
+
     /** 색 뜻 하나: 12x12 색 칸과 12 크기 글. */
     private static JLabel swatch(Color color, String text) {
         JLabel l = new JLabel(text, new Icon() {
@@ -104,5 +123,20 @@ public final class ScheduleScreen extends JPanel {
         }, JLabel.LEFT);
         l.setFont(Theme.font(12));
         return l;
+    }
+
+    /** 보이는 주를 newStart로 옮기고 다시 그린다. */
+    public void move(LocalDate newStart) {
+        start = newStart;
+        redraw.run();
+    }
+
+    /** 기간 글과 시간표를 보이는 주로 다시 그린다. */
+    public void refresh() {
+        table.monday = start;
+        LocalDate last = start.plusDays(6);
+        range.setText("<html><b>" + start.getMonthValue() + "월 " + start.getDayOfMonth() + "일 ~ "
+                + last.getMonthValue() + "월 " + last.getDayOfMonth() + "일</b></html>");
+        table.repaint();
     }
 }
