@@ -4,11 +4,46 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 import org.junit.jupiter.api.Test;
+import planningpet.common.view.Snap;
 import planningpet.common.view.Theme;
 
-/** 홈 펫 카드의 그림 도구. 번호는 docs/porting/home.md S3j 2절. */
+/** 홈 펫 카드의 그림 도구. 번호는 docs/porting/home.md S3j 2절. 기준 그림은 proto/scene-*.png다. */
 class PetCardArtTest {
+    /** 프로토타입 PetCard처럼 안티에일리어싱과 품질 우선을 켜고, 틀보다 오른쪽과 아래로 4 큰 그림에 그린다. */
+    private static BufferedImage scene(Rectangle f, int ground) {
+        BufferedImage img = new BufferedImage(f.x + f.width + 4, f.y + f.height + 4, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = img.createGraphics();
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        PetCardArt.scene(g, f, ground);
+        g.dispose();
+        return img;
+    }
+
+    /** 카드 w x h의 PetCard 틀과 땅 선(틀 아래에서 높이의 1/11, 최소 14). */
+    private static BufferedImage card(int w, int h) {
+        Rectangle f = new Rectangle(2, 1, w - 4, h - 8);
+        return scene(f, f.y + f.height - Math.max(14, f.height / 11));
+    }
+
+    @Test
+    void eScene1CardSizes() throws IOException {
+        for (int[] s : new int[][] {{360, 240}, {300, 210}, {800, 500}}) {
+            Snap.assertLooksLikePrototype("scene-card-" + s[0] + "x" + s[1], card(s[0], s[1]));
+        }
+    }
+
+    @Test
+    void eScene2MovedFrame() throws IOException {
+        Snap.assertLooksLikePrototype("scene-moved", scene(new Rectangle(30, 20, 356, 232), 20 + 232 - 21));
+    }
+
     @Test
     void eMix1() {
         Color a = Theme.GRASS;
