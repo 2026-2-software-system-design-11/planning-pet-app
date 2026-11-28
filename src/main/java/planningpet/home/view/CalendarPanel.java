@@ -32,6 +32,11 @@ public final class CalendarPanel extends JPanel {
         add(grid, BorderLayout.CENTER);
     }
 
+    /** 고른 날. 처음은 오늘이다. */
+    public LocalDate selected() {
+        return selected;
+    }
+
     /** 한 주 시작, 고정 일정 설정, 일정이 바뀌면 부른다. 보이는 달의 칸을 다시 놓는다. 다른 달 자리는 빈 칸이다. */
     public void refresh() {
         grid.removeAll();
