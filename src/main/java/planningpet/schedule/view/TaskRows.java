@@ -214,6 +214,10 @@ public final class TaskRows extends JPanel {
         // D-35: 고정 일정도 체크한다. 체크 옆에 "고정" 꼬리표를 둔다.
         row.add(t.getKind() == Kind.FIXED ? middle(box, fixedTag()) : middle(box), BorderLayout.WEST);
         TitleLabel label = new TitleLabel(t);
+        // D-33: 메모가 있으면 제목이나 줄 빈 곳에 마우스를 올렸을 때 보인다.
+        String tip = memoTip(t);
+        label.setToolTipText(tip);
+        row.setToolTipText(tip);
         row.add(label, BorderLayout.CENTER);
         row.add(middle(when, minutes, pencil, trash), BorderLayout.EAST);
         // D-94: 마감 글, 하려던 일, "오늘 마감"과 "마감"은 제목 아래 둘째 줄 왼쪽이다. 제목이 줄의 폭을 먼저 받는다.
@@ -239,6 +243,15 @@ public final class TaskRows extends JPanel {
         // 줄과 줄 안 버튼 위에 있는 동안이다. 듣는이가 없는 걸리는 시간, 둘째 줄, "고정" 위의 마우스는 줄이 받는다.
         List.of(row, label, box, pencil, trash, when).forEach(c -> c.addMouseListener(hover));
         return row;
+    }
+
+    /** 메모가 있으면 마우스를 올렸을 때 200자까지 보인다(D-33). 줄바꿈은 줄바꿈으로 보인다. 공백뿐이면 null(docs/porting/task-rows.md S3aa). */
+    static String memoTip(Task t) {
+        if (t.getMemo().isBlank()) {
+            return null;
+        }
+        String m = t.getMemo().length() > 200 ? t.getMemo().substring(0, 200) + "…" : t.getMemo();
+        return "<html><div style='width:280px'>" + Ui.esc(m).replace("\n", "<br>") + "</div></html>";
     }
 
     /** 부품을 가로로 놓고 줄 높이의 가운데에 맞춘다. 둘째부터는 앞과 4 띄운다. 칸은 불투명이고 앱의 Theme.clear가 투명하게 한다. */
