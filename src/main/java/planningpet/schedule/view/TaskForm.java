@@ -43,8 +43,8 @@ import planningpet.schedule.model.TaskDraft;
 
 /**
  * 일정 입력 창의 칸(05 일정 입력 창 1~11번). 창 없이 만들 수 있다. 추가 창과 수정 창의 칸과 처음 값, 반복 사본의 반복 칸
- * showSeries, 칸끼리 켜고 끄기 sync(), 손댄 값 지키기와 날짜 따라가기, 칸에 쓴 값 draft(), 칸 아래 오류 글이 있다. 수정 창의 잠금은 뒤 몫이 더한다(docs/porting/task-dialog.md
- * S4f~S4j).
+ * showSeries, 칸끼리 켜고 끄기 sync(), 손댄 값 지키기와 날짜 따라가기, 칸에 쓴 값 draft(), 칸 아래 오류 글, 마감이 지난 일의 잠금이 있다
+ * (docs/porting/task-dialog.md S4f~S4k).
  * 쳐 넣은 글 읽기(C1)의 칸 아래 글 줄은 두지 않는다.
  */
 final class TaskForm {
@@ -60,6 +60,9 @@ final class TaskForm {
     /** 11번 기간 안에 하기와 마감(D-65). */
     final JCheckBox period = new JCheckBox("기간 안에 하기");
     final JLabel periodHint = Ui.hint("반복 일정은 기간을 정할 수 없어요");
+    /** 마감이 지나도 끝내지 못한 기간 할 일을 고칠 때 날짜, 기간, 마감 칸이 흐린 까닭(D-99). */
+    static final String LOCKED = "마감이 지난 일은 날짜를 바꿀 수 없어요";
+    final JLabel lockHint = Ui.hint(LOCKED);
     final JLabel dueLabel = new JLabel("마감일");
     final JSpinner due = new JSpinner(new SpinnerDateModel());
     final JCheckBox timed = new JCheckBox("정하기");
@@ -113,6 +116,8 @@ final class TaskForm {
     private final boolean editing;
     /** 반복 사본을 고치는 중(기간 칸은 꺼진 채 비활성, D-65). */
     private final boolean copy;
+    /** 마감이 지나도 끝내지 못한 기간 할 일을 고치는 중. 받지 않는 일이라 날짜와 마감을 바꾸지 않는다(D-99). */
+    private final boolean pastDue;
     /** sync 안에서 칸 값을 바꿀 때 다시 sync하지 않는다. */
     private boolean syncing;
     private int row;
@@ -132,6 +137,7 @@ final class TaskForm {
         this.weekStart = weekStart;
         editing = t != null;
         copy = t != null && t.getSeriesId() != null;
+        pastDue = t != null && t.pastDue(AppDay.of(now));
         // 프로토타입과 일부러 다름(E-FORM-13): setValue는 5분 단위가 아닌 값을 막으므로 칸을 저장해 둔 값으로 만든다(범위 밖도, E-UI-7).
         minutes = Ui.minutes(t == null ? 30 : t.getDurationMinutes());
         clock = () -> now;
@@ -162,7 +168,7 @@ final class TaskForm {
         line("", errors.get("제목"));
         line("유형", Ui.flow(category));
         dateLabel = line("날짜", this.date);
-        line("기간", Ui.flow(period, periodHint, dueLabel, due));
+        line("기간", Ui.flow(period, periodHint, lockHint, dueLabel, due));
         line("", errors.get("마감"));
         line("시작 시각", Ui.flow(timed, start, realTime));
         line("", errors.get("시작 시각"));
@@ -263,6 +269,7 @@ final class TaskForm {
 
     /**
      * 수정 창이면 종류와 반복 칸이 비활성이고 반복 끝이 날짜를 따라가지 않으며 30분 안내가 없다. 반복 사본은 기간이 꺼진 채 비활성이다.
+     * 마감이 지나도 끝내지 못한 기간 할 일이면 날짜, 기간, 마감 칸이 비활성이고 툴팁과 기간 옆 글이 그 까닭이다(D-99).
      * 고정 일정이면 시작 시각이 켜진 채 비활성이고 기간은 꺼진 채 비활성이다(D-16, D-65). 반복과 기간은 함께 고를 수 없다(D-65). 기간을
      * 켜면 시작 시각이 꺼진 채 비활성이다(D-68). 시작 시각을 정하면 끝 시각 글과 다음 날 값의 실제 날과 시각을 적고(D-73, D-77),
      * 걸리는 시간이 30이면 30분 안내를 보인다(D-43). 고정 일정, 기간, 반복 때문에 앱이 바꾼 칸은 맥락이 돌아오면 되돌린다(D-101).
@@ -319,8 +326,14 @@ final class TaskForm {
         timed.setEnabled(!isFixed && !period.isSelected());
         timed.setToolTipText(period.isSelected() ? "기간 할 일의 시각은 목록에서 정해요" : null);
         start.setEnabled(timed.isSelected());
-        period.setEnabled(periodAllowed);
-        period.setToolTipText(isFixed ? "기간은 할 일만 정할 수 있어요" : null);
+        period.setEnabled(periodAllowed && !pastDue);
+        period.setToolTipText(isFixed ? "기간은 할 일만 정할 수 있어요" : pastDue ? LOCKED : null);
+        lockHint.setVisible(pastDue);
+        for (JSpinner c : new JSpinner[] {date, due}) {
+            c.setEnabled(!pastDue);
+            c.setToolTipText(pastDue ? LOCKED : null);
+            ((JSpinner.DefaultEditor) c.getEditor()).getTextField().setToolTipText(pastDue ? LOCKED : null);
+        }
         periodHint.setVisible(repeating && !isFixed && !copy);
         dateLabel.setText(period.isSelected() ? "시작일" : "날짜");
         dueLabel.setVisible(period.isSelected());
@@ -383,7 +396,7 @@ final class TaskForm {
     }
 
     /**
-     * 칸에 쓴 값. 반복이 안 함이면 반복 방식과 끝은 null, 기간 안에 하기가 꺼져 있으면 마감은 null이다. 오늘은 앱의 오늘이고 editing은
+     * 칸에 쓴 값. 반복이 안 함이면 반복 방식과 끝은 null, 기간 안에 하기가 꺼져 있으면 마감은 null이다. 오늘은 today()이고 editing은
      * 수정 창이면 참이다.
      */
     TaskDraft draft() {
@@ -403,7 +416,12 @@ final class TaskForm {
         return new TaskDraft(fixed.isSelected() ? Kind.FIXED : Kind.TASK, title.getText(),
                 Category.values()[category.getSelectedIndex()], Ui.dateOf(date), period.isSelected() ? Ui.dateOf(due) : null,
                 s == null ? null : LocalTime.of(s % Task.DAY / 60, s % 60), (int) minutes.getValue(), memo.getText(), how,
-                how == null ? null : Ui.dateOf(repeatEnd), s != null && s >= Task.DAY, null, AppDay.of(clock.get()), editing);
+                how == null ? null : Ui.dateOf(repeatEnd), s != null && s >= Task.DAY, null, today(), editing);
+    }
+
+    /** 마감이 넘지 말아야 할 앱의 오늘(D-99). 마감이 지난 일을 고칠 때는 null이다. */
+    private LocalDate today() {
+        return pastDue ? null : AppDay.of(clock.get());
     }
 
     /** D-42: 반복 사본을 고칠 때 반복 칸을 그 반복의 방식인 채(비활성) 그 반복의 마지막 날짜 end와 함께 보인다. */
