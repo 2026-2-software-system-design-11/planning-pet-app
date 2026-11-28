@@ -86,22 +86,23 @@ final class PetCardArt {
         return new Color(c.getRed(), c.getGreen(), c.getBlue(), a);
     }
 
-    /** 띄어쓰기 단위로 max 폭에서 줄을 바꾼다. 띄어쓰기 없이 긴 글은 글자 단위로 자른다. */
+    /** 띄어쓰기 단위로 max 폭에서 줄을 바꾼다. 띄어쓰기 없이 긴 글은 글자(코드 포인트) 단위로 자른다(home.md S3k E-WRAP-5). */
     static List<String> wrap(String text, FontMetrics fm, int max) {
         List<String> lines = new ArrayList<>();
         StringBuilder line = new StringBuilder();
         for (String word : text.split(" ")) {
             while (fm.stringWidth(word) > max) {
-                int cut = word.length() - 1;
-                while (cut > 1 && fm.stringWidth(word.substring(0, cut)) > max) {
+                int cut = word.codePointCount(0, word.length()) - 1;
+                while (cut > 1 && fm.stringWidth(word.substring(0, word.offsetByCodePoints(0, cut))) > max) {
                     cut--;
                 }
+                int end = word.offsetByCodePoints(0, cut);
                 if (line.length() > 0) {
                     lines.add(line.toString());
                     line = new StringBuilder();
                 }
-                lines.add(word.substring(0, cut));
-                word = word.substring(cut);
+                lines.add(word.substring(0, end));
+                word = word.substring(end);
             }
             String next = line.length() == 0 ? word : line + " " + word;
             if (fm.stringWidth(next) > max && line.length() > 0) {

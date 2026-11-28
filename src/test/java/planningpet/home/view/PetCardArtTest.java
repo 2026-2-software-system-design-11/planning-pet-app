@@ -184,15 +184,14 @@ class PetCardArtTest {
     }
 
     private static final String SMILE = "😀";
-    private static final String FRONT = "\uD83D";
-    private static final String BACK = "\uDE00";
 
+    /** 프로토타입과 일부러 다름(06 읽는 법): 코드 포인트로 잘라 이모지는 통째로 다음 줄로 간다. */
     @Test
     void eWrap5EmojiAtCut() {
-        assertEquals(List.of("가" + FRONT, BACK + "나"), wrap("가😀나", 20));
-        assertEquals(List.of(SMILE + FRONT, BACK + SMILE), wrap("😀😀😀", 30));
+        assertEquals(List.of("가", SMILE, "나"), wrap("가😀나", 20));
+        assertEquals(List.of(SMILE, SMILE, SMILE), wrap("😀😀😀", 30));
         assertEquals(List.of(SMILE, SMILE, SMILE), wrap("😀😀😀", 25));
-        assertEquals(List.of("가", SMILE + FRONT, BACK), wrap("가 😀😀", 30));
-        assertEquals(List.of("가나" + FRONT, BACK), wrap("가나😀", 30));
+        assertEquals(List.of("가", SMILE, SMILE), wrap("가 😀😀", 30));
+        assertEquals(List.of("가나", SMILE), wrap("가나😀", 30));
     }
 }
