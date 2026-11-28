@@ -1,9 +1,11 @@
 package planningpet.app;
 
+import java.awt.Desktop;
 import java.awt.Frame;
 import java.awt.Window;
 import java.nio.file.Path;
 import java.time.Clock;
+import java.util.List;
 import java.util.Map;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -50,10 +52,10 @@ public final class Main {
             System.exit(0); // 06 24번: 실행 중인 앱에 신호를 보냈다.
             return;
         }
-        // --autostart로 창을 띄우지 않는 일은 S11c(#537)다. 지금은 창을 띄운다.
+        boolean autostart = List.of(args).contains("--autostart"); // 07 실행 모드: 컴퓨터 켤 때 실행
         Theme.install(); // 부품을 만들기 전에 건다(프로토타입 Main).
         Clock clock = Clock.systemDefaultZone();
-        SwingUtilities.invokeLater(() -> start(new SqliteDataStore(folder, clock), folder, clock, swing));
+        SwingUtilities.invokeLater(() -> start(new SqliteDataStore(folder, clock), folder, clock, swing, autostart));
     }
 
     /** 창을 띄우고 앱을 끝내는 일. 검사가 창 없이 바꿔 끼운다(docs/porting/main.md). */
@@ -64,8 +66,14 @@ public final class Main {
         /** 고르기 창을 띄운다. 닫기 버튼을 누르면 closed를 부른다. */
         void pick(PickDialog pick, Runnable closed);
 
-        /** 메인 창을 띄운다. */
-        void main(JComponent root);
+        /** 메인 창을 만들기만 한다. 띄우는 일은 front다. 닫기 버튼은 closing을 부른다(06 25번). */
+        void main(JComponent root, Runnable closing);
+
+        /** 메인 창을 숨긴다. */
+        void hide();
+
+        /** macOS Cmd+Q에 quit를 잇는다. 그 기능이 없는 운영체제(Windows)에서는 잇지 않는다. */
+        void quitKey(Runnable quit);
 
         /** 트레이 아이콘과 메뉴를 단다. 달았으면 true다(06 25번). */
         boolean tray(Tray tray);
@@ -101,10 +109,16 @@ public final class Main {
             dialog.setVisible(true);
         }
 
-        public void main(JComponent root) {
-            JFrame frame = AppWindow.frame(root);
-            front = frame;
-            frame.setVisible(true);
+        public void main(JComponent root, Runnable closing) {
+            front = AppWindow.frame(root, closing);
+        }
+
+        public void hide() { front.setVisible(false); }
+
+        public void quitKey(Runnable quit) {
+            if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.APP_QUIT_HANDLER)) {
+                Desktop.getDesktop().setQuitHandler((e, response) -> SwingUtilities.invokeLater(quit));
+            }
         }
 
         /** 신호를 받으면 Swing 스레드에서 부른다(02 UC-01 1a). */
@@ -129,8 +143,8 @@ public final class Main {
         public void exit(int code) { System.exit(code); }
     }
 
-    /** UC-01. 06 21번 load의 결과로 갈린다. 창은 shell이 띄운다. */
-    static void start(DataStore store, Path folder, Clock clock, Shell shell) {
+    /** UC-01. 06 21번 load의 결과로 갈린다. 창은 shell이 띄운다. autostart면 메인 창을 띄우지 않는다(07 실행 모드). */
+    static void start(DataStore store, Path folder, Clock clock, Shell shell, boolean autostart) {
         LoadResult result = store.load();
         switch (result.status()) {
             case UNREADABLE -> {
@@ -143,18 +157,19 @@ public final class Main {
                 AppData data = new AppData(clock);
                 AppController app = new AppController(data, store, shell::saveFailed);
                 PickDialog pick = new PickDialog();
-                pick.onStart(new PetController(data, app), data, () -> open(data, app, folder, clock, shell));
+                // 고르기 창을 마친 사람에게는 메인 창을 띄운다(docs/porting/tray.md).
+                pick.onStart(new PetController(data, app), data, () -> open(data, app, folder, clock, shell, false));
                 shell.pick(pick, () -> shell.exit(0)); // 프로토타입 Main처럼 0으로 끝낸다. 저장한 것이 없다.
             }
-            case LOADED -> open(result.data(), new AppController(result.data(), store, shell::saveFailed), folder, clock, shell);
+            case LOADED -> open(result.data(), new AppController(result.data(), store, shell::saveFailed), folder, clock, shell, autostart);
         }
     }
 
     /**
      * 메인 창과 30초 타이머. 차례는 프로토타입 create와 main과 같다. 화면의 refresh는 Theme.clear보다 먼저 건다(home.md S3ac,
-     * settings.md S10b). 설정은 이 컴퓨터의 운영체제 등록을 읽는다.
+     * settings.md S10b). 설정은 이 컴퓨터의 운영체제 등록을 읽는다. 트레이를 먼저 달아야 창 닫기가 트레이 지원을 안다.
      */
-    private static void open(AppData data, AppController app, Path folder, Clock clock, Shell shell) {
+    private static void open(AppData data, AppController app, Path folder, Clock clock, Shell shell, boolean autostart) {
         AppWindow window = new AppWindow(data, app);
         MainScreen home = new MainScreen(data, app, new HomeController(data, app), new RewardController(data, app));
         window.watch(home::refresh);
@@ -169,9 +184,13 @@ public final class Main {
         Theme.clear(window.root());
         Tray tray = new Tray(app, watcher, clock, window, home, shell::front);
         app.setQuit(() -> shell.exit(0)); // 끝내기는 오류가 아니다(docs/porting/tray.md).
-        shell.tray(tray);
-        shell.main(window.root());
-        app.onWindowShown();
+        shell.quitKey(app::quit);
+        boolean trayOn = shell.tray(tray);
+        shell.main(window.root(), () -> window.close(trayOn, shell::hide, tray::notice));
+        if (!autostart || !trayOn) { // 트레이가 없으면 창 없이 남지 않는다(페르소나 투표 전 잠정, docs/porting/tray.md).
+            shell.front();
+            app.onWindowShown();
+        }
         shell.signal(app::onWindowShown); // 고르기 창일 때의 신호는 15번을 부르지 않는다(E-ONE-5).
         shell.timer(tray);
     }

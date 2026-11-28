@@ -8,6 +8,8 @@ import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -25,6 +27,7 @@ import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
 import planningpet.app.controller.AppController;
+import planningpet.app.controller.CloseAction;
 import planningpet.app.model.AppData;
 import planningpet.common.view.Backdrop;
 import planningpet.common.view.Card;
@@ -49,6 +52,7 @@ public final class AppWindow {
     private static final Map<String, Icons.Kind> ICONS = Map.of("홈", Icons.Kind.HOME, "일정관리", Icons.Kind.CALENDAR,
             "나의 방", Icons.Kind.ROOM, "통계", Icons.Kind.CHART, "설정", Icons.Kind.GEAR);
     private final AppData data;
+    private final AppController app;
     private final JPanel nav = new JPanel(new GridLayout(0, 1, 0, 6));
     private final Card navWrap = new Card(new BorderLayout(), 22).filled(Theme.SIDE);
     private final Backdrop root = new Backdrop(new BorderLayout(Theme.GAP, 0), navWrap);
@@ -69,6 +73,7 @@ public final class AppWindow {
 
     public AppWindow(AppData data, AppController app) {
         this.data = data;
+        this.app = app;
         RewardController reward = new RewardController(data, app);
         navWrap.setBorder(BorderFactory.createEmptyBorder(18, 8, 12, 8));
         navWrap.add(logo(), BorderLayout.NORTH);
@@ -252,11 +257,30 @@ public final class AppWindow {
         return best < 0 ? text : "<html>" + text.substring(0, best) + "<br>" + text.substring(best + 1) + "</html>";
     }
 
-    /** 창(05 창 구조, D-47). 창을 띄우는 일은 Main이 한다. 25번(트레이에 남기)은 S11이라 그때까지는 닫으면 끝난다. */
-    public static JFrame frame(JComponent content) {
+    /** 06 25번 창 닫기(seq-uc19). 창의 닫기 버튼이 부른다. 트레이가 없으면 끝내고, 있으면 숨기고 처음이면 안내한다. */
+    public void close(boolean traySupported, Runnable hide, Runnable notice) {
+        CloseAction action = app.onClose(traySupported);
+        if (action == CloseAction.QUIT) {
+            app.quit();
+            return;
+        }
+        hide.run();
+        if (action == CloseAction.HIDE_WITH_NOTICE) {
+            notice.run();
+        }
+    }
+
+    /** 창(05 창 구조, D-47). 닫기 버튼은 closing을 부른다(06 25번). 창을 띄우는 일은 Main이 한다. */
+    public static JFrame frame(JComponent content, Runnable closing) {
         JFrame f = new JFrame(TITLE);
         f.setIconImage(icon());
-        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        f.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        f.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                closing.run();
+            }
+        });
         f.setContentPane(content);
         f.setMinimumSize(new Dimension(1000, 680));
         f.pack();

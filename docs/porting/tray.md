@@ -32,7 +32,7 @@ S11b(#524)와 S11c(#537)에서 07 안에서 정한 것과 그 까닭(창 닫기,
 - **트레이 메뉴는 `menu()`가 돌려주는 이름과 함수의 차례(열기, 끝내기)다.** 열기는 `front`와 15번, 끝내기는 `AppController.quit`다. `PopupMenu`, `MenuItem`, `TrayIcon`은 headless에서 `HeadlessException`이라 메뉴와 알림의 동작은 함수로 검사하고, 운영체제에 다는 `install`은 3절에 적는다.
 - **창 닫기는 `AppWindow.close(traySupported, hide, notice)`가 한다(seq-uc19).** `frame`은 닫기 버튼을 `DO_NOTHING_ON_CLOSE`로 두고 그 사건에 이 함수를 잇는다. `onClose`가 `QUIT`이면 `quit`, `HIDE`면 숨기기, `HIDE_WITH_NOTICE`면 숨긴 뒤 `Tray.notice`다. `traySupported`는 `SystemTray.isSupported()`가 참이고 아이콘을 실제로 달았는지다. 달지 못하면 숨긴 창을 열 길이 없다.
 - **`Main`은 `setQuit`에 종료 코드 0의 끝내기를 넣는다.** 끝내기는 오류가 아니다. S11c에서 macOS Cmd+Q는 `Desktop.setQuitHandler`로 받아 Swing 스레드에서 `AppController.quit`를 부른다(트레이 메뉴의 끝내기와 같다). 그 기능이 없는 운영체제(Windows)에서는 잇지 않는다.
-- **`--autostart`면 메인 창을 만들되 띄우지 않고 15번을 부르지 않는다(07 실행 모드, T-BRF-3).** 트레이의 열기나 두 번째 실행의 신호가 처음 창을 띄우고 15번을 부른다. 트레이를 달지 못했으면 보통 실행처럼 창을 띄우고 15번을 부른다. 06, 05가 정하지 않음, 페르소나 투표 전 잠정이다. 창 없이 남으면 앱을 끝낼 길이 없어 그대로 두는 길은 뺐고, 창을 띄우며 안내 글을 보이는 길과 함께 투표에 올렸다. 이 갈래는 `Main.open`의 조건 한 줄이다. 데이터가 없는 첫 실행은 `--autostart`여도 고르기 창을 띄운다(펫이 없어 메인 창과 트레이가 없다). 못 읽음 창도 같다.
+- **`--autostart`면 메인 창을 만들되 띄우지 않고 15번을 부르지 않는다(07 실행 모드, T-BRF-3).** 트레이의 열기나 두 번째 실행의 신호가 처음 창을 띄우고 15번을 부른다. 트레이를 달지 못했으면 보통 실행처럼 창을 띄우고 15번을 부른다. 06, 05가 정하지 않음, 페르소나 투표 전 잠정이다. 창 없이 남으면 앱을 끝낼 길이 없어 그대로 두는 길은 뺐고, 창을 띄우며 안내 글을 보이는 길과 함께 투표에 올렸다. 이 갈래는 `Main.open`의 조건 한 줄이다. 데이터가 없는 첫 실행은 `--autostart`여도 고르기 창을 띄운다(펫이 없어 메인 창과 트레이가 없다). 고르기를 마치면 메인 창도 보통 실행처럼 띄운다. 그 사람은 방금 창에서 시작을 눌렀고, 숨기면 누른 뒤 보이는 것이 없다. 못 읽음 창도 같다.
 - **`Main`의 `Shell`에 `tray`(아이콘 달기)와 `front`를 더한다(S11b).** S11c는 `hide`, `quitKey`(Cmd+Q 잇기)를 더하고 `main`이 창을 만들기만 하게 바꾼다. 그 뒤 메인 창을 여는 차례는 Cmd+Q 잇기, 트레이 달기, 창 만들기, 앞으로 가져오기와 15번, 신호 잇기, 타이머다. 트레이를 먼저 달아야 창 닫기가 트레이 지원을 안다.
 
 ## 1. 화면에서 따라 할 단계
@@ -92,4 +92,4 @@ S11b(#524)와 S11c(#537)에서 07 안에서 정한 것과 그 까닭(창 닫기,
 
 - `Tray.install`: `SystemTray.isSupported()`, `menu()`의 차례대로 `MenuItem`을 단 `PopupMenu`, `AppWindow.icon()`의 `TrayIcon`, 아이콘의 사건을 알림 누르기에 잇기, `SystemTray.add`, 알림을 `TrayIcon.displayMessage`로 바꾸기.
 - `Main`의 `Swing`: `tray`는 `install`, `front`는 내려 둔 창을 펴서 보이고 앞으로, `timer`는 `Tray.start`.
-- S11c(#537)에서: `AppWindow.frame`의 `DO_NOTHING_ON_CLOSE`와 닫기 사건에 받은 함수 잇기, `Swing`의 `hide`(창 숨기기)와 `quitKey`(`Desktop.setQuitHandler`).
+- S11c(#537)에서: `AppWindow.frame`의 `DO_NOTHING_ON_CLOSE`와 닫기 사건에 받은 함수 잇기, `Swing`의 `main`(창 만들기), `hide`(창 숨기기)와 `quitKey`(`Desktop.setQuitHandler`), `Main.main`이 인자에서 `--autostart`를 읽어 `start`에 넘기기. 이 컴퓨터에 실제 Cmd+Q 처리기를 다는 검사는 두지 않았다.
