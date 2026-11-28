@@ -5,20 +5,26 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.FontMetrics;
+import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.LayoutManager;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JRootPane;
 import javax.swing.SwingConstants;
 import planningpet.app.model.AppData;
 import planningpet.common.view.Card;
@@ -36,6 +42,8 @@ import planningpet.pet.model.PetKind;
  * 가운데 한 줄로 둔다. 부품 종류, 글, 기본값은 05 그대로다.
  */
 public final class PickDialog {
+    /** 창 제목. 05가 정하지 않아 프로토타입 ask의 제목이다(docs/porting/pick.md). */
+    static final String TITLE = "플래닝펫 시작";
     /** 리본 아래 부제(05, 11-23 예시 글). */
     static final String SUBTITLE = "선택한 친구와 함께 일정을 관리하고,\n계획을 실천하며 성장할 수 있어요!";
     /** 이름 칸 라벨(05, 11-23 예시 글). */
@@ -112,6 +120,36 @@ public final class PickDialog {
                 picked.run();
             }
         });
+    }
+
+    /**
+     * 창(프로토타입 ask): 부모 없는 모달 창, Enter는 바로 시작, 화면 가운데. 닫기 버튼을 누르면 closed를 부른다. 띄우는 일(setVisible)과
+     * 닫은 뒤 앱을 끝내는 일은 Main이 한다. headless 검사는 창을 만들 수 없어 into와 onClose를 검사한다.
+     */
+    public JDialog dialog(Runnable closed) {
+        JDialog d = new JDialog((Frame) null, TITLE, true);
+        into(d.getRootPane());
+        d.addWindowListener(onClose(closed));
+        d.pack();
+        d.setLocationRelativeTo(null);
+        close = d::dispose;
+        return d;
+    }
+
+    /** 창 내용과 기본 버튼을 넣는다. 이름 칸에는 리스너가 없어 칸의 Enter도 기본 버튼 바로 시작으로 간다(05 입력 항목 2). */
+    void into(JRootPane root) {
+        root.setContentPane(panel);
+        root.setDefaultButton(start);
+    }
+
+    /** 닫기 버튼(windowClosing)에서만 closed를 부른다. 바로 시작 뒤의 dispose는 windowClosed만 보낸다. */
+    static WindowListener onClose(Runnable closed) {
+        return new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                closed.run();
+            }
+        };
     }
 
     /** 이름 줄 카드: 연필, 라벨, 둥근 이름 칸, 칸 아래 안내(05). 테스트가 카드만 견주도록 패키지 안에 연다. */
