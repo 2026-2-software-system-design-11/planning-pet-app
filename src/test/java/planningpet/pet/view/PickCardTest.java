@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.awt.Dimension;
 import org.junit.jupiter.api.Test;
 import planningpet.common.view.Theme;
 import planningpet.pet.model.PetKind;
@@ -45,5 +46,19 @@ class PickCardTest {
         assertEquals("가  나 ", described("가\n\n나\n"));
         assertThrows(NullPointerException.class, () -> new PickCard("x", PetKind.CAT, false, null));
         assertEquals("", new PickCard(null, PetKind.CAT, false, "").getText());
+    }
+
+    @Test
+    void eCard3Size() {
+        PickCard c = new PickCard("", PetKind.CAT, false, "");
+        Dimension card = new Dimension(248, 262);
+        for (int i = 0; i < 2; i++) {
+            assertEquals(card, c.getPreferredSize());
+            assertEquals(card, c.getMinimumSize());
+            assertEquals(card, c.getMaximumSize());
+            c.setPreferredSize(new Dimension(100, 100));
+            c.setMinimumSize(new Dimension(10, 10));
+            c.setMaximumSize(new Dimension(1000, 1000));
+        }
     }
 }

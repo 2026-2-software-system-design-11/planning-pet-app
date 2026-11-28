@@ -1,5 +1,6 @@
 package planningpet.pet.view;
 
+import java.awt.Dimension;
 import javax.swing.JRadioButton;
 import planningpet.common.view.Theme;
 import planningpet.pet.model.PetKind;
@@ -10,6 +11,10 @@ import planningpet.pet.model.PetKind;
  * 고른 카드는 민트 테두리와 체크 배지, 펫 옆 강조선이다. 펫의 움직임은 #424가 더한다(docs/porting/pick.md).
  */
 public final class PickCard extends JRadioButton {
+    /** 1배 크기. 창 폭 800에 두 장과 사이 20이 들어간다. */
+    static final int W = 248;
+    static final int H = 262;
+
     public PickCard(String text, PetKind kind, boolean selected, String about) {
         super(text, selected);
         setOpaque(false);
@@ -19,5 +24,20 @@ public final class PickCard extends JRadioButton {
         setRolloverEnabled(true);
         setFont(Theme.heavy(22));
         getAccessibleContext().setAccessibleDescription(about.replace("\n", " "));
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+        return new Dimension(W, H);
+    }
+
+    @Override
+    public Dimension getMinimumSize() {
+        return getPreferredSize();
+    }
+
+    @Override
+    public Dimension getMaximumSize() {
+        return getPreferredSize();
     }
 }
