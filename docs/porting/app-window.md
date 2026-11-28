@@ -2,7 +2,7 @@
 
 [본 구현으로 옮기기](../porting.md) 1절 표의 단위 S1이다. 07의 `AppController.onWindowShown`과 `DayWatcher`를 `planningpet.app.controller`에, 30초 타이머 `Tray`를 `planningpet.app.view`에, `RewardController.attend`를 `planningpet.reward.controller`에 둔다. 기준은 06 11번, 15번, 23번과 그 검사 줄, 02 UC-01, UC-02, D-21, D-23, 프로토타입 `app/controller/AppController.windowShown`, `DayWatcher`, `reward/controller/RewardController`다.
 
-창 틀은 S1b~S1d, `Main` 잇기(읽기, 못 읽음 창, 첫 실행 갈래, 창과 타이머 잇기)는 S2가 한다(porting.md 1절 "창 틀은 부품 다음이다"). 그래서 이 단위가 끝나도 앱 창은 단위 0의 빈 창이고, 여기 옮긴 것은 S1d와 S2가 잇는다.
+창 틀은 S1b~S1d, `Main` 잇기(읽기, 못 읽음 창, 첫 실행 갈래, 창과 타이머 잇기)는 S2가 한다(porting.md 1절 "창 틀은 부품 다음이다"). 그래서 이 단위가 끝나도 앱 창은 단위 0의 빈 창이고, 여기 옮긴 것은 S1d와 S2(#434, [main.md](main.md))가 잇는다.
 
 PR 하나의 크기 한도(1절) 때문에 둘로 나눠 옮긴다. 창이 보일 때의 브리핑, 날 바뀜, 30초 타이머는 #389, 출석 controller `RewardController.attend`와 E-ATT-1~4는 #393이다.
 
@@ -17,7 +17,7 @@ PR 하나의 크기 한도(1절) 때문에 둘로 나눠 옮긴다. 창이 보�
 - **`DayWatcher`는 만들 때의 앱 날짜를 `lastDay`로 둔다.** `tick(now)`는 `AppDay.of(now)`가 `lastDay`와 다르면 `lastDay`를 바꾸고, 창이 보이면 `onWindowShown`을, 아니면 `AppData.changed()`를 부른다. `onWindowShown`도 알림을 보내므로 어느 쪽이든 날 바뀜 알림은 한 번이다(06 23번 "한 번 알린다", 프로토타입도 한 번). 07 seq-uc01은 `changed()`와 `onWindowShown`을 함께 그렸다. 날짜가 다르기만 하면 알리므로 시계를 되돌려도 알린다(E-DAYW-3, 프로토타입과 같다).
 - **고른 날짜 옮기기(T-DAYW-4)는 S3 달력이 한다.** 06 23번은 이것을 날 바뀜 알림에 따른 다시 그리기로 적었고, 07의 `DayWatcher`는 달력을 모른다. S3의 달력이 알림을 받아, 옛 오늘을 고르고 있었으면 새 오늘로 옮긴다.
 - **창 숨기기(T-DAYW-3)는 S11이 옮긴다.** 이 단위는 창을 한 번도 보이지 않은 상태로 같은 결과를 검사한다.
-- **30초 타이머는 `Tray`에 둔다(07 "30초 타이머는 `app.view.Tray`에 둔다").** 이번에는 `javax.swing.Timer` 30초가 시계의 지금으로 `DayWatcher.tick`만 부른다. 시계는 생성자로 받는다(06 읽는 법). 트레이 아이콘과 메뉴, `dueReminders`는 S11이 같은 클래스에 더하고, 타이머를 켜는 일은 S2의 `Main` 잇기가 한다.
+- **30초 타이머는 `Tray`에 둔다(07 "30초 타이머는 `app.view.Tray`에 둔다").** 이번에는 `javax.swing.Timer` 30초가 시계의 지금으로 `DayWatcher.tick`만 부른다. 시계는 생성자로 받는다(06 읽는 법). 트레이 아이콘과 메뉴, `dueReminders`는 S11이 같은 클래스에 더하고, 타이머를 켜는 일은 S2의 `Main` 잇기(#434, [main.md](main.md))가 한다.
 - **`RewardController`는 생성자로 `AppData`와 `AppController`를 받고 `Rewards`와 `PetTalk`를 만든다.** `attend`는 `change("출석", ...)` 안에서 `Rewards.attend(오늘)`이 true면 `ATTENDED`를 `say(line, null)`로 말한다(수가 없는 말, pet-talk.md). 이미 출석했으면 아무 말도 하지 않는다(프로토타입과 같다. 화면에서는 단추가 흐려 누를 수 없다, 05 메인 입력 항목 1). 저장에 실패하면 지금 `change`대로 포인트, 출석 기록, 말풍선이 되돌아간다(UC-02 3a). `complete`, `uncomplete`는 S3이 옮긴다.
 
 ## 1. 화면에서 따라 할 단계
