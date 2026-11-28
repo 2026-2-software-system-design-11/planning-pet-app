@@ -1,11 +1,14 @@
 package planningpet.common.view;
 
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextLayout;
 import java.util.function.ToIntFunction;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
@@ -13,7 +16,10 @@ import javax.swing.text.Document;
 import javax.swing.text.DocumentFilter;
 import javax.swing.text.JTextComponent;
 
-/** 화면 여러 곳이 같이 쓰는 작은 부품. 입력칸과 칸 글이 쓰는 것, 툴팁의 HTML 글자 바꾸기만 옮겼고, 나머지는 그것을 쓰는 화면의 단위가 더한다(docs/porting/pick.md, home.md). */
+/**
+ * 화면 여러 곳이 같이 쓰는 작은 부품. 입력칸과 칸 글이 쓰는 것, 툴팁의 HTML 글자 바꾸기, 일정 입력 창의 칸 도우미만 옮겼고, 나머지는 그것을
+ * 쓰는 화면의 단위가 더한다(docs/porting/pick.md, home.md, task-dialog.md).
+ */
 public final class Ui {
     private Ui() {
     }
@@ -80,5 +86,14 @@ public final class Ui {
             cut = cut.substring(0, cut.offsetByCodePoints(cut.length(), -1));
         }
         return cut.strip() + "…";
+    }
+
+    /** 한 줄에 왼쪽부터 사이 4로 놓는 판. 일정 입력 창의 칸 줄과 단추 줄이 쓴다. */
+    public static JPanel flow(JComponent... parts) {
+        JPanel p = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
+        for (JComponent c : parts) {
+            p.add(c);
+        }
+        return p;
     }
 }

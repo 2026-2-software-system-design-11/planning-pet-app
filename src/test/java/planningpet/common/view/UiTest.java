@@ -4,15 +4,22 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.FontMetrics;
+import java.awt.Rectangle;
+import java.util.List;
+import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.text.BadLocationException;
 import org.junit.jupiter.api.Test;
 
-/** 입력칸과 칸 글, HTML 글자의 도우미. 번호는 docs/porting/pick.md 2절, home.md S3d 2절(E-FIT), S3q 2절(E-ESC). */
+/** 입력칸과 칸 글, HTML 글자, 입력 창 칸의 도우미. 번호는 docs/porting/pick.md 2절, home.md S3d 2절(E-FIT), S3q 2절(E-ESC), task-dialog.md S4b 2절(E-UI). */
 class UiTest {
     private static final String TEN = "가나다라마바사아자차";
     private static final String SMILE = "😀";
@@ -181,5 +188,23 @@ class UiTest {
         assertEquals("a&amp;&amp;b&gt;&gt;", Ui.esc("a&&b>>"));
         assertEquals("plain 글", Ui.esc("plain 글"));
         assertThrows(NullPointerException.class, () -> Ui.esc(null));
+    }
+
+    @Test
+    void eUi1Flow() {
+        JLabel label = new JLabel("가");
+        label.setPreferredSize(new Dimension(30, 20));
+        JButton button = new JButton("x");
+        button.setPreferredSize(new Dimension(50, 26));
+        JPanel p = Ui.flow(label, button);
+        FlowLayout f = (FlowLayout) p.getLayout();
+        assertEquals(List.of(FlowLayout.LEFT, 4, 0), List.of(f.getAlignment(), f.getHgap(), f.getVgap()));
+        assertEquals(List.of(label, button), List.of(p.getComponents()));
+        assertTrue(p.isOpaque());
+        assertEquals(new Dimension(92, 26), p.getPreferredSize());
+        p.setSize(200, 30);
+        p.doLayout();
+        assertEquals(List.of(new Rectangle(4, 3, 30, 20), new Rectangle(38, 0, 50, 26)), List.of(label.getBounds(), button.getBounds()));
+        assertEquals(new Dimension(8, 0), Ui.flow().getPreferredSize());
     }
 }
