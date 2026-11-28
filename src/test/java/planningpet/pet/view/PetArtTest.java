@@ -12,15 +12,16 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import org.junit.jupiter.api.Test;
 import planningpet.common.view.Snap;
+import planningpet.pet.model.PetKind;
 
-/** 펫 얼굴과 로고. 번호는 docs/porting/pet-art.md 2절. 기준 그림은 proto/pet-*.png. */
+/** 펫 얼굴과 로고. 번호는 docs/porting/pet-art.md 2절과 3절. 기준 그림은 proto/pet-*.png. */
 class PetArtTest {
     /** 부품은 240x200 그림의 (120, 110)에 1배로, 선 굵기 line으로 그린다. 기준 그림과 같은 배치다. */
-    private static PetPaintHead part(BufferedImage img, float line) {
+    private static PetPaintHead part(BufferedImage img, PetKind kind, float line) {
         Graphics2D g = img.createGraphics();
         PetPaintBase.hints(g);
         g.translate(120, 110);
-        PetPaintHead p = new PetPaintHead(g);
+        PetPaintHead p = new PetPaintHead(g, kind);
         p.line = line;
         return p;
     }
@@ -30,7 +31,7 @@ class PetArtTest {
     }
 
     /** 크기마다 한 변이 cell(크기)인 칸을 한 줄로 두고 칸 가운데에 얼굴을 그린다. 기준 그림과 같은 배치다. */
-    private static BufferedImage faces(int... sizes) {
+    private static BufferedImage faces(PetKind kind, int... sizes) {
         int w = 0;
         int h = 0;
         for (int s : sizes) {
@@ -41,7 +42,7 @@ class PetArtTest {
         Graphics2D g = img.createGraphics();
         int x = 0;
         for (int s : sizes) {
-            PetArt.drawFace(g, x + cell(s) / 2.0, cell(s) / 2.0, s);
+            PetArt.drawFace(g, kind, x + cell(s) / 2.0, cell(s) / 2.0, s);
             x += cell(s);
         }
         g.dispose();
@@ -50,28 +51,28 @@ class PetArtTest {
 
     @Test
     void eFace1LineWidthSizes() throws IOException {
-        Snap.assertLooksLikePrototype("pet-face-sizes", faces(30, 47, 48, 89, 90, 112, 230));
+        Snap.assertLooksLikePrototype("pet-face-sizes", faces(PetKind.CAT, 30, 47, 48, 89, 90, 112, 230));
     }
 
     @Test
     void eFace2VerySmall() throws IOException {
-        Snap.assertLooksLikePrototype("pet-face-small", faces(0, 1, 7));
+        Snap.assertLooksLikePrototype("pet-face-small", faces(PetKind.CAT, 0, 1, 7));
     }
 
     @Test
     void eFace3NegativeSize() throws IOException {
         BufferedImage img = new BufferedImage(80, 80, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = img.createGraphics();
-        PetArt.drawFace(g, 40, 40, -48);
+        PetArt.drawFace(g, PetKind.CAT, 40, 40, -48);
         g.dispose();
         Snap.assertLooksLikePrototype("pet-face-neg48", img);
     }
 
-    @Test
-    void eFace4PaintedBox() {
+    /** 크기 230 얼굴을 (300, 300)에 그려 칠한 픽셀을 모두 담는 상자를 가운데에서 잰 "왼쪽 위 오른쪽 아래". */
+    private static String face230Box(PetKind kind) {
         BufferedImage img = new BufferedImage(600, 600, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = img.createGraphics();
-        PetArt.drawFace(g, 300, 300, 230);
+        PetArt.drawFace(g, kind, 300, 300, 230);
         g.dispose();
         int[] box = {600, 600, -1, -1};
         for (int y = 0; y < 600; y++) {
@@ -81,7 +82,12 @@ class PetArtTest {
                 }
             }
         }
-        assertEquals("-126 -115 125 72", (box[0] - 300) + " " + (box[1] - 300) + " " + (box[2] - 300) + " " + (box[3] - 300));
+        return (box[0] - 300) + " " + (box[1] - 300) + " " + (box[2] - 300) + " " + (box[3] - 300);
+    }
+
+    @Test
+    void eFace4PaintedBox() {
+        assertEquals("-126 -115 125 72", face230Box(PetKind.CAT));
     }
 
     /** w x h 그림의 (x, y)에 bw x bh 상자로 로고를 그린다. */
@@ -112,7 +118,7 @@ class PetArtTest {
         g.translate(3, 4);
         AffineTransform before = g.getTransform();
         Object aa = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-        PetArt.drawFace(g, 40, 40, 60);
+        PetArt.drawFace(g, PetKind.CAT, 40, 40, 60);
         assertEquals(Color.RED, g.getColor());
         assertSame(stroke, g.getStroke());
         assertEquals(before, g.getTransform());
@@ -124,7 +130,7 @@ class PetArtTest {
     @Test
     void eFace6Ears() throws IOException {
         BufferedImage img = new BufferedImage(240, 200, BufferedImage.TYPE_INT_ARGB);
-        PetPaintHead p = part(img, 6f);
+        PetPaintHead p = part(img, PetKind.CAT, 6f);
         p.ear(-1);
         p.ear(1);
         p.g.dispose();
@@ -135,7 +141,7 @@ class PetArtTest {
     void eFace6FaceParts() throws IOException {
         for (float line : new float[] {6f, 9f}) {
             BufferedImage img = new BufferedImage(240, 200, BufferedImage.TYPE_INT_ARGB);
-            PetPaintHead p = part(img, line);
+            PetPaintHead p = part(img, PetKind.CAT, line);
             p.faceParts();
             p.g.dispose();
             Snap.assertLooksLikePrototype("pet-face-parts-" + (int) line, img);
@@ -148,8 +154,60 @@ class PetArtTest {
         Graphics2D g = img.createGraphics();
         PetPaintBase.hints(g);
         g.translate(130, 120);
-        new PetPaintHead(g).head();
+        new PetPaintHead(g, PetKind.CAT).head();
         g.dispose();
         Snap.assertLooksLikePrototype("pet-head", img);
+    }
+
+    @Test
+    void eDog1LineWidthSizes() throws IOException {
+        Snap.assertLooksLikePrototype("pet-dog-face-sizes", faces(PetKind.DOG, 30, 47, 48, 89, 90, 112, 230));
+    }
+
+    @Test
+    void eDog2SmallAndNegative() throws IOException {
+        Snap.assertLooksLikePrototype("pet-dog-face-small", faces(PetKind.DOG, 0, 1, 7));
+        BufferedImage img = new BufferedImage(80, 80, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = img.createGraphics();
+        PetArt.drawFace(g, PetKind.DOG, 40, 40, -48);
+        g.dispose();
+        Snap.assertLooksLikePrototype("pet-dog-face-neg48", img);
+    }
+
+    @Test
+    void eDog3PaintedBox() {
+        assertEquals("-117 -81 109 72", face230Box(PetKind.DOG));
+    }
+
+    @Test
+    void eDog4Ears() throws IOException {
+        BufferedImage img = new BufferedImage(240, 240, BufferedImage.TYPE_INT_ARGB);
+        PetPaintHead p = part(img, PetKind.DOG, 6f);
+        p.dogEar(-1);
+        p.dogEar(1);
+        p.g.dispose();
+        Snap.assertLooksLikePrototype("pet-dog-ears", img);
+    }
+
+    @Test
+    void eDog4FaceParts() throws IOException {
+        for (float line : new float[] {6f, 9f}) {
+            BufferedImage img = new BufferedImage(240, 200, BufferedImage.TYPE_INT_ARGB);
+            PetPaintHead p = part(img, PetKind.DOG, line);
+            p.faceParts();
+            p.g.dispose();
+            Snap.assertLooksLikePrototype("pet-dog-face-parts-" + (int) line, img);
+        }
+    }
+
+    @Test
+    void eDog4Head() throws IOException {
+        BufferedImage img = new BufferedImage(260, 240, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = img.createGraphics();
+        PetPaintBase.hints(g);
+        g.translate(130, 120);
+        new PetPaintHead(g, PetKind.DOG).head();
+        g.dispose();
+        Snap.assertLooksLikePrototype("pet-dog-head", img);
     }
 }
