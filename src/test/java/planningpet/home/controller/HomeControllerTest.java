@@ -1,56 +1,43 @@
 package planningpet.home.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static planningpet.schedule.model.Tasks.d;
 
-import java.time.Clock;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.ZoneId;
 import org.junit.jupiter.api.Test;
 import planningpet.app.controller.AppController;
 import planningpet.app.model.AppData;
-import planningpet.app.model.DataStore;
-import planningpet.app.model.LoadResult;
-import planningpet.pet.model.PetKind;
-import planningpet.pet.model.PetState;
-import planningpet.schedule.model.Category;
+import planningpet.app.model.Apps;
+import planningpet.app.model.MemoryStore;
 import planningpet.schedule.model.DeleteScope;
 import planningpet.schedule.model.Kind;
-import planningpet.schedule.model.TaskDraft;
+import planningpet.schedule.model.Tasks;
 
 /** UC-09 달력 날짜 고르기, docs/porting/home.md S3b 2절의 경계. 오늘은 11-{today} 10:00이고 고른 고양이 나비가 있다. */
 class HomeControllerTest {
-    private static final ZoneId ZONE = ZoneId.systemDefault();
     private AppData data;
     private AppController app;
     private HomeController home;
-    private int saves;
+    private final MemoryStore store = new MemoryStore();
     private int heard;
 
     private void at(int today) {
-        data = new AppData(Clock.fixed(LocalDateTime.of(2026, 11, today, 10, 0).atZone(ZONE).toInstant(), ZONE));
-        data.addPet(new PetState(PetKind.CAT, "나비"));
-        data.setActiveKind(PetKind.CAT);
-        app = new AppController(data, new DataStore() {
-            public LoadResult load() { return LoadResult.firstRun(); }
-            public void save(AppData d) { saves++; }
-        }, error -> { });
+        data = Apps.data("2026-11-" + today + "T10:00");
+        app = new AppController(data, store, error -> { });
         home = new HomeController(data, app);
         data.onChange(() -> heard++);
     }
 
-    static LocalDate d(int day) { return LocalDate.of(2026, 11, day); }
-
     /** 일정 하나. start가 있으면 고정 일정(60분), 없으면 할 일(30분), due가 있으면 기간 할 일. */
     private void add(String title, LocalDate day, LocalTime start, LocalDate due) {
-        data.getBook().add(new TaskDraft(start != null ? Kind.FIXED : Kind.TASK, title, Category.OTHER, day, due, start,
-                start != null ? 60 : 30, "", null, null, false, null, null, false));
+        Tasks.Spec task = Tasks.task(title, day).at(start).period(day, due);
+        data.getBook().add((start != null ? task.kind(Kind.FIXED).minutes(60) : task).draft());
     }
 
     private String said() {
         return app.getBubble().getLine() + " 새 말 " + app.getBubble().getNewLines() + " 세는 날 "
-                + app.getBubble().getRecountDay() + " 알림 " + heard + " 저장 " + saves;
+                + app.getBubble().getRecountDay() + " 알림 " + heard + " 저장 " + store.saves;
     }
 
     @Test

@@ -2,9 +2,11 @@ package planningpet.common.view;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import javax.imageio.ImageIO;
@@ -21,13 +23,35 @@ public final class Snap {
     private Snap() {
     }
 
-    static BufferedImage paint(JComponent c, int w, int h) {
+    /** 부품을 w x h로 두고 (w+4) x (h+4) 그림에 그린다. */
+    public static BufferedImage paint(JComponent c, int w, int h) {
         c.setSize(w, h);
         BufferedImage img = new BufferedImage(w + 4, h + 4, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = img.createGraphics();
         c.paint(g);
         g.dispose();
         return img;
+    }
+
+    /** 이미 배치한 부품을 지금 크기 그대로 그린다. */
+    public static BufferedImage paint(JComponent c) {
+        return paint(c, c.getWidth(), c.getHeight());
+    }
+
+    /** 글이 놓인 자리처럼 운영체제마다 다른 픽셀을 자홍(0xFF00FF)으로 덮는다. 기준 그림도 같은 자리를 덮어 둔다. */
+    public static BufferedImage cover(BufferedImage img, Rectangle... boxes) {
+        Graphics2D g = img.createGraphics();
+        g.setColor(new Color(0xFF00FF));
+        for (Rectangle r : boxes) {
+            g.fill(r);
+        }
+        g.dispose();
+        return img;
+    }
+
+    /** 그림의 픽셀을 줄 순서로 늘어놓는다. 두 그림이 같은지 볼 때 쓴다. */
+    public static int[] pixels(BufferedImage img) {
+        return img.getRGB(0, 0, img.getWidth(), img.getHeight(), null, 0, img.getWidth());
     }
 
     static void assertLooksLikePrototype(String name, JComponent c, int w, int h) throws IOException {
