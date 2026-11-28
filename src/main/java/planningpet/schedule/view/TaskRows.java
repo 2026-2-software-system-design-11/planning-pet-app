@@ -10,6 +10,8 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.RenderingHints;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.time.LocalDate;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -164,13 +166,15 @@ public final class TaskRows extends JPanel {
 
     /** 홈 목록의 할 일 한 줄. time이 ""이면 "시각 정하기", listDay는 이 줄이 보이는 목록의 날이다(D-65). 순서는 D-59, 아래에 가는 선, 끝낸 줄은 민트빛 바탕. */
     JPanel row(Task t, String time, LocalDate listDay) {
+        // 마우스를 올린 줄은 DAY 바탕이다(디자인 시스템 10절 홈, docs/porting/task-rows.md S3z).
+        boolean[] over = {false};
         JPanel row = new JPanel(new BorderLayout(6, 0)) {
             @Override
             protected void paintComponent(Graphics graphics) {
                 Graphics2D g = (Graphics2D) graphics.create();
                 g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                if (t.isDone()) {
-                    g.setColor(Theme.ROW_DONE);
+                if (t.isDone() || over[0]) {
+                    g.setColor(over[0] ? Theme.DAY : Theme.ROW_DONE);
                     g.fillRoundRect(0, 1, getWidth(), getHeight() - 3, 12, 12);
                 }
                 g.setColor(Theme.CARD_EDGE);
@@ -216,6 +220,21 @@ public final class TaskRows extends JPanel {
             row.add(marks, BorderLayout.SOUTH);
         }
         row.setMaximumSize(new Dimension(Integer.MAX_VALUE, marks == null ? 44 : 62));
+        MouseAdapter hover = new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                over[0] = true;
+                row.repaint();
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                // 마우스가 아직 줄 안(자식 위)이면 바탕을 둔다. 창 없는 줄은 보이지 않아 늘 끈다.
+                over[0] = row.isShowing() && row.getMousePosition(true) != null;
+                row.repaint();
+            }
+        };
+        row.addMouseListener(hover);
         return row;
     }
 
