@@ -313,4 +313,19 @@ class PetCardTest {
             }
         }
     }
+
+    /** 할 일을 끝내고 펫이 말하면 변경 알림 한 번에 수, 칸 막대, 말풍선이 함께 바뀐다(S3o E-PTODAY-7). */
+    @Test
+    void ePtoday7Change() throws IOException {
+        AppData d = data(PetKind.CAT, 0, task("일", 20, 0, false), task("이", 20, 0, false));
+        Bubble said = new Bubble();
+        PetCard c = new PetCard(d, said);
+        new planningpet.reward.model.Rewards(d).complete(d.getBook().getTasks().get(0), d.today());
+        said.say("잘했어! +10P");
+        assertEquals(0, c.doneBar.ratio());
+        d.changed();
+        assertEquals(List.of("오늘 끝낸 일 1 / 2", 0.5, 2), List.of(c.doneText(), c.doneBar.ratio(), c.doneBar.segments()));
+        assertCovered("today-change", c, 360, 240);
+        assertEquals(new Rectangle(152, 147, 192, 33), c.bubbleBox);
+    }
 }
