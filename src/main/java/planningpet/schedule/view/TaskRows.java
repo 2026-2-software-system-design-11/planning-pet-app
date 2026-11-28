@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -27,6 +28,7 @@ import planningpet.common.view.Icons;
 import planningpet.common.view.Theme;
 import planningpet.common.view.Ui;
 import planningpet.reward.controller.RewardController;
+import planningpet.schedule.model.DayPlan;
 import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Task;
 
@@ -53,6 +55,21 @@ public final class TaskRows extends JPanel {
         this.onEdit = onEdit;
         this.onDelete = onDelete;
         this.onTime = onTime;
+        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+    }
+
+    /** 홈 그날 목록(06 6번, D-31). 일정이 하나도 없는 날은 흐린 안내다(D-33, docs/porting/task-rows.md S3w). */
+    public void showPlan(DayPlan plan) {
+        removeAll();
+        if (plan.isEmpty()) {
+            JLabel none = Ui.hint("아직 일정이 없어요. 작은 계획을 추가해 보세요.");
+            none.setFont(Theme.font(13));
+            none.setForeground(Theme.INK_SUB);
+            none.setBorder(BorderFactory.createEmptyBorder(16, 6, 0, 0));
+            add(none);
+        }
+        revalidate();
+        repaint();
     }
 
     /**
