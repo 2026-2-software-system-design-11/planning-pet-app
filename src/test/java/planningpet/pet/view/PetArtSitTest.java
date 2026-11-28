@@ -23,7 +23,7 @@ class PetArtSitTest {
     }
 
     @Test
-    void eSit1TailAndPaw() throws IOException {
+    void eSit1Parts() throws IOException {
         for (PetKind kind : KINDS) {
             BufferedImage tail = new BufferedImage(320, 320, BufferedImage.TYPE_INT_ARGB);
             PetPaintBody p = part(tail, kind);
@@ -36,6 +36,11 @@ class PetArtSitTest {
             p.paw(0, 0);
             p.g.dispose();
             Snap.assertLooksLikePrototype("pet-sit-paw-" + name(kind), paw);
+            BufferedImage whole = new BufferedImage(320, 320, BufferedImage.TYPE_INT_ARGB);
+            p = part(whole, kind);
+            p.sit();
+            p.g.dispose();
+            Snap.assertLooksLikePrototype("pet-sit-1x-" + name(kind), whole);
         }
     }
 }

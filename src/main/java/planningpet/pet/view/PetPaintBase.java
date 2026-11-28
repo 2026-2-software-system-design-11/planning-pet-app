@@ -16,6 +16,7 @@ abstract class PetPaintBase {
     // ---------- 색 (예시 픽셀에서 뽑은 값) ----------
     static final Color CAT_INK = new Color(0x3B3535);
     static final Color CAT_GREY = new Color(0xA9A8AE);
+    static final Color CAT_GREY_SHADE = new Color(0x8F8D96);
     static final Color CAT_WHITE = new Color(0xFFFEFC);
     static final Color CAT_WHITE_SHADE = new Color(0xE8E3E3);
     static final Color CAT_EAR = new Color(0xF6B8B4);
@@ -32,11 +33,12 @@ abstract class PetPaintBase {
     static final float LINE = 6f;
 
     final Graphics2D g;
-    /** 움직임 시각(초). 귀 까딱임과 흔들림, 꼬리가 쓴다. */
+    /** 움직임 시각(초). 귀 까딱임과 흔들림, 숨쉬기, 머리 기울기, 꼬리가 쓴다. */
     final double t;
     final boolean cat;
     final Color ink;
     final Color fur;
+    final Color furShade;
     float line = LINE;
 
     PetPaintBase(Graphics2D g, PetKind kind, double t) {
@@ -45,6 +47,7 @@ abstract class PetPaintBase {
         this.cat = kind == PetKind.CAT;
         this.ink = cat ? CAT_INK : DOG_INK;
         this.fur = cat ? CAT_WHITE : DOG_FUR;
+        this.furShade = cat ? CAT_WHITE_SHADE : DOG_FUR_SHADE;
     }
 
     static void hints(Graphics2D g) {
