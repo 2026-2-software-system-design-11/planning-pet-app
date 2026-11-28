@@ -15,10 +15,12 @@ import planningpet.app.model.AppData;
 import planningpet.app.model.Apps;
 import planningpet.app.model.MemoryStore;
 import planningpet.common.view.Pill;
+import planningpet.common.view.Snap;
 import planningpet.common.view.ThemeOn;
 import planningpet.pet.controller.PetController;
 import planningpet.pet.model.PetKind;
 import planningpet.pet.model.PetState;
+import planningpet.pet.model.Pose;
 
 /**
  * 캐릭터 창 왼쪽 열의 펫 탭. 번호는 docs/porting/character.md S8e 2절. 고양이 나비(경험치 0)를 고른 앱
@@ -95,5 +97,18 @@ class CharacterScreenTest {
         tabs(s).get(1).doClick(0);
         assertEquals(List.of(PetKind.DOG, 1), List.of(data.getActiveKind(), store.saves));
         assertEquals(List.of(false, true), tabs(s).stream().map(Pill::isSelected).toList());
+    }
+
+    @Test
+    void eChr10BigPetBoxAndGround() {
+        assertEquals(List.of(222, 270), List.of(CharacterScreen.petSize(400, 300), CharacterScreen.ground(300)));
+        assertEquals(List.of(186, 360), List.of(CharacterScreen.petSize(300, 400), CharacterScreen.ground(400)));
+        PetState cat = data.activePet();
+        assertEquals(140, CharacterScreen.drawnHeight(cat, 222));
+        cat.setExp(990);
+        cat.setPose(Pose.SLEEP);
+        assertEquals(113, CharacterScreen.drawnHeight(cat, 222));
+        // 방 그림, 러그, 펫, 털실 공, 하트를 그려도 멈추지 않고 무대 가운데가 칠해진다(그림 비교는 하지 않는다).
+        assertTrue(Snap.paint(screen().stage, 400, 300).getRGB(200, 150) >>> 24 > 0);
     }
 }
