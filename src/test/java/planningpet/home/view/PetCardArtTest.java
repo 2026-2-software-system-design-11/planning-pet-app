@@ -21,6 +21,11 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import planningpet.common.view.Snap;
 import planningpet.common.view.Theme;
+import planningpet.pet.model.PetKind;
+import planningpet.pet.model.PetState;
+import planningpet.pet.model.Slot;
+import planningpet.pet.model.WearId;
+import planningpet.pet.view.PetArt;
 
 /** 홈 펫 카드의 그림 도구. 번호는 docs/porting/home.md S3j 2절. 기준 그림은 proto/scene-*.png다. */
 class PetCardArtTest {
@@ -370,5 +375,77 @@ class PetCardArtTest {
         Drawn zero = assertTimeoutPreemptively(Duration.ofSeconds(5), () -> bubble("잘했어", 152, 147, 0, 400, 360, 412));
         assertEquals(new Rectangle(152, 147, 0, 67), zero.box());
         assertFalse(zero.cut());
+    }
+
+    /** 프로토타입 PetCard처럼 힌트를 켜고 카드 w x h의 틀에 펫만 투명 그림에 그린다. 기준 그림은 proto/petcard-pet-*.png다(S3m). */
+    static BufferedImage pet(PetState p, int w, int h, double t) {
+        BufferedImage img = new BufferedImage(w + 4, h + 4, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = hinted(img);
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        PetCardArt.pet(g, p, frame(w, h), t);
+        g.dispose();
+        return img;
+    }
+
+    @Test
+    void ePcard1PetInCardSizes() throws IOException {
+        PetState cat = new PetState(PetKind.CAT, "나비");
+        int[][] sizes = {{360, 240}, {300, 210}, {800, 500}};
+        double[] fill = {0.7915, 0.7826, 0.8147};
+        for (int i = 0; i < sizes.length; i++) {
+            int w = sizes[i][0];
+            int h = sizes[i][1];
+            Snap.assertLooksLikePrototype("petcard-pet-size-" + w + "x" + h, pet(cat, w, h, 0));
+            assertEquals(fill[i], PetCardArt.petFill(cat, frame(w, h)), 0.00005);
+        }
+        double[] scale = {0.94, 0.94, 0.97, 1.0, 1.0};
+        for (int stage = 0; stage < scale.length; stage++) {
+            assertEquals(scale[stage], PetArt.cardScale(stage));
+        }
+    }
+
+    private static PetState pet(PetKind kind, int exp) {
+        PetState p = new PetState(kind, "");
+        p.setExp(exp);
+        return p;
+    }
+
+    @Test
+    void ePcard2KindsAndStages() throws IOException {
+        double[][] fill = {{0.7915, 0.8199, 0.8436, 0.6919, 0.7156, 0.7393}, {0.7826, 0.8098, 0.8370, 0.6848, 0.7065, 0.7283}};
+        int[][] sizes = {{360, 240}, {300, 210}};
+        int i = 0;
+        for (PetKind kind : PetKind.values()) {
+            for (int exp : new int[] {0, 240, 750}) {
+                for (int s = 0; s < 2; s++) {
+                    int w = sizes[s][0];
+                    int h = sizes[s][1];
+                    PetState p = pet(kind, exp);
+                    Snap.assertLooksLikePrototype("petcard-pet-stage-" + kind + "-" + exp + "-" + w + "x" + h, pet(p, w, h, 0));
+                    assertEquals(fill[s][i], PetCardArt.petFill(p, frame(w, h)), 0.00005);
+                    assertTrue(PetCardArt.petFill(p, frame(w, h)) > 2 / 3.0);
+                }
+                i++;
+            }
+        }
+    }
+
+    /** 장신구는 그림 높이 비율과 강조선 자리를 바꾸지 않는다. 강아지 모자는 강조선 자리까지 올라와 겹친다(S3m E-PCARD-3). */
+    @Test
+    void ePcard3HatsAndCape() throws IOException {
+        WearId[] wears = {WearId.BERET, WearId.CROWN, WearId.STRAW_HAT, WearId.CAPE};
+        for (PetKind kind : PetKind.values()) {
+            for (WearId wear : wears) {
+                for (int exp : new int[] {0, 750}) {
+                    for (int[] s : new int[][] {{360, 240}, {300, 210}}) {
+                        PetState p = pet(kind, exp);
+                        p.setWear(java.util.Map.of(Slot.NECK, WearId.BASIC_NECKLACE, wear == WearId.CAPE ? Slot.CLOTHES : Slot.HAT, wear));
+                        String name = "petcard-pet-wear-" + kind + "-" + wear + "-" + exp + "-" + s[0] + "x" + s[1];
+                        Snap.assertLooksLikePrototype(name, pet(p, s[0], s[1], 0));
+                        assertEquals(PetCardArt.petFill(pet(kind, exp), frame(s[0], s[1])), PetCardArt.petFill(p, frame(s[0], s[1])));
+                    }
+                }
+            }
+        }
     }
 }

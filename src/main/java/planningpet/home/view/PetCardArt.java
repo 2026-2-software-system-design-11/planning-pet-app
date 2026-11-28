@@ -10,17 +10,23 @@ import java.awt.RenderingHints;
 import java.awt.geom.Path2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import planningpet.common.view.Card;
 import planningpet.common.view.Icons;
 import planningpet.common.view.Images;
 import planningpet.common.view.Theme;
 import planningpet.common.view.Ui;
+import planningpet.pet.model.PetState;
+import planningpet.pet.view.PetArt;
+import planningpet.reward.model.Level;
 
-/** 홈 펫 카드(D-59)의 그림 도구: 하늘과 풀밭 장면과 그것이 쓰는 색 섞기, 알파 바꾸기, 펫 옆 말풍선과 그 글 줄 바꾸기. 값은 디자인 시스템 10절 "홈"에 있다(docs/porting/home.md S3j). */
+/** 홈 펫 카드(D-59)의 그림 도구: 하늘과 풀밭 장면과 그것이 쓰는 색 섞기, 알파 바꾸기, 카드 왼쪽 펫, 펫 옆 말풍선과 그 글 줄 바꾸기. 값은 디자인 시스템 10절 "홈"에 있다(docs/porting/home.md S3j). */
 final class PetCardArt {
     /** 말풍선은 이 줄 수까지 보이고 넘치면 끝을 줄인다. */
     static final int BUBBLE_MAX_LINES = 4;
+    /** 펫 칸과 오른쪽 열 사이. */
+    static final int GAP = 8;
 
     private PetCardArt() {
     }
@@ -81,6 +87,50 @@ final class PetCardArt {
             g.draw(new java.awt.geom.Line2D.Double(bx + s * 0.25, by, bx + s * 0.3, by - s * 1.3));
             g.draw(new java.awt.geom.Line2D.Double(bx + s * 0.5, by, bx + s * 1.0, by - s * 0.9));
         }
+    }
+
+    /** 펫 칸 폭: 틀 폭의 0.4(118 이상 260 이하). 오른쪽 열은 이 칸 뒤 GAP에서 시작한다. */
+    static int petWidth(Rectangle f) {
+        return (int) Math.max(118, Math.min(f.width * 0.40, 260));
+    }
+
+    /** 땅 선: 틀 아래에서 높이의 1/11(14 이상). */
+    static int ground(Rectangle f) {
+        return f.y + f.height - Math.max(14, f.height / 11);
+    }
+
+    /** 펫 상자 한 변: 3단계 그림이 위쪽 여백을 빼고 꽉 차는 크기. */
+    static int petSize(Rectangle f) {
+        return (int) Math.min(petWidth(f) * 1.7, (ground(f) - f.y - 14) / 0.97);
+    }
+
+    /** 홈 카드 비율(D-93)로 키운 상자에 그린 앉은 펫의 높이. 장신구는 보지 않는다(home.md S3m E-PCARD-3). */
+    static int drawnHeight(PetState p, int size) {
+        return (int) (size * PetArt.cardScale(Level.of(p.getExp()).getStage()) * PetArt.heightRatio(p.getKind()));
+    }
+
+    /** 펫 그림 높이를 카드 칸(틀 위에서 땅 선까지) 높이로 나눈 값. 1단계도 3분의 2를 넘는다(D-93). */
+    static double petFill(PetState p, Rectangle f) {
+        return drawnHeight(p, petSize(f)) / (double) (ground(f) - f.y);
+    }
+
+    /**
+     * 펫: 틀 왼쪽 펫 칸에 발을 땅 선에 붙이고, 발 아래 옅은 그림자와 오른쪽 귀 옆 강조선을 그린다. 단계는 상자 안의 크기로 보인다(D-93).
+     * t는 움직임 시각(초)이다. 자세는 앉기만 그린다(home.md S3m).
+     */
+    static void pet(Graphics2D g, PetState p, Rectangle f, double t) {
+        int ground = ground(f);
+        int cx = f.x + petWidth(f) / 2 + 6;
+        int size = petSize(f);
+        g.setColor(new Color(0x5E, 0x8A, 0x3C, 45));
+        g.fillOval(cx - size * 3 / 10, ground - size / 26, size * 3 / 5, size / 13);
+        double box = size * PetArt.cardScale(Level.of(p.getExp()).getStage());
+        PetArt.drawAt(g, p.getKind(), new HashSet<>(p.getWear().values()), t, 99, cx, ground, box);
+        // 강조선은 오른쪽 귀 옆에 작게 둔다. 더 오른쪽은 이름과 흰 작은 카드 자리다.
+        int sp = Math.max(14, size / 8);
+        int infoX = f.x + petWidth(f) + GAP;
+        Icons.draw(g, Icons.Kind.SPARK, Math.min(cx + size / 6, infoX - sp - 4),
+                Math.max(f.y + 4, ground - drawnHeight(p, size) - sp / 3), sp, Theme.SPARK);
     }
 
     static Color mix(Color a, Color b, double k) {
