@@ -67,6 +67,9 @@ class PetCardTest {
         g.fillRect(x + 19, r0 - 4, iw - 17, 37);
         g.fillRect(x - 1, r0 + 30, iw + 3, 37);
         g.fillRect(x + 6, r0 + 77, iw - 12, 24);
+        if (c.periodText() != null) {
+            g.fillRect(x + 6, r0 + 119, iw - 12, 19);
+        }
         g.dispose();
         Snap.assertLooksLikePrototype("petcard-" + name, img);
     }
@@ -263,5 +266,23 @@ class PetCardTest {
                         Integer.parseInt(wh[1]));
             }
         }
+    }
+
+    /** 기간 할 일 줄은 덮은 띠 안이라 글을 수로 보고, 작은 카드가 70으로 길어진 것을 그림으로 본다(S3o E-PTODAY-3). */
+    @Test
+    void ePtoday3PeriodLine() throws IOException {
+        PetCard one = new PetCard(data(PetKind.CAT, 0, task("할 일", 20, 0, true), task("E사 지원서", 16, 22, false)));
+        assertEquals(List.of("오늘 끝낸 일 1 / 1", "기간 할 일 1개 (~11/22)"), List.of(one.doneText(), one.periodText()));
+        for (int[] s : new int[][] {{360, 240}, {300, 210}, {800, 500}}) {
+            assertCovered("period-1-" + s[0] + "x" + s[1], one, s[0], s[1]);
+        }
+        PetCard two = new PetCard(data(PetKind.CAT, 0, task("멀리", 18, 25, false), task("가까이", 19, 21, false),
+                task("끝냄", 16, 24, true)));
+        assertEquals(List.of("오늘 끝낸 일 1 / 1", "기간 할 일 2개 (~11/21)"), List.of(two.doneText(), two.periodText()));
+        assertCovered("period-2-360x240", two, 360, 240);
+        PetCard due = new PetCard(data(PetKind.CAT, 0, task("오늘 마감", 16, 20, false)));
+        assertEquals("오늘 끝낸 일 0 / 1", due.doneText());
+        assertEquals(null, due.periodText());
+        assertCovered("period-dueday-360x240", due, 360, 240);
     }
 }
