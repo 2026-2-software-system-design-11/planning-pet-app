@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.List;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
 import javax.swing.BorderFactory;
@@ -18,6 +19,7 @@ import planningpet.common.view.Theme;
 import planningpet.common.view.Ui;
 import planningpet.schedule.model.DefaultDates;
 import planningpet.schedule.model.EditScope;
+import planningpet.schedule.model.FieldError;
 import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Task;
 import planningpet.schedule.model.TaskDraft;
@@ -27,6 +29,7 @@ import planningpet.schedule.model.TaskDraft;
  * S5f다(docs/porting/schedule.md S5e). 쳐 넣은 글 읽기(C1)의 칸 아래 글은 두지 않아 두 칸은 Swing 기본 편집기다.
  */
 public final class TimeEditor {
+    private static final List<String> FIELDS = List.of("시작 시각", "걸리는 시간");
     final JSpinner start = new JSpinner(new SpinnerListModel(Times.values()));
     /** 다음 날 새벽 값이면 칸 옆에 실제 날과 시각 "(토 01:30)"(D-77). */
     final JLabel realTime = new JLabel();
@@ -63,6 +66,8 @@ public final class TimeEditor {
         // D-67: 정한 날에 못 끝낸 기간 할 일은 시각 없는 할 일처럼 연다.
         boolean placed = task.onTimetable(AppDay.of(now));
         int from = placed ? task.startMinute() : DefaultDates.defaultStart(day, now);
+        // 프로토타입과 일부러 다름(E-TED-13): 5분 단위가 아닌 저장 값도 목록 제자리에 끼워 그 값으로 연다.
+        ((SpinnerListModel) start.getModel()).setList(Times.values(from));
         start.setValue(Times.value(from));
         base = placed ? task.getDate() : day;
         realTime.setText(Times.real(base, from));
@@ -90,9 +95,13 @@ public final class TimeEditor {
         clear.addActionListener(e -> clear());
     }
 
-    /** 끝이 다음 날 04:00을 넘으면 문장, 아니면 null(D-77). */
+    /**
+     * 06 2번 검사의 두 칸 문장을 " / "로 잇는다. 맞으면 null이다. 칸이 받는 값이면 끝이 다음 날 04:00을 넘을 때의 문장 하나다(D-77).
+     * 프로토타입과 일부러 다름(E-TED-13): 프로토타입은 끝만 보아 5분 단위가 아니거나 범위 밖인 저장 값을 그대로 넘긴다.
+     */
     String check() {
-        return Times.minuteOf(start.getValue()) + (int) minutes.getValue() > Task.DAY_END ? TaskDraft.END_PROBLEM : null;
+        List<String> problems = draft().validate().stream().filter(p -> FIELDS.contains(p.field())).map(FieldError::message).toList();
+        return problems.isEmpty() ? null : String.join(" / ", problems);
     }
 
     /**

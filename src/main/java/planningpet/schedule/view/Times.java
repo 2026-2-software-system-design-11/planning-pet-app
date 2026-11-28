@@ -2,6 +2,7 @@ package planningpet.schedule.view;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 import planningpet.schedule.model.Task;
@@ -16,6 +17,15 @@ final class Times {
     /** 00:00부터 23:55, 이어서 "00:00(다음 날)"부터 "03:55(다음 날)"까지 5분 단위(D-38, D-77). */
     static List<String> values() {
         return IntStream.range(0, Task.DAY_END / 5).mapToObj(i -> value(i * 5)).toList();
+    }
+
+    /** values()에 5분 단위가 아닌 저장 값 minute을 제자리에 끼운 목록(task-dialog.md E-FORM-13). 목록에 있는 값이면 values()다. */
+    static List<String> values(int minute) {
+        List<String> values = new ArrayList<>(values());
+        if (!values.contains(value(minute))) {
+            values.add(Math.min(minute / 5 + 1, values.size()), value(minute));
+        }
+        return values;
     }
 
     /** 앱 하루의 분을 "01:30", 24시간을 넘으면 "01:30(다음 날)"로. */

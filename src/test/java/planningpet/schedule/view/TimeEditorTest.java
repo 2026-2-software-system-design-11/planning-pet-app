@@ -178,4 +178,19 @@ class TimeEditorTest {
         e.clear.doClick();
         assertEquals(List.of(EditScope.ONLY_THIS), calls);
     }
+
+    @Test
+    void eTed13OffStepStoredValues() {
+        TimeEditor e = open(task("운동", d(20)).at("09:03").minutes(27).task(), d(20));
+        assertEquals(List.of("09:03", 27, "09:05", "09:00"), List.of(e.start.getValue(), e.minutes.getValue(),
+                e.start.getNextValue(), e.start.getPreviousValue()));
+        e.save.doClick();
+        assertEquals(List.of("5분 단위로 정해 주세요 / 10분부터 720분까지, 5분 단위예요", List.of()), List.of(e.error.getText(), calls));
+        e.start.setValue("09:05");
+        e.minutes.setValue(30);
+        e.save.doClick();
+        assertEquals(List.of(e.draft(), "닫음"), calls);
+        TimeEditor wide = open(task("일", d(20)).at("10:00").minutes(725).task(), d(20));
+        assertEquals(List.of(725, "10분부터 720분까지, 5분 단위예요"), List.of(wide.minutes.getValue(), wide.check()));
+    }
 }
