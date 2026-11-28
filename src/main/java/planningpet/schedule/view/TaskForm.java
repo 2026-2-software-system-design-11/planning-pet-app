@@ -42,8 +42,9 @@ import planningpet.schedule.model.Task;
 import planningpet.schedule.model.TaskDraft;
 
 /**
- * 일정 입력 창의 칸(05 일정 입력 창 1~11번). 창 없이 만들 수 있다. 지금은 추가 창의 칸과 처음 값, 칸끼리 켜고 끄기 sync(), 손댄 값
- * 지키기와 날짜 따라가기, 칸에 쓴 값 draft(), 칸 아래 오류 글이 있고, 수정 창은 뒤 몫이 더한다(docs/porting/task-dialog.md S4f~S4i).
+ * 일정 입력 창의 칸(05 일정 입력 창 1~11번). 창 없이 만들 수 있다. 추가 창과 수정 창의 칸과 처음 값, 칸끼리 켜고 끄기 sync(), 손댄
+ * 값 지키기와 날짜 따라가기, 칸에 쓴 값 draft(), 칸 아래 오류 글이 있다. 수정 창의 잠금은 뒤 몫이 더한다(docs/porting/task-dialog.md
+ * S4f~S4j).
  * 쳐 넣은 글 읽기(C1)의 칸 아래 글 줄은 두지 않는다.
  */
 final class TaskForm {
@@ -107,13 +108,29 @@ final class TaskForm {
     private boolean dueTouched;
     /** 마감 기본값이 쓰는 한 주의 시작 요일(D-91). */
     private final DayOfWeek weekStart;
+    /** 수정 창이면 참. 종류와 반복 칸이 비활성이다(05 일정 입력 창 수정 줄). */
+    private final boolean editing;
+    /** 반복 사본을 고치는 중(기간 칸은 꺼진 채 비활성, D-65). */
+    private final boolean copy;
     /** sync 안에서 칸 값을 바꿀 때 다시 sync하지 않는다. */
     private boolean syncing;
     private int row;
 
     /** 추가 창의 칸. date는 06 14번 forAdd가 고른 날, weekStart는 마감 기본값과 요일 단추 차례의 한 주 시작(D-91, D-94). */
     TaskForm(LocalDate date, LocalDateTime now, DayOfWeek weekStart) {
+        this(null, date, now, weekStart);
+    }
+
+    /** 수정 창의 칸. 칸은 t의 값으로 열린다. 반복 사본의 반복 칸은 showSeries가 채운다(D-42). */
+    TaskForm(Task t, LocalDateTime now, DayOfWeek weekStart) {
+        this(t, null, now, weekStart);
+    }
+
+    /** t가 null이면 date로 여는 추가 창이다. */
+    private TaskForm(Task t, LocalDate date, LocalDateTime now, DayOfWeek weekStart) {
         this.weekStart = weekStart;
+        editing = t != null;
+        copy = t != null && t.getSeriesId() != null;
         clock = () -> now;
         Ui.limit(title, 100);
         Ui.limit(memo, 1000);
@@ -161,11 +178,28 @@ final class TaskForm {
         line("", repeatHint);
         line("메모", new JScrollPane(memo));
         line("", errors.get("메모"));
-        category.setSelectedItem(Category.OTHER.label());
-        Ui.setDate(this.date, date);
-        Ui.setDate(due, DefaultDates.dueFor(date, weekStart));
-        Ui.setDate(repeatEnd, DefaultDates.repeatEndFor(Kind.TASK, date));
-        start.setValue(Times.value(DefaultDates.defaultStart(date, now)));
+        category.setSelectedItem((t == null ? Category.OTHER : t.getCategory()).label());
+        // D-66: 기간 할 일의 날짜 칸은 기간 첫날이다(계획한 날이 아니다).
+        LocalDate first = t == null ? date : t.period() ? t.getStartDay() : t.getDate();
+        Ui.setDate(this.date, first);
+        // D-96: 수정 창에서 저장해 둔 마감도 고른 마감이다.
+        dueTouched = t != null && t.period();
+        Ui.setDate(due, dueTouched ? t.getDueDate() : DefaultDates.dueFor(first, weekStart));
+        start.setValue(Times.value(DefaultDates.defaultStart(first, now)));
+        if (t != null) {
+            title.setText(t.getTitle());
+            fixed.setSelected(t.getKind() == Kind.FIXED);
+            period.setSelected(t.period());
+            timed.setSelected(t.timed() && !t.period());
+            // D-101: 저장해 둔 시각은 사용자 값이다. 시각 없는 일정의 시작 칸은 앱이 채운 값이라 날짜를 따라간다.
+            startTouched = t.timed();
+            if (t.timed()) {
+                start.setValue(Times.value(t.startMinute()));
+            }
+            minutes.setValue(t.getDurationMinutes());
+            memo.setText(t.getMemo());
+        }
+        Ui.setDate(repeatEnd, DefaultDates.repeatEndFor(fixed.isSelected() ? Kind.FIXED : Kind.TASK, first));
         for (AbstractButton b : new AbstractButton[] {task, fixed, timed, period}) {
             b.addActionListener(e -> sync());
         }
@@ -336,7 +370,10 @@ final class TaskForm {
         }
     }
 
-    /** 칸에 쓴 값. 반복이 안 함이면 반복 방식과 끝은 null, 기간 안에 하기가 꺼져 있으면 마감은 null이다. 오늘은 앱의 오늘이다. */
+    /**
+     * 칸에 쓴 값. 반복이 안 함이면 반복 방식과 끝은 null, 기간 안에 하기가 꺼져 있으면 마감은 null이다. 오늘은 앱의 오늘이고 editing은
+     * 수정 창이면 참이다.
+     */
     TaskDraft draft() {
         Repeat how = null;
         if (repeat.getSelectedIndex() == 1) {
@@ -354,7 +391,7 @@ final class TaskForm {
         return new TaskDraft(fixed.isSelected() ? Kind.FIXED : Kind.TASK, title.getText(),
                 Category.values()[category.getSelectedIndex()], Ui.dateOf(date), period.isSelected() ? Ui.dateOf(due) : null,
                 s == null ? null : LocalTime.of(s % Task.DAY / 60, s % 60), (int) minutes.getValue(), memo.getText(), how,
-                how == null ? null : Ui.dateOf(repeatEnd), s != null && s >= Task.DAY, null, AppDay.of(clock.get()), false);
+                how == null ? null : Ui.dateOf(repeatEnd), s != null && s >= Task.DAY, null, AppDay.of(clock.get()), editing);
     }
 
     /** 검사 결과를 칸 아래에 보인다. 고친 칸의 오류는 지운다. 이 뒤로는 칸을 고칠 때마다 다시 검사한다(D-43). */

@@ -3,6 +3,7 @@ package planningpet.schedule.view;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static planningpet.schedule.model.Tasks.d;
 
@@ -35,7 +36,10 @@ import planningpet.schedule.model.Repeat;
 import planningpet.schedule.model.TaskDraft;
 import planningpet.schedule.model.Tasks;
 
-/** 일정 입력 창의 칸, 추가 창의 처음 값, 칸끼리 켜고 끄기, 손댄 값 지키기와 날짜 따라가기, 칸 아래 오류 글. 번호는 docs/porting/task-dialog.md S4f~S4i 2절. */
+/**
+ * 일정 입력 창의 칸, 추가 창과 수정 창의 처음 값, 칸끼리 켜고 끄기, 손댄 값 지키기와 날짜 따라가기, 칸 아래 오류 글. 번호는
+ * docs/porting/task-dialog.md S4f~S4j 2절.
+ */
 class TaskFormTest {
     private static final LocalDateTime NOW = LocalDateTime.of(2026, 11, 18, 10, 7);
     private static final String SMILE = new String(Character.toChars(0x1F600));
@@ -616,5 +620,38 @@ class TaskFormTest {
         assertEquals(3, runs[0]);
         f.title.setText("운동");
         assertEquals(4, runs[0]);
+    }
+
+    private static TaskForm edit(Tasks.Spec spec) {
+        return new TaskForm(spec.task(), NOW, DayOfWeek.MONDAY);
+    }
+
+    @Test
+    void eForm11EditStartValues() {
+        TaskForm f = edit(Tasks.task("운동", d(20)).at("10:00").minutes(45).category(Category.EXERCISE).memo("스트레칭"));
+        assertEquals(List.of(true, "운동", "운동", "2026-11-20 (금)", false, true, "10:00", 45, "스트레칭"),
+                List.of(f.task.isSelected(), f.title.getText(), f.category.getSelectedItem(), text(f.date), f.period.isSelected(),
+                        f.timed.isSelected(), f.start.getValue(), f.minutes.getValue(), f.memo.getText()));
+        Ui.setDate(f.date, d(21));
+        assertEquals("10:00", f.start.getValue());
+        assertTrue(f.draft().editing());
+        TaskForm p = edit(Tasks.task("보고서", d(18)).at("09:00").period(d(16), d(22)));
+        assertEquals(List.of("시작일", "2026-11-16 (월)", true, "2026-11-22", false, false), List.of(p.dateLabel.getText(),
+                text(p.date), p.period.isSelected(), text(p.due), p.timed.isSelected(), p.timed.isEnabled()));
+        TaskForm fixed = edit(Tasks.task("수업", d(20)).kind(Kind.FIXED).at("13:00").minutes(75));
+        assertEquals(List.of(true, true, false, "13:00", 75), List.of(fixed.fixed.isSelected(), fixed.timed.isSelected(),
+                fixed.timed.isEnabled(), fixed.start.getValue(), fixed.minutes.getValue()));
+        TaskForm untimed = edit(Tasks.task("빨래", d(18)));
+        assertEquals(List.of(false, "10:10"), List.of(untimed.timed.isSelected(), untimed.start.getValue()));
+        Ui.setDate(untimed.date, d(19));
+        assertEquals("09:00", untimed.start.getValue());
+    }
+
+    @Test
+    void eForm13OffStepStoredValues() {
+        assertThrows(IllegalArgumentException.class, () -> edit(Tasks.task("운동", d(20)).at("09:03")));
+        assertThrows(IllegalArgumentException.class, () -> edit(Tasks.task("운동", d(20)).at("10:00").minutes(27)));
+        assertEquals(List.of(5, 725), List.of(edit(Tasks.task("짧게", d(20)).minutes(5)).minutes.getValue(),
+                edit(Tasks.task("길게", d(20)).minutes(725)).minutes.getValue()));
     }
 }
