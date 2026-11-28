@@ -24,6 +24,7 @@ import planningpet.common.view.Icons;
 import planningpet.common.view.Theme;
 import planningpet.common.view.Ui;
 import planningpet.reward.controller.RewardController;
+import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Task;
 
 /** 할 일 줄 목록(07). 홈의 그날 목록과 일정관리 오른쪽 목록이 같이 쓴다. 옮기는 몫은 docs/porting/task-rows.md. */
@@ -201,13 +202,20 @@ public final class TaskRows extends JPanel {
         CircleButton trash = new CircleButton(Icons.Kind.TRASH, 28, "삭제", true);
         trash.addActionListener(e -> onDelete.accept(t));
         // D-94: 끝낸 줄과 지난 날 목록의 기간 할 일은 시각을 정하지 않는다.
-        boolean pastPeriod = !t.isDone() && t.period() && listDay.isBefore(data.today());
+        LocalDate today = data.today();
+        boolean pastPeriod = !t.isDone() && t.period() && listDay.isBefore(today);
         TimePill when = new TimePill(time, t.isDone(), t.isDone() || pastPeriod, pastPeriod ? "지난 날에는 시각을 정할 수 없어요" : null);
         when.addActionListener(e -> onTime.open(t, listDay, when));
-        row.add(middle(box), BorderLayout.WEST);
+        // D-35: 고정 일정도 체크한다. 체크 옆에 "고정" 꼬리표를 둔다.
+        row.add(t.getKind() == Kind.FIXED ? middle(box, fixedTag()) : middle(box), BorderLayout.WEST);
         row.add(new TitleLabel(t), BorderLayout.CENTER);
         row.add(middle(when, minutes, pencil, trash), BorderLayout.EAST);
-        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
+        // D-94: 마감 글, 하려던 일, "오늘 마감"과 "마감"은 제목 아래 둘째 줄 왼쪽이다. 제목이 줄의 폭을 먼저 받는다.
+        JLabel marks = marks(data.getBook().dueText(t), missedNote(t, today), dueTag(t, listDay, today));
+        if (marks != null) {
+            row.add(marks, BorderLayout.SOUTH);
+        }
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, marks == null ? 44 : 62));
         return row;
     }
 

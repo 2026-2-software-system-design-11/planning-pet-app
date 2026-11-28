@@ -237,4 +237,25 @@ class TaskRowTest {
         }
         assertEquals(List.of("시각 지원서 2026-11-18", "시각 지원서 2026-11-20", "시각 빨래 2026-11-17"), heard);
     }
+
+    @Test
+    void eRow3Marks() throws IOException {
+        JPanel p = row(period(false), "", LocalDate.of(2026, 11, 17), 480);
+        assertEquals(new Dimension(303, 54), p.getPreferredSize());
+        assertEquals(62, p.getMaximumSize().height);
+        JLabel marks = (JLabel) p.getComponent(3);
+        assertEquals("<html><font color='#8A96A0'>~11/22까지</font></html>", marks.getText());
+        assertEquals("6,33 470x15", marks.getX() + "," + marks.getY() + " " + marks.getWidth() + "x" + marks.getHeight());
+        looks("period-past", p);
+    }
+
+    @Test
+    void eRow4Fixed() throws IOException {
+        JPanel p = row(task(Kind.FIXED, "수업", LocalTime.of(9, 0), 75, false), "09:00~10:15", TODAY, 480);
+        assertEquals(new Dimension(341, 39), p.getPreferredSize());
+        assertEquals("JPanel 6,5 62x28 [JCheckBox 0,2 24x24, JLabel 28,5 34x18], TitleLabel 74,5 179x28, JPanel 259,5 217x28 "
+                + "[TimePill 0,0 115x28, JLabel 119,4 34x20, CircleButton 157,0 28x28, CircleButton 189,0 28x28]", bounds(p));
+        assertEquals("고정", ((JLabel) ((JPanel) p.getComponent(0)).getComponent(1)).getText());
+        looks("fixed", p);
+    }
 }
