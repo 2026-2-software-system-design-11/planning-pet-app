@@ -48,4 +48,28 @@ class TaskDialogAskTest {
         assertEquals(other.question(), TaskDialog.overlapPane(other).getMessage());
         assertEquals(null, TaskDialog.overlapPane(other).getIcon());
     }
+
+    @Test
+    void eAsk2ScopeBatchim() {
+        assertEquals("반복 일정 저장", TaskDialog.SCOPE);
+        List<String> scopes = List.of("이 일정만", "이후 반복 모두", "취소");
+        assertEquals(asked("'대학수학'은 반복 일정이에요. 어디까지 바꿀까요?", scopes, "취소"),
+                shown(TaskDialog.scopePane(task("대학수학", true))));
+        assertEquals(asked("'과제'는 반복 일정이에요. 어디까지 바꿀까요?", scopes, "취소"), shown(TaskDialog.scopePane(task("과제", true))));
+    }
+
+    @Test
+    void eAsk3DeleteConfirm() {
+        assertEquals("일정 삭제", TaskDialog.DELETE);
+        List<String> buttons = List.of("삭제", "취소");
+        assertEquals(asked("'대학수학'을 삭제할까요?", buttons, "취소"), shown(TaskDialog.deletePane(task("대학수학", false))));
+        assertEquals(asked("'과제'를 삭제할까요?", buttons, "취소"), shown(TaskDialog.deletePane(task("과제", false))));
+    }
+
+    @Test
+    void eAsk4SeriesDelete() {
+        List<String> scopes = List.of("이 일정만", "이후 반복 모두", "취소");
+        assertEquals(asked("'대학수학'은 반복 일정이에요.", scopes, "취소"), shown(TaskDialog.deletePane(task("대학수학", true))));
+        assertEquals(asked("'과제'는 반복 일정이에요.", scopes, "취소"), shown(TaskDialog.deletePane(task("과제", true))));
+    }
 }
