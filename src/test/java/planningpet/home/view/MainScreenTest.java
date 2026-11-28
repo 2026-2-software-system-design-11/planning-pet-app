@@ -10,30 +10,58 @@ import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.time.Clock;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.AbstractButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import org.junit.jupiter.api.Test;
 import planningpet.app.controller.AppController;
 import planningpet.app.model.AppData;
 import planningpet.home.controller.HomeController;
 import planningpet.pet.model.PetKind;
 import planningpet.pet.model.PetState;
+import planningpet.reward.controller.RewardController;
+import planningpet.schedule.model.Category;
+import planningpet.schedule.model.Kind;
+import planningpet.schedule.model.Task;
+import planningpet.schedule.model.TaskDraft;
+import planningpet.schedule.view.TaskRows;
 
 /** 홈 화면. 번호는 docs/porting/home.md S3ab 2절. */
 class MainScreenTest {
     private static final ZoneId ZONE = ZoneId.systemDefault();
+    private final List<Task> tasks = new ArrayList<>();
     private AppData data;
+
+    private void task(String title, int month, int day, String start, int minutes, boolean done) {
+        LocalDate d = LocalDate.of(2026, month, day);
+        tasks.add(new Task("id" + tasks.size(), tasks.size() + 1, Kind.TASK, title, d, start == null ? null : LocalTime.parse(start),
+                minutes, "", false, Category.OTHER, null, null, null, null, done, done ? d : null, 0, 0, null, null));
+    }
+
+    /** 1절의 일정: 11-14에 보고서 10:00 60분, 시각 없는 토익 공부, 끝낸 빨래, 11-18에 가. */
+    private void base() {
+        task("보고서", 11, 14, "10:00", 60, false);
+        task("토익 공부", 11, 14, null, 30, false);
+        task("빨래", 11, 14, null, 30, true);
+        task("가", 11, 18, null, 30, false);
+    }
 
     /** 오늘 11-14 15:23, 고른 고양이 나비의 홈 화면. Main처럼 데이터 변경 알림에 refresh를 건다. */
     private MainScreen screen() {
-        data = new AppData(Clock.fixed(LocalDateTime.of(2026, 11, 14, 15, 23).atZone(ZONE).toInstant(), ZONE), List.of(), List.of());
+        data = new AppData(Clock.fixed(LocalDateTime.of(2026, 11, 14, 15, 23).atZone(ZONE).toInstant(), ZONE), tasks, List.of());
+        data.setNextSeq(tasks.size() + 1);
         data.addPet(new PetState(PetKind.CAT, "나비"));
         data.setActiveKind(PetKind.CAT);
         AppController app = new AppController(data, null, e -> { });
-        MainScreen m = new MainScreen(data, app, new HomeController(data, app));
+        MainScreen m = new MainScreen(data, app, new HomeController(data, app), new RewardController(data, app));
         data.onChange(m::refresh);
         return m;
     }
@@ -50,6 +78,22 @@ class MainScreenTest {
 
     private static String at(Rectangle r) {
         return r.x + "," + r.y + " " + r.width + "x" + r.height;
+    }
+
+    /** 목록의 줄마다 체크와 제목, 라벨과 단추는 글. */
+    private static String rows(TaskRows rows) {
+        List<String> out = new ArrayList<>();
+        for (Component c : rows.getComponents()) {
+            if (c instanceof JLabel l) {
+                out.add(l.getText());
+            } else if (c instanceof AbstractButton b) {
+                out.add(b.getText());
+            } else {
+                JCheckBox b = (JCheckBox) ((JPanel) ((JPanel) c).getComponent(0)).getComponent(0);
+                out.add((b.isSelected() ? "[x] " : "[ ] ") + ((Task) b.getClientProperty(Task.class)).getTitle());
+            }
+        }
+        return String.join(" / ", out);
     }
 
     private static void press(MainScreen m, int day) {
@@ -114,5 +158,36 @@ class MainScreenTest {
         got.add(m.listTitle.getText());
         assertEquals(List.of("11월 14일 (토) 할 일", "11월 15일 (일) 할 일", "11월 16일 (월) 할 일", "11월 1일 (일) 할 일", "11월 30일 (월) 할 일",
                 "11월 18일 (수) 할 일", "12월 1일 (화) 할 일", "1월 3일 (일) 할 일"), got);
+    }
+
+    @Test
+    void eScreen7PickRedraws() {
+        base();
+        MainScreen m = screen();
+        data.changed();
+        String first = rows(m.rows);
+        assertEquals("[ ] 보고서 / 시각 없는 할 일 / [ ] 토익 공부 / 끝낸 일 1개 / [x] 빨래", first);
+        press(m, 18);
+        assertEquals("시각 없는 할 일 / [ ] 가", rows(m.rows));
+        press(m, 15);
+        assertEquals("아직 일정이 없어요. 작은 계획을 추가해 보세요.", rows(m.rows));
+        m.calendar.next.doClick();
+        assertEquals("11월 15일 (일) 할 일 아직 일정이 없어요. 작은 계획을 추가해 보세요.", m.listTitle.getText() + " " + rows(m.rows));
+        m.calendar.prev.doClick();
+        press(m, 14);
+        assertEquals("11월 14일 (토) 할 일 " + first, m.listTitle.getText() + " " + rows(m.rows));
+    }
+
+    @Test
+    void eScreen8DataChange() {
+        base();
+        MainScreen m = screen();
+        data.changed();
+        data.getBook().add(new TaskDraft(Kind.TASK, "새 일", Category.OTHER, LocalDate.of(2026, 11, 14), null, null, 30, "", null,
+                null, false, null, null, false));
+        data.changed();
+        assertEquals("[ ] 보고서 / 시각 없는 할 일 / [ ] 토익 공부 / [ ] 새 일 / 끝낸 일 1개 / [x] 빨래", rows(m.rows));
+        DayCell cell = (DayCell) m.calendar.grid.getComponent(19);
+        assertEquals("<html><center><b>14</b><br><font size='2' color='#28977F'>4개</font></center></html>", cell.getText());
     }
 }
