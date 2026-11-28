@@ -66,11 +66,7 @@ public final class CalendarPanel extends JPanel {
         next.addActionListener(e -> move(1));
         today.setFont(Theme.bold(12));
         today.setBorder(BorderFactory.createEmptyBorder(5, 12, 7, 12));
-        today.addActionListener(e -> {
-            selected = data.today();
-            month = YearMonth.from(selected);
-            onPick.accept(selected);
-        });
+        today.addActionListener(e -> pick(data.today()));
         title.setIcon(Icons.icon(Icons.Kind.CALENDAR, 24, Theme.ICON));
         title.setIconTextGap(8);
         title.setFont(Theme.heavy(21));
@@ -94,6 +90,13 @@ public final class CalendarPanel extends JPanel {
     /** 고른 날. 처음은 오늘이다. */
     public LocalDate selected() {
         return selected;
+    }
+
+    /** date와 그 달로 옮기고 받은 함수에 넘긴다. "오늘" 버튼과 일정 시작 알림 누르기(seq-uc13)가 부른다. */
+    public void pick(LocalDate date) {
+        selected = date;
+        month = YearMonth.from(date);
+        onPick.accept(date);
     }
 
     /** 데이터 변경 알림. 앱 날짜가 바뀌었고 옛 오늘을 고르고 있었으면 새 오늘과 그 달로 옮긴 뒤(06 23번, T-DAYW-4) 다시 그린다. */

@@ -250,6 +250,17 @@ class MainScreenTest {
         assertEquals("11월 14일 (토) 할 일 " + first, m.listTitle.getText() + " " + rows(m.rows));
     }
 
+    /** 일정 시작 알림을 누르면 Tray가 부르는 날 고르기. 그 날의 달로 옮기고 목록을 그 날로 바꾼다(docs/porting/tray.md E-TRAY-3). */
+    @Test
+    void eTray3ShowDayMovesMonth() {
+        base();
+        MainScreen m = screen();
+        data.changed();
+        m.showDay(LocalDate.of(2026, 12, 2));
+        assertEquals(List.of(LocalDate.of(2026, 12, 2), "2026년 12월", "12월 2일 (수) 할 일"),
+                List.of(m.calendar.selected(), m.calendar.title.getText(), m.listTitle.getText()));
+    }
+
     @Test
     void eScreen8DataChange() {
         base();

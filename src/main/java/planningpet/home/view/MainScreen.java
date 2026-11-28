@@ -160,6 +160,11 @@ public final class MainScreen extends JPanel {
         return panel;
     }
 
+    /** 달력에서 date를 고른다. 일정 시작 알림을 누르면 Tray가 부른다(07 seq-uc13). */
+    public void showDay(LocalDate date) {
+        calendar.pick(date);
+    }
+
     /** 고른 날의 목록 제목과 목록, 예시 띠, 달력, 펫 카드를 다시 그린다. 목록이 다시 놓일 때(resort)도 부른다. */
     public void refresh() {
         LocalDate date = calendar.selected();

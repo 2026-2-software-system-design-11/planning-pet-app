@@ -2,13 +2,14 @@
 
 [본 구현으로 옮기기](../porting.md) 1절 표의 단위 S2 가운데 `Main` 잇기(#434)다. `Main`이 06 21번 `load`로 데이터를 읽고 결과에 따라 메인 창, 반려동물 고르기 창, 못 읽음 창으로 갈린다(02 UC-01). 기준은 02 UC-01과 UC-17, 06 15번, 21번, 22번, 23번, 30번, 07 실행 모드, [seq-uc01](../diagrams/seq-uc01.puml), [seq-uc17](../diagrams/seq-uc17.puml), 프로토타입 `app/Main`의 `main`과 `create`다. 프로토타입은 목 데이터만 읽어 `load`가 없으므로 읽기 갈래는 비교 기준이 없고(porting.md "프로토타입과 본 구현") 06 검사 줄과 아래 경계 줄이 기준이다. 갈래가 띄우는 창은 앞 단위가 만들었다. 메인 창 틀은 S1d([frame.md](frame.md)), 30초 타이머는 S1([app-window.md](app-window.md)), 고르기 창과 저장 실패 창은 S2m(#435, [pick.md](pick.md)), 못 읽음 창은 S2l([unreadable.md](unreadable.md))이다.
 
-이 단위가 옮기지 않는 것: `--autostart`로 창 없이 트레이로 시작하기와 하나만 실행(24번 `SingleInstance`)은 S11이다. 그때까지 `--autostart`도 창을 띄운다. 메인 창 닫기는 25번이 S11이라 그때까지 앱을 끝낸다([frame.md](frame.md)). 예시로 둘러보기는 C5다.
+이 단위가 옮기지 않는 것: `--autostart`로 창 없이 트레이로 시작하기는 S11b(#524)다. 그때까지 `--autostart`도 창을 띄운다. 하나만 실행(24번 `SingleInstance`)은 S11a(#522, [tray.md](tray.md))가 `main`에 이었다. 메인 창 닫기는 25번이 S11이라 그때까지 앱을 끝낸다([frame.md](frame.md)). 예시로 둘러보기는 C5다.
 
 07 안에서 정한 것과 그 까닭:
 
 - **갈래는 `Main.start(store, folder, clock, shell)`이 한다.** `main`은 데이터 폴더를 정하고(`dataFolder`) `Theme.install`을 부른 뒤 Swing 스레드에서 `start`에 `SqliteDataStore`, 컴퓨터 시계, 실제 창을 띄우는 `shell`을 넘긴다(07 실행 모드). 검사는 `start`에 `@TempDir` 폴더의 저장소나 바꿔 끼운 저장소, 고정 시계, 창을 띄우지 않고 부른 차례를 적는 `shell`을 넘긴다.
 - **창을 띄우고 앱을 끝내는 일은 `Main` 안의 작은 interface `Shell` 뒤에 둔다.** 못 읽음 창, 고르기 창, 메인 창을 띄우기, 30초 타이머 켜기, 저장 실패 창, 끝내기다. 검사는 headless라 창을 만들 수 없고(D-108), `System.exit`를 부르면 검사가 끝나 버린다. 실제 구현은 `UnreadableDialog.show`, `PickDialog.dialog`, `AppWindow.frame`, `Tray.start`, `AppWindow.saveFailed`, `System.exit`를 부르기만 한다. 07은 `Main`의 정적 메서드만 그렸고 `Shell`은 `Main` 안에서만 쓰여 클래스를 더하지 않는다.
 - **메인 창을 여는 차례는 프로토타입과 같다.** `AppWindow`와 `DayWatcher`를 만들고, `Theme.clear`를 데이터 변경 알림마다 다시 걸고 한 번 부른 뒤(프로토타입 `create`, [frame.md](frame.md)), 창을 띄우고, 15번 `onWindowShown`을 부르고, 30초 타이머를 켠다(프로토타입 `main`). 메인 창에 넣을 화면(홈, 일정관리 같은 것)은 S3부터 더한다.
+- **S11b(#524)부터 메인 창을 여는 차례에 트레이 달기가 더해진다.** 2절 "부른 차례"의 메인 창 앞에 트레이가 붙는다. S11c(#537)가 그 앞에 Cmd+Q를, 메인 창 뒤에 앞으로를 더한다([tray.md](tray.md)).
 - **첫 실행은 빈 `AppData`이고 고르기 창과 메인 창이 `AppController` 하나를 같이 쓴다.** 07 seq-uc01의 "첫 실행이면 빈 AppData"다. 프로토타입 `apply`는 고르기 창용 controller를 따로 만들지만, 본 구현은 저장소가 지난 저장 값을 기억해 바뀐 행만 쓰므로(07 저장 형식) 같은 저장소와 controller를 쓴다.
 - **고르기 창을 닫으면 종료 코드 0으로 끝낸다.** 프로토타입 `Main`이 `System.exit(0)`이다. 아무것도 저장하지 않았으므로 파일은 생기지 않는다(05 반려동물 고르기 창).
 - **못 읽음 창에서 확인을 누르면 종료 코드 1로 끝낸다.** 06, 07, 05가 정하지 않았고 프로토타입에도 없어 메인 에이전트가 골랐다. 못 읽음 창 뒤에 끝나는 것은 오류로 끝나는 것이고, 화면에 보이는 차이는 없으며, `Main`은 이미 `--data-dir` 오류에 0이 아닌 2로 끝낸다는 까닭이다. 명세의 규칙이 아니다. 파일 자리는 데이터 폴더의 `planningpet.db`이고, 저장소의 파일 이름 `SqliteDataStore.FILE`을 `Main`이 읽도록 연다.
