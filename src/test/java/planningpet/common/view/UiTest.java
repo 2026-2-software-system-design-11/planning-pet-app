@@ -4,12 +4,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+import java.awt.Font;
+import java.awt.FontMetrics;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.text.BadLocationException;
 import org.junit.jupiter.api.Test;
 
-/** 입력칸의 도우미. 번호는 docs/porting/pick.md 2절. */
+/** 입력칸과 칸 글의 도우미. 번호는 docs/porting/pick.md 2절, home.md S3d 2절(E-FIT). */
 class UiTest {
     private static final String TEN = "가나다라마바사아자차";
     private static final String SMILE = "😀";
@@ -119,5 +121,51 @@ class UiTest {
         f.select(0, 2);
         f.replaceSelection("가나다");
         assertEquals("가나다" + SMILE.repeat(4), f.getText());
+    }
+
+    /** 글꼴에 기대지 않게 UTF-16 한 단위를 폭 10으로 잰다("…"도 10, 이모지는 20). fit은 stringWidth만 쓴다. */
+    private static final FontMetrics TEN_EACH = new FontMetrics(new Font(Font.DIALOG, Font.PLAIN, 10)) {
+        @Override
+        public int stringWidth(String s) {
+            return 10 * s.length();
+        }
+    };
+
+    private static String fit(String s, int max) {
+        return Ui.fit(s, TEN_EACH, max);
+    }
+
+    @Test
+    void eFit1Fits() {
+        assertEquals("가나다", fit("가나다", 30));
+        assertEquals("가나다", fit("가나다", 31));
+        assertEquals("", fit("", 0));
+        assertEquals(" 가 ", fit(" 가 ", 30));
+    }
+
+    @Test
+    void eFit2TooWide() {
+        assertEquals("가나다…", fit("가나다라마", 40));
+        assertEquals("가나다…", fit("가나다라마", 49));
+        assertEquals("가나…", fit("가나 다라마", 40));
+        assertEquals("가나다…", fit("  가나다라마", 40));
+    }
+
+    @Test
+    void eFit3VeryNarrow() {
+        assertEquals("가…", fit("가나다", 5));
+        assertEquals("가…", fit("가나다", 0));
+        assertEquals("가…", fit("가", 5));
+        assertEquals("…", fit("", -1));
+        assertEquals("…", fit("   가나", 10));
+    }
+
+    /** 프로토타입과 일부러 다름: 06 읽는 법대로 코드 포인트로 자른다(프로토타입은 이모지의 앞 반쪽이 남았다). */
+    @Test
+    void eFit4EmojiAtCut() {
+        assertEquals("가나…", fit("가나" + SMILE + "다", 40));
+        assertEquals("가나" + SMILE + "다", fit("가나" + SMILE + "다", 50));
+        assertEquals(SMILE + "…", fit(SMILE.repeat(3), 30));
+        assertEquals(SMILE + "…", fit(SMILE, 5));
     }
 }
