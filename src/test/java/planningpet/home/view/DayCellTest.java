@@ -28,6 +28,8 @@ import planningpet.schedule.model.CellPreview;
 class DayCellTest {
     private static final CellPreview NONE = new CellPreview(0, true, List.of());
     private static final CellPreview TWO = new CellPreview(2, true, List.of());
+    private static final CellPreview DUE_TWO = new CellPreview(2, true, List.of("E사 지원서", "F사 서류"));
+    private static final CellPreview DUE_ONLY = new CellPreview(0, true, List.of("P"));
     private final List<LocalDate> picks = new ArrayList<>();
 
     private static LocalDate d(int day) {
@@ -194,5 +196,29 @@ class DayCellTest {
         assertFalse(c.isOpaque());
         assertEquals(SwingConstants.CENTER, c.getHorizontalAlignment());
         assertNull(c.getToolTipText());
+    }
+
+    @Test
+    void eCell10DueDot() throws IOException {
+        for (int[] s : new int[][] {{46, 44}, {60, 56}, {20, 30}}) {
+            looks("due-count", cell(20, DUE_TWO, false, false), s[0], s[1]);
+            looks("due-only", cell(22, DUE_ONLY, false, false), s[0], s[1]);
+        }
+        Color due = new Color(0xC0392B);
+        BufferedImage img = paint(cell(20, DUE_TWO, false, false), 46, 44);
+        int[] number = ink(img, Theme.INK, 0, 44);
+        int[] dot = ink(img, due, 0, 44);
+        assertTrue(dot[0] > number[2] && dot[0] - number[2] <= 4, "숫자 오른쪽");
+        assertTrue(Math.abs(dot[1] - (number[1] - 3)) <= 2, "숫자 위");
+        assertEquals(5, dot[2] - dot[0]);
+        assertEquals(5, dot[3] - dot[1]);
+        assertTrue(ink(paint(cell(22, DUE_ONLY, false, false), 46, 44), due, 0, 44)[1] > dot[1], "수가 없으면 숫자와 함께 내려온다");
+    }
+
+    @Test
+    void eCell11DueTooltip() {
+        assertEquals("E사 지원서 마감, F사 서류 마감", cell(20, DUE_TWO, false, false).getToolTipText());
+        assertEquals("P 마감", cell(22, DUE_ONLY, false, false).getToolTipText());
+        assertNull(cell(18, TWO, false, false).getToolTipText());
     }
 }
