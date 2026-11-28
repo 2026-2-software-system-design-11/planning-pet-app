@@ -1,6 +1,8 @@
 package planningpet.schedule.view;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static planningpet.schedule.model.Tasks.d;
 import static planningpet.schedule.model.Tasks.task;
 
@@ -8,9 +10,13 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.AbstractButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import org.junit.jupiter.api.Test;
@@ -19,6 +25,7 @@ import planningpet.app.model.AppData;
 import planningpet.app.model.Apps;
 import planningpet.app.model.MemoryStore;
 import planningpet.common.view.CircleButton;
+import planningpet.common.view.Input;
 import planningpet.common.view.Snap;
 import planningpet.common.view.Theme;
 import planningpet.reward.controller.RewardController;
@@ -101,5 +108,58 @@ class WeekRowTest {
         assertEquals(new Insets(5, 6, 6, 4), home.getInsets());
         assertEquals(44, home.getMaximumSize().height);
         assertEquals(4, ((JPanel) home.getComponent(2)).getComponentCount());
+    }
+
+    @Test
+    void tEdit16ListPresses() {
+        Task homework = task("과제", d(18)).task();
+        Task laundry = task("빨래", d(18)).done(d(17)).task();
+        TaskRows r = rows("2026-11-17T10:00", homework, laundry);
+        JPanel p = row(r, homework, d(18));
+        Input.mouse(p.getComponent(1), MouseEvent.MOUSE_CLICKED);
+        Input.mouse(p, MouseEvent.MOUSE_CLICKED);
+        assertEquals(List.of(), heard);
+        Component title = p.getComponent(1);
+        title.dispatchEvent(new MouseEvent(title, MouseEvent.MOUSE_CLICKED, 0, 0, 5, 5, 2, false, MouseEvent.BUTTON1));
+        assertEquals(List.of("수정 과제"), heard);
+        clock(p).doClick();
+        assertEquals(List.of("수정 과제", "시각 과제 2026-11-18"), heard);
+        TimePill done = clock(row(r, laundry, d(18)));
+        assertFalse(done.isEnabled());
+        done.doClick();
+        assertEquals(2, heard.size());
+    }
+
+    @Test
+    void tEdit22LastWeekRowOpensToday() {
+        Task p = task("지원서", d(12)).minutes(60).period(d(12), d(20)).task();
+        TimePill clock = clock(row(p, d(15)));
+        assertTrue(clock.isEnabled());
+        assertEquals("시각 정하기", clock.getToolTipText());
+        clock.doClick();
+        assertEquals(List.of("시각 지원서 2026-11-18"), heard);
+    }
+
+    @Test
+    void tEdit42PastDueClock() {
+        TimePill clock = clock(row(task("Q", d(10)).period(d(10), d(16)).task(), d(16)));
+        assertFalse(clock.isEnabled());
+        assertEquals("마감이 지난 일은 시각을 정할 수 없어요", clock.getToolTipText());
+        clock.doClick();
+        assertEquals(List.of(), heard);
+        // 흐린 것을 건너뛰고 단추의 동작을 부르면 창을 연 날은 목록의 날 11-16이다. 창을 막는 일은 창을 여는 쪽(S5f)이다.
+        for (ActionListener l : clock.getActionListeners()) {
+            l.actionPerformed(new ActionEvent(clock, ActionEvent.ACTION_PERFORMED, ""));
+        }
+        assertEquals(List.of("시각 Q 2026-11-16"), heard);
+    }
+
+    @Test
+    void eWrow9CheckDoesNotLinger() {
+        Task t = task("과제", d(18)).task();
+        TaskRows r = rows("2026-11-18T10:00", t);
+        ((AbstractButton) ((JPanel) row(r, t, d(18)).getComponent(0)).getComponent(0)).doClick();
+        assertTrue(t.isDone());
+        assertFalse(r.settling());
     }
 }

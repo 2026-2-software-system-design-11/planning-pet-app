@@ -377,15 +377,17 @@ public final class TaskRows extends JPanel implements Scrollable {
         box.putClientProperty(Task.class, t);
         box.getAccessibleContext().setAccessibleName((t.isDone() ? "끝냄 취소: " : "끝냄: ") + t.getTitle());
         // UC-07, UC-08: 끝내지 않은 일은 끝내고 끝낸 일은 체크를 푼다(프로토타입 TaskController.check의 갈래).
-        // D-88: 체크하면 제자리에 머물고 마지막 체크에서 1.5초 뒤 묶음으로 내려간다. 풀면 바로 제자리다.
+        // D-88: 홈 목록에서 체크하면 제자리에 머물고 마지막 체크에서 1.5초 뒤 묶음으로 내려간다. 풀면 바로 제자리다.
         box.addActionListener(e -> {
             if (t.isDone()) {
                 lingering.remove(t);
                 reward.uncomplete(t);
             } else {
-                lingering.add(t);
-                if (isShowing()) {
-                    settleTimer.restart();
+                if (!withDate) {
+                    lingering.add(t);
+                    if (isShowing()) {
+                        settleTimer.restart();
+                    }
                 }
                 reward.complete(t);
             }
@@ -399,13 +401,17 @@ public final class TaskRows extends JPanel implements Scrollable {
         pencil.addActionListener(e -> onEdit.accept(t));
         CircleButton trash = new CircleButton(Icons.Kind.TRASH, iconButton, "삭제", true);
         trash.addActionListener(e -> onDelete.accept(t));
-        // D-94: 끝낸 줄과 지난 날 목록의 기간 할 일은 시각을 정하지 않는다.
+        // D-94, D-102: 끝낸 줄은 시각을 정하지 않는다. 홈의 지난 날 목록에서 기간 할 일의 시각은 정하지 않는다. 일정관리 목록의 지난 날
+        // 줄은 마감이 남았으면 오늘로 정하고(D-99), 마감이 지났으면 정하지 않는다.
         LocalDate today = data.today();
-        boolean pastPeriod = !t.isDone() && t.period() && listDay.isBefore(today);
-        String why = pastPeriod ? "지난 날에는 시각을 정할 수 없어요" : null;
+        boolean pastPeriod = !t.isDone() && t.period() && listDay.isBefore(today) && (!withDate || t.getDueDate().isBefore(today));
+        String why = !pastPeriod ? null : withDate ? "마감이 지난 일은 시각을 정할 수 없어요" : "지난 날에는 시각을 정할 수 없어요";
         TimePill when = withDate ? TimePill.icon(t.isDone(), t.isDone() || pastPeriod, why)
                 : new TimePill(time, t.isDone(), t.isDone() || pastPeriod, why);
-        when.addActionListener(e -> onTime.open(t, listDay, when));
+        // 마감이 지난 줄은 목록의 날(지난 날)을 그대로 넘겨 시각 고치기 창을 여는 쪽도 막는다(D-99, 06 T-EDIT-42).
+        boolean toToday = withDate && t.period() && listDay.isBefore(today) && !t.getDueDate().isBefore(today);
+        LocalDate openDay = toToday ? today : listDay;
+        when.addActionListener(e -> onTime.open(t, openDay, when));
         // D-35: 고정 일정도 체크한다. 체크 옆에 "고정" 꼬리표를 둔다.
         row.add(t.getKind() == Kind.FIXED ? middle(box, fixedTag()) : middle(box), BorderLayout.WEST);
         String date = withDate ? rowDay.getMonthValue() + "/" + rowDay.getDayOfMonth() + " " : "";
