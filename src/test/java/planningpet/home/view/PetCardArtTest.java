@@ -1,6 +1,7 @@
 package planningpet.home.view;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
@@ -230,5 +231,43 @@ class PetCardArtTest {
         assertEquals(List.of("가", "나"), bounded("가 나", 5));
         assertEquals(List.of("가"), bounded(" 가", -5));
         assertEquals(List.of(SMILE), bounded(SMILE, 10));
+    }
+
+    /** 그린 말풍선: 그림, 돌려받은 자리, 줄였는지, 그린 뒤 그래픽의 글꼴과 색. */
+    private record Drawn(BufferedImage img, Rectangle box, boolean cut, Font font, Color color) {
+    }
+
+    /** 프로토타입 PetCard처럼 글 안티에일리어싱도 켜고 cw x ch 그림에 그린다. 부르기 전 줄였는지는 참이다. */
+    private static Drawn bubble(String text, int x, int top, int w, int bottom, int cw, int ch) {
+        BufferedImage img = new BufferedImage(cw, ch, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = hinted(img);
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        boolean[] cut = {true};
+        Rectangle box = PetCardArt.bubble(g, text, x, top, w, bottom, cut);
+        Drawn d = new Drawn(img, box, cut[0], g.getFont(), g.getColor());
+        g.dispose();
+        return d;
+    }
+
+    /** 글 자리 [x+30, x+폭-4) x [y+7, y+높이-7)를 CARD_TOP으로 덮고 기준 그림과 맞춘다(home.md S3l). */
+    private static void looks(String name, Drawn d) throws IOException {
+        Graphics2D g = d.img().createGraphics();
+        g.setColor(Theme.CARD_TOP);
+        g.fillRect(d.box().x + 30, d.box().y + 7, d.box().width - 34, d.box().height - 14);
+        g.dispose();
+        Snap.assertLooksLikePrototype("bubble-" + name, d.img());
+    }
+
+    @Test
+    void eBub2OneLine() throws IOException {
+        int[][] cards = {{360, 240, 152, 147, 192, 221}, {300, 210, 128, 147, 156, 191}, {800, 500, 270, 227, 514, 481}};
+        for (int[] c : cards) {
+            Drawn d = bubble("잘했어! +10P", c[2], c[3], c[4], c[5], c[0], c[1]);
+            assertEquals(new Rectangle(c[2], c[3], c[4], 33), d.box());
+            assertFalse(d.cut());
+            assertEquals(Theme.bold(13), d.font());
+            assertEquals(Theme.INK, d.color());
+            looks("one-" + c[0] + "x" + c[1], d);
+        }
     }
 }

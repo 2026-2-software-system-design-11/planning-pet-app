@@ -11,11 +11,17 @@ import java.awt.geom.Path2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
+import planningpet.common.view.Card;
+import planningpet.common.view.Icons;
 import planningpet.common.view.Images;
 import planningpet.common.view.Theme;
+import planningpet.common.view.Ui;
 
-/** 홈 펫 카드(D-59)의 그림 도구: 하늘과 풀밭 장면과 그것이 쓰는 색 섞기, 알파 바꾸기, 말풍선 글 줄 바꾸기. 값은 디자인 시스템 10절 "홈"에 있다(docs/porting/home.md S3j). */
+/** 홈 펫 카드(D-59)의 그림 도구: 하늘과 풀밭 장면과 그것이 쓰는 색 섞기, 알파 바꾸기, 펫 옆 말풍선과 그 글 줄 바꾸기. 값은 디자인 시스템 10절 "홈"에 있다(docs/porting/home.md S3j). */
 final class PetCardArt {
+    /** 말풍선은 이 줄 수까지 보이고 넘치면 끝을 줄인다. */
+    static final int BUBBLE_MAX_LINES = 4;
+
     private PetCardArt() {
     }
 
@@ -84,6 +90,54 @@ final class PetCardArt {
 
     static Color withAlpha(Color c, int a) {
         return new Color(c.getRed(), c.getGreen(), c.getBlue(), a);
+    }
+
+    /**
+     * 펫 옆 말풍선(D-59): (x, top)에서 폭 w, bottom 위까지. 꼬리가 왼쪽의 펫을 가리킨다. 폭에서 줄을 바꾸고 넘치면 끝을 줄인다.
+     * 그린 자리를 돌려주고, 글을 줄였으면 cut[0]을 true로 한다. 글이 없으면 그리지 않고 null이다.
+     */
+    static Rectangle bubble(Graphics2D g, String text, int x, int top, int w, int bottom, boolean[] cut) {
+        cut[0] = false;
+        if (text.isBlank()) {
+            return null;
+        }
+        g.setFont(Theme.bold(13));
+        FontMetrics fm = g.getFontMetrics();
+        int heart = 14;
+        int textW = w - 14 - heart - 6 - 12;
+        int lineH = fm.getHeight();
+        int room = Math.max(1, Math.min(BUBBLE_MAX_LINES, (bottom - top - 16) / lineH));
+        List<String> lines = wrap(text, fm, textW);
+        if (lines.size() > room) {
+            cut[0] = true;
+            List<String> shown = new ArrayList<>(lines.subList(0, room));
+            shown.set(room - 1, Ui.fit(shown.get(room - 1) + " " + String.join(" ", lines.subList(room, lines.size())), fm, textW));
+            lines = shown;
+        }
+        int bh = lines.size() * lineH + 16;
+        int by = top;
+        int bx = x;
+        Card.shadow(g, bx, by, w, bh, Theme.BUBBLE_RADIUS);
+        int tailY = by + Math.min(bh / 2, 20);
+        Path2D tail = new Path2D.Double();
+        tail.moveTo(bx + 2, tailY - 7);
+        tail.lineTo(bx - 9, tailY + 1);
+        tail.lineTo(bx + 2, tailY + 6);
+        tail.closePath();
+        g.setColor(Theme.CARD_TOP);
+        g.fillRoundRect(bx, by, w, bh, Theme.BUBBLE_RADIUS, Theme.BUBBLE_RADIUS);
+        g.fill(tail);
+        g.setColor(Theme.CARD_EDGE);
+        g.setStroke(new BasicStroke(1f));
+        g.drawRoundRect(bx, by, w - 1, bh - 1, Theme.BUBBLE_RADIUS, Theme.BUBBLE_RADIUS);
+        g.draw(new java.awt.geom.Line2D.Double(bx, tailY - 7, bx - 9, tailY + 1));
+        g.draw(new java.awt.geom.Line2D.Double(bx - 9, tailY + 1, bx, tailY + 6));
+        Icons.draw(g, Icons.Kind.HEART, bx + 12, by + 8 + (lineH - heart) / 2, heart, Theme.HEART);
+        g.setColor(Theme.INK);
+        for (int i = 0; i < lines.size(); i++) {
+            g.drawString(lines.get(i), bx + 12 + heart + 6, by + 8 + fm.getAscent() + i * lineH);
+        }
+        return new Rectangle(bx, by, w, bh);
     }
 
     /** 띄어쓰기 단위로 max 폭에서 줄을 바꾼다. 띄어쓰기 없이 긴 글은 글자(코드 포인트) 단위로 자른다(home.md S3k E-WRAP-5). */
