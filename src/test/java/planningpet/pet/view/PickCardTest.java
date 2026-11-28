@@ -7,12 +7,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.Dimension;
 import java.awt.Rectangle;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 import javax.swing.ButtonGroup;
 import javax.swing.JComponent;
 import javax.swing.RepaintManager;
 import org.junit.jupiter.api.Test;
+import planningpet.common.view.Snap;
 import planningpet.common.view.Theme;
 import planningpet.pet.model.PetKind;
 
@@ -32,6 +34,10 @@ class PickCardTest {
         public void addDirtyRegion(JComponent c, int x, int y, int w, int h) {
             all.add(new Rectangle(x, y, w, h));
         }
+    }
+
+    private static PickCard blank(PetKind kind, boolean selected) {
+        return new PickCard("", kind, selected, "");
     }
 
     private static String described(String about) {
@@ -109,5 +115,11 @@ class PickCardTest {
         off.setEnabled(false);
         off.doClick(0);
         assertFalse(off.isSelected());
+    }
+
+    @Test
+    void eCard4Plain() throws IOException {
+        Snap.assertLaidOutLooksLikePrototype("pickcard-cat", blank(PetKind.CAT, false), 248, 262);
+        Snap.assertLaidOutLooksLikePrototype("pickcard-dog", blank(PetKind.DOG, false), 248, 262);
     }
 }
