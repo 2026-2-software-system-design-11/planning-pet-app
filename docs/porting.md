@@ -69,6 +69,7 @@
 | S3j | 펫 카드 배경 장면과 색 도우미 | `home.view`의 패키지 안 `PetCardArt`의 `scene`(하늘, 구름, 언덕, 풀밭, 풀잎), `mix`, `withAlpha`(#458). 말풍선 줄바꿈은 #459, 말풍선 그리기는 #462 | 없음(05 홈 "펫 카드", [디자인 시스템](design-system.md) 10절 홈) | [docs/porting/home.md](porting/home.md) |
 | S3k | 펫 말풍선 줄바꿈 | `home.view`의 패키지 안 `PetCardArt.wrap`(띄어쓰기에서 바꿈, 긴 낱말 자르기, #459). 말풍선 그리기와 하트 아이콘은 #462 | 06 읽는 법의 글자 수(05 홈 "펫 카드", D-59) | [docs/porting/home.md](porting/home.md) |
 | S3l | 펫 말풍선 그리기와 하트 아이콘 | `home.view`의 패키지 안 `PetCardArt.bubble`(줄바꿈, 4줄 넘김과 마지막 줄 줄이기, 꼬리와 하트), `common.view`의 `Icons`의 `HEART`(#462) | 16번의 펫 말을 그린다(05 홈 "펫 카드", D-59, [디자인 시스템](design-system.md) 10절 홈) | [docs/porting/home.md](porting/home.md) |
+| S3m | 펫 카드 몸 | `home.view`의 `PetCard`(틀, 그림자, 둥근 틀로 자른 장면, 펫과 숨쉬기, 테두리), `PetArt`의 `cardScale`(#465). 오른쪽 열은 #466, 누르기와 상태는 #467 | 없음(05 홈 "펫 카드", 입력 항목 9, D-48, D-93, [디자인 시스템](design-system.md) 10절 홈) | [docs/porting/home.md](porting/home.md) |
 | S3 | 홈 목록 | `MainScreen`, `PetCard`, `CalendarPanel`, `TaskRows`(홈 목록이 쓰므로 S5에서 당겨 온다). `RewardController.complete`, `uncomplete`는 S3a, `HomeController`는 S3b | 6번, 13번, 16번, 26번 | [docs/porting/home.md](porting/home.md) |
 | S4 | 일정 입력 창 | `TaskDialog`, `TaskController.add`, `update`, `delete`, 고르는 칸 `ComboUI`와 그것을 거는 `Theme.install`의 줄([theme.md](porting/theme.md)) | 2~5번, 14번 | `docs/porting/task-dialog.md` |
 | S5 | 일정관리 | `ScheduleScreen`, `TimetablePanel`, `TimeEditor`, `TaskController.clearTime` | 4번의 시각 고치기 창, 7번, 19번 | `docs/porting/schedule.md` |
