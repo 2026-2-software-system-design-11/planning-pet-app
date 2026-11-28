@@ -54,7 +54,7 @@
 | S2k | 펫 만들기와 고르기 controller | `PetController.choose`(바로 시작 갈래, `examples` 인자는 C5), `adopt`, `select`(#430) | 30번(`step`, `rename`, `pose`는 S8), 15번 T-BRF-6, 16번 `ADOPTED`, `SELECTED` | [docs/porting/pet-controller.md](porting/pet-controller.md) |
 | S2l | 데이터 파일을 못 읽음 창 | `UnreadableDialog`의 창 내용(#431) | 21번의 `UNREADABLE`(프로토타입 기준 없음) | [docs/porting/unreadable.md](porting/unreadable.md) |
 | S2m | 고르기 창 띄우기와 저장 실패 창 | `PickDialog`의 창 만들기(`dialog`, 제목, Enter, 닫기 알림)와 바로 시작(`onStart`), 저장 실패 창 `AppWindow.saveFailed`(#435) | 22번의 저장 실패 창, 30번의 바로 시작 | [docs/porting/pick.md](porting/pick.md) |
-| S2 | 반려동물 고르기 창 | `PickDialog`, `PetController.adopt`, `select`(S2k가 옮긴다), `Main` 잇기(읽기, 못 읽음 창 띄우기와 끝내기(창 내용은 S2l), 첫 실행 갈래(고르기 창과 저장 실패 창은 S2m), 창과 타이머 잇기) | 30번, 21번의 시작할 때 읽기 | [docs/porting/pick.md](porting/pick.md) |
+| S2 | 반려동물 고르기 창 | `PickDialog`, `PetController.adopt`, `select`(S2k가 옮긴다), `Main` 잇기(읽기, 못 읽음 창 띄우기와 끝내기(창 내용은 S2l), 첫 실행 갈래(고르기 창과 저장 실패 창은 S2m), 창과 타이머 잇기) | 30번, 21번의 시작할 때 읽기 | [docs/porting/pick.md](porting/pick.md), [docs/porting/main.md](porting/main.md) |
 | S3 | 홈 목록 | `MainScreen`, `PetCard`, `CalendarPanel`, `HomeController`, `RewardController.complete`, `uncomplete` | 6번, 8번, 9번, 13번, 16번, 26번 | `docs/porting/home.md` |
 | S4 | 일정 입력 창 | `TaskDialog`, `TaskController.add`, `update`, `delete`, 고르는 칸 `ComboUI`와 그것을 거는 `Theme.install`의 줄([theme.md](porting/theme.md)) | 2~5번, 14번 | `docs/porting/task-dialog.md` |
 | S5 | 일정관리 | `ScheduleScreen`, `TimetablePanel`, `TaskRows`, `TimeEditor`, `TaskController.clearTime` | 4번의 시각 고치기 창, 7번, 19번 | `docs/porting/schedule.md` |

@@ -7,9 +7,9 @@ PR 하나의 크기 한도(1절) 때문에 둘로 나눠 옮긴다. 이 기록(�
 07 안에서 정한 것과 그 까닭:
 
 - **`AppWindow`는 `JFrame`을 물려받지 않는다.** 검사는 `java.awt.headless=true`로 돌고(D-108), 그때 `JFrame`을 만들면 `HeadlessException`이다. 그래서 `AppWindow`는 창 내용(창 바탕 `Backdrop`과 그 안)을 만들어 갖고, 창은 `frame(내용)`이 만든다. 프로토타입도 창 내용(`App`)과 창(`Main`)을 나눴다. 창 제목, 발자국 아이콘, 최소 크기 1000x680은 `frame`이 단다(05 창 구조, D-47, [build.md](build.md)가 이 단위로 넘긴 제목 줄 아이콘).
-- **`Main`은 이 단위가 끝나도 단위 0의 빈 창을 띄운다.** `Main` 잇기(읽기, 못 읽음 창, 첫 실행 갈래)는 S2다(porting.md 1절). 데이터를 읽지 않고 빈 `AppData`로 창 틀을 띄우면 첫 저장이 실제 데이터 파일을 덮을 수 있다. 빈 창도 `frame`으로 만들어 제목 줄 아이콘은 지금부터 보인다.
+- **`Main`은 이 단위가 끝나도 단위 0의 빈 창을 띄운다.** `Main` 잇기(읽기, 못 읽음 창, 첫 실행 갈래)는 S2다(porting.md 1절). 데이터를 읽지 않고 빈 `AppData`로 창 틀을 띄우면 첫 저장이 실제 데이터 파일을 덮을 수 있다. 빈 창도 `frame`으로 만들어 제목 줄 아이콘은 지금부터 보인다. S2(#434)가 읽은 데이터로 창 틀을 띄운다([main.md](main.md)).
 - **로고 고양이 얼굴은 높이 64의 빈 자리만 둔다.** 얼굴을 그리는 `PetArt`는 S2a(#407, [pet-art.md](pet-art.md))가 옮긴다. 자리를 먼저 두어 S2a에서 메뉴 자리가 바뀌지 않고, 프로토타입 기준 그림(얼굴만 빈 자리로 바꿔 그림)과 픽셀로 맞출 수 있다. #407이 얼굴을 그리고 창 틀 기준 그림을 얼굴이 든 프로토타입 그림으로 바꿨다.
-- **`Theme.install`과 `Theme.clear`는 `Main`이 건다(S2).** 프로토타입은 `Main`이 부품을 만들기 전에 `install`을, 화면을 다 넣은 뒤 `clear`를 창 바탕에 걸고 다시 그릴 때마다 또 건다. 화면을 넣는 곳이 `Main`이라 순서가 같도록 `Main`에 둔다. 이 단위의 검사는 프로토타입 `Main.create`처럼 `install` 뒤에 만들고 `clear`를 건 뒤 그린다.
+- **`Theme.install`과 `Theme.clear`는 `Main`이 건다(S2, #434의 [main.md](main.md)).** 프로토타입은 `Main`이 부품을 만들기 전에 `install`을, 화면을 다 넣은 뒤 `clear`를 창 바탕에 걸고 다시 그릴 때마다 또 건다. 화면을 넣는 곳이 `Main`이라 순서가 같도록 `Main`에 둔다. 이 단위의 검사는 프로토타입 `Main.create`처럼 `install` 뒤에 만들고 `clear`를 건 뒤 그린다.
 - **"screen이 null이면 흐린 메뉴" 갈래는 옮기지 않는다.** 통계를 흐린 메뉴로 두던 D-05의 갈래다. D-47이 통계를 열어 프로토타입 `Main`도 이 갈래를 부르지 않는다. 메뉴 다섯이 모두 화면을 가진다(05 창 구조).
 - **출석 단추는 `RewardController.attend`를 부른다.** `AppWindow`가 받은 `AppData`와 `AppController`로 `RewardController`를 만든다(프로토타입 `App`과 같다, 07 `AppWindow ..> RewardController`). 단추의 글과 흐림, 카드의 값은 데이터 변경 알림을 받아 다시 그린다(06 23번 "출석 버튼을 새 날로 다시 그린다", D-46).
 

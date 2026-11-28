@@ -5,7 +5,7 @@
 ## 1. 화면에서 따라 할 단계
 
 1. JDK 21을 깔고 저장소 맨 위 폴더에서 `./gradlew build`(Windows는 `gradlew.bat build`)를 친다. Gradle을 따로 깔지 않아도 래퍼가 받는다. 마지막 줄에 `BUILD SUCCESSFUL`이 보이고 `build/libs/planning-pet-app.jar`가 생긴다.
-2. `java -jar build/libs/planning-pet-app.jar`를 친다. 화면 가운데에 제목 줄이 "플래닝펫 (Planning Pet)"인 빈 창이 뜬다(05 1절). 창은 1000x680보다 작게 줄어들지 않는다.
+2. `java -jar build/libs/planning-pet-app.jar`를 친다. 화면 가운데에 제목 줄이 "플래닝펫 (Planning Pet)"인 빈 창이 뜬다(05 1절). #434부터는 데이터 폴더에 따라 고르기 창, 메인 창, 못 읽음 창이 뜬다([main.md](main.md)). 창은 1000x680보다 작게 줄어들지 않는다.
 3. 창의 닫기 단추를 누르면 앱이 끝난다.
 4. `java -jar build/libs/planning-pet-app.jar --data-dir`처럼 경로 없이 치면 창이 뜨지 않고 "--data-dir 뒤에 폴더 경로를 넣어 주세요"가 보인 뒤 끝난다.
 
