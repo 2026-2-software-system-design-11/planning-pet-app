@@ -26,6 +26,7 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.SwingUtilities;
 import org.junit.jupiter.api.Test;
 import planningpet.pet.model.PetKind;
 import planningpet.pet.model.PetState;
@@ -38,6 +39,7 @@ import planningpet.common.view.Card;
 import planningpet.common.view.Snap;
 import planningpet.common.view.Theme;
 import planningpet.reward.controller.RewardController;
+import planningpet.schedule.model.Repeat;
 import planningpet.schedule.model.Task;
 
 /** 일정관리 화면. 번호는 docs/porting/schedule.md S5c 2절, S5c2 2절, S5d 2절. 따로 적지 않으면 지금은 11-18(수) 10:00이다. */
@@ -353,5 +355,117 @@ class ScheduleScreenTest {
             l.actionPerformed(null);
         }
         assertEquals(Set.of(), screen.table.flashing());
+    }
+
+    /**
+     * 오른쪽 목록 줄의 글 "줄 앞 날짜 제목 표시". 체크한 줄은 앞에 "v", 취소선 제목은 -제목-, 빨간 표시는 (표시)이고 흐린 줄(끝낸 일, 지난
+     * 반복 사본)은 끝에 "흐림"이다.
+     */
+    private List<String> rows() {
+        return Arrays.stream(screen.untimed.getComponents()).map(c -> {
+            JPanel row = (JPanel) c;
+            JPanel line = (JPanel) row.getComponent(3);
+            String marks = line.getComponentCount() == 2 ? " " + ((JLabel) line.getComponent(0)).getText() : "";
+            boolean checked = ((AbstractButton) ((JPanel) row.getComponent(0)).getComponent(0)).isSelected();
+            boolean dim = ((JPanel) row.getComponent(2)).getComponent(0).getForeground().equals(Theme.INK_DIM);
+            return ((checked ? "v " : "") + ((JLabel) row.getComponent(1)).getText() + marks + (dim ? " 흐림" : ""))
+                    .replace("<s>", "-").replace("</s>", "-").replaceAll("<font color='#C0392B'>(.*?)</font>", "($1)")
+                    .replaceAll("<[^>]+>", "");
+        }).toList();
+    }
+
+    private static Task period(String title, int first, int due, long seq) {
+        return task(title, d(first)).period(d(first), d(due)).seq(seq).task();
+    }
+
+    /** 06 7번 T-WEEK-1, T-WEEK-5(D-78)의 화면 몫: 그 주의 시각 없는 할 일만, 끝낸 일은 체크와 취소선이고 "지난 날"이 없다. */
+    @Test
+    void tWeek1And5Rows() {
+        open(task("가", d(15)).task(), task("나", d(16)).done(d(16)).task(), task("다", d(22)).task(), task("라", d(23)).task(),
+                task("마", d(18)).at("09:00").task());
+        assertEquals(List.of("v 11/16 -나- 흐림", "11/22 다"), rows());
+        open(task("과제", d(16)).seq(1).done(d(16)).task(), task("빨래", d(16)).seq(2).task());
+        assertEquals(List.of("v 11/16 -과제- 흐림", "11/16 빨래 (지난 날)"), rows());
+    }
+
+    /** 06 7번 T-WEEK-2(D-65, D-67, D-93, D-105)의 화면 몫: 기간 할 일은 오늘 줄과 마감 날 줄이다. */
+    @Test
+    void tWeek2PeriodRows() {
+        Task[] tasks = {period("P", 12, 20, 1), period("Q", 10, 17, 2)};
+        open(tasks);
+        assertEquals(List.of("11/17 Q ~11/17까지 (지난 날)", "11/18 P ~11/20까지", "11/20 P (마감)"), rows());
+        open("2026-11-20T10:00", tasks);
+        assertEquals(List.of("11/17 Q ~11/17까지 (지난 날)", "11/20 P (오늘 마감)"), rows());
+    }
+
+    /** 06 7번 T-WEEK-3(D-93, D-105)의 화면 몫: 첫날이 아니라 오늘 줄이고, 마감이 다음 주면 한 줄이다. */
+    @Test
+    void tWeek3FirstAndDueDay() {
+        open("2026-11-17T10:00", period("P", 16, 20, 1), period("Q", 16, 29, 2),
+                task("R", d(16)).period(d(16), d(19)).seq(3).done(d(17)).task());
+        assertEquals(List.of("11/17 P ~11/20까지", "11/17 Q ~11/29까지", "v 11/17 -R- ~11/19까지 흐림", "11/20 P (마감)"), rows());
+    }
+
+    /** 06 7번 T-WEEK-4(D-69)의 화면 몫: 지난 반복 사본은 "지난 날" 없이 흐리고 체크할 수 있다. */
+    @Test
+    void tWeek4PastCopies() {
+        List<Task> tasks = new ArrayList<>();
+        for (int day = 16; day <= 22; day++) {
+            tasks.add(task("운동", d(day)).id("r" + day).seq(day).series("s", Repeat.DAILY).task());
+        }
+        tasks.add(task("과제", d(16)).seq(30).task());
+        open(tasks.toArray(Task[]::new));
+        assertEquals(List.of("11/16 운동 흐림", "11/16 과제 (지난 날)", "11/17 운동 흐림", "11/18 운동", "11/19 운동", "11/20 운동",
+                "11/21 운동", "11/22 운동"), rows());
+        ((AbstractButton) ((JPanel) ((JPanel) screen.untimed.getComponent(0)).getComponent(0)).getComponent(0)).doClick();
+        assertTrue(tasks.get(0).isDone());
+    }
+
+    /** 06 4번 T-EDIT-46(D-105)의 화면 몫: 마감 전 기간 할 일은 오늘 줄이고 날이 바뀌면 따라간다. 지난주와 다음 주도 본다. */
+    @Test
+    void tEdit46PeriodTodayRow() {
+        Task[] tasks = {period("P", 12, 27, 1), period("S", 20, 22, 2), task("빨래", d(18)).seq(3).task()};
+        open(tasks);
+        assertEquals(List.of("11/18 P ~11/27까지", "11/18 빨래", "11/20 S ~11/22까지", "11/22 S (마감)"), rows());
+        screen.move(LocalDate.of(2026, 11, 9));
+        assertEquals(List.of("11/15 P ~11/27까지"), rows());
+        screen.move(d(23));
+        assertEquals(List.of("11/23 P ~11/27까지", "11/27 P (마감)"), rows());
+        open("2026-11-19T10:00", tasks);
+        assertEquals(List.of("11/18 빨래 (지난 날)", "11/19 P ~11/27까지", "11/20 S ~11/22까지", "11/22 S (마감)"), rows());
+    }
+
+    /** 06 4번 T-EDIT-47(D-67, D-102)의 화면 몫: 마감 날에는 하려던 일과 "오늘 마감", 마감이 지나면 "지난 날"만이다. */
+    @Test
+    void tEdit47PastDuePlan() {
+        Task m = task("M", d(17)).at("10:00").period(d(16), d(20)).task();
+        open("2026-11-20T10:00", m);
+        assertEquals(List.of("11/20 M 17일에 하려던 일 (오늘 마감)"), rows());
+        open("2026-11-22T10:00", m);
+        assertEquals(List.of("11/20 M ~11/20까지 (지난 날)"), rows());
+    }
+
+    /** 목록 스크롤의 "세로 막대가 보이는지, 보기 폭, 목록 폭, 줄 폭들, 둘째 줄 폭들". */
+    private String listBar() {
+        JScrollPane side = (JScrollPane) SwingUtilities.getAncestorOfClass(JScrollPane.class, screen.untimed);
+        List<JPanel> rows = Arrays.stream(screen.untimed.getComponents()).map(c -> (JPanel) c).toList();
+        return side.getVerticalScrollBar().isVisible() + " " + side.getViewport().getWidth() + " " + screen.untimed.getWidth() + " "
+                + rows.stream().map(r -> r.getWidth()).distinct().toList() + " "
+                + rows.stream().map(r -> r.getComponent(3).getWidth()).distinct().toList();
+    }
+
+    /** E-SCH-15(S5a 3절): 폭 240 카드의 목록은 줄이 넘칠 때만 세로 막대가 생기고 줄은 보기 폭을 따른다. 막대가 있어도 둘째 줄은 170보다 넓다. */
+    @Test
+    void eSch15ListScrollBar() {
+        open(task("M", d(17)).at("10:00").period(d(16), d(20)).seq(1).task(), task("과제", d(19)).seq(2).task());
+        assertEquals(List.of("11/18 M ~11/20까지 17일에 하려던 일", "11/19 과제", "11/20 M 17일에 하려던 일 (마감)"), rows());
+        assertEquals("false 208 208 [208] [198]", listBar());
+        List<Task> tasks = new ArrayList<>();
+        for (int day = 16; day <= 22; day++) {
+            tasks.add(task("운동", d(day)).id("r" + day).seq(day).series("s", Repeat.DAILY).task());
+        }
+        open(tasks.toArray(Task[]::new));
+        assertEquals("true 191 191 [191] [181]", listBar());
+        assertTrue(((JPanel) screen.untimed.getComponent(0)).getComponent(3).getWidth() > SecondLine.WIDTH);
     }
 }
