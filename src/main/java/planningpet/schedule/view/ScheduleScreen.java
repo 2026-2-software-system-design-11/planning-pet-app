@@ -1,12 +1,16 @@
 package planningpet.schedule.view;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Graphics;
 import java.awt.GridLayout;
 import java.awt.Point;
 import java.time.Clock;
 import java.util.function.Consumer;
 import javax.swing.BorderFactory;
+import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -14,6 +18,7 @@ import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
 import planningpet.app.model.AppData;
 import planningpet.common.view.Card;
+import planningpet.common.view.Theme;
 import planningpet.common.view.Ui;
 import planningpet.reward.controller.RewardController;
 import planningpet.schedule.model.Task;
@@ -53,8 +58,11 @@ public final class ScheduleScreen extends JPanel {
         JPanel bar = new JPanel(new BorderLayout());
         bar.add(Ui.flow(prev, range, next, today), BorderLayout.WEST);
         bar.add(Ui.flow(autoPlace, add), BorderLayout.EAST);
+        // D-44: 시간표 블록 색의 뜻.
         JPanel top = new JPanel(new BorderLayout(0, 4));
         top.add(bar, BorderLayout.NORTH);
+        top.add(Ui.flow(swatch(Theme.TRACK, "고정 일정"), swatch(Theme.MINT_SOFT, "할 일"), swatch(Theme.DAY, "끝냄")),
+                BorderLayout.SOUTH);
         add(top, BorderLayout.NORTH);
         scroll = new JScrollPane(table, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scroll.setColumnHeaderView(header);
@@ -71,5 +79,30 @@ public final class ScheduleScreen extends JPanel {
         side.add(sideScroll, BorderLayout.CENTER);
         // 말풍선과 펫 자리(side의 SOUTH)는 S5d가 더한다.
         add(side, BorderLayout.EAST);
+    }
+
+    /** 색 뜻 하나: 12x12 색 칸과 12 크기 글. */
+    private static JLabel swatch(Color color, String text) {
+        JLabel l = new JLabel(text, new Icon() {
+            @Override
+            public void paintIcon(Component c, Graphics g, int x, int y) {
+                g.setColor(color);
+                g.fillRect(x, y, 12, 12);
+                g.setColor(Theme.CARD_LINE);
+                g.drawRect(x, y, 11, 11);
+            }
+
+            @Override
+            public int getIconWidth() {
+                return 12;
+            }
+
+            @Override
+            public int getIconHeight() {
+                return 12;
+            }
+        }, JLabel.LEFT);
+        l.setFont(Theme.font(12));
+        return l;
     }
 }
