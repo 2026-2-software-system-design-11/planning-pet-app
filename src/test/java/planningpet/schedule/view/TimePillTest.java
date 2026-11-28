@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.Cursor;
+import java.awt.Dimension;
 import org.junit.jupiter.api.Test;
 import planningpet.common.view.Theme;
 
@@ -51,6 +52,14 @@ class TimePillTest {
             assertFalse(p.isEnabled());
             assertEquals(WHY, p.getToolTipText());
         }
+    }
+
+    @Test
+    void eTpill5Width() {
+        assertEquals(new Dimension(115, 28), pill("9:00").getPreferredSize());
+        assertEquals(new Dimension(115, 28), pill("23:30~24:00").getPreferredSize());
+        assertEquals(new Dimension(115, 28), pill("").getMaximumSize());
+        assertEquals(new Dimension(155, 28), pill("23:30~01:00(다음 날)").getMaximumSize());
     }
 
     @Test

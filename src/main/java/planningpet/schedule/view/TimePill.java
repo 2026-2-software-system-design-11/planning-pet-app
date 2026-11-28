@@ -1,6 +1,8 @@
 package planningpet.schedule.view;
 
 import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.FontMetrics;
 import javax.swing.JButton;
 import planningpet.common.view.Theme;
 
@@ -20,5 +22,19 @@ final class TimePill extends JButton {
             setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         }
         setToolTipText(locked ? why : "눌러서 시각을 바꿔요");
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+        FontMetrics fm = getFontMetrics(getFont());
+        // 폭은 줄마다 같다. 자정을 넘는 "23:30~01:00(다음 날)"(D-77)만 글에 맞춰 넓어진다.
+        int w = Math.max(Math.max(fm.stringWidth("00:00~00:00"), fm.stringWidth("시각 정하기")), fm.stringWidth(getText()))
+                + 14 + 5 + 18;
+        return new Dimension(w, 28);
+    }
+
+    @Override
+    public Dimension getMaximumSize() {
+        return getPreferredSize();
     }
 }
