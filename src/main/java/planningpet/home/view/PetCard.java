@@ -16,6 +16,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
 import javax.swing.KeyStroke;
@@ -50,7 +52,7 @@ public final class PetCard extends JComponent {
     long start;
     double t;
 
-    /** 마지막으로 그린 말풍선 자리(말이 없으면 null)와 줄였는지. #472의 툴팁이 전체 글을 보일지 정한다. */
+    /** 마지막으로 그린 말풍선 자리(말이 없으면 null)와 줄였는지. 툴팁이 전체 글을 보일지 정한다(S3q). */
     Rectangle bubbleBox;
     boolean bubbleCut;
     /** 마우스가 카드 위에 있는지(올림 테두리). */
@@ -71,6 +73,8 @@ public final class PetCard extends JComponent {
         add(doneBar);
         setFocusable(true);
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        setToolTipText("");
+        getAccessibleContext().setAccessibleName("펫 카드. 누르면 캐릭터 창이 열려요");
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent e) {
@@ -126,10 +130,26 @@ public final class PetCard extends JComponent {
         refresh();
     }
 
+    /** 화면 읽기 프로그램에는 누르는 단추로 알린다. 이름은 생성자가, 설명(펫, 레벨, 오늘 끝낸 일, 말)은 refresh가 채운다(S3q). */
+    @Override
+    public AccessibleContext getAccessibleContext() {
+        if (accessibleContext == null) {
+            accessibleContext = new AccessibleJComponent() {
+                @Override
+                public AccessibleRole getAccessibleRole() {
+                    return AccessibleRole.PUSH_BUTTON;
+                }
+            };
+        }
+        return accessibleContext;
+    }
+
     private void refresh() {
         expBar.set(Level.of(data.activePet().getExp()).ratio());
         DailyProgress d = progress();
         doneBar.set(d.getDone(), d.getTotal());
+        getAccessibleContext().setAccessibleDescription(nameText() + " " + levelText() + ", " + expText() + ", " + doneText()
+                + (periodText() == null ? "" : ", " + periodText()) + (bubbleText().isBlank() ? "" : ", " + bubbleText()));
         revalidate();
         repaint();
     }
@@ -142,6 +162,15 @@ public final class PetCard extends JComponent {
     @Override
     public Dimension getMinimumSize() {
         return new Dimension(300, 210);
+    }
+
+    /** 마지막으로 그린 말풍선을 줄였고 마우스가 그 위면 펫 말 전체, 아니면 "캐릭터 창 열기"(S3q). */
+    @Override
+    public String getToolTipText(MouseEvent e) {
+        if (bubbleCut && bubbleBox != null && bubbleBox.contains(e.getPoint())) {
+            return "<html><div style='width:260px'>" + Ui.esc(bubbleText()) + "</div></html>";
+        }
+        return "캐릭터 창 열기";
     }
 
     @Override
