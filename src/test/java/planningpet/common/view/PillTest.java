@@ -2,6 +2,7 @@ package planningpet.common.view;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.Color;
@@ -87,6 +88,14 @@ class PillTest {
         return inks(p, () -> p.setText(""), ink);
     }
 
+    /** 첫 줄 글이 없는 크기 30 알약의 작은 글 "고양이"의 색. 작은 글이 가늘어 크기 14로는 다 칠한 픽셀이 없다. */
+    private static boolean smallIs(boolean selected, boolean enabled, Color ink) {
+        Pill p = new Pill("", null, 30).small("고양이");
+        p.setSelected(selected);
+        p.setEnabled(enabled);
+        return inks(p, () -> p.small(null), ink);
+    }
+
     /** 글 없는 알약을 발자국이 있는 것과 없는 것으로 같은 크기에 그려 아이콘 색이 ink인지 본다. */
     private static boolean iconIs(boolean selected, boolean enabled, Color ink) {
         Pill with = pill("", Icons.Kind.PAW, selected, enabled);
@@ -103,6 +112,8 @@ class PillTest {
         assertEquals(new Dimension(text + 34, 32), plain.getPreferredSize());
         icon.showIcon(false);
         assertEquals(plain.getPreferredSize(), icon.getPreferredSize());
+        int small = plain.getFontMetrics(Theme.font(11)).stringWidth("고양이");
+        assertEquals(new Dimension(text + 5 + small + 34, 32), plain.small("고양이").getPreferredSize());
     }
 
     @Test
@@ -110,15 +121,18 @@ class PillTest {
         assertEquals(mint(28, 3), fill(pill("상태", null, true, true)));
         assertTrue(textIs(pill("상태", null, true, true), Color.WHITE));
         assertTrue(iconIs(true, true, Color.WHITE));
+        assertTrue(smallIs(true, true, new Color(255, 255, 255, 215)));
         assertEquals(Theme.CARD_TOP.getRGB(), fill(pill("상태", null, false, true)));
         assertTrue(textIs(pill("상태", null, false, true), Theme.INK));
         assertTrue(iconIs(false, true, Theme.ICON));
+        assertTrue(smallIs(false, true, Theme.INK_SUB));
     }
 
     @Test
     void ePill4DisabledTextDim() {
         for (boolean on : new boolean[] {true, false}) {
             assertTrue(textIs(pill("상태", null, on, false), Theme.INK_DIM), "고름 " + on);
+            assertTrue(smallIs(on, false, Theme.INK_DIM), "고름 " + on);
         }
         assertEquals(mint(28, 3), fill(pill("상태", null, true, false)));
         assertEquals(Theme.CARD_TOP.getRGB(), fill(pill("상태", null, false, false)));
@@ -146,5 +160,7 @@ class PillTest {
         assertFalse(p.isBorderPainted());
         assertTrue(p.isRolloverEnabled());
         assertEquals(Theme.bold(14), p.getFont());
+        assertNull(p.small());
+        assertEquals("고양이", p.small("고양이").small());
     }
 }

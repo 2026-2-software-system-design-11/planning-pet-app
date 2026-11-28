@@ -3,6 +3,7 @@ package planningpet.common.view;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.GradientPaint;
 import java.awt.Graphics;
@@ -16,6 +17,8 @@ import javax.swing.JToggleButton;
  */
 public class Pill extends JToggleButton {
     private final Icons.Kind kind;
+    /** 첫 줄 글자 옆의 작은 글("고양이"). null이면 없다(D-81). */
+    private String small;
     private final int size;
     /** 좁은 자리에서 아이콘을 빼고 글자만 보인다. */
     private boolean showIcon = true;
@@ -33,9 +36,26 @@ public class Pill extends JToggleButton {
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     }
 
-    /** 첫 줄의 폭. */
+    /** 첫 줄 글자 옆 작은 글("고양이", D-81). null이면 없다. */
+    public Pill small(String text) {
+        this.small = text;
+        revalidate();
+        repaint();
+        return this;
+    }
+
+    public String small() {
+        return small;
+    }
+
+    private Font smallFont() {
+        return Theme.font(Math.max(10, size - 3));
+    }
+
+    /** 첫 줄(글자와 작은 글)의 폭. */
     private int firstLine(FontMetrics fm) {
-        return fm.stringWidth(getText());
+        int w = fm.stringWidth(getText());
+        return small == null ? w : w + 5 + getFontMetrics(smallFont()).stringWidth(small);
     }
 
     /** 글자 앞 표시(아이콘)의 폭. */
@@ -95,6 +115,12 @@ public class Pill extends JToggleButton {
         g.setFont(getFont());
         int base = (h + fm.getAscent() - fm.getDescent()) / 2;
         g.drawString(getText(), tx, base);
+        if (small != null) {
+            g.setFont(smallFont());
+            g.setColor(!isEnabled() ? Theme.INK_DIM : on ? new Color(255, 255, 255, 215) : Theme.INK_SUB);
+            g.drawString(small, tx + fm.stringWidth(getText()) + 5, base);
+            g.setColor(ink);
+        }
         g.dispose();
     }
 }
