@@ -96,7 +96,10 @@ class PetPaintHead extends PetPaintBase {
         g.setTransform(old);
     }
 
-    /** 웃는 얼굴 부품: 감고 웃는 눈, 분홍 볼, 코, 닫은 입, 수염. 눈은 선 굵기의 0.85배, 입은 그 0.75배, 수염은 0.42배다. */
+    /**
+     * 웃는 얼굴 부품: 감고 웃는 눈, 분홍 볼, 코, 입. 고양이는 세모 코, 닫은 입, 수염이고 강아지는 둥근 코와 혀가 보이게 벌린 입이다.
+     * 눈은 선 굵기의 0.85배, 닫은 입은 그 0.75배, 수염은 0.42배다.
+     */
     void faceParts() {
         float w = line * 0.85f;
         stroke(new QuadCurve2D.Double(-54, 2, -40, -14, -26, 2), w, ink);
@@ -104,6 +107,14 @@ class PetPaintHead extends PetPaintBase {
         g.setColor(BLUSH);
         g.fill(ell(-62, 24, 15, 8));
         g.fill(ell(62, 24, 15, 8));
+        if (!cat) {
+            g.setColor(NOSE);
+            g.fill(ell(0, 14, 11, 8));
+            g.setColor(new Color(255, 255, 255, 170));
+            g.fill(ell(-4, 11, 3.5, 2));
+            openMouth(w);
+            return;
+        }
         Path2D n = new Path2D.Double();
         n.moveTo(-7, 12);
         n.quadTo(0, 9, 7, 12);
@@ -120,5 +131,20 @@ class PetPaintHead extends PetPaintBase {
             stroke(new Line2D.Double(s * 82, 10, s * 124, 2), ww, ink);
             stroke(new Line2D.Double(s * 82, 22, s * 120, 26), ww, ink);
         }
+    }
+
+    /** 강아지의 벌린 입: 짙은 빨강 입 안 아래에 혀, 코에서 입으로 내려오는 선. */
+    private void openMouth(float w) {
+        double h = 12;
+        Path2D m = new Path2D.Double();
+        m.moveTo(-13, 26);
+        m.quadTo(0, 30, 13, 26);
+        m.quadTo(12, 26 + h * 1.3, 0, 26 + h * 1.3);
+        m.quadTo(-12, 26 + h * 1.3, -13, 26);
+        m.closePath();
+        filled(m, MOUTH);
+        shadeIn(m, ell(0, 26 + h * 1.2, 10, h * 0.5), TONGUE);
+        redraw(m);
+        stroke(new Line2D.Double(0, 20, 0, 27), w * 0.8f, ink);
     }
 }

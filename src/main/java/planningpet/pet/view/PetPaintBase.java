@@ -23,6 +23,8 @@ abstract class PetPaintBase {
     static final Color DOG_EAR_SHADE = new Color(0xEBA66A);
     static final Color BLUSH = new Color(247, 160, 165, 150);
     static final Color NOSE = new Color(0x4A2E28);
+    static final Color MOUTH = new Color(0x8A3B3B);
+    static final Color TONGUE = new Color(0xF27E86);
     /** 큰 그림의 선 굵기. 작게 그릴 때는 부르는 쪽이 line을 굵게 바꾼다. */
     static final float LINE = 6f;
 
