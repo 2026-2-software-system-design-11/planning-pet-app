@@ -10,6 +10,7 @@ import static planningpet.schedule.model.Tasks.task;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Insets;
+import java.awt.event.MouseEvent;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -31,14 +32,16 @@ import planningpet.common.view.Theme;
 import planningpet.reward.controller.RewardController;
 import planningpet.schedule.model.Task;
 
-/** 일정관리 화면. 번호는 docs/porting/schedule.md S5c 2절. 따로 적지 않으면 지금은 11-18(수) 10:00이다. */
+/** 일정관리 화면. 번호는 docs/porting/schedule.md S5c 2절과 S5c2 2절. 따로 적지 않으면 지금은 11-18(수) 10:00이다. */
 class ScheduleScreenTest {
     private AppData data;
     private ScheduleScreen screen;
     /** 함수 필드가 받은 것. */
     private final List<String> heard = new ArrayList<>();
+    /** 화면 높이. */
+    private int height = 600;
 
-    /** now의 앱 데이터에 tasks를 둔 화면을 1000 x 600으로 배치하고 데이터 변경에 refresh를 건다. */
+    /** now의 앱 데이터에 tasks를 둔 화면을 1000 x height로 배치하고 데이터 변경에 refresh를 건다. */
     private ScheduleScreen open(String now, Task... tasks) {
         data = Apps.data(now, tasks);
         RewardController reward = new RewardController(data, new AppController(data, new MemoryStore(), e -> { }));
@@ -49,9 +52,9 @@ class ScheduleScreenTest {
         screen.openAdd = day -> heard.add("추가 " + day);
         screen.openAutoPlace = start -> heard.add("자동 배치 " + start);
         data.onChange(screen::refresh);
-        Snap.layOut(screen, 1000, 600);
+        Snap.layOut(screen, 1000, height);
         screen.refresh();
-        Snap.layOut(screen, 1000, 600);
+        Snap.layOut(screen, 1000, height);
         return screen;
     }
 
@@ -158,17 +161,19 @@ class ScheduleScreenTest {
         assertEquals("이번 주에 시각 없는 할 일이 없어요.", ((JLabel) screen.untimed.getComponent(0)).getText());
     }
 
-    /** 목록 줄 둘째 줄의 단추(시계, 연필, 휴지통)와 "자동 배치"를 누른다. */
+    /** 목록 줄 둘째 줄의 단추(시계, 연필, 휴지통)와 "자동 배치"를 누르고 시간표 블록을 두 번 누른다. */
     @Test
     void eSch8Hooks() {
-        open(task("과제", d(18)).task());
+        open(task("과제", d(18)).task(), task("수업", d(18)).at("09:00").task());
         JPanel line = (JPanel) ((JComponent) screen.untimed.getComponent(0)).getComponent(3);
         JPanel buttons = (JPanel) line.getComponent(line.getComponentCount() - 1);
         for (Component b : buttons.getComponents()) {
             ((AbstractButton) b).doClick();
         }
         screen.autoPlace.doClick();
-        assertEquals(List.of("시각 과제 2026-11-18", "수정 과제", "삭제 과제", "자동 배치 2026-11-16"), heard);
+        Snap.paint(screen.table, 752, screen.table.getPreferredSize().height);
+        screen.table.dispatchEvent(new MouseEvent(screen.table, MouseEvent.MOUSE_CLICKED, 0, 0, 300, 410, 2, false, MouseEvent.BUTTON1));
+        assertEquals(List.of("시각 과제 2026-11-18", "수정 과제", "삭제 과제", "자동 배치 2026-11-16", "수정 수업"), heard);
     }
 
     /** 06 14번: 일정관리 "일정 추가"가 넘기는 날. */
@@ -195,5 +200,36 @@ class ScheduleScreenTest {
     void tAuto8Button() {
         assertFalse(open(task("빨래", d(16)).done(d(16)).task()).autoPlace.isEnabled());
         assertTrue(open(task("과제", d(19)).task()).autoPlace.isEnabled());
+    }
+
+    /** 06 19번: 열 때 맨 위는 19:10, 다음 주는 08:00, 데이터가 바뀌어도 그대로, 숨었다 다시 보이면 내린다. */
+    @Test
+    void tTt8FirstTop() {
+        height = 300;
+        open("2026-11-18T20:10", task("과제", d(23)).at("09:00").task());
+        assertEquals(1150, screen.topMinute());
+        screen.next.doClick();
+        assertEquals(480, screen.topMinute());
+        screen.scrollTo(600);
+        data.changed();
+        assertEquals(600, screen.topMinute());
+        boolean[] on = {false};
+        screen.shown = () -> on[0];
+        screen.refresh();
+        on[0] = true;
+        screen.refresh();
+        assertEquals(480, screen.topMinute());
+    }
+
+    @Test
+    void eSch9ScrollEnds() {
+        open();
+        screen.scrollTo(-30);
+        assertEquals(0, screen.topMinute());
+        int view = screen.scroll.getViewport().getExtentSize().height;
+        screen.scrollTo(5000);
+        assertEquals(Math.round((1232 - view) * 60.0 / 44), screen.topMinute());
+        screen.scrollTo(61);
+        assertEquals(List.of(44, 60), List.of(screen.scroll.getViewport().getViewPosition().y, screen.topMinute()));
     }
 }

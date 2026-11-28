@@ -6,6 +6,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -14,10 +15,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 import planningpet.app.model.AppData;
 import planningpet.common.view.Theme;
 import planningpet.common.view.Ui;
+import planningpet.reward.controller.RewardController;
 import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Slot;
 import planningpet.schedule.model.Task;
@@ -25,7 +29,7 @@ import planningpet.schedule.model.TimetableLayout;
 
 /**
  * 일정관리의 일주일 시간표(07, 05 일정관리). 0시부터 다음 날 4시(28:00)까지 그린다(D-77). 옮기는 몫은 docs/porting/schedule.md
- * S5b. 끌어 놓기는 C2, 자동 배치 뒤 진하게 보이기는 S5d가 더한다.
+ * S5b와 S5c2(누르기). 끌어 놓기는 C2, 자동 배치 뒤 진하게 보이기는 S5d가 더한다.
  */
 public final class TimetablePanel extends JComponent {
     /** 한 시간의 높이. */
@@ -45,10 +49,55 @@ public final class TimetablePanel extends JComponent {
     /** 열을 나눴거나 제목이 잘린 블록(D-87). 마지막으로 그린 모양이다. */
     private final Set<Task> narrow = new HashSet<>();
 
-    public TimetablePanel(AppData data) {
+    /**
+     * 체크 칸은 reward의 complete와 uncomplete를 부르고, 두 번 누르기와 오른쪽 버튼 메뉴는 onEdit, onDelete에 알린다. 여는 창은
+     * S4와 삭제 확인이 잇는다(docs/porting/schedule.md S5c2).
+     */
+    public TimetablePanel(AppData data, RewardController reward, Consumer<Task> onEdit, Consumer<Task> onDelete) {
         this.data = data;
         setPreferredSize(new Dimension(300, HOUR * HOURS));
         setToolTipText("");
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                // 체크 칸은 왼쪽 버튼 한 번으로만 바뀐다. 나중에 그린(위에 있는) 블록의 것을 먼저 본다.
+                Task boxed = null;
+                for (Map.Entry<Rectangle, Task> b : boxes.entrySet()) {
+                    if (b.getKey().contains(e.getPoint())) {
+                        boxed = b.getValue();
+                    }
+                }
+                if (boxed != null && e.getClickCount() == 1) {
+                    if (SwingUtilities.isLeftMouseButton(e)) {
+                        // UC-07, UC-08: 끝내지 않은 일은 끝내고 끝낸 일은 체크를 푼다.
+                        if (boxed.isDone()) {
+                            reward.uncomplete(boxed);
+                        } else {
+                            reward.complete(boxed);
+                        }
+                    }
+                    return;
+                }
+                Task t = at(e);
+                if (t != null && e.getClickCount() == 2) {
+                    onEdit.accept(t);
+                }
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                // 운영체제마다 누를 때나 뗄 때 팝업 깃발이 서서 둘 다 본다(목록 줄과 같다).
+                Task t = at(e);
+                if (t != null && e.isPopupTrigger()) {
+                    TaskMenu.of(onEdit, onDelete, t).show(TimetablePanel.this, e.getX(), e.getY());
+                }
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                mousePressed(e);
+            }
+        });
     }
 
     /** h번째 시각 줄의 글. 자정 아래는 00:00부터 다시 적는다(D-77). */
@@ -84,7 +133,7 @@ public final class TimetablePanel extends JComponent {
         return t == null ? null : tip(t);
     }
 
-    /** 블록의 툴팁. 마지막으로 그린 모양을 따른다. 좁지 않으면 목록 줄과 같은 메모 툴팁이다. */
+    /** 블록의 툴팁. 마지막으로 그린 모양을 따른다. 좁지 않으면 목록 줄과 같은 메모 툴팁이다. 글자 수는 코드 포인트로 센다(06 읽는 법). */
     String tip(Task t) {
         String memo = TaskRows.memoTip(t);
         if (!narrow.contains(t)) {
@@ -92,7 +141,9 @@ public final class TimetablePanel extends JComponent {
         }
         String head = "<b>" + Ui.esc(t.getTitle()) + "</b> " + data.getBook().timeText(t);
         String m = t.getMemo();
-        String body = m.isBlank() ? "" : "<br>" + Ui.esc(m.length() > 200 ? m.substring(0, 200) + "…" : m).replace("\n", "<br>");
+        // 프로토타입과 일부러 다름: 프로토타입은 UTF-16 단위로 잘라 200번째 자리의 이모지를 반쪽으로 남겼다(porting.md 4절).
+        String cut = m.codePointCount(0, m.length()) > 200 ? m.substring(0, m.offsetByCodePoints(0, 200)) + "…" : m;
+        String body = m.isBlank() ? "" : "<br>" + Ui.esc(cut).replace("\n", "<br>");
         return "<html><div style='width:280px'>" + head + body + "</div></html>";
     }
 

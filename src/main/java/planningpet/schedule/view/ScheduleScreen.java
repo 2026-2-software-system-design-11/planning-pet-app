@@ -10,6 +10,7 @@ import java.awt.Point;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import javax.swing.BorderFactory;
 import javax.swing.Icon;
@@ -28,11 +29,12 @@ import planningpet.schedule.model.AutoPlacer;
 import planningpet.schedule.model.DefaultDates;
 import planningpet.schedule.model.Screen;
 import planningpet.schedule.model.Task;
+import planningpet.schedule.model.TimetableLayout;
 
 /**
  * 일정관리(05 일정관리, UC-10, UC-11). 위 줄, 가운데 시간표, 오른쪽 "시각 없는 할 일" 카드다. 옮기는 몫은
- * docs/porting/schedule.md S5c. 시간표 누르기와 처음 보이는 자리는 S5c2, 말풍선, 펫 자리, 놓인 블록 보이기, 앱 창에 붙이기는 S5d가
- * 더한다.
+ * docs/porting/schedule.md S5c와 S5c2(시간표 누르기, 처음 보이는 자리). 말풍선, 펫 자리, 놓인 블록 보이기, 앱 창에 붙이기는
+ * S5d가 더한다.
  */
 public final class ScheduleScreen extends JPanel {
     private static final String WEEK = "월화수목금토일";
@@ -51,7 +53,10 @@ public final class ScheduleScreen extends JPanel {
     final JScrollPane scroll;
     /** 보이는 주의 첫날(06 데이터 절의 한 주, D-91). */
     private LocalDate start;
-    /** 목록 줄의 연필, 휴지통, 시계 단추. 창은 S4와 S5f가 넣는다. 시간표 블록의 누르기는 S5c2가 잇는다. */
+    private boolean wasShown;
+    /** 주를 옮겨 처음 보이는 자리로 내려야 한다(D-89). */
+    private boolean scrollPending;
+    /** 목록 줄의 연필, 휴지통, 시계 단추와 시간표 블록의 두 번 누르기, 메뉴. 창은 S4와 S5f가 넣는다. */
     public Consumer<Task> onEdit = t -> { };
     public Consumer<Task> onDelete = t -> { };
     public TaskRows.TimeOpener onTime = (t, day, at) -> { };
@@ -61,15 +66,17 @@ public final class ScheduleScreen extends JPanel {
     public Consumer<LocalDate> openAutoPlace = start -> { };
     /** 주를 옮긴 뒤 다시 그린다. Main이 앱 창의 redraw를 넣는다(Theme.clear까지 돈다). */
     public Runnable redraw = this::refresh;
+    /** 앱 창이 이 화면을 고른 채인지(settings.md S10c와 같은 꼴). Main이 넣는다. */
+    public BooleanSupplier shown = () -> true;
 
-    /** clock은 자동 배치 단추가 세는 지금이다. 데이터 변경 알림에 refresh를 거는 일은 화면을 넣는 쪽(Main)이 한다. */
+    /** clock은 처음 보이는 자리와 자동 배치의 지금이다. 데이터 변경 알림에 refresh를 거는 일은 화면을 넣는 쪽(Main)이 한다. */
     public ScheduleScreen(AppData data, RewardController reward, Clock clock) {
         super(new BorderLayout(8, 8));
         this.data = data;
         this.clock = clock;
         setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 12));
         start = thisWeekStart();
-        table = new TimetablePanel(data);
+        table = new TimetablePanel(data, reward, t -> onEdit.accept(t), t -> onDelete.accept(t));
         untimed = new TaskRows(data, reward, t -> onEdit.accept(t), t -> onDelete.accept(t), (t, day, at) -> onTime.open(t, day, at));
         prev.addActionListener(e -> move(start.minusWeeks(1)));
         next.addActionListener(e -> move(start.plusWeeks(1)));
@@ -107,6 +114,19 @@ public final class ScheduleScreen extends JPanel {
         return start;
     }
 
+    /** 시간표 맨 위가 앱 하루의 분 minute이 되게 내린다. 끝을 넘지 않는다. */
+    public void scrollTo(int minute) {
+        int view = scroll.getViewport().getExtentSize().height;
+        int max = Math.max(0, table.getPreferredSize().height - view);
+        int y = Math.min(Math.max(0, minute * TimetablePanel.HOUR / 60), max);
+        scroll.getViewport().setViewPosition(new Point(0, y));
+    }
+
+    /** 시간표 맨 위의 앱 하루의 분. */
+    public int topMinute() {
+        return (int) Math.round(scroll.getViewport().getViewPosition().y * 60.0 / TimetablePanel.HOUR);
+    }
+
     /** 오늘이 든 주의 첫날(설정의 한 주 시작, D-91). */
     private LocalDate thisWeekStart() {
         return Rules.weekStart(data.today(), data.getWeekStart());
@@ -137,9 +157,10 @@ public final class ScheduleScreen extends JPanel {
         return l;
     }
 
-    /** 보이는 주를 newStart로 옮기고 다시 그린다. */
+    /** 보이는 주를 newStart로 옮기고 다시 그린다. 다음 refresh가 처음 보이는 자리로 내린다(D-89). */
     public void move(LocalDate newStart) {
         start = newStart;
+        scrollPending = true;
         redraw.run();
     }
 
@@ -166,7 +187,15 @@ public final class ScheduleScreen extends JPanel {
             header.add(label);
         }
         untimed.show(data.getBook().untimedOfWeek(start));
-        autoPlace.setEnabled(AutoPlacer.place(data.getBook(), start, LocalDateTime.now(clock)).count() > 0);
+        LocalDateTime now = LocalDateTime.now(clock);
+        autoPlace.setEnabled(AutoPlacer.place(data.getBook(), start, now).count() > 0);
+        // D-89: 화면을 열거나 주를 옮기면 처음 보이는 자리로 내린다. 데이터만 바뀌면 그대로다.
+        boolean visible = shown.getAsBoolean();
+        if (visible && (!wasShown || scrollPending)) {
+            scrollTo(TimetableLayout.top(start, now));
+            scrollPending = false;
+        }
+        wasShown = visible;
         table.repaint();
         header.revalidate();
     }
