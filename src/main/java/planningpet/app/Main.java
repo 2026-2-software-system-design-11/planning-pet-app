@@ -1,5 +1,6 @@
 package planningpet.app;
 
+import java.awt.Desktop;
 import java.awt.Frame;
 import java.awt.Window;
 import java.nio.file.Path;
@@ -70,6 +71,9 @@ public final class Main {
         /** 메인 창을 숨긴다. */
         void hide();
 
+        /** macOS Cmd+Q에 quit를 잇는다. 그 기능이 없는 운영체제(Windows)에서는 잇지 않는다. */
+        void quitKey(Runnable quit);
+
         /** 트레이 아이콘과 메뉴를 단다. 달았으면 true다(06 25번). */
         boolean tray(Tray tray);
 
@@ -109,6 +113,12 @@ public final class Main {
         }
 
         public void hide() { front.setVisible(false); }
+
+        public void quitKey(Runnable quit) {
+            if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.APP_QUIT_HANDLER)) {
+                Desktop.getDesktop().setQuitHandler((e, response) -> SwingUtilities.invokeLater(quit));
+            }
+        }
 
         /** 신호를 받으면 Swing 스레드에서 부른다(02 UC-01 1a). */
         void signalled() {
@@ -172,6 +182,7 @@ public final class Main {
         Theme.clear(window.root());
         Tray tray = new Tray(app, watcher, clock, window, home, shell::front);
         app.setQuit(() -> shell.exit(0)); // 끝내기는 오류가 아니다(docs/porting/tray.md).
+        shell.quitKey(app::quit);
         boolean trayOn = shell.tray(tray);
         shell.main(window.root(), () -> window.close(trayOn, shell::hide, tray::notice));
         shell.front();
