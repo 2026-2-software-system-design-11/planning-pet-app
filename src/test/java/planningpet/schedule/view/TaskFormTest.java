@@ -27,6 +27,7 @@ import org.junit.jupiter.api.Test;
 import planningpet.common.view.Theme;
 import planningpet.common.view.Ui;
 import planningpet.schedule.model.Category;
+import planningpet.schedule.model.FieldError;
 import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Repeat;
 import planningpet.schedule.model.TaskDraft;
@@ -170,8 +171,10 @@ class TaskFormTest {
         f.minutes.setValue(45);
         f.memo.setText("준비물\n이력서");
         f.repeat.setSelectedIndex(2);
-        f.days[0].setSelected(true);
-        f.days[2].setSelected(true);
+        // 앱이 골라 준 날짜의 요일(금)을 끄고 월, 수를 고른다(D-93, S4h).
+        f.days[4].doClick();
+        f.days[0].doClick();
+        f.days[2].doClick();
         planningpet.common.view.Ui.setDate(f.repeatEnd, d(12, 31));
         assertEquals(new TaskDraft(Kind.TASK, "  면접 준비 ", Category.PROJECT, d(20), null, LocalTime.of(1, 30), 45,
                 "준비물\n이력서", Repeat.weekly(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY), d(12, 31), true, null, d(18), false),
@@ -195,6 +198,7 @@ class TaskFormTest {
         assertEquals(List.of(d(25), "null null"), List.of(p.draft().dueDate(), p.draft().repeat() + " " + p.draft().repeatEnd()));
         TaskForm q = form(d(20));
         q.repeat.setSelectedIndex(2);
+        q.days[4].doClick();
         q.start.setValue("00:00(다음 날)");
         assertEquals(List.of(Repeat.weekly(), "null false"),
                 List.of(q.draft().repeat(), q.draft().startTime() + " " + q.draft().nextDay()));
@@ -395,5 +399,41 @@ class TaskFormTest {
         at1441(periodOff).period.doClick();
         assertEquals(List.of("14:45", "14:15", "14:45", "14:45"), List.of(timedLater.start.getValue(),
                 timedFirst.start.getValue(), fixedLater.start.getValue(), periodOff.start.getValue()));
+    }
+
+    /** 골라진 요일 단추의 글. 월요일부터다. */
+    private static String picked(TaskForm f) {
+        return String.join(", ", List.of(f.days).stream().filter(JToggleButton::isSelected).map(JToggleButton::getText).toList());
+    }
+
+    @Test
+    void tDef19PickedDaysStay() {
+        TaskForm f = form(d(18));
+        f.repeat.setSelectedIndex(2);
+        List<String> got = new ArrayList<>(List.of(picked(f)));
+        Ui.setDate(f.date, d(19));
+        got.add(picked(f));
+        f.days[3].doClick();
+        f.days[1].doClick();
+        f.days[3].doClick();
+        Ui.setDate(f.date, d(20));
+        got.add(picked(f));
+        for (int how : new int[] {1, 2, 0, 2}) {
+            f.repeat.setSelectedIndex(how);
+        }
+        got.add(picked(f));
+        assertEquals(List.of("수", "목", "화, 목", "화, 목"), got);
+        f.days[1].doClick();
+        f.days[3].doClick();
+        f.repeat.setSelectedIndex(1);
+        f.repeat.setSelectedIndex(2);
+        assertEquals("", picked(f));
+        assertTrue(f.draft().validate().contains(new FieldError("반복", "요일을 하나 이상 골라 주세요")));
+        TaskForm g = form(d(18));
+        g.repeat.setSelectedIndex(2);
+        g.days[2].doClick();
+        g.days[2].doClick();
+        Ui.setDate(g.date, d(19));
+        assertEquals("수", picked(g));
     }
 }

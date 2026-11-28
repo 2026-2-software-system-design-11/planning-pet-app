@@ -90,6 +90,10 @@ final class TaskForm {
     private LocalDate startDay;
     /** 지난 sync에서 시작 칸을 쓸 수 있었는지. 쓸 수 있게 되는 순간에도 다시 잰다(D-101). */
     private boolean startOpen;
+    /** D-101: 요일을 한 번 고른 뒤에는 다른 반복을 거쳐 돌아와도 단추를 그대로 둔다. */
+    private boolean daysShown;
+    /** D-101: 앱이 골라 준 요일. 사용자가 요일 단추를 누르면 null이 되고 날짜를 따라가지 않는다. */
+    private DayOfWeek autoDay;
     /** sync 안에서 칸 값을 바꿀 때 다시 sync하지 않는다. */
     private boolean syncing;
     private int row;
@@ -108,6 +112,10 @@ final class TaskForm {
         for (int i = 0; i < 7; i++) {
             days[i] = new JToggleButton(String.valueOf("월화수목금토일".charAt(i)));
             days[i].setMargin(new Insets(1, 4, 1, 4));
+            days[i].addActionListener(e -> {
+                autoDay = null;
+                sync();
+            });
         }
         for (String k : new String[] {"제목", "마감", "시작 시각", "걸리는 시간", "메모", "반복"}) {
             JLabel l = new JLabel();
@@ -147,7 +155,15 @@ final class TaskForm {
         for (AbstractButton b : new AbstractButton[] {task, fixed, timed, period}) {
             b.addActionListener(e -> sync());
         }
-        repeat.addActionListener(e -> sync());
+        repeat.addActionListener(e -> {
+            if (!syncing && repeat.getSelectedIndex() == 2 && !daysShown) {
+                // 요일을 처음 고르면 날짜의 요일이 골라져 있다(D-93, 05 일정 입력 창 7번).
+                daysShown = true;
+                autoDay = Ui.dateOf(this.date).getDayOfWeek();
+                pick(autoDay);
+            }
+            sync();
+        });
         start.addChangeListener(e -> {
             if (!syncing) {
                 startTouched = true;
@@ -231,11 +247,28 @@ final class TaskForm {
             start.setValue(Times.value(DefaultDates.defaultStart(day, clock.get())));
         }
         startDay = day;
+        // D-101: 앱이 골라 준 요일은 사용자가 단추를 누르기 전까지 날짜를 바꾸는 그 순간 따라간다.
+        if (autoDay != null && autoDay != day.getDayOfWeek()) {
+            boolean untouched = true;
+            for (int i = 0; i < 7; i++) {
+                untouched &= days[i].isSelected() == (i == autoDay.getValue() - 1);
+            }
+            autoDay = untouched ? day.getDayOfWeek() : null;
+            if (untouched) {
+                pick(autoDay);
+            }
+        }
         minutesHint.setVisible((int) minutes.getValue() == 30);
         Integer s = startTime();
         endLabel.setText(s == null ? "" : Times.endHint(s, (int) minutes.getValue()));
         realTime.setText(s == null ? "" : Times.real(day, s));
         syncing = false;
+    }
+
+    private void pick(DayOfWeek d) {
+        for (int i = 0; i < 7; i++) {
+            days[i].setSelected(i == d.getValue() - 1);
+        }
     }
 
     /** 칸에 쓴 값. 반복이 안 함이면 반복 방식과 끝은 null, 기간 안에 하기가 꺼져 있으면 마감은 null이다. 오늘은 앱의 오늘이다. */
