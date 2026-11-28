@@ -128,7 +128,7 @@ class PetArtWearTest {
     }
 
     /** 크기 size의 얼굴을 한 변 size x 2인 그림 가운데에 그린 픽셀. */
-    private static int[] face(PetKind kind, Set<WearId> wear, int size) {
+    static int[] face(PetKind kind, Set<WearId> wear, int size) {
         BufferedImage img = new BufferedImage(size * 2, size * 2, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = img.createGraphics();
         PetArt.drawFace(g, kind, wear, size, size, size);

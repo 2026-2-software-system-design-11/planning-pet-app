@@ -19,14 +19,17 @@ final class PetPaintBody extends PetPaintHead {
     }
 
     /**
-     * 앉은 펫을 그린다. 몸은 바닥을 기준으로 2.6초 주기로 숨쉬며 위아래로 조금 부풀고, 목걸이와 머리는 몸을 따라 오르내린다. 머리는
-     * 3.4초 주기로 좌우로 기운다(t).
+     * 앉은 펫을 그린다. 몸은 바닥을 기준으로 2.6초 주기로 숨쉬며 위아래로 조금 부풀고(조끼도 함께), 목 둘레와 머리는 몸을 따라 오르내린다. 머리는
+     * 3.4초 주기로 좌우로 기운다(t). 망토 뒤판은 꼬리보다 먼저 몸 뒤에 그려 숨쉬지 않는다.
      */
     void sit() {
         AffineTransform base = g.getTransform();
         double breathe = wave(t, 2.6, 1.0, 1.022, 0);
         double headRot = wave(t, 3.4, -2.5, 2.5, 0.2);
         Shape body = sitBody();
+        if (has(WearId.CAPE)) {
+            capeBehind(160, 200, 62);
+        }
         tail();
         g.translate(160, 300);
         g.scale(1, breathe);
@@ -41,6 +44,9 @@ final class PetPaintBody extends PetPaintHead {
             shadeIn(body, ell(160, 300, 90, 12), DOG_FUR_SHADE);
         }
         redraw(body);
+        if (has(WearId.VEST)) {
+            vest(body, 200, 258);
+        }
         // 뒷다리 허벅지 선
         stroke(new QuadCurve2D.Double(92, 268, 108, 250, 126, 262), line * 0.7f, ink);
         stroke(new QuadCurve2D.Double(228, 268, 212, 250, 194, 262), line * 0.7f, ink);

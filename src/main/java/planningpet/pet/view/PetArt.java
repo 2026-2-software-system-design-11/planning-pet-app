@@ -7,8 +7,8 @@ import planningpet.pet.model.WearId;
 
 /**
  * 펫 그림(D-48, D-50). 그림 파일이 아니라 도형 부품으로 그려 크게 그려도 흐려지지 않는다. 생김새는 나의 방 예시(2026-11-23)의
- * 고양이와 강아지다. 지금은 앉은 펫, 얼굴, 앱 로고를 그리고 장신구는 앉은 펫의 목걸이와 머리 장신구, 얼굴의 머리 장신구를
- * 그린다. 옷은 #438이 더한다(docs/porting/pet-art.md).
+ * 고양이와 강아지다. 지금은 앉은 펫, 얼굴, 앱 로고를 그리고 장신구는 앉은 펫의 목걸이, 머리 장신구, 옷과 얼굴의 머리 장신구를
+ * 그린다(docs/porting/pet-art.md).
  */
 public final class PetArt {
     private PetArt() {
@@ -17,7 +17,8 @@ public final class PetArt {
     /**
      * 앉은 펫을 (x, ground)에 발을 붙여 한 변 size 상자에 그린다(고르기 창 카드). t는 움직임 시각(초)으로 숨쉬기, 머리 기울기, 귀,
      * 꼬리가 따른다. since는 고른 뒤 지난 초로, 0.35초 동안 0.9배에서 살짝 넘치며 제 크기로 튄다. 고른 적이 없으면 큰 값(예: 99)을 준다.
-     * wear는 입은 장신구(D-51)이고 null이면 없는 것으로 본다.
+     * wear는 입은 장신구(D-51)이고 null이면 없는 것으로 본다. 망토를 입으면 아랫단이 바닥 아래로 상자의 약 6%까지 내려온다
+     * (docs/porting/pet-art.md E-CLO-6).
      */
     public static void drawAt(Graphics2D g0, PetKind kind, Set<WearId> wear, double t, double since, double x, double ground,
             double size) {
@@ -34,7 +35,8 @@ public final class PetArt {
 
     /**
      * 앉은 펫의 그림 높이를 상자 size에 대한 비율로 준다(바닥에서 귀나 머리 끝까지). 고른 카드의 강조선 자리를 잰다.
-     * 프로토타입이 2026-11-24 기본 목걸이를 입혀 그려 잰 값이다. 목걸이는 칠하는 칸을 바꾸지 않는다(docs/porting/pet-art.md E-WEAR-8).
+     * 프로토타입이 2026-11-24 기본 목걸이를 입혀 그려 잰 값이다. 목걸이는 칠하는 칸을 바꾸지 않고 옷은 위 끝을 바꾸지 않는다(docs/porting/pet-art.md E-WEAR-8,
+     * E-CLO-6).
      */
     public static double heightRatio(PetKind kind) {
         return kind == PetKind.CAT ? 0.88 : 0.77;
