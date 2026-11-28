@@ -6,9 +6,13 @@ import java.awt.Insets;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 import javax.swing.ButtonGroup;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -23,11 +27,15 @@ import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.SpinnerDateModel;
 import javax.swing.SpinnerListModel;
+import planningpet.common.model.AppDay;
 import planningpet.common.view.Theme;
 import planningpet.common.view.Ui;
 import planningpet.schedule.model.Category;
 import planningpet.schedule.model.DefaultDates;
 import planningpet.schedule.model.Kind;
+import planningpet.schedule.model.Repeat;
+import planningpet.schedule.model.Task;
+import planningpet.schedule.model.TaskDraft;
 
 /**
  * 일정 입력 창의 칸(05 일정 입력 창 1~11번). 창 없이 만들 수 있다. 지금은 추가 창의 칸과 처음 값, 칸에 쓴 값 draft()만 있고, 칸끼리 켜고
@@ -64,10 +72,13 @@ final class TaskForm {
     final JTextArea memo = new JTextArea(3, 22);
     /** 칸 아래 빨간 오류 글(05). 칸 차례다. */
     final Map<String, JLabel> errors = new LinkedHashMap<>();
+    /** 날짜를 바꾼 그 순간의 시계(D-101). 처음은 창을 연 때다. */
+    Supplier<LocalDateTime> clock;
     private int row;
 
     /** 추가 창의 칸. date는 06 14번 forAdd가 고른 날, weekStart는 마감 기본값과 요일 단추 차례의 한 주 시작(D-91, D-94). */
     TaskForm(LocalDate date, LocalDateTime now, DayOfWeek weekStart) {
+        clock = () -> now;
         Ui.limit(title, 100);
         Ui.limit(memo, 1000);
         ButtonGroup kinds = new ButtonGroup();
@@ -115,6 +126,27 @@ final class TaskForm {
         Ui.setDate(due, DefaultDates.dueFor(date, weekStart));
         Ui.setDate(repeatEnd, DefaultDates.repeatEndFor(Kind.TASK, date));
         start.setValue(Times.value(DefaultDates.defaultStart(date, now)));
+    }
+
+    /** 칸에 쓴 값. 반복이 안 함이면 반복 방식과 끝은 null, 기간 안에 하기가 꺼져 있으면 마감은 null이다. 오늘은 앱의 오늘이다. */
+    TaskDraft draft() {
+        Repeat how = null;
+        if (repeat.getSelectedIndex() == 1) {
+            how = Repeat.DAILY;
+        } else if (repeat.getSelectedIndex() == 2) {
+            List<DayOfWeek> picked = new ArrayList<>();
+            for (int i = 0; i < 7; i++) {
+                if (days[i].isSelected()) {
+                    picked.add(DayOfWeek.of(i + 1));
+                }
+            }
+            how = Repeat.weekly(picked.toArray(DayOfWeek[]::new));
+        }
+        Integer s = timed.isSelected() ? Times.minuteOf(start.getValue()) : null;
+        return new TaskDraft(fixed.isSelected() ? Kind.FIXED : Kind.TASK, title.getText(),
+                Category.values()[category.getSelectedIndex()], Ui.dateOf(date), period.isSelected() ? Ui.dateOf(due) : null,
+                s == null ? null : LocalTime.of(s % Task.DAY / 60, s % 60), (int) minutes.getValue(), memo.getText(), how,
+                how == null ? null : Ui.dateOf(repeatEnd), s != null && s >= Task.DAY, null, AppDay.of(clock.get()), false);
     }
 
     /** 이름 칸과 칸을 한 줄에 놓는다. 이름 칸을 돌려준다. */

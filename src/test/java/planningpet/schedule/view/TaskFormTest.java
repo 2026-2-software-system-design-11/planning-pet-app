@@ -13,6 +13,7 @@ import java.awt.Insets;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.AbstractButton;
@@ -23,6 +24,11 @@ import javax.swing.JToggleButton;
 import javax.swing.text.JTextComponent;
 import org.junit.jupiter.api.Test;
 import planningpet.common.view.Theme;
+import planningpet.schedule.model.Category;
+import planningpet.schedule.model.Kind;
+import planningpet.schedule.model.Repeat;
+import planningpet.schedule.model.TaskDraft;
+import planningpet.schedule.model.Tasks;
 
 /** 일정 입력 창의 칸과 추가 창의 처음 값. 번호는 docs/porting/task-dialog.md S4f 2절. */
 class TaskFormTest {
@@ -145,5 +151,52 @@ class TaskFormTest {
                 pasted(form(d(20)).title, "가".repeat(99), SMILE)));
         assertEquals(List.of(1000, 1000, 1000), List.of(pasted(form(d(20)).memo, "", "가".repeat(1001)),
                 pasted(form(d(20)).memo, "", SMILE.repeat(1000)), pasted(form(d(20)).memo, "", SMILE.repeat(1001))));
+    }
+
+    @Test
+    void eForm5StartDraft() {
+        assertEquals(Tasks.task("", d(20)).today(d(18)).draft(), form(d(20)).draft());
+    }
+
+    @Test
+    void eForm5FilledDraft() {
+        TaskForm f = new TaskForm(d(20), LocalDateTime.of(2026, 11, 19, 1, 12), DayOfWeek.MONDAY);
+        f.title.setText("  면접 준비 ");
+        f.category.setSelectedIndex(2);
+        f.timed.setSelected(true);
+        f.start.setValue("01:30(다음 날)");
+        f.minutes.setValue(45);
+        f.memo.setText("준비물\n이력서");
+        f.repeat.setSelectedIndex(2);
+        f.days[0].setSelected(true);
+        f.days[2].setSelected(true);
+        planningpet.common.view.Ui.setDate(f.repeatEnd, d(12, 31));
+        assertEquals(new TaskDraft(Kind.TASK, "  면접 준비 ", Category.PROJECT, d(20), null, LocalTime.of(1, 30), 45,
+                "준비물\n이력서", Repeat.weekly(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY), d(12, 31), true, null, d(18), false),
+                f.draft());
+    }
+
+    @Test
+    void eForm5KindsRepeatsAndPeriod() {
+        TaskForm f = form(d(20));
+        f.fixed.setSelected(true);
+        f.timed.setSelected(true);
+        f.start.setValue("23:55");
+        f.repeat.setSelectedIndex(1);
+        planningpet.common.view.Ui.setDate(f.repeatEnd, LocalDate.of(2027, 3, 5));
+        TaskDraft x = f.draft();
+        assertEquals(List.of(Kind.FIXED, LocalTime.of(23, 55), false, Repeat.DAILY, LocalDate.of(2027, 3, 5)),
+                List.of(x.kind(), x.startTime(), x.nextDay(), x.repeat(), x.repeatEnd()));
+        TaskForm p = form(d(20));
+        p.period.setSelected(true);
+        planningpet.common.view.Ui.setDate(p.due, d(25));
+        assertEquals(List.of(d(25), "null null"), List.of(p.draft().dueDate(), p.draft().repeat() + " " + p.draft().repeatEnd()));
+        TaskForm q = form(d(20));
+        q.repeat.setSelectedIndex(2);
+        q.start.setValue("00:00(다음 날)");
+        assertEquals(List.of(Repeat.weekly(), "null false"),
+                List.of(q.draft().repeat(), q.draft().startTime() + " " + q.draft().nextDay()));
+        q.timed.setSelected(true);
+        assertEquals(List.of(LocalTime.MIDNIGHT, true), List.of(q.draft().startTime(), q.draft().nextDay()));
     }
 }
