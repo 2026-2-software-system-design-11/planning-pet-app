@@ -59,7 +59,8 @@
 | S2o | 펫 옷 | `PetPaintWear`의 스카프와 망토 고리(`neckWear`), 조끼 `vest`, 망토 뒤판 `capeBehind`와 그것을 그리는 `PetArt.drawAt`(#438) | 없음(D-51, [디자인 시스템](design-system.md) 10절) | [docs/porting/pet-art.md](porting/pet-art.md) |
 | S3a | 할 일 끝내기와 체크 풀기 controller | `RewardController.complete`, `uncomplete`(#441) | 8번, 9번, 16번 `COMPLETED`, `UNCOMPLETED`, 22번 T-SAVE-1, T-SAVE-5 | [docs/porting/home.md](porting/home.md) |
 | S3b | 홈 달력에서 날 고르기 controller | `HomeController.pick`(#442) | 16번 `OTHER_DATE`, `USUAL`과 다시 세기(D-106) | [docs/porting/home.md](porting/home.md) |
-| S3c | 원 버튼과 꺾쇠 아이콘 | `common.view`의 `CircleButton`(흰 원 버튼과 바탕 없는 버튼), `Icons`의 `LEFT`, `RIGHT`(#445). 홈 달력의 나머지는 #446~#448([home.md](porting/home.md)) | 없음(05 홈 입력 항목 2, D-60, [디자인 시스템](design-system.md) 5절, 9절) | [docs/porting/home.md](porting/home.md) |
+| S3c | 원 버튼과 꺾쇠 아이콘 | `common.view`의 `CircleButton`(흰 원 버튼과 바탕 없는 버튼), `Icons`의 `LEFT`, `RIGHT`(#445). 홈 달력의 나머지는 #450, #446~#448([home.md](porting/home.md)) | 없음(05 홈 입력 항목 2, D-60, [디자인 시스템](design-system.md) 5절, 9절) | [docs/porting/home.md](porting/home.md) |
+| S3d | 칸 글 줄이기 | `common.view`의 `Ui.fit`(프로토타입 `PetCardArt.fit`, #450) | 06 읽는 법의 글자 수 | [docs/porting/home.md](porting/home.md) |
 | S3 | 홈 목록 | `MainScreen`, `PetCard`, `CalendarPanel`, `TaskRows`(홈 목록이 쓰므로 S5에서 당겨 온다). `RewardController.complete`, `uncomplete`는 S3a, `HomeController`는 S3b | 6번, 13번, 16번, 26번 | [docs/porting/home.md](porting/home.md) |
 | S4 | 일정 입력 창 | `TaskDialog`, `TaskController.add`, `update`, `delete`, 고르는 칸 `ComboUI`와 그것을 거는 `Theme.install`의 줄([theme.md](porting/theme.md)) | 2~5번, 14번 | `docs/porting/task-dialog.md` |
 | S5 | 일정관리 | `ScheduleScreen`, `TimetablePanel`, `TimeEditor`, `TaskController.clearTime` | 4번의 시각 고치기 창, 7번, 19번 | `docs/porting/schedule.md` |
