@@ -148,7 +148,7 @@ public final class Main {
         shell.main(window.root());
         app.onWindowShown();
         shell.signal(app::onWindowShown); // 고르기 창일 때의 신호는 15번을 부르지 않는다(E-ONE-5).
-        shell.timer(new Tray(watcher, clock));
+        shell.timer(new Tray(app, watcher, clock));
     }
 
     /** 데이터 폴더. --data-dir 뒤에 경로가 없으면 IllegalArgumentException. 모르는 인자는 무시한다. */
