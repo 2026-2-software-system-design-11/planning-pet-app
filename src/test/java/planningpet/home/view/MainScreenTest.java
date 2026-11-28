@@ -298,7 +298,7 @@ class MainScreenTest {
         assertEquals("11월 14일 (토) 할 일 [ ] 보고서 / 시각 없는 할 일 / [ ] 토익 공부 / [ ] 새 일 / 끝낸 일 2개 / [x] 빨래 / [x] C",
                 m.listTitle.getText() + " " + rows(m.rows));
         assertEquals(10, opaque(m.rows));
-        Snap.layOut(m, 804, 554);
+        noText(m);
         BufferedImage settled = paint(m);
         Theme.clear(m);
         BufferedImage cleared = paint(m);
@@ -312,13 +312,13 @@ class MainScreenTest {
                 }
             }
         }
-        assertEquals("16931 411,72 373x250", differ + " " + at(box));
+        assertEquals("17006 411,72 373x250", differ + " " + at(box));
         m.rows.doneHead.doClick();
         assertEquals("[ ] 보고서 / 시각 없는 할 일 / [ ] 토익 공부 / [ ] 새 일 / 끝낸 일 2개", rows(m.rows));
     }
 
-    /** 글을 비우고 줄 제목 칸을 감추고 달력 칸 글을 빼고 그린 뒤 펫 카드 오른쪽 열과 빠른 추가 칸 글 자리를 덮어 기준 그림과 견준다. */
-    private static void looks(String name, MainScreen m) throws IOException {
+    /** 운영체제마다 픽셀이 다른 글을 빼려고 배치한 뒤 라벨과 버튼의 글을 비우고 줄 제목 칸을 감추고 달력 칸 글을 뺀다. */
+    private static void noText(MainScreen m) {
         Snap.layOut(m, 804, 554);
         Snap.blank(m);
         for (Component c : m.rows.getComponents()) {
@@ -331,6 +331,11 @@ class MainScreenTest {
                 d.blankText();
             }
         }
+    }
+
+    /** 글을 빼고 그린 뒤 펫 카드 오른쪽 열과 빠른 추가 칸 글 자리를 덮어 기준 그림과 견준다. */
+    private static void looks(String name, MainScreen m) throws IOException {
+        noText(m);
         BufferedImage img = paint(m);
         Graphics2D g = img.createGraphics();
         g.setColor(new Color(0xFF00FF));
