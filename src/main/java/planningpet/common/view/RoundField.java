@@ -6,6 +6,7 @@ import java.awt.Dimension;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Insets;
 import java.awt.RenderingHints;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
@@ -13,6 +14,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import javax.swing.BorderFactory;
 import javax.swing.JTextField;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 /**
  * 알약 모양 입력칸(디자인 시스템 9절, 07). 흰 바탕에 CARD_LINE 가장자리, 왼쪽에 선 아이콘, 비었을 때 흐린 예시 글.
@@ -22,6 +25,8 @@ public final class RoundField extends JTextField {
     private final Icons.Kind kind;
     private final String placeholder;
     private boolean over;
+    /** 0이 아니면 칸 안 오른쪽에 "글자 수 / count"를 보인다. */
+    private int count;
 
     public RoundField(Icons.Kind kind, String placeholder) {
         this.kind = kind;
@@ -55,6 +60,35 @@ public final class RoundField extends JTextField {
         });
     }
 
+    /** 칸 안 오른쪽에 친 글자 수와 최대("3 / 10")를 보인다(반려동물 이름 칸). 글을 칠 때마다 다시 센다. */
+    public RoundField count(int max) {
+        count = max;
+        Insets in = getBorder().getBorderInsets(this);
+        setBorder(BorderFactory.createEmptyBorder(in.top, in.left, in.bottom, 16 + 52));
+        getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                repaint();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                repaint();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                repaint();
+            }
+        });
+        return this;
+    }
+
+    /** 칸 안 글자 수 표시. 세지 않는 칸이면 빈 글이다. */
+    public String countText() {
+        return count == 0 ? "" : getText().length() + " / " + count;
+    }
+
     @Override
     public Dimension getPreferredSize() {
         Dimension d = super.getPreferredSize();
@@ -78,6 +112,13 @@ public final class RoundField extends JTextField {
         int s = 18;
         if (kind != null) {
             Icons.draw(g, kind, 15, (h - s) / 2, s, focus ? Theme.ICON : Theme.INK_SUB);
+        }
+        if (count > 0) {
+            g.setColor(Theme.INK_SUB);
+            g.setFont(Theme.font(13));
+            FontMetrics cm = g.getFontMetrics();
+            String c = countText();
+            g.drawString(c, w - 16 - cm.stringWidth(c), (h + cm.getAscent() - cm.getDescent()) / 2);
         }
         if (getText().isEmpty() && placeholder != null) {
             g.setColor(Theme.INK_DIM);

@@ -24,6 +24,8 @@ import org.junit.jupiter.api.Test;
  * 운영체제마다 픽셀이 달라 테스트에 두지 않는다.
  */
 class RoundFieldTest {
+    private static final String TWELVE = "가나다라마바사아자차카타";
+
     private static RoundField pencil() {
         return new RoundField(Icons.Kind.PENCIL, null);
     }
@@ -37,6 +39,11 @@ class RoundFieldTest {
         f.setText(text);
         BufferedImage img = Snap.paint(f, 300, 40);
         return img.getRGB(0, 0, img.getWidth(), img.getHeight(), null, 0, img.getWidth());
+    }
+
+    private static RoundField typed(RoundField f, String text) {
+        f.setText(text);
+        return f;
     }
 
     /** 창 없이 칸에 마우스가 들어오고 나가는 알림. */
@@ -156,6 +163,52 @@ class RoundFieldTest {
     }
 
     @Test
+    void eRound8Count() {
+        RoundField f = new RoundField(null, "예시) 모찌, 코코, 하루").count(10);
+        assertEquals("0 / 10", f.countText());
+        assertEquals(new Insets(8, 18, 8, 68), f.getInsets());
+        assertFalse(Arrays.equals(pixels(new RoundField(null, null), ""), pixels(new RoundField(null, null).count(10), "")));
+        f.setText("가나다");
+        assertEquals("3 / 10", f.countText());
+        f.setText("  모 찌 ");
+        assertEquals("6 / 10", f.countText());
+        assertEquals(new Insets(8, 40, 8, 68), pencil().count(10).getInsets());
+        RoundField twice = new RoundField(null, null).count(10).count(5);
+        twice.setText("가나");
+        assertEquals("2 / 5", twice.countText());
+        assertEquals(new Insets(8, 18, 8, 68), twice.getInsets());
+        assertEquals("", typed(pencil(), "가나다").countText());
+    }
+
+    @Test
+    void eRound9ZeroNegativeOver() {
+        RoundField zero = typed(new RoundField(null, null).count(0), "가나다");
+        RoundField negative = typed(new RoundField(null, null).count(-1), "가나다");
+        assertEquals("", zero.countText());
+        assertEquals("3 / -1", negative.countText());
+        assertArrayEquals(pixels(zero, "가나다"), pixels(negative, "가나다"), "음수는 그리지 않는다");
+        assertEquals(new Insets(8, 18, 8, 68), negative.getInsets());
+        assertEquals("12 / 10", typed(new RoundField(null, null).count(10), TWELVE).countText());
+        RoundField limited = new RoundField(null, null).count(10);
+        Ui.limit(limited, 10);
+        assertEquals("10 / 10", typed(limited, TWELVE).countText());
+    }
+
+    /** 프로토타입처럼 UTF-16 단위로 센다. Ui.limit은 #417에서 코드 포인트로 막아 최대를 넘어 보인다. */
+    @Test
+    void eRound10Emoji() {
+        assertEquals("4 / 10", typed(new RoundField(null, null).count(10), "😀😀").countText());
+        RoundField f = new RoundField(null, null).count(10);
+        Ui.limit(f, 10);
+        f.setText("가나다라마바사아자");
+        f.replaceSelection("😀");
+        assertEquals("11 / 10", f.countText());
+        f.setText("");
+        f.replaceSelection("😀".repeat(11));
+        assertEquals("20 / 10", f.countText());
+    }
+
+    @Test
     void eRound11Repaint() {
         Dirty d = new Dirty();
         RepaintManager.setCurrentManager(d);
@@ -170,6 +223,10 @@ class RoundFieldTest {
             FocusEvent lost = new FocusEvent(f, FocusEvent.FOCUS_LOST);
             assertEquals(all, d.after(() -> Arrays.stream(f.getFocusListeners()).forEach(l -> l.focusLost(lost))));
             assertEquals(all, d.after(() -> f.replaceSelection("가")));
+            RoundField c = new RoundField(null, null).count(10);
+            c.setSize(300, 40);
+            assertEquals(all, d.after(() -> c.replaceSelection("가")));
+            assertEquals(all, d.after(() -> c.setText("")));
         } finally {
             RepaintManager.setCurrentManager(null);
         }
