@@ -118,8 +118,10 @@ final class TaskForm {
     private final boolean copy;
     /** 수정하는 기간 할 일에 시각을 정해 둔 날. 마감은 이 날보다 전일 수 없다(D-99). 아니면 null. */
     private final LocalDate placed;
-    /** 마감이 지나도 끝내지 못한 기간 할 일을 고치는 중. 받지 않는 일이라 날짜와 마감을 바꾸지 않는다(D-99). */
-    private final boolean pastDue;
+    /** 마감이 지나도 끝내지 못한 기간 할 일을 고치는 중. 받지 않는 일이라 날짜와 마감을 바꾸지 않는다(D-99). lockIfPastDue가 정한다. */
+    private boolean pastDue;
+    /** 수정하는 일정. 추가 창이면 null. */
+    private final Task stored;
     /** 끝낸 일을 고치는 중. 마감을 오늘 전으로 두어도 막지 않는다(D-99). */
     private final boolean doneTask;
     /** sync 안에서 칸 값을 바꿀 때 다시 sync하지 않는다. */
@@ -142,7 +144,7 @@ final class TaskForm {
         editing = t != null;
         copy = t != null && t.getSeriesId() != null;
         placed = t != null && t.period() && t.timed() ? t.getDate() : null;
-        pastDue = t != null && t.pastDue(AppDay.of(now));
+        stored = t;
         doneTask = t != null && t.isDone();
         // 프로토타입과 일부러 다름(E-FORM-13): setValue는 5분 단위가 아닌 값을 막으므로 칸을 저장해 둔 값으로 만든다(범위 밖도, E-UI-7).
         minutes = Ui.minutes(t == null ? 30 : t.getDurationMinutes());
@@ -288,6 +290,7 @@ final class TaskForm {
             return;
         }
         syncing = true;
+        lockIfPastDue();
         boolean dueShown = due.isVisible();
         task.setEnabled(!editing);
         fixed.setEnabled(!editing);
@@ -406,6 +409,7 @@ final class TaskForm {
      * 할 일의 정해 둔 날, 오늘은 today(), editing은 수정 창이면 참이다.
      */
     TaskDraft draft() {
+        lockIfPastDue();
         Repeat how = null;
         if (repeat.getSelectedIndex() == 1) {
             how = Repeat.DAILY;
@@ -423,6 +427,26 @@ final class TaskForm {
                 Category.values()[category.getSelectedIndex()], Ui.dateOf(date), period.isSelected() ? Ui.dateOf(due) : null,
                 s == null ? null : LocalTime.of(s % Task.DAY / 60, s % 60), (int) minutes.getValue(), memo.getText(), how,
                 how == null ? null : Ui.dateOf(repeatEnd), s != null && s >= Task.DAY, placed, today(), editing);
+    }
+
+    /**
+     * 프로토타입과 일부러 다름(D-99, D-101): 마감이 지났는지를 오늘 검사와 같은 그 순간의 앱 시계로 잰다. 창을 연 뒤 04:00을 넘어 마감이
+     * 지나면 날짜, 기간, 마감 칸을 저장해 둔 값으로 돌리고 잠근다. 프로토타입은 창을 연 때 한 번 잰다.
+     */
+    private void lockIfPastDue() {
+        if (pastDue || stored == null || !stored.pastDue(AppDay.of(clock.get()))) {
+            return;
+        }
+        pastDue = true;
+        boolean inSync = syncing;
+        syncing = true;
+        Ui.setDate(date, stored.getStartDay());
+        period.setSelected(true);
+        Ui.setDate(due, stored.getDueDate());
+        syncing = inSync;
+        if (!inSync) {
+            sync();
+        }
     }
 
     /** 마감이 넘지 말아야 할 앱의 오늘(D-99). 끝낸 일과 마감이 지난 일을 고칠 때는 null이다. */

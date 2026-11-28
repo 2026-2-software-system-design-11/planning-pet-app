@@ -843,4 +843,27 @@ class TaskFormTest {
         got.add(untimed.start.getValue());
         assertEquals(List.of("10:00", "09:00", "14:15", "14:45"), got);
     }
+
+    @Test
+    void eForm16LockAtClockMoment() {
+        Task t = Tasks.task("보고서", d(16)).period(d(16), d(18)).task();
+        TaskForm f = new TaskForm(t, LocalDateTime.of(2026, 11, 19, 3, 50), DayOfWeek.MONDAY);
+        Ui.setDate(f.due, d(25));
+        assertEquals(List.of(true, false), List.of(f.due.isEnabled(), f.lockHint.isVisible()));
+        f.clock = () -> LocalDateTime.of(2026, 11, 19, 4, 5);
+        f.title.setText("보고서2");
+        assertEquals(Arrays.asList(false, false, false, true), lock(f).subList(0, 4));
+        assertEquals(List.of("2026-11-16 (월)", true, "2026-11-18", ""), List.of(text(f.date), f.period.isSelected(), text(f.due),
+                f.errorText()));
+        book(t, d(19)).update(t, f.draft(), EditScope.ONLY_THIS);
+        assertEquals(List.of("보고서2", d(16), d(18)), List.of(t.getTitle(), t.getStartDay(), t.getDueDate()));
+        TaskForm g = new TaskForm(Tasks.task("계획", d(16)).period(d(16), d(18)).task(), LocalDateTime.of(2026, 11, 19, 3, 50),
+                DayOfWeek.MONDAY);
+        g.period.doClick();
+        Ui.setDate(g.date, d(20));
+        g.clock = () -> LocalDateTime.of(2026, 11, 19, 4, 5);
+        TaskDraft got = g.draft();
+        assertEquals(Arrays.asList(d(16), d(18), null), Arrays.asList(got.date(), got.dueDate(), got.today()));
+        assertFalse(g.date.isEnabled());
+    }
 }
