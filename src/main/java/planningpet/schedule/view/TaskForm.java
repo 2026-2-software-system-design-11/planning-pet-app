@@ -131,6 +131,7 @@ final class TaskForm {
         for (AbstractButton b : new AbstractButton[] {task, fixed, timed, period}) {
             b.addActionListener(e -> sync());
         }
+        repeat.addActionListener(e -> sync());
         for (JSpinner s : new JSpinner[] {this.date, start, minutes}) {
             s.addChangeListener(e -> sync());
         }
@@ -138,13 +139,15 @@ final class TaskForm {
     }
 
     /**
-     * 고정 일정이면 시작 시각이 켜진 채 비활성이고 기간은 꺼진 채 비활성이다(D-16, D-65). 기간을 켜면 시작 시각이 꺼진 채
-     * 비활성이다(D-68). 앱이 끈 값을 되돌리기와 날짜 따라가기(D-101)는 S4h다.
+     * 고정 일정이면 시작 시각이 켜진 채 비활성이고 기간은 꺼진 채 비활성이다(D-16, D-65). 반복과 기간은 함께 고를 수 없다(D-65). 기간을
+     * 켜면 시작 시각이 꺼진 채 비활성이다(D-68). 앱이 끈 값을 되돌리기와 날짜 따라가기(D-101)는 S4h다.
      */
     void sync() {
         boolean isFixed = fixed.isSelected();
+        boolean repeating = repeat.getSelectedIndex() != 0;
+        boolean periodAllowed = !isFixed && !repeating;
         // 기간을 먼저 끈다. 기간 할 일에서 고정 일정으로 가도 정하기가 켜진다(05 일정 입력 창 4번).
-        if (isFixed) {
+        if (!periodAllowed) {
             period.setSelected(false);
         }
         if (period.isSelected()) {
@@ -156,11 +159,18 @@ final class TaskForm {
         timed.setEnabled(!isFixed && !period.isSelected());
         timed.setToolTipText(period.isSelected() ? "기간 할 일의 시각은 목록에서 정해요" : null);
         start.setEnabled(timed.isSelected());
-        period.setEnabled(!isFixed);
+        period.setEnabled(periodAllowed);
         period.setToolTipText(isFixed ? "기간은 할 일만 정할 수 있어요" : null);
+        periodHint.setVisible(repeating && !isFixed);
         dateLabel.setText(period.isSelected() ? "시작일" : "날짜");
         dueLabel.setVisible(period.isSelected());
         due.setVisible(period.isSelected());
+        repeat.setEnabled(!period.isSelected());
+        for (JToggleButton d : days) {
+            d.setEnabled(repeat.getSelectedIndex() == 2);
+        }
+        repeatEnd.setEnabled(repeating);
+        repeatHint.setVisible(period.isSelected());
     }
 
     /** 칸에 쓴 값. 반복이 안 함이면 반복 방식과 끝은 null, 기간 안에 하기가 꺼져 있으면 마감은 null이다. 오늘은 앱의 오늘이다. */
