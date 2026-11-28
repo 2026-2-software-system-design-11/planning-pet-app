@@ -21,6 +21,12 @@ class RoundCheckTest {
         return b;
     }
 
+    private static JCheckBox over(boolean on) {
+        JCheckBox b = box(on);
+        b.getModel().setRollover(true);
+        return b;
+    }
+
     private static void looks(String name, JCheckBox b, int w, int h) throws IOException {
         Snap.assertLaidOutLooksLikePrototype("rchk-" + name, b, w, h);
     }
@@ -29,6 +35,26 @@ class RoundCheckTest {
     void eRchk1OffAndOn() throws IOException {
         looks("off", box(false), 24, 24);
         looks("on", box(true), 24, 24);
+    }
+
+    @Test
+    void eRchk2Over() throws IOException {
+        looks("over", over(false), 24, 24);
+        looks("on", over(true), 24, 24);
+    }
+
+    @Test
+    void eRchk3PressedAndDisabled() throws IOException {
+        JCheckBox b = box(false);
+        b.getModel().setArmed(true);
+        b.getModel().setPressed(true);
+        looks("off", b, 24, 24);
+        b = box(false);
+        b.setEnabled(false);
+        looks("off", b, 24, 24);
+        b = box(true);
+        b.setEnabled(false);
+        looks("on", b, 24, 24);
     }
 
     @Test
@@ -49,6 +75,7 @@ class RoundCheckTest {
         assertEquals(20, b.getIcon().getIconHeight());
         assertFalse(b.isOpaque());
         assertFalse(b.isFocusPainted());
+        assertTrue(b.isRolloverEnabled());
         assertEquals(Cursor.HAND_CURSOR, b.getCursor().getType());
         assertEquals("", b.getText());
     }

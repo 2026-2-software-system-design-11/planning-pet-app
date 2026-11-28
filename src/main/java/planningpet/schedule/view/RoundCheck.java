@@ -17,7 +17,7 @@ import planningpet.common.view.Theme;
 
 /**
  * 할 일 줄의 둥근 체크(05 입력 항목 4, D-59). 안 끝냄은 흰 바탕에 CARD_LINE 테두리, 끝냄은 민트 채움(MINT_TOP에서 MINT_DEEP)에
- * 흰 체크다(docs/porting/task-rows.md S3r).
+ * 흰 체크다. 마우스를 올리면 테두리가 MINT다(docs/porting/task-rows.md S3r).
  */
 final class RoundCheck {
     static final int SIZE = 20;
@@ -30,6 +30,7 @@ final class RoundCheck {
         box.setIcon(new Mark());
         box.setOpaque(false);
         box.setFocusPainted(false);
+        box.setRolloverEnabled(true);
         box.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
         box.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         return box;
@@ -43,6 +44,7 @@ final class RoundCheck {
             g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g.translate(x, y);
             int s = SIZE - 1;
+            boolean over = b.getModel().isRollover();
             if (b.isSelected()) {
                 g.setPaint(new GradientPaint(0, 0, Theme.MINT_TOP, 0, s, Theme.MINT_DEEP));
                 g.fillRoundRect(0, 0, s, s, 8, 8);
@@ -54,9 +56,9 @@ final class RoundCheck {
                 p.lineTo(s * 0.74, s * 0.34);
                 g.draw(p);
             } else {
-                g.setColor(Theme.CARD_TOP);
+                g.setColor(over ? Theme.MINT_PALE : Theme.CARD_TOP);
                 g.fillRoundRect(0, 0, s, s, 8, 8);
-                g.setColor(Theme.CARD_LINE);
+                g.setColor(over ? Theme.MINT : Theme.CARD_LINE);
                 g.setStroke(new BasicStroke(1.5f));
                 g.drawRoundRect(1, 1, s - 2, s - 2, 7, 7);
             }
