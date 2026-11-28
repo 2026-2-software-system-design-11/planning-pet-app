@@ -50,6 +50,7 @@ import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Task;
 import planningpet.schedule.model.TaskDraft;
 import planningpet.schedule.view.TaskRows;
+import planningpet.settings.view.SettingsScreen;
 
 /** Main.start의 갈래. 번호는 docs/porting/main.md 2절. 지금은 11-16(월) 10:00이고, 창은 띄우지 않고 부른 차례만 적는다. */
 class MainStartTest {
@@ -252,11 +253,24 @@ class MainStartTest {
         data.changed();
         Snap.layOut(root, 1000, 680);
         MainScreen home = parts(root, MainScreen.class).get(0);
-        assertEquals("[홈] 174,92 804x564 [오늘도 계획을 세우고, 조금씩 성장해요!] 0",
+        assertEquals("[홈, 설정] 174,92 804x564 [오늘도 계획을 세우고, 조금씩 성장해요!] 0",
                 parts(root, JToggleButton.class).stream().filter(b -> b.getClass() == JToggleButton.class).map(AbstractButton::getText).toList() + " "
                         + at(SwingUtilities.convertRectangle(home.getParent(), home.getBounds(), root)) + " "
                         + parts(root, JLabel.class).stream().map(JLabel::getText).filter(t -> t != null && t.startsWith("오늘도")).toList() + " "
                         + panels(parts(home, TaskRows.class).get(0), new ArrayList<>()).stream().filter(JPanel::isOpaque).count());
+    }
+
+    /** 설정이 메뉴 "설정"으로 붙고 알림마다 다시 그리기가 Theme.clear보다 먼저 돈다(docs/porting/settings.md S10b E-SET-14). */
+    @Test
+    void eSet14SettingsAttached() {
+        AppData data = saved();
+        Main.start(store(LoadResult.loaded(data), false), folder, CLOCK, shell);
+        data.setWeekStart(java.time.DayOfWeek.SUNDAY);
+        data.changed();
+        SettingsScreen settings = parts(root, SettingsScreen.class).get(0);
+        assertEquals("[플래닝펫을 내게 맞게 바꿔요.] 일요일 0", parts(root, JLabel.class).stream().map(JLabel::getText).filter("플래닝펫을 내게 맞게 바꿔요."::equals).toList()
+                + " " + parts(settings, javax.swing.JRadioButton.class).stream().filter(AbstractButton::isSelected).map(AbstractButton::getText).findFirst().orElse("")
+                + " " + panels(settings, new ArrayList<>()).stream().filter(JPanel::isOpaque).count());
     }
 
     /** 06 T-LIST-9(D-94)를 창 1000x680의 홈 목록으로 본다. 오늘은 11-19 09:00이다. 화면이 홈뿐이라 목록이 10 높다(S3ac 2절). */

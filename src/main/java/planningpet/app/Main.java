@@ -21,6 +21,9 @@ import planningpet.home.view.MainScreen;
 import planningpet.pet.controller.PetController;
 import planningpet.pet.view.PickDialog;
 import planningpet.reward.controller.RewardController;
+import planningpet.settings.controller.SettingsController;
+import planningpet.settings.store.OsAutostart;
+import planningpet.settings.view.SettingsScreen;
 
 /** 진입점. 실행 인자로 데이터 폴더를 정하고 클래스를 만들어 잇는다(07 실행 모드). */
 public final class Main {
@@ -89,20 +92,27 @@ public final class Main {
                 AppData data = new AppData(clock);
                 AppController app = new AppController(data, store, shell::saveFailed);
                 PickDialog pick = new PickDialog();
-                pick.onStart(new PetController(data, app), data, () -> open(data, app, clock, shell));
+                pick.onStart(new PetController(data, app), data, () -> open(data, app, folder, clock, shell));
                 shell.pick(pick, () -> shell.exit(0)); // 프로토타입 Main처럼 0으로 끝낸다. 저장한 것이 없다.
             }
-            case LOADED -> open(result.data(), new AppController(result.data(), store, shell::saveFailed), clock, shell);
+            case LOADED -> open(result.data(), new AppController(result.data(), store, shell::saveFailed), folder, clock, shell);
         }
     }
 
-    /** 메인 창과 30초 타이머. 차례는 프로토타입 create와 main과 같다. 홈의 refresh는 Theme.clear보다 먼저 건다(home.md S3ac). */
-    private static void open(AppData data, AppController app, Clock clock, Shell shell) {
+    /**
+     * 메인 창과 30초 타이머. 차례는 프로토타입 create와 main과 같다. 화면의 refresh는 Theme.clear보다 먼저 건다(home.md S3ac,
+     * settings.md S10b). 설정은 이 컴퓨터의 운영체제 등록을 읽는다.
+     */
+    private static void open(AppData data, AppController app, Path folder, Clock clock, Shell shell) {
         AppWindow window = new AppWindow(data, app);
         MainScreen home = new MainScreen(data, app, new HomeController(data, app), new RewardController(data, app));
         window.watch(home::refresh);
         window.addScreen("홈", "오늘도 계획을 세우고, 조금씩 성장해요!", home);
         DayWatcher watcher = new DayWatcher(data, app);
+        OsAutostart os = OsAutostart.here();
+        SettingsScreen settings = new SettingsScreen(data, new SettingsController(data, app, os), os, folder);
+        window.watch(settings::refresh);
+        window.addScreen("설정", "플래닝펫을 내게 맞게 바꿔요.", settings);
         window.watch(() -> Theme.clear(window.root()));
         Theme.clear(window.root());
         shell.main(window.root());
