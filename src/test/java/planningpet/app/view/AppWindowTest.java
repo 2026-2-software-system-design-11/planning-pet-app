@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -213,6 +214,18 @@ class AppWindowTest {
         looksLikePrototype("frame-1366x768", window(), 1366, 768);
         looksLikePrototype("frame-2560x1440", window(), 2560, 1440);
         looksLikePrototype("frame-600x400", window(), 600, 400);
+    }
+
+    /** 사이드바 로고 얼굴 자리(폭 124, 높이 64)는 PetArt.drawLogo의 사이드바 그림과 같다(pet-art.md E-LOGO-6). */
+    @Test
+    void eLogo6SidebarFace() throws IOException {
+        Component face = at(window().root(), 0, 0, 0);
+        face.setSize(124, 64);
+        BufferedImage img = new BufferedImage(124, 64, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = img.createGraphics();
+        face.paint(g);
+        g.dispose();
+        Snap.assertLooksLikePrototype("pet-logo-side", img);
     }
 
     @Test

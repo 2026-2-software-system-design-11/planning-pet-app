@@ -5,6 +5,7 @@ import java.awt.CardLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.image.BufferedImage;
@@ -30,6 +31,7 @@ import planningpet.common.view.Icons;
 import planningpet.common.view.RoundButtonUI;
 import planningpet.common.view.StatCard;
 import planningpet.common.view.Theme;
+import planningpet.pet.view.PetArt;
 import planningpet.reward.controller.RewardController;
 
 /**
@@ -184,10 +186,18 @@ public final class AppWindow {
         ((CardLayout) cards.getLayout()).show(cards, name);
     }
 
-    /** 사이드바 위의 로고(05 창 구조의 앱 이름). 얼굴 자리는 S2가 고양이 얼굴(PetArt)을 그린다. */
+    /** 사이드바 위의 로고(05 창 구조의 앱 이름). */
     private JPanel logo() {
         JPanel p = new JPanel(new BorderLayout(0, 2));
         JComponent face = new JComponent() {
+            @Override
+            protected void paintComponent(Graphics graphics) {
+                // 앱이 그리는 고양이 얼굴(PetArt). 크기가 바뀌어도 흐려지지 않는다. 높이 64 칸에 폭 88까지 그린다.
+                Graphics2D g = (Graphics2D) graphics.create();
+                int w = Math.min(getWidth(), 88);
+                PetArt.drawLogo(g, (getWidth() - w) / 2.0, 0, w, getHeight());
+                g.dispose();
+            }
         };
         face.setPreferredSize(new Dimension(0, 64));
         JLabel name = new JLabel("플래닝펫", SwingConstants.CENTER);
