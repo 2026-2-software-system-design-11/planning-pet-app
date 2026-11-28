@@ -1,5 +1,6 @@
 package planningpet.schedule.view;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -11,6 +12,7 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Insets;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.time.Clock;
@@ -115,13 +117,35 @@ class TaskRowTest {
 
     /** 글을 비우고 제목 칸을 숨겨 그린 그림을 기준 그림과 견준다. */
     private static void looks(String name, JPanel p) throws IOException {
+        Snap.assertLooksLikePrototype("row-" + name, blankPaint(p));
+    }
+
+    private static BufferedImage blankPaint(JPanel p) {
         Snap.blank(p);
         p.getComponent(1).setVisible(false);
         BufferedImage img = new BufferedImage(p.getWidth() + 4, p.getHeight() + 4, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = img.createGraphics();
         p.paint(g);
         g.dispose();
-        Snap.assertLooksLikePrototype("row-" + name, img);
+        return img;
+    }
+
+    private static int[] pixels(BufferedImage img) {
+        return img.getRGB(0, 0, img.getWidth(), img.getHeight(), null, 0, img.getWidth());
+    }
+
+    private static void mouse(Component c, int id) {
+        c.dispatchEvent(new MouseEvent(c, id, 0, 0, 1, 1, 0, false));
+    }
+
+    /** 줄에 들어가면 기준 그림 row-{name}-over와 같고, 나가면 들어가기 전과 픽셀이 같다. */
+    private void overAndBack(String name, Task t, String time) throws IOException {
+        JPanel p = row(t, time, TODAY, 480);
+        int[] before = pixels(blankPaint(p));
+        mouse(p, MouseEvent.MOUSE_ENTERED);
+        looks(name + "-over", p);
+        mouse(p, MouseEvent.MOUSE_EXITED);
+        assertArrayEquals(before, pixels(blankPaint(p)));
     }
 
     @Test
@@ -257,5 +281,48 @@ class TaskRowTest {
                 + "[TimePill 0,0 115x28, JLabel 119,4 34x20, CircleButton 157,0 28x28, CircleButton 189,0 28x28]", bounds(p));
         assertEquals("고정", ((JLabel) ((JPanel) p.getComponent(0)).getComponent(1)).getText());
         looks("fixed", p);
+    }
+
+    @Test
+    void eHover1Open() throws IOException {
+        overAndBack("open", task(Kind.TASK, "토익 공부", null, 30, false), "");
+    }
+
+    @Test
+    void eHover2Done() throws IOException {
+        overAndBack("done", task(Kind.TASK, "빨래", LocalTime.of(10, 0), 60, true), "10:00~11:00");
+    }
+
+    @Test
+    void eHover3Marks() throws IOException {
+        overAndBack("period", period(false), "");
+    }
+
+    /** 글 그대로 그린 줄의 왼쪽 끝 가운데(3, 높이의 반) 픽셀. 바탕이 없으면 0이다. */
+    private static int edge(JPanel p) {
+        BufferedImage img = new BufferedImage(p.getWidth() + 4, p.getHeight() + 4, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = img.createGraphics();
+        p.paint(g);
+        g.dispose();
+        return img.getRGB(3, p.getHeight() / 2);
+    }
+
+    @Test
+    void eHover4Children() {
+        JPanel p = row(task(Kind.TASK, "토익 공부", null, 30, false), "", TODAY, 480);
+        JPanel left = (JPanel) p.getComponent(0);
+        JPanel east = (JPanel) p.getComponent(2);
+        Component[] kids = {p.getComponent(1), left.getComponent(0), east.getComponent(0), east.getComponent(2), east.getComponent(3),
+            east.getComponent(1), left, east};
+        for (int i = 0; i < kids.length; i++) {
+            mouse(kids[i], MouseEvent.MOUSE_ENTERED);
+            assertEquals(i < 5 ? Theme.DAY.getRGB() : 0, edge(p), "부품 " + i);
+            mouse(kids[i], MouseEvent.MOUSE_EXITED);
+            assertEquals(0, edge(p));
+        }
+        mouse(p, MouseEvent.MOUSE_ENTERED);
+        mouse(p, MouseEvent.MOUSE_EXITED);
+        mouse(kids[0], MouseEvent.MOUSE_ENTERED);
+        assertEquals(Theme.DAY.getRGB(), edge(p));
     }
 }

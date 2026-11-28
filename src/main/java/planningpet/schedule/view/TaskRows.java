@@ -10,7 +10,10 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.RenderingHints;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import javax.swing.BorderFactory;
@@ -164,13 +167,15 @@ public final class TaskRows extends JPanel {
 
     /** 홈 목록의 할 일 한 줄. time이 ""이면 "시각 정하기", listDay는 이 줄이 보이는 목록의 날이다(D-65). 순서는 D-59, 아래에 가는 선, 끝낸 줄은 민트빛 바탕. */
     JPanel row(Task t, String time, LocalDate listDay) {
+        // 마우스를 올린 줄은 DAY 바탕이다(디자인 시스템 10절 홈, docs/porting/task-rows.md S3z).
+        boolean[] over = {false};
         JPanel row = new JPanel(new BorderLayout(6, 0)) {
             @Override
             protected void paintComponent(Graphics graphics) {
                 Graphics2D g = (Graphics2D) graphics.create();
                 g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                if (t.isDone()) {
-                    g.setColor(Theme.ROW_DONE);
+                if (t.isDone() || over[0]) {
+                    g.setColor(over[0] ? Theme.DAY : Theme.ROW_DONE);
                     g.fillRoundRect(0, 1, getWidth(), getHeight() - 3, 12, 12);
                 }
                 g.setColor(Theme.CARD_EDGE);
@@ -208,7 +213,8 @@ public final class TaskRows extends JPanel {
         when.addActionListener(e -> onTime.open(t, listDay, when));
         // D-35: 고정 일정도 체크한다. 체크 옆에 "고정" 꼬리표를 둔다.
         row.add(t.getKind() == Kind.FIXED ? middle(box, fixedTag()) : middle(box), BorderLayout.WEST);
-        row.add(new TitleLabel(t), BorderLayout.CENTER);
+        TitleLabel label = new TitleLabel(t);
+        row.add(label, BorderLayout.CENTER);
         row.add(middle(when, minutes, pencil, trash), BorderLayout.EAST);
         // D-94: 마감 글, 하려던 일, "오늘 마감"과 "마감"은 제목 아래 둘째 줄 왼쪽이다. 제목이 줄의 폭을 먼저 받는다.
         JLabel marks = marks(data.getBook().dueText(t), missedNote(t, today), dueTag(t, listDay, today));
@@ -216,6 +222,22 @@ public final class TaskRows extends JPanel {
             row.add(marks, BorderLayout.SOUTH);
         }
         row.setMaximumSize(new Dimension(Integer.MAX_VALUE, marks == null ? 44 : 62));
+        MouseAdapter hover = new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                over[0] = true;
+                row.repaint();
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                // 마우스가 아직 줄 안(자식 위)이면 바탕을 둔다. 창 없는 줄은 보이지 않아 늘 끈다.
+                over[0] = row.isShowing() && row.getMousePosition(true) != null;
+                row.repaint();
+            }
+        };
+        // 줄과 줄 안 버튼 위에 있는 동안이다. 듣는이가 없는 걸리는 시간, 둘째 줄, "고정" 위의 마우스는 줄이 받는다.
+        List.of(row, label, box, pencil, trash, when).forEach(c -> c.addMouseListener(hover));
         return row;
     }
 
