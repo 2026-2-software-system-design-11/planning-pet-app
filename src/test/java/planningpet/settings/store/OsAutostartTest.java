@@ -18,7 +18,9 @@ class OsAutostartTest {
     Path home;
 
     private OsAutostart mac(String app) {
-        return new OsAutostart("Mac OS X", home, app);
+        return new OsAutostart("Mac OS X", home, app, c -> {
+            throw new AssertionError("macOS는 명령을 돌리지 않는다: " + c);
+        });
     }
 
     @Test
@@ -103,7 +105,9 @@ class OsAutostartTest {
     @Test
     void eAuto8LinuxIsUnavailable() throws IOException {
         mac(APP).set(true);
-        OsAutostart linux = new OsAutostart("Linux", home, APP);
+        OsAutostart linux = new OsAutostart("Linux", home, APP, c -> {
+            throw new AssertionError("Linux는 명령을 돌리지 않는다: " + c);
+        });
         assertFalse(linux.available());
         assertFalse(linux.registered());
     }
