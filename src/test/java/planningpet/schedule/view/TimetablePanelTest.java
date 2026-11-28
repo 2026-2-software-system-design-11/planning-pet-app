@@ -3,6 +3,7 @@ package planningpet.schedule.view;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static planningpet.schedule.model.Tasks.d;
 import static planningpet.schedule.model.Tasks.task;
@@ -10,9 +11,11 @@ import static planningpet.schedule.model.Tasks.task;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
+import java.awt.IllegalComponentStateException;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import planningpet.app.controller.AppController;
@@ -32,6 +35,8 @@ class TimetablePanelTest {
     private AppData data;
     private TimetablePanel panel;
     private final MemoryStore store = new MemoryStore();
+    /** 수정, 삭제 함수가 받은 것. */
+    private final List<String> heard = new ArrayList<>();
 
     private BufferedImage show(Task... tasks) {
         return show(752, tasks);
@@ -41,7 +46,7 @@ class TimetablePanelTest {
     private BufferedImage show(int w, Task... tasks) {
         data = Apps.data("2026-11-18T10:00", tasks);
         RewardController reward = new RewardController(data, new AppController(data, store, e -> { }));
-        panel = new TimetablePanel(data, reward);
+        panel = new TimetablePanel(data, reward, t -> heard.add("수정 " + t.getTitle()), t -> heard.add("삭제 " + t.getTitle()));
         panel.monday = d(16);
         return Snap.paint(panel, w, H);
     }
@@ -278,5 +283,36 @@ class TimetablePanelTest {
                 List.copyOf(panel.boxAreas().keySet()));
         press(MouseEvent.MOUSE_CLICKED, 260, 409, MouseEvent.BUTTON1, 1, false);
         assertEquals(List.of(false, true), List.of(s.isDone(), b.isDone()));
+    }
+
+    @Test
+    void eTbl11BoxDoubleClick() {
+        Task a = at("A", "09:00", 60).task();
+        show(a);
+        press(MouseEvent.MOUSE_CLICKED, 260, 405, MouseEvent.BUTTON1, 2, false);
+        assertEquals(List.of(false, 0, List.of("수정 A")), List.of(a.isDone(), store.saves, heard));
+    }
+
+    @Test
+    void eTbl12DoubleClick() {
+        show(at("A", "09:00", 60).task());
+        press(MouseEvent.MOUSE_CLICKED, 300, 425, MouseEvent.BUTTON1, 1, false);
+        press(MouseEvent.MOUSE_CLICKED, 300, 500, MouseEvent.BUTTON1, 2, false);
+        assertEquals(List.of(), heard);
+        press(MouseEvent.MOUSE_CLICKED, 300, 425, MouseEvent.BUTTON1, 2, false);
+        press(MouseEvent.MOUSE_CLICKED, 300, 425, MouseEvent.BUTTON3, 2, false);
+        assertEquals(List.of("수정 A", "수정 A"), heard);
+    }
+
+    /** 창 없는 시간표는 화면에 보이지 않아 메뉴를 띄우려 하면 show가 예외를 던진다(task-rows.md S3y). */
+    @Test
+    void eTbl13Menu() {
+        show(at("A", "09:00", 60).task());
+        for (int id : new int[] {MouseEvent.MOUSE_PRESSED, MouseEvent.MOUSE_RELEASED}) {
+            assertThrows(IllegalComponentStateException.class, () -> press(id, 300, 425, MouseEvent.BUTTON3, 1, true));
+            press(id, 300, 500, MouseEvent.BUTTON3, 1, true);
+        }
+        press(MouseEvent.MOUSE_PRESSED, 300, 425, MouseEvent.BUTTON3, 1, false);
+        assertEquals(List.of(), heard);
     }
 }

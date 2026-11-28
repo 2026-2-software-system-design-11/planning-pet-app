@@ -10,6 +10,7 @@ import static planningpet.schedule.model.Tasks.task;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Insets;
+import java.awt.event.MouseEvent;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -158,17 +159,19 @@ class ScheduleScreenTest {
         assertEquals("이번 주에 시각 없는 할 일이 없어요.", ((JLabel) screen.untimed.getComponent(0)).getText());
     }
 
-    /** 목록 줄 둘째 줄의 단추(시계, 연필, 휴지통)와 "자동 배치"를 누른다. */
+    /** 목록 줄 둘째 줄의 단추(시계, 연필, 휴지통)와 "자동 배치"를 누르고 시간표 블록을 두 번 누른다. */
     @Test
     void eSch8Hooks() {
-        open(task("과제", d(18)).task());
+        open(task("과제", d(18)).task(), task("수업", d(18)).at("09:00").task());
         JPanel line = (JPanel) ((JComponent) screen.untimed.getComponent(0)).getComponent(3);
         JPanel buttons = (JPanel) line.getComponent(line.getComponentCount() - 1);
         for (Component b : buttons.getComponents()) {
             ((AbstractButton) b).doClick();
         }
         screen.autoPlace.doClick();
-        assertEquals(List.of("시각 과제 2026-11-18", "수정 과제", "삭제 과제", "자동 배치 2026-11-16"), heard);
+        Snap.paint(screen.table, 752, screen.table.getPreferredSize().height);
+        screen.table.dispatchEvent(new MouseEvent(screen.table, MouseEvent.MOUSE_CLICKED, 0, 0, 300, 410, 2, false, MouseEvent.BUTTON1));
+        assertEquals(List.of("시각 과제 2026-11-18", "수정 과제", "삭제 과제", "자동 배치 2026-11-16", "수정 수업"), heard);
     }
 
     /** 06 14번: 일정관리 "일정 추가"가 넘기는 날. */

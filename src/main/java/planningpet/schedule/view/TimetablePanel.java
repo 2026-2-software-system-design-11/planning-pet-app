@@ -15,6 +15,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 import planningpet.app.model.AppData;
@@ -48,8 +49,11 @@ public final class TimetablePanel extends JComponent {
     /** 열을 나눴거나 제목이 잘린 블록(D-87). 마지막으로 그린 모양이다. */
     private final Set<Task> narrow = new HashSet<>();
 
-    /** 체크 칸은 reward의 complete와 uncomplete를 부른다(docs/porting/schedule.md S5c2). */
-    public TimetablePanel(AppData data, RewardController reward) {
+    /**
+     * 체크 칸은 reward의 complete와 uncomplete를 부르고, 두 번 누르기와 오른쪽 버튼 메뉴는 onEdit, onDelete에 알린다. 여는 창은
+     * S4와 삭제 확인이 잇는다(docs/porting/schedule.md S5c2).
+     */
+    public TimetablePanel(AppData data, RewardController reward, Consumer<Task> onEdit, Consumer<Task> onDelete) {
         this.data = data;
         setPreferredSize(new Dimension(300, HOUR * HOURS));
         setToolTipText("");
@@ -72,7 +76,26 @@ public final class TimetablePanel extends JComponent {
                             reward.complete(boxed);
                         }
                     }
+                    return;
                 }
+                Task t = at(e);
+                if (t != null && e.getClickCount() == 2) {
+                    onEdit.accept(t);
+                }
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                // 운영체제마다 누를 때나 뗄 때 팝업 깃발이 서서 둘 다 본다(목록 줄과 같다).
+                Task t = at(e);
+                if (t != null && e.isPopupTrigger()) {
+                    TaskMenu.of(onEdit, onDelete, t).show(TimetablePanel.this, e.getX(), e.getY());
+                }
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                mousePressed(e);
             }
         });
     }

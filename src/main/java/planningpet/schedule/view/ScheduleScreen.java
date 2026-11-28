@@ -51,7 +51,7 @@ public final class ScheduleScreen extends JPanel {
     final JScrollPane scroll;
     /** 보이는 주의 첫날(06 데이터 절의 한 주, D-91). */
     private LocalDate start;
-    /** 목록 줄의 연필, 휴지통, 시계 단추. 창은 S4와 S5f가 넣는다. 시간표 블록의 누르기는 S5c2가 잇는다. */
+    /** 목록 줄의 연필, 휴지통, 시계 단추와 시간표 블록의 두 번 누르기, 메뉴. 창은 S4와 S5f가 넣는다. */
     public Consumer<Task> onEdit = t -> { };
     public Consumer<Task> onDelete = t -> { };
     public TaskRows.TimeOpener onTime = (t, day, at) -> { };
@@ -69,7 +69,7 @@ public final class ScheduleScreen extends JPanel {
         this.clock = clock;
         setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 12));
         start = thisWeekStart();
-        table = new TimetablePanel(data, reward);
+        table = new TimetablePanel(data, reward, t -> onEdit.accept(t), t -> onDelete.accept(t));
         untimed = new TaskRows(data, reward, t -> onEdit.accept(t), t -> onDelete.accept(t), (t, day, at) -> onTime.open(t, day, at));
         prev.addActionListener(e -> move(start.minusWeeks(1)));
         next.addActionListener(e -> move(start.plusWeeks(1)));
