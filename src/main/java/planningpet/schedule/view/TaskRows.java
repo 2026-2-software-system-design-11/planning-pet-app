@@ -2,6 +2,9 @@ package planningpet.schedule.view;
 
 import java.awt.Dimension;
 import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import planningpet.common.view.Theme;
@@ -10,7 +13,10 @@ import planningpet.schedule.model.Task;
 
 /** 할 일 줄 목록(07). 홈의 그날 목록과 일정관리 오른쪽 목록이 같이 쓴다. 옮기는 몫은 docs/porting/task-rows.md. */
 public final class TaskRows extends JPanel {
-    /** 제목 칸. 글(getText)은 HTML(화면 읽기 프로그램이 읽는다)이고, 칸 폭을 넘으면 "…"로 줄인다(docs/porting/task-rows.md S3t). */
+    /**
+     * 제목 칸. 글(getText)은 HTML(화면 읽기 프로그램이 읽는다)이고, 그림은 한 줄로 그려 칸 폭을 넘으면 "…"로 줄인다. HTML 라벨은 좁으면
+     * 두 줄로 꺾여 줄 높이를 넘었다(docs/porting/task-rows.md S3t).
+     */
     public static final class TitleLabel extends JLabel {
         private final Task t;
 
@@ -26,6 +32,19 @@ public final class TaskRows extends JPanel {
         public String shown() {
             FontMetrics fm = getFontMetrics(getFont());
             return Ui.fit(t.getTitle(), fm, getWidth());
+        }
+
+        @Override
+        protected void paintComponent(Graphics graphics) {
+            Graphics2D g = (Graphics2D) graphics.create();
+            g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            FontMetrics fm = g.getFontMetrics(getFont());
+            String text = shown();
+            int y = (getHeight() + fm.getAscent() - fm.getDescent()) / 2;
+            g.setFont(getFont());
+            g.setColor(Theme.INK);
+            g.drawString(text, 0, y);
+            g.dispose();
         }
     }
 }
