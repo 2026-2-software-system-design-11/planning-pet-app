@@ -67,6 +67,11 @@ public class Pill extends JToggleButton {
         return small;
     }
 
+    /** 넣은 둘째 줄 글(없으면 null). */
+    public String second() {
+        return second;
+    }
+
     private Font smallFont() {
         return Theme.font(Math.max(10, size - 3));
     }
