@@ -1,5 +1,6 @@
 package planningpet.settings.view;
 
+import java.awt.Desktop;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -17,6 +18,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+import javax.swing.JTextField;
 import planningpet.app.model.AppData;
 import planningpet.common.view.Ui;
 import planningpet.settings.controller.SettingsController;
@@ -30,6 +32,9 @@ public final class SettingsScreen extends JPanel {
     static final String UNAVAILABLE = "설치 파일로 설치했을 때만 쓸 수 있어요";
     /** 등록이나 빼기에 실패한 창의 제목(잠정, S10b). 내용은 운영체제가 준 이유다. */
     static final String AUTOSTART_FAILED = "컴퓨터 켤 때 실행을 바꾸지 못했어요";
+    /** 폴더를 열지 못한 창의 제목과 안내(잠정, S10b). 안내 아래에 경로를 복사할 수 있는 칸을 둔다. */
+    static final String FOLDER_FAILED = "폴더를 열지 못했어요";
+    static final String FOLDER_HELP = "아래 경로를 복사해 파일 탐색기에서 열어 주세요.";
     private final AppData data;
     private final Autostart os;
     private int row;
@@ -48,9 +53,16 @@ public final class SettingsScreen extends JPanel {
     public IntSupplier samples = () -> 0;
     /** "예시 지우기"를 누르면 부른다(D-74). 확인과 지우기는 C5가 넣는다. */
     public Runnable clearSamples = () -> { };
+    /** 데이터 폴더를 파일 탐색기로 연다(05 설정 2번). 검사가 바꿔 끼운다. */
+    Opener opener = folder -> Desktop.getDesktop().open(folder.toFile());
     /** 제목과 내용으로 오류 창을 띄우고 확인을 기다린다. 검사가 바꿔 끼운다. */
     BiConsumer<String, Object> alert = (title, message) -> new JOptionPane(message, JOptionPane.ERROR_MESSAGE,
             JOptionPane.DEFAULT_OPTION, null, new Object[] {"확인"}, "확인").createDialog(this, title).setVisible(true);
+
+    /** 폴더 열기. 열지 못하면 IOException이나 RuntimeException이다(Desktop.open). */
+    interface Opener {
+        void open(Path folder) throws IOException;
+    }
 
     /** folder는 데이터 폴더(06 21번)다. 데이터 변경 알림에 refresh를 거는 일은 화면을 넣는 쪽(Main)이 한다. */
     public SettingsScreen(AppData data, SettingsController settings, Autostart os, Path folder) {
@@ -62,6 +74,7 @@ public final class SettingsScreen extends JPanel {
         autostartHint.setVisible(!os.available());
         autostart.addActionListener(e -> setAutostart(settings));
         Path full = folder.toAbsolutePath();
+        open.addActionListener(e -> openFolder(full));
         line(new JLabel("<html><b>시작</b></html>"), autostart);
         line(new JLabel(), autostartHint);
         line(new JLabel("<html><b>데이터 위치</b></html>"), Ui.flow(new JLabel(full.toString()), open));
@@ -104,6 +117,17 @@ public final class SettingsScreen extends JPanel {
             alert.accept(AUTOSTART_FAILED, e.getMessage());
         }
         autostart.setSelected(os.registered());
+    }
+
+    /** 05 설정 2번. 열지 못하면 경로를 복사할 수 있는 창을 띄운다. */
+    private void openFolder(Path folder) {
+        try {
+            opener.open(folder);
+        } catch (IOException | RuntimeException e) {
+            JTextField path = new JTextField(folder.toString());
+            path.setEditable(false);
+            alert.accept(FOLDER_FAILED, new Object[] {FOLDER_HELP, path});
+        }
     }
 
     private void line(JComponent label, JComponent value) {

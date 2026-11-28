@@ -11,6 +11,7 @@ import java.time.DayOfWeek;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JLabel;
+import javax.swing.JTextField;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
@@ -22,14 +23,14 @@ import planningpet.common.view.ThemeOn;
 import planningpet.settings.controller.SettingsController;
 import planningpet.settings.model.Autostart;
 
-/** 설정 화면. 번호는 docs/porting/settings.md S10b 2절. 창은 띄우지 않고 받은 것을 적는다. */
+/** 설정 화면. 번호는 docs/porting/settings.md S10b 2절. 창과 파일 탐색기는 띄우지 않고 받은 것을 적는다. */
 @ExtendWith(ThemeOn.class)
 class SettingsScreenTest {
     private final AppData data = Apps.data("2026-11-18T10:00");
     private final MemoryStore store = new MemoryStore();
     private final List<String> errors = new ArrayList<>();
     private final Os os = new Os();
-    /** 띄우려던 창의 제목과 내용. */
+    /** 띄우려던 창의 제목과 내용. 내용이 여럿이면 글과 칸의 글을 " / "로 잇는다. */
     private final List<String> alerts = new ArrayList<>();
     @TempDir
     Path folder;
@@ -53,9 +54,17 @@ class SettingsScreenTest {
     /** Main처럼 변경 알림에 refresh를 건 화면. */
     private SettingsScreen screen() {
         SettingsScreen s = new SettingsScreen(data, new SettingsController(data, new AppController(data, store, errors::add), os), os, folder);
-        s.alert = (title, message) -> alerts.add(title + " " + message);
+        s.alert = (title, message) -> alerts.add(title + " " + (message instanceof Object[] parts ? text(parts) : message));
         data.onChange(s::refresh);
         return s;
+    }
+
+    private static String text(Object[] parts) {
+        List<String> out = new ArrayList<>();
+        for (Object p : parts) {
+            out.add(p instanceof JTextField f ? f.getText() + (f.isEditable() ? " 고칠 수 있음" : " 읽기만") : p.toString());
+        }
+        return String.join(" / ", out);
     }
 
     @Test
@@ -105,6 +114,31 @@ class SettingsScreenTest {
         assertTrue(s.autostart.isSelected());
         assertEquals(List.of("컴퓨터 켤 때 실행을 바꾸지 못했어요 액세스가 거부되었습니다.", "컴퓨터 켤 때 실행을 바꾸지 못했어요 액세스가 거부되었습니다."),
                 alerts);
+    }
+
+    @Test
+    void eSet8OpensFullDataFolder() {
+        SettingsScreen s = screen();
+        List<Path> opened = new ArrayList<>();
+        s.opener = opened::add;
+        s.open.doClick();
+        assertEquals(List.of(folder.toAbsolutePath()), opened);
+        assertEquals(folder.toAbsolutePath().toString(), ((JLabel) s.open.getParent().getComponent(0)).getText());
+    }
+
+    @Test
+    void eSet9OpenFailsShowsCopyablePath() {
+        SettingsScreen s = screen();
+        s.opener = f -> {
+            throw new IOException("열 수 없다");
+        };
+        s.open.doClick();
+        s.opener = f -> {
+            throw new IllegalArgumentException("폴더가 없다");
+        };
+        s.open.doClick();
+        String shown = "폴더를 열지 못했어요 아래 경로를 복사해 파일 탐색기에서 열어 주세요. / " + folder.toAbsolutePath() + " 읽기만";
+        assertEquals(List.of(shown, shown), alerts);
     }
 
     @Test
