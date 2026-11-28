@@ -21,7 +21,7 @@ class PetArtTest {
         Graphics2D g = img.createGraphics();
         PetPaintBase.hints(g);
         g.translate(120, 110);
-        PetPaintHead p = new PetPaintHead(g, kind);
+        PetPaintHead p = new PetPaintHead(g, kind, 0);
         p.line = line;
         return p;
     }
@@ -68,21 +68,26 @@ class PetArtTest {
         Snap.assertLooksLikePrototype("pet-face-neg48", img);
     }
 
-    /** 크기 230 얼굴을 (300, 300)에 그려 칠한 픽셀을 모두 담는 상자를 가운데에서 잰 "왼쪽 위 오른쪽 아래". */
-    private static String face230Box(PetKind kind) {
-        BufferedImage img = new BufferedImage(600, 600, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g = img.createGraphics();
-        PetArt.drawFace(g, kind, 300, 300, 230);
-        g.dispose();
-        int[] box = {600, 600, -1, -1};
-        for (int y = 0; y < 600; y++) {
-            for (int x = 0; x < 600; x++) {
+    /** 칠한(알파가 0이 아닌) 픽셀을 모두 담는 상자를 (ox, oy)에서 잰 "왼쪽 위 오른쪽 아래". */
+    static String paintedBox(BufferedImage img, int ox, int oy) {
+        int[] box = {img.getWidth(), img.getHeight(), -1, -1};
+        for (int y = 0; y < img.getHeight(); y++) {
+            for (int x = 0; x < img.getWidth(); x++) {
                 if (img.getRGB(x, y) >>> 24 != 0) {
                     box = new int[] {Math.min(box[0], x), Math.min(box[1], y), Math.max(box[2], x), Math.max(box[3], y)};
                 }
             }
         }
-        return (box[0] - 300) + " " + (box[1] - 300) + " " + (box[2] - 300) + " " + (box[3] - 300);
+        return (box[0] - ox) + " " + (box[1] - oy) + " " + (box[2] - ox) + " " + (box[3] - oy);
+    }
+
+    /** 크기 230 얼굴을 (300, 300)에 그려 칠한 픽셀의 상자를 가운데에서 잰다. */
+    private static String face230Box(PetKind kind) {
+        BufferedImage img = new BufferedImage(600, 600, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = img.createGraphics();
+        PetArt.drawFace(g, kind, 300, 300, 230);
+        g.dispose();
+        return paintedBox(img, 300, 300);
     }
 
     @Test
@@ -131,8 +136,8 @@ class PetArtTest {
     void eFace6Ears() throws IOException {
         BufferedImage img = new BufferedImage(240, 200, BufferedImage.TYPE_INT_ARGB);
         PetPaintHead p = part(img, PetKind.CAT, 6f);
-        p.ear(-1);
-        p.ear(1);
+        p.ear(-1, 0);
+        p.ear(1, 0);
         p.g.dispose();
         Snap.assertLooksLikePrototype("pet-ears", img);
     }
@@ -154,7 +159,7 @@ class PetArtTest {
         Graphics2D g = img.createGraphics();
         PetPaintBase.hints(g);
         g.translate(130, 120);
-        new PetPaintHead(g, PetKind.CAT).head();
+        new PetPaintHead(g, PetKind.CAT, 0).head(0, 0, 0);
         g.dispose();
         Snap.assertLooksLikePrototype("pet-head", img);
     }
@@ -200,14 +205,25 @@ class PetArtTest {
         }
     }
 
-    @Test
-    void eDog4Head() throws IOException {
+    /** 260x240 그림의 (130, 120)에 머리를 움직임 시각 t에 rot 기울여 1배로 그린다. */
+    private static BufferedImage head(PetKind kind, double t, double rot) {
         BufferedImage img = new BufferedImage(260, 240, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = img.createGraphics();
         PetPaintBase.hints(g);
         g.translate(130, 120);
-        new PetPaintHead(g, PetKind.DOG).head();
+        new PetPaintHead(g, kind, t).head(0, 0, rot);
         g.dispose();
-        Snap.assertLooksLikePrototype("pet-dog-head", img);
+        return img;
+    }
+
+    @Test
+    void eDog4Head() throws IOException {
+        Snap.assertLooksLikePrototype("pet-dog-head", head(PetKind.DOG, 0, 0));
+    }
+
+    @Test
+    void eHead1TurnedAndMoving() throws IOException {
+        Snap.assertLooksLikePrototype("pet-head-turned-cat", head(PetKind.CAT, 1.1, -9));
+        Snap.assertLooksLikePrototype("pet-head-turned-dog", head(PetKind.DOG, 0.6, -9));
     }
 }

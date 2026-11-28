@@ -8,11 +8,15 @@ import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
 import planningpet.pet.model.PetKind;
 
-/** PetArt 펫 그림의 바탕: 색, 한 번 그리는 데 필요한 값, 그리기 도구. 머리는 PetPaintHead가 더한다(docs/porting/pet-art.md). */
+/**
+ * PetArt 펫 그림의 바탕: 색, 시간 함수, 한 번 그리는 데 필요한 값, 그리기 도구. 머리는 PetPaintHead, 몸은 PetPaintBody가 더한다
+ * (docs/porting/pet-art.md).
+ */
 abstract class PetPaintBase {
     // ---------- 색 (예시 픽셀에서 뽑은 값) ----------
     static final Color CAT_INK = new Color(0x3B3535);
     static final Color CAT_GREY = new Color(0xA9A8AE);
+    static final Color CAT_GREY_SHADE = new Color(0x8F8D96);
     static final Color CAT_WHITE = new Color(0xFFFEFC);
     static final Color CAT_WHITE_SHADE = new Color(0xE8E3E3);
     static final Color CAT_EAR = new Color(0xF6B8B4);
@@ -29,22 +33,41 @@ abstract class PetPaintBase {
     static final float LINE = 6f;
 
     final Graphics2D g;
+    /** 움직임 시각(초). 귀 까딱임과 흔들림, 숨쉬기, 머리 기울기, 꼬리가 쓴다. */
+    final double t;
     final boolean cat;
     final Color ink;
     final Color fur;
+    final Color furShade;
     float line = LINE;
 
-    PetPaintBase(Graphics2D g, PetKind kind) {
+    PetPaintBase(Graphics2D g, PetKind kind, double t) {
         this.g = g;
+        this.t = t;
         this.cat = kind == PetKind.CAT;
         this.ink = cat ? CAT_INK : DOG_INK;
         this.fur = cat ? CAT_WHITE : DOG_FUR;
+        this.furShade = cat ? CAT_WHITE_SHADE : DOG_FUR_SHADE;
     }
 
     static void hints(Graphics2D g) {
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
         g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+    }
+
+    /** 시각 t에서 period초 주기로 a와 b 사이를 부드럽게 오가는 값. phase는 주기의 몇 분의 일만큼 앞서는지다. */
+    static double wave(double t, double period, double a, double b, double phase) {
+        double x = (t / period + phase) * 2 * Math.PI;
+        return a + (b - a) * (0.5 - 0.5 * Math.cos(x));
+    }
+
+    /** 0에서 1로 가며 끝에서 조금 넘쳤다 돌아오는 값(고를 때 튀기). x는 0과 1 사이로 자른다. */
+    static double easeOutBack(double x) {
+        x = Math.max(0, Math.min(1, x));
+        double c1 = 1.70158;
+        double c3 = c1 + 1;
+        return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
     }
 
     static Ellipse2D ell(double cx, double cy, double rx, double ry) {
@@ -73,6 +96,12 @@ abstract class PetPaintBase {
     void push(double x, double y, double rot) {
         g.translate(x, y);
         g.rotate(Math.toRadians(rot));
+    }
+
+    /** 외곽선 있는 굵은 관(꼬리). 짙은 선을 넓게, 그 위에 c를 좁게 긋는다. */
+    void tube(Shape path, float w, Color c) {
+        stroke(path, w + line * 2, ink);
+        stroke(path, w, c);
     }
 
     /** s 안쪽에만 shade를 칠한다(그림자 한 단). */
