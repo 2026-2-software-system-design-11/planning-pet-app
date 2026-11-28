@@ -103,6 +103,7 @@
 | S6 | 자동 배치 결과 창 | `AutoPlaceDialog`, `TaskController.applyPlacement` | 18번 | `docs/porting/auto-place-dialog.md` |
 | S7 | 나의 방 | `PetScreen`, `RoomView`, `ShopPanel`, `ShopController` | 20번 | `docs/porting/room.md` |
 | S8a | 펫 controller 넷 | `PetState.setName`, `PetController.step`, `rename`, `pose`, `applyWear`(#540) | 28번 T-WEAR-1, T-WEAR-3, 30번 T-PET-2~4, T-PET-7 | [docs/porting/character.md](porting/character.md) |
+| S8b | 앉은 자세 셋과 홈 카드 자세 | `PetArt`의 자세를 받는 `drawAt`(앉기, 밥 먹기, 노래와 밥그릇, 음표), `stageScale`, `heightRatio(kind, pose)`, 얼굴 그림 `face`, 홈 펫 카드가 저장된 자세로 그리기(#541) | 없음(D-50, 디자인 시스템 10절) | [docs/porting/character.md](porting/character.md) |
 | S8 | 캐릭터 창 | `CharacterDialog`, `PetController.step`, `rename`, `pose`, `applyWear` | 27번, 28번, 30번 | [docs/porting/character.md](porting/character.md) |
 | S9 | 통계 화면 | `StatsScreen`, 통계 화면일 때 창 바탕의 자는 고양이([icons.md](porting/icons.md)) | 29번 | `docs/porting/stats-screen.md` |
 | S10a | 컴퓨터 켤 때 실행과 설정 controller | `Autostart`, `OsAutostart`의 macOS 등록(설치된 앱인지는 `jpackage.app-path`), `SettingsController`의 `setCalendarFixed`, `setWeekStart`, `setAutostart`(#523). `setListClickTime`은 C3 | 25번의 컴퓨터 켤 때 실행(T-WIN-4~6의 등록 몫, 프로토타입 기준 없음), 데이터 절 `calendarFixed`, `weekStart` | [docs/porting/settings.md](porting/settings.md) |
