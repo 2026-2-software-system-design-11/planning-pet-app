@@ -8,6 +8,7 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Insets;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.time.Clock;
@@ -17,10 +18,13 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.SwingConstants;
 import org.junit.jupiter.api.Test;
 import planningpet.app.model.AppData;
 import planningpet.common.view.Snap;
@@ -78,6 +82,13 @@ class TaskPlanTest {
             }
         }
         return String.join(", ", out);
+    }
+
+    /** 앱의 할 일 카드처럼 가로 막대가 없고 테두리가 없는 스크롤 창에 넣는다. */
+    private static JScrollPane scroll(TaskRows rows) {
+        JScrollPane sp = new JScrollPane(rows, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        sp.setBorder(BorderFactory.createEmptyBorder());
+        return sp;
     }
 
     /** 글을 비우고 줄의 제목 칸을 숨겨 그린 그림을 기준 그림 proto/plan-{name}.png와 견준다. */
@@ -157,6 +168,24 @@ class TaskPlanTest {
     }
 
     @Test
+    void ePlan7Scroll() {
+        TaskRows rows = plan(day(18).atTime(10, 0), day(18), mix());
+        assertTrue(rows.getScrollableTracksViewportWidth());
+        assertFalse(rows.getScrollableTracksViewportHeight());
+        assertEquals(rows.getPreferredSize(), rows.getPreferredScrollableViewportSize());
+        for (int o : new int[] {SwingConstants.VERTICAL, SwingConstants.HORIZONTAL}) {
+            assertEquals(16, rows.getScrollableUnitIncrement(null, o, 1));
+            assertEquals(64, rows.getScrollableBlockIncrement(null, o, -1));
+        }
+        JScrollPane sp = scroll(rows);
+        // 높이 200은 목록 높이 252보다 작아 세로 막대(폭 17)가 보인다.
+        for (int[] w : new int[][] {{300, 283}, {480, 463}, {700, 683}}) {
+            Snap.layOut(sp, w[0], 200);
+            assertEquals(new Dimension(w[1], 252), rows.getSize());
+        }
+    }
+
+    @Test
     void tList1TimeThenSeq() {
         TaskRows rows = plan(day(16).atTime(8, 0), day(16),
                 task(3, Kind.TASK, "A", day(16), LocalTime.of(15, 0), 30, null, false),
@@ -168,5 +197,25 @@ class TaskPlanTest {
         // 끝낸 F는 "끝낸 일" 묶음(#480) 전에는 빠진다(docs/porting/task-rows.md S3w).
         assertEquals("C 09:00~09:30 0,0 480x39, E 10:30~11:00 0,39 480x39, D 15:00~15:30 0,78 480x39, A 15:00~15:30 0,117 480x39, "
                 + "[시각 없는 할 일] 0,156 75x33, B 시각 정하기 0,189 480x39", kids(rows));
+    }
+
+    @Test
+    void tList9TitlesInFirstWindow() {
+        Task due = task(1, Kind.TASK, "졸업 작품 기획서", day(12), null, 60, day(19), false);
+        Task missed = new Task("E사 지원서", 2, Kind.TASK, "E사 지원서", day(18), LocalTime.of(9, 0), 120, "", false,
+                Category.OTHER, null, null, day(22), day(16), false, null, 0, 0, null, null);
+        TaskRows rows = plan(day(19).atTime(9, 0), day(19), due, missed);
+        // 프로토타입 메인 창 1000x680의 할 일 카드 스크롤 창 크기다(docs/porting/task-rows.md S3w). 창 전체는 MainScreen이 본다.
+        Snap.layOut(scroll(rows), 383, 392);
+        assertEquals("졸업 작품 기획서 시각 정하기 0,0 383x54, [기간 안에 할 일] 0,54 75x33, E사 지원서 시각 정하기 0,87 383x54", kids(rows));
+        String[][] want = {{"졸업 작품 기획서", "<font color='#8A96A0'>~11/19까지</font> <font color='#C0392B'>오늘 마감</font>"},
+            {"E사 지원서", "<font color='#8A96A0'>~11/22까지</font> <font color='#8A96A0'>18일에 하려던 일</font>"}};
+        for (int i = 0; i < 2; i++) {
+            JPanel row = (JPanel) rows.getComponent(i * 2);
+            assertEquals(want[i][0], ((TaskRows.TitleLabel) row.getComponent(1)).shown());
+            JLabel marks = (JLabel) row.getComponent(3);
+            assertEquals("<html>" + want[i][1] + "</html>", marks.getText());
+            assertEquals(new Rectangle(6, 33, 373, 15), marks.getBounds());
+        }
     }
 }

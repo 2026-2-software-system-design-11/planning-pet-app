@@ -9,6 +9,7 @@ import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -22,6 +23,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.Scrollable;
 import planningpet.app.model.AppData;
 import planningpet.common.view.CircleButton;
 import planningpet.common.view.Icons;
@@ -33,7 +35,7 @@ import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Task;
 
 /** 할 일 줄 목록(07). 홈의 그날 목록과 일정관리 오른쪽 목록이 같이 쓴다. 옮기는 몫은 docs/porting/task-rows.md. */
-public final class TaskRows extends JPanel {
+public final class TaskRows extends JPanel implements Scrollable {
     /** 시각 알약을 누르면 할 일, 그 줄이 보이는 목록의 날, 누른 알약을 받는다. 시각 고치기 창(S5)이 알약 아래에 뜬다. */
     public interface TimeOpener {
         void open(Task t, LocalDate day, Component anchor);
@@ -303,5 +305,31 @@ public final class TaskRows extends JPanel {
             p.add(parts[i], k);
         }
         return p;
+    }
+
+    /** 목록 폭을 보이는 칸에 맞춰서 긴 제목이 버튼을 밀어내지 않게 한다. 제목은 남는 폭에서 줄어든다(D-94). */
+    @Override
+    public boolean getScrollableTracksViewportWidth() {
+        return true;
+    }
+
+    @Override
+    public boolean getScrollableTracksViewportHeight() {
+        return false;
+    }
+
+    @Override
+    public Dimension getPreferredScrollableViewportSize() {
+        return getPreferredSize();
+    }
+
+    @Override
+    public int getScrollableUnitIncrement(Rectangle visible, int orientation, int direction) {
+        return 16;
+    }
+
+    @Override
+    public int getScrollableBlockIncrement(Rectangle visible, int orientation, int direction) {
+        return 64;
     }
 }
