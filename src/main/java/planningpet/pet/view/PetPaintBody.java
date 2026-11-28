@@ -29,7 +29,13 @@ final class PetPaintBody extends PetPaintHead {
     PetPaintBody(Graphics2D g, PetKind kind, Pose pose, Set<WearId> wear, double t) {
         super(g, kind, wear, t);
         this.pose = pose;
-        face = pose == Pose.EAT ? Face.EAT : pose == Pose.SING ? Face.SING : Face.HAPPY;
+        face = switch (pose) {
+            case SIT -> Face.HAPPY;
+            case SLEEP -> Face.SLEEP;
+            case STRETCH -> Face.STRETCH;
+            case EAT -> Face.EAT;
+            case SING -> Face.SING;
+        };
     }
 
     /**

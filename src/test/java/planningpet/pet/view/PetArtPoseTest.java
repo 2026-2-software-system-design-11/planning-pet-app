@@ -17,7 +17,7 @@ import planningpet.pet.model.PetKind;
 import planningpet.pet.model.Pose;
 import planningpet.pet.model.WearId;
 
-/** 자세(D-50)와 모습 단계 크기, 얼굴 그림. 번호는 docs/porting/character.md S8b. */
+/** 자세(D-50)와 모습 단계 크기, 얼굴 그림. 번호는 docs/porting/character.md S8b, S8c. */
 class PetArtPoseTest {
     private static final PetKind[] KINDS = {PetKind.CAT, PetKind.DOG};
     private static final Set<WearId> COLLAR = Set.of(WearId.BASIC_NECKLACE);
@@ -115,6 +115,27 @@ class PetArtPoseTest {
     @Test
     void ePose5RaisedPaw() {
         assertEquals(List.of(209, 201, 208), List.of(pawTop(0), pawTop(0.4), pawTop(0.8)));
+    }
+
+    /** 머리만 상자 좌표 (160, 160)에 표정 face로 그린다. */
+    private static BufferedImage head(PetKind kind, PetPaintBase.Face face) {
+        BufferedImage img = new BufferedImage(320, 320, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = img.createGraphics();
+        PetPaintBase.hints(g);
+        PetPaintHead p = new PetPaintHead(g, kind, Set.of(), 0);
+        p.face = face;
+        p.head(160, 160, 0);
+        g.dispose();
+        return img;
+    }
+
+    /** 잠든 얼굴은 입을 닫고(늘 입을 벌린 강아지도), 기지개 얼굴은 입을 벌린다(고양이도). 웃는 얼굴은 강아지만 입을 벌린다. */
+    @Test
+    void ePose15SleepAndStretchFaces() {
+        assertEquals(List.of(0L, 0L, true, true), List.of(count(head(PetKind.CAT, PetPaintBase.Face.HAPPY), PetPaintBase.MOUTH),
+                count(head(PetKind.DOG, PetPaintBase.Face.SLEEP), PetPaintBase.MOUTH),
+                count(head(PetKind.CAT, PetPaintBase.Face.STRETCH), PetPaintBase.MOUTH) > 0,
+                count(head(PetKind.DOG, PetPaintBase.Face.HAPPY), PetPaintBase.MOUTH) > 0));
     }
 
     private static long count(BufferedImage img, Color c) {

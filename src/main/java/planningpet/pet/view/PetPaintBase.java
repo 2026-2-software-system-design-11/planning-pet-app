@@ -52,8 +52,8 @@ abstract class PetPaintBase {
     /** 큰 그림의 선 굵기. 작게 그릴 때는 부르는 쪽이 line을 굵게 바꾼다. */
     static final float LINE = 6f;
 
-    /** 표정. 자세마다 하나다(D-50): 앉기는 웃음, 밥 먹기는 먹기, 노래는 노래. */
-    enum Face { HAPPY, EAT, SING }
+    /** 표정. 자세마다 하나다(D-50): 앉기는 웃음, 자기는 잠, 밥 먹기는 먹기, 노래는 노래, 기지개는 기지개. */
+    enum Face { HAPPY, SLEEP, SING, EAT, STRETCH }
 
     final Graphics2D g;
     /** 움직임 시각(초). 귀 까딱임과 흔들림, 숨쉬기, 머리 기울기, 꼬리가 쓴다. */
