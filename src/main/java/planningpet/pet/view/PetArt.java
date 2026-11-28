@@ -33,6 +33,11 @@ public final class PetArt {
         g.dispose();
     }
 
+    /** 홈 펫 카드의 모습 단계(D-20)별 크기 비율(D-93). 1단계도 카드 칸의 3분의 2 넘게 그리려고 단계 사이 차를 줄였다. */
+    public static double cardScale(int stage) {
+        return stage <= 1 ? 0.94 : stage == 2 ? 0.97 : 1.0;
+    }
+
     /**
      * 앉은 펫의 그림 높이를 상자 size에 대한 비율로 준다(바닥에서 귀나 머리 끝까지). 고른 카드의 강조선 자리를 잰다.
      * 프로토타입이 2026-11-24 기본 목걸이를 입혀 그려 잰 값이다. 목걸이는 칠하는 칸을 바꾸지 않고 옷은 위 끝을 바꾸지 않는다(docs/porting/pet-art.md E-WEAR-8,
