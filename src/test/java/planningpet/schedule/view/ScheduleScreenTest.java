@@ -1,10 +1,14 @@
 package planningpet.schedule.view;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static planningpet.schedule.model.Tasks.d;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Insets;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
@@ -19,6 +23,7 @@ import planningpet.app.model.Apps;
 import planningpet.app.model.MemoryStore;
 import planningpet.common.view.Card;
 import planningpet.common.view.Snap;
+import planningpet.common.view.Theme;
 import planningpet.reward.controller.RewardController;
 import planningpet.schedule.model.Task;
 
@@ -45,6 +50,11 @@ class ScheduleScreenTest {
 
     private static List<String> texts(JPanel p) {
         return Arrays.stream(p.getComponents()).map(c -> c instanceof AbstractButton b ? b.getText() : ((JLabel) c).getText()).toList();
+    }
+
+    /** 요일 머리 글. */
+    private List<String> header() {
+        return Arrays.stream(screen.header.getComponents()).map(c -> ((JLabel) c).getText()).toList();
     }
 
     @Test
@@ -79,6 +89,21 @@ class ScheduleScreenTest {
     }
 
     @Test
+    void eSch3Header() {
+        open();
+        assertEquals(List.of("월 16", "화 17", "수 18", "목 19", "금 20", "토 21", "일 22"), header());
+        assertEquals(new Insets(0, 52, 0, 0), screen.header.getInsets());
+        List<Boolean> opaque = Arrays.stream(screen.header.getComponents()).map(Component::isOpaque).toList();
+        assertEquals(List.of(false, false, true, false, false, false, false), opaque);
+        assertEquals(Theme.DAY_SELECTED, screen.header.getComponent(2).getBackground());
+        data.setWeekStart(DayOfWeek.SUNDAY);
+        screen.refresh();
+        assertEquals(List.of("일 15", "월 16", "화 17", "수 18", "목 19", "금 20", "토 21"), header());
+        screen.next.doClick();
+        assertEquals(List.of(), Arrays.stream(screen.header.getComponents()).filter(Component::isOpaque).toList());
+    }
+
+    @Test
     void eSch4Weeks() {
         assertEquals(d(16), open().weekStart());
         screen.prev.doClick();
@@ -88,5 +113,27 @@ class ScheduleScreenTest {
         assertEquals(d(23), screen.weekStart());
         assertEquals(d(16), open("2026-11-23T03:59").weekStart());
         assertEquals(d(23), open("2026-11-23T04:00").weekStart());
+    }
+
+    @Test
+    void eSch5Today() {
+        open();
+        assertEquals(List.of(false, "이번 주를 보고 있어요"), List.of(screen.today.isEnabled(), screen.today.getToolTipText()));
+        screen.prev.doClick();
+        assertTrue(screen.today.isEnabled());
+        assertNull(screen.today.getToolTipText());
+        screen.today.doClick();
+        assertEquals(List.of(d(16), false), List.of(screen.weekStart(), screen.today.isEnabled()));
+    }
+
+    @Test
+    void eSch6WeekStartChange() {
+        open().next.doClick();
+        data.setWeekStart(DayOfWeek.SUNDAY);
+        screen.refresh();
+        assertEquals(d(22), screen.weekStart());
+        data.setWeekStart(DayOfWeek.MONDAY);
+        screen.refresh();
+        assertEquals(d(16), screen.weekStart());
     }
 }

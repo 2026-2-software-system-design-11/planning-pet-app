@@ -31,6 +31,7 @@ import planningpet.schedule.model.Task;
  * 더한다.
  */
 public final class ScheduleScreen extends JPanel {
+    private static final String WEEK = "월화수목금토일";
     private final AppData data;
     private final Clock clock;
     final TimetablePanel table;
@@ -64,6 +65,7 @@ public final class ScheduleScreen extends JPanel {
         untimed = new TaskRows(data, reward, t -> onEdit.accept(t), t -> onDelete.accept(t), (t, day, at) -> onTime.open(t, day, at));
         prev.addActionListener(e -> move(start.minusWeeks(1)));
         next.addActionListener(e -> move(start.plusWeeks(1)));
+        today.addActionListener(e -> move(thisWeekStart()));
         JPanel bar = new JPanel(new BorderLayout());
         bar.add(Ui.flow(prev, range, next, today), BorderLayout.WEST);
         bar.add(Ui.flow(autoPlace, add), BorderLayout.EAST);
@@ -131,12 +133,29 @@ public final class ScheduleScreen extends JPanel {
         redraw.run();
     }
 
-    /** 기간 글과 시간표를 보이는 주로 다시 그린다. */
+    /** 기간 글, 요일 머리, "오늘" 단추, 시간표를 보이는 주로 다시 그린다. */
     public void refresh() {
+        // D-91: 한 주 시작을 바꾸면 보던 주의 첫날이 든 새 주로 바꾼다.
+        start = Rules.weekStart(start, data.getWeekStart());
         table.monday = start;
+        boolean thisWeek = start.equals(thisWeekStart());
+        today.setEnabled(!thisWeek);
+        today.setToolTipText(thisWeek ? "이번 주를 보고 있어요" : null);
         LocalDate last = start.plusDays(6);
         range.setText("<html><b>" + start.getMonthValue() + "월 " + start.getDayOfMonth() + "일 ~ "
                 + last.getMonthValue() + "월 " + last.getDayOfMonth() + "일</b></html>");
+        header.removeAll();
+        header.setBorder(BorderFactory.createEmptyBorder(0, TimetablePanel.GUTTER, 0, 0));
+        for (int i = 0; i < 7; i++) {
+            LocalDate d = start.plusDays(i);
+            JLabel label = new JLabel(WEEK.charAt(d.getDayOfWeek().getValue() - 1) + " " + d.getDayOfMonth(), SwingConstants.CENTER);
+            if (d.equals(data.today())) {
+                label.setOpaque(true);
+                label.setBackground(Theme.DAY_SELECTED);
+            }
+            header.add(label);
+        }
         table.repaint();
+        header.revalidate();
     }
 }
