@@ -3,6 +3,7 @@ package planningpet.common.view;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -303,5 +304,45 @@ class UiTest {
             type(s, "2026-11-20 (월)"); // 친 요일은 읽지 않는다
             assertEquals(List.of(LocalDate.of(2026, 11, 20), "2026-11-20 (금)"), List.of(Ui.dateOf(s), editor(s).getText()));
         });
+    }
+
+    @Test
+    void eUi4DateRoundTrip() {
+        JSpinner s = day("yyyy-MM-dd", NOV16);
+        String[][] rows = {{"2026-11-30", "2026-12-01", "2026-11-29"}, {"2026-12-31", "2027-01-01", "2026-12-30"},
+            {"2027-01-01", "2027-01-02", "2026-12-31"}, {"2028-02-28", "2028-02-29", "2028-02-27"}, {"2026-03-01", "2026-03-02", "2026-02-28"}};
+        for (String[] row : rows) {
+            LocalDate d = LocalDate.parse(row[0]);
+            Ui.setDate(s, d);
+            assertEquals(d, Ui.dateOf(s));
+            arrow(s, "increment");
+            assertEquals(LocalDate.parse(row[1]), Ui.dateOf(s));
+            Ui.setDate(s, d);
+            arrow(s, "decrement");
+            assertEquals(LocalDate.parse(row[2]), Ui.dateOf(s));
+        }
+    }
+
+    @Test
+    void eUi5NonexistentDate() {
+        inLocale(Locale.KOREA, () -> {
+            JSpinner s = day(WEEKDAY, NOV16);
+            type(s, "2026-11-31 (월)");
+            assertEquals(LocalDate.of(2026, 12, 1), Ui.dateOf(s));
+            type(s, "2026-13-01 (월)");
+            assertEquals(LocalDate.of(2027, 1, 1), Ui.dateOf(s));
+        });
+        JSpinner plain = day("yyyy-MM-dd", NOV16);
+        type(plain, "2026-02-30");
+        assertEquals(LocalDate.of(2026, 3, 2), Ui.dateOf(plain));
+    }
+
+    @Test
+    void eUi6TwoDigitYear() {
+        JSpinner s = day("yyyy-MM-dd", NOV16);
+        type(s, "26-1-5");
+        assertEquals("0026-01-05", editor(s).getText());
+        assertEquals(26, Ui.dateOf(s).getYear());
+        assertNotEquals(LocalDate.of(26, 1, 5), Ui.dateOf(s)); // 1582년 전 달력 차이
     }
 }
