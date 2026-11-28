@@ -11,13 +11,18 @@ import javax.swing.JComponent;
 import javax.swing.Timer;
 import planningpet.app.model.AppData;
 import planningpet.common.view.Card;
+import planningpet.common.view.Icons;
 import planningpet.common.view.Theme;
+import planningpet.common.view.Ui;
+import planningpet.reward.model.Level;
 
 /**
  * 홈의 펫 카드(05 홈 "펫 카드", D-59). 하늘과 풀밭 장면 왼쪽에 고른 펫(D-48)을 그린다. 값은 디자인 시스템 10절 "홈"에 있다.
- * 오른쪽 열은 #466, 누르기는 #467이 더한다(docs/porting/home.md S3m).
+ * 오른쪽 열 위에 이름과 레벨을 그린다(S3n). 흰 작은 카드와 말풍선은 #469, 누르기는 #467이 더한다(docs/porting/home.md S3m).
  */
 public final class PetCard extends JComponent {
+    /** 오른쪽 열의 위와 오른쪽 여백. */
+    private static final int PAD = 14;
     private final AppData data;
     /** 펫 숨쉬기 시계. 처음 화면에 붙을 때 만들고 붙어 보이는 동안 40밀리초마다 펫 자리를 다시 그린다. */
     Timer clock;
@@ -75,6 +80,36 @@ public final class PetCard extends JComponent {
         return new Rectangle(2, 1, getWidth() - 4, getHeight() - 8);
     }
 
+    /** 오른쪽 열(이름부터 말풍선까지)의 왼쪽과 폭. */
+    private static int infoX(Rectangle f) {
+        return f.x + PetCardArt.petWidth(f) + PetCardArt.GAP;
+    }
+
+    private static int infoW(Rectangle f) {
+        return f.x + f.width - PAD - infoX(f);
+    }
+
+    /** 이름 줄과 경험치 줄의 위. 카드가 높으면(넓은 창) 오른쪽 열을 조금 내려 위로 몰리지 않게 한다. */
+    private static int[] rows(Rectangle f) {
+        int name = f.y + PAD + Math.max(0, (f.height - 250) / 3);
+        return new int[] {name, name + 30 + 6};
+    }
+
+    /** "나비". */
+    String nameText() {
+        return data.activePet().getName();
+    }
+
+    /** 이름 옆에 작게 적는 종류 "고양이"(D-81). */
+    String kindText() {
+        return data.activePet().getKind().label();
+    }
+
+    /** "Lv. 3". */
+    String levelText() {
+        return "Lv. " + Level.of(data.activePet().getExp()).getLevel();
+    }
+
     @Override
     protected void paintComponent(Graphics graphics) {
         Graphics2D g = (Graphics2D) graphics.create();
@@ -89,9 +124,36 @@ public final class PetCard extends JComponent {
         PetCardArt.scene(s, f, PetCardArt.ground(f));
         PetCardArt.pet(s, data.activePet(), f, t);
         s.dispose();
+        info(g, f);
         g.setColor(Theme.CARD_EDGE);
         g.setStroke(new BasicStroke(1.2f));
         g.draw(new RoundRectangle2D.Double(f.x + 0.5, f.y + 0.5, f.width - 1, f.height - 1, r, r));
         g.dispose();
+    }
+
+    /** 오른쪽 열: 발자국과 이름, 작은 종류, 레벨을 한 줄에 아래 끝을 맞춘다. 이름이 길면 줄인다(D-81). */
+    private void info(Graphics2D g, Rectangle f) {
+        int[] r = rows(f);
+        int x = infoX(f);
+        int w = infoW(f);
+        String level = levelText();
+        g.setFont(Theme.heavy(24));
+        int lw = g.getFontMetrics().stringWidth(level);
+        int base = r[0] + 24;
+        Icons.draw(g, Icons.Kind.PAW, x, base - 15, 15, Theme.ICON);
+        String kind = kindText();
+        g.setFont(Theme.font(11));
+        int kw = g.getFontMetrics().stringWidth(kind);
+        g.setFont(Theme.bold(15));
+        String name = Ui.fit(nameText(), g.getFontMetrics(), w - 22 - lw - 10 - kw - 5);
+        g.setColor(Theme.INK);
+        g.drawString(name, x + 21, base);
+        int kx = x + 21 + g.getFontMetrics().stringWidth(name) + 5;
+        g.setFont(Theme.font(11));
+        g.setColor(Theme.INK_SUB);
+        g.drawString(kind, kx, base);
+        g.setColor(Theme.INK);
+        g.setFont(Theme.heavy(24));
+        g.drawString(level, kx + kw + 10, base);
     }
 }
