@@ -18,6 +18,7 @@ import java.awt.event.MouseListener;
 import java.io.IOException;
 import java.time.Clock;
 import java.time.DayOfWeek;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -32,6 +33,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import planningpet.app.controller.AppController;
+import planningpet.app.controller.DayWatcher;
 import planningpet.app.model.AppData;
 import planningpet.app.model.DataStore;
 import planningpet.app.model.LoadResult;
@@ -421,10 +423,17 @@ class CalendarPanelTest {
 
     private AppController app;
     private int heard;
+    private LocalDateTime now;
+    private DayWatcher watcher;
 
-    /** 잇는 생성자로 만든 패널(S3h). 고른 고양이 나비가 있고 저장은 늘 된다. */
-    private CalendarPanel wired(String now) {
-        data = new AppData(Clock.fixed(LocalDateTime.parse(now).atZone(ZONE).toInstant(), ZONE), tasks, List.of());
+    /** 잇는 생성자로 만든 패널(S3h). 고른 고양이 나비가 있고 저장은 늘 된다. 시계는 tick이 옮긴다. */
+    private CalendarPanel wired(String at) {
+        now = LocalDateTime.parse(at);
+        data = new AppData(new Clock() {
+            public ZoneId getZone() { return ZONE; }
+            public Clock withZone(ZoneId zone) { return this; }
+            public Instant instant() { return now.atZone(ZONE).toInstant(); }
+        }, tasks, List.of());
         data.addPet(new PetState(PetKind.CAT, "나비"));
         data.setActiveKind(PetKind.CAT);
         app = new AppController(data, new DataStore() {
@@ -432,6 +441,7 @@ class CalendarPanelTest {
             public void save(AppData d) { }
         }, e -> { });
         CalendarPanel c = new CalendarPanel(data, new HomeController(data, app), app);
+        watcher = new DayWatcher(data, app);
         data.onChange(() -> heard++);
         c.refresh();
         return c;
@@ -483,5 +493,65 @@ class CalendarPanelTest {
         assertEquals("오늘 할 일을 다 끝냈어! 푹 쉬어. 세는 날 null 알림 2", said());
         app.change("일정 삭제", () -> data.getBook().delete(data.getBook().getTasks().get(2), DeleteScope.ONLY_THIS));
         assertEquals("11월 18일 할 일은 1개야. 세는 날 2026-11-18 알림 3", said());
+    }
+
+    /** 시계를 at으로 옮기고 날 바뀜을 확인한다. 창을 띄우지 않아 바뀌면 알림만 한 번이다. */
+    private void tick(String at) {
+        now = LocalDateTime.parse(at);
+        watcher.tick(now);
+    }
+
+    /** 고른 날, 달 제목과 칸 수, "오늘" 버튼, 알림 수. */
+    private String after(CalendarPanel c) {
+        return c.selected() + " " + c.title.getText() + " " + c.grid.getComponentCount() + " 오늘 버튼 " + c.today.isEnabled() + " 알림 "
+                + heard;
+    }
+
+    @Test
+    void tDayw4PickedDayFollowsToday() {
+        CalendarPanel c = wired("2026-11-16T10:00");
+        tick("2026-11-17T04:00:10");
+        assertEquals("2026-11-17 2026년 11월 42 오늘 버튼 false 알림 1", after(c));
+        press(cell(c, 20));
+        tick("2026-11-18T04:00:10");
+        assertEquals("2026-11-20 2026년 11월 42 오늘 버튼 true 알림 3", after(c));
+    }
+
+    @Test
+    void eDayw4ViewingOtherMonth() {
+        CalendarPanel c = wired("2026-11-16T10:00");
+        c.next.doClick();
+        tick("2026-11-17T04:00:10");
+        assertEquals("2026-11-17 2026년 11월 42 오늘 버튼 false 알림 1", after(c));
+        heard = 0;
+        c = wired("2026-11-16T10:00");
+        press(cell(c, 20));
+        c.next.doClick();
+        tick("2026-11-17T04:00:10");
+        assertEquals("2026-11-20 2026년 12월 35 오늘 버튼 true 알림 2", after(c));
+    }
+
+    @Test
+    void eDayw5MonthChange() {
+        CalendarPanel c = wired("2026-11-30T10:00");
+        tick("2026-12-01T04:00:10");
+        assertEquals("2026-12-01 2026년 12월 35 오늘 버튼 false 알림 1", after(c));
+    }
+
+    @Test
+    void eDayw6Midnight() {
+        CalendarPanel c = wired("2026-11-16T10:00");
+        tick("2026-11-17T00:00:20");
+        assertEquals("2026-11-16 2026년 11월 42 오늘 버튼 false 알림 0", after(c));
+    }
+
+    @Test
+    void eDayw7MoveBeforeTick() {
+        CalendarPanel c = wired("2026-11-16T10:00");
+        now = LocalDateTime.parse("2026-11-17T04:00:10");
+        c.next.doClick();
+        assertEquals("2026-11-16 2026년 12월 35 오늘 버튼 true 알림 0", after(c));
+        watcher.tick(now);
+        assertEquals("2026-11-17 2026년 11월 42 오늘 버튼 false 알림 1", after(c));
     }
 }

@@ -41,15 +41,17 @@ public final class CalendarPanel extends JPanel {
     private DayOfWeek shownStart;
     private YearMonth month;
     private LocalDate selected;
+    /** 알림을 받은 때의 앱 날짜. 처음은 만들 때의 앱 날짜다(T-DAYW-4). */
+    private LocalDate noticed;
 
     /**
      * 홈 화면의 달력. 누른 날을 home.pick에 넘기고(07 seq-uc09), 고른 날을 app.setHomeDay로 잇고(D-106), 데이터 변경 알림마다
-     * 다시 그린다(docs/porting/home.md S3h).
+     * 다시 그린다. 앱 날짜가 바뀌면 고른 날을 옮긴다(docs/porting/home.md S3h).
      */
     public CalendarPanel(AppData data, HomeController home, AppController app) {
         this(data, home::pick);
         app.setHomeDay(this::selected);
-        data.onChange(this::refresh);
+        data.onChange(this::changed);
     }
 
     /** onPick은 날짜 칸이나 "오늘" 버튼을 누르면 고른 날을 받는다. 검사가 쓴다. */
@@ -58,6 +60,7 @@ public final class CalendarPanel extends JPanel {
         this.data = data;
         this.onPick = onPick;
         this.selected = data.today();
+        this.noticed = selected;
         this.month = YearMonth.from(selected);
         prev.addActionListener(e -> move(-1));
         next.addActionListener(e -> move(1));
@@ -91,6 +94,17 @@ public final class CalendarPanel extends JPanel {
     /** 고른 날. 처음은 오늘이다. */
     public LocalDate selected() {
         return selected;
+    }
+
+    /** 데이터 변경 알림. 앱 날짜가 바뀌었고 옛 오늘을 고르고 있었으면 새 오늘과 그 달로 옮긴 뒤(06 23번, T-DAYW-4) 다시 그린다. */
+    private void changed() {
+        LocalDate today = data.today();
+        if (!today.equals(noticed) && noticed.equals(selected)) {
+            selected = today;
+            month = YearMonth.from(today);
+        }
+        noticed = today;
+        refresh();
     }
 
     /** 보이는 달을 months만큼 옮긴다. 고른 날은 그대로다(05 입력 항목 2). */
