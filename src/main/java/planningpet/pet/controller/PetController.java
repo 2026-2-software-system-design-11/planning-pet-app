@@ -1,5 +1,6 @@
 package planningpet.pet.controller;
 
+import java.util.List;
 import planningpet.app.controller.AppController;
 import planningpet.app.model.AppData;
 import planningpet.pet.model.PetKind;
@@ -70,5 +71,11 @@ public final class PetController {
             data.setActiveKind(kind);
             app.say(talk.say(Situation.SELECTED), data.today());
         });
+    }
+
+    /** UC-21 화살표(D-80). pets 차례에서 앞(-1)이나 다음(+1) 펫을 고르고 끝에서 처음으로 돈다. 고르기와 말은 select와 같다. */
+    public void step(int delta) {
+        List<PetState> all = data.getPets();
+        select(all.get(Math.floorMod(all.indexOf(data.activePet()) + delta, all.size())).getKind());
     }
 }

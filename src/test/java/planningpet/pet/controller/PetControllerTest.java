@@ -245,4 +245,45 @@ class PetControllerTest {
         assertEquals("", app.getBubble().getLine());
         assertEquals(List.of("고른 펫 바꾸기 저장에 실패해서 바꾸기 전으로 돌렸어요."), errors);
     }
+
+    /** 고른 고양이 나비 하나. exp는 누적 경험치다(레벨 3은 130, 레벨 10은 1600, D-20). */
+    private PetState oneCat(int exp) {
+        PetState cat = new PetState(PetKind.CAT, "나비");
+        cat.setExp(exp);
+        data.addPet(cat);
+        data.setActiveKind(PetKind.CAT);
+        return cat;
+    }
+
+    @Test
+    void T_PET_2_arrowSteps() {
+        twoPetsThreeTasks();
+        data.setActiveKind(PetKind.CAT);
+        pets.step(1);
+        assertEquals(PetKind.DOG, data.getActiveKind());
+        assertEquals("이제 경험치는 내가 받을게! 오늘 할 일 3개 남았어.", app.getBubble().getLine());
+        pets.step(1);
+        assertEquals(PetKind.CAT, data.getActiveKind());
+        assertEquals(2, saves);
+        assertEquals(2, heard);
+    }
+
+    @Test
+    void E_PET_19_stepBackWraps() {
+        twoPetsThreeTasks();
+        data.setActiveKind(PetKind.CAT);
+        pets.step(-1);
+        assertEquals(PetKind.DOG, data.getActiveKind());
+    }
+
+    @Test
+    void E_PET_20_stepWithOnePet() {
+        oneCat(0);
+        pets.step(1);
+        pets.step(-1);
+        assertEquals(PetKind.CAT, data.getActiveKind());
+        assertEquals("", app.getBubble().getLine());
+        assertEquals(0, saves);
+        assertEquals(0, heard);
+    }
 }
