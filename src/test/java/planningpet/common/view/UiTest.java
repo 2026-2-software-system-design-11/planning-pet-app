@@ -284,7 +284,8 @@ class UiTest {
 
     @Test
     void eUi3DayEditor() {
-        inLocale(Locale.US, () -> assertEquals("2026-11-16 (Mon)", editor(day(WEEKDAY, NOV16)).getText()));
+        // 프로토타입과 일부러 다름: 운영체제 로캘이 en_US여도 요일은 한국어다(프로토타입은 "(Mon)").
+        inLocale(Locale.US, () -> assertEquals("2026-11-16 (월)", editor(day(WEEKDAY, NOV16)).getText()));
         inLocale(Locale.KOREA, () -> {
             JSpinner s = day(WEEKDAY, NOV16);
             assertEquals("2026-11-16 (월)", editor(s).getText());

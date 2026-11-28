@@ -9,6 +9,7 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Date;
+import java.util.Locale;
 import java.util.function.ToIntFunction;
 import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
@@ -122,12 +123,13 @@ public final class Ui {
     /**
      * 날짜 칸(D-43). 화살표가 커서 자리(처음에는 연도) 대신 늘 하루씩 바꾸도록 DateEditor가 아닌 기본 편집기에 날짜 형식을 붙인다.
      * SpinnerDateModel의 기본 단위가 하루다. 형식에 맞지 않는 글은 칸을 벗어날 때 이전 값으로 돌아간다(05 일정 입력 창 3번).
+     * 요일 글은 05 그림대로 운영체제 로캘과 관계없이 한국어다. 프로토타입과 일부러 다름(운영체제 로캘을 따랐다, docs/porting.md 4절).
      */
     public static void dayEditor(JSpinner s, String pattern) {
         JSpinner.DefaultEditor editor = new JSpinner.DefaultEditor(s);
         JFormattedTextField field = editor.getTextField();
         field.setEditable(true);
-        field.setFormatterFactory(new DefaultFormatterFactory(new DateFormatter(new SimpleDateFormat(pattern))));
+        field.setFormatterFactory(new DefaultFormatterFactory(new DateFormatter(new SimpleDateFormat(pattern, Locale.KOREAN))));
         s.setEditor(editor);
     }
 
