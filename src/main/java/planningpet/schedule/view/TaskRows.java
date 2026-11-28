@@ -15,13 +15,13 @@ import planningpet.schedule.model.Task;
 public final class TaskRows extends JPanel {
     /**
      * 제목 칸. 글(getText)은 HTML(화면 읽기 프로그램이 읽는다)이고, 그림은 한 줄로 그려 칸 폭을 넘으면 "…"로 줄인다. HTML 라벨은 좁으면
-     * 두 줄로 꺾여 줄 높이를 넘었다. 메모가 있으면 끝에 흐린 "메모"다(docs/porting/task-rows.md S3t).
+     * 두 줄로 꺾여 줄 높이를 넘었다. 끝낸 일은 흐린 글에 취소선, 메모가 있으면 끝에 흐린 "메모"다(docs/porting/task-rows.md S3t).
      */
     public static final class TitleLabel extends JLabel {
         private final Task t;
 
         TitleLabel(Task t) {
-            super("<html>" + Ui.esc(t.getTitle())
+            super("<html>" + (t.isDone() ? "<s>" + Ui.esc(t.getTitle()) + "</s>" : Ui.esc(t.getTitle()))
                     + (t.getMemo().isBlank() ? "" : " <font size='2' color='#8A96A0'>메모</font>") + "</html>");
             this.t = t;
             setFont(Theme.font(14));
@@ -47,9 +47,12 @@ public final class TaskRows extends JPanel {
             String text = shown();
             int y = (getHeight() + fm.getAscent() - fm.getDescent()) / 2;
             g.setFont(getFont());
-            g.setColor(Theme.INK);
+            g.setColor(t.isDone() ? Theme.INK_DIM : Theme.INK);
             g.drawString(text, 0, y);
             int tw = fm.stringWidth(text);
+            if (t.isDone()) {
+                g.fillRect(0, y - fm.getAscent() / 3 - 1, tw, 1);
+            }
             if (!t.getMemo().isBlank()) {
                 g.setFont(Theme.font(11));
                 g.setColor(Theme.INK_DIM);

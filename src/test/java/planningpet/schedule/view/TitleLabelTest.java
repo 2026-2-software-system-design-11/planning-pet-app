@@ -100,6 +100,17 @@ class TitleLabelTest {
     }
 
     @Test
+    void eTitle5Done() {
+        TaskRows.TitleLabel l = label("토익 공부", "", true, 200, 24);
+        draws(l, "토익 공부", 17, 12, false);
+        assertEquals("<html><s>토익 공부</s></html>", l.getText());
+        draws(label(LONG, "", true, 120, 24), "졸업 작품 기획서 마…", 17, 12, false);
+        TaskRows.TitleLabel memo = label("토익 공부", "단어", true, 200, 24);
+        draws(memo, "토익 공부", 17, 12, true);
+        assertEquals("<html><s>토익 공부</s> <font size='2' color='#8A96A0'>메모</font></html>", memo.getText());
+    }
+
+    @Test
     void eTitle6Html() {
         TaskRows.TitleLabel l = label("<b>A&B</b>", "", false, 200, 24);
         draws(l, "<b>A&B</b>", 17, -1, false);
@@ -115,5 +126,11 @@ class TitleLabelTest {
         Task t = new Task("a", 1, Kind.TASK, "토익 공부", DAY, null, 30, "", false, Category.OTHER, null, null, null, null, false, null,
                 0, 0, null, null);
         assertEquals("토…", new TaskRows.TitleLabel(t).shown());
+    }
+
+    @Test
+    void eTitle8Height() {
+        draws(label("토익 공부", "", true, 200, 40), "토익 공부", 25, 20, false);
+        draws(label("토익 공부", "", true, 200, 10), "토익 공부", 10, 5, false);
     }
 }
