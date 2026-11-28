@@ -9,7 +9,7 @@ import javax.swing.text.Document;
 import javax.swing.text.DocumentFilter;
 import javax.swing.text.JTextComponent;
 
-/** 화면 여러 곳이 같이 쓰는 작은 부품. 입력칸과 칸 글이 쓰는 것만 옮겼고, 나머지는 그것을 쓰는 화면의 단위가 더한다(docs/porting/pick.md, home.md). */
+/** 화면 여러 곳이 같이 쓰는 작은 부품. 입력칸과 칸 글이 쓰는 것, 툴팁의 HTML 글자 바꾸기만 옮겼고, 나머지는 그것을 쓰는 화면의 단위가 더한다(docs/porting/pick.md, home.md). */
 public final class Ui {
     private Ui() {
     }
@@ -20,6 +20,11 @@ public final class Ui {
         l.setForeground(Theme.INK_DIM);
         l.setFont(Theme.font(12));
         return l;
+    }
+
+    /** HTML 라벨과 툴팁에 넣을 글자. 할 일 제목이나 펫 말의 꺾쇠와 앰퍼샌드가 태그로 읽히지 않게 한다(docs/porting/home.md S3q). */
+    public static String esc(String s) {
+        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 
     /**

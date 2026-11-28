@@ -3,6 +3,7 @@ package planningpet.common.view;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.awt.Font;
 import java.awt.FontMetrics;
@@ -11,7 +12,7 @@ import javax.swing.JTextField;
 import javax.swing.text.BadLocationException;
 import org.junit.jupiter.api.Test;
 
-/** 입력칸과 칸 글의 도우미. 번호는 docs/porting/pick.md 2절, home.md S3d 2절(E-FIT). */
+/** 입력칸과 칸 글, HTML 글자의 도우미. 번호는 docs/porting/pick.md 2절, home.md S3d 2절(E-FIT), S3q 2절(E-ESC). */
 class UiTest {
     private static final String TEN = "가나다라마바사아자차";
     private static final String SMILE = "😀";
@@ -167,5 +168,18 @@ class UiTest {
         assertEquals("가나" + SMILE + "다", fit("가나" + SMILE + "다", 50));
         assertEquals(SMILE + "…", fit(SMILE.repeat(3), 30));
         assertEquals(SMILE + "…", fit(SMILE, 5));
+    }
+
+    @Test
+    void eEsc1() {
+        assertEquals("a&lt;b&gt;&amp;c", Ui.esc("a<b>&c"));
+        assertEquals("&amp;lt;", Ui.esc("&lt;"));
+        assertEquals("", Ui.esc(""));
+        assertEquals("'\"", Ui.esc("'\""));
+        assertEquals(SMILE + "&lt;" + SMILE, Ui.esc(SMILE + "<" + SMILE));
+        assertEquals("&lt;html&gt;&lt;b&gt;x&lt;/b&gt;&lt;/html&gt;", Ui.esc("<html><b>x</b></html>"));
+        assertEquals("a&amp;&amp;b&gt;&gt;", Ui.esc("a&&b>>"));
+        assertEquals("plain 글", Ui.esc("plain 글"));
+        assertThrows(NullPointerException.class, () -> Ui.esc(null));
     }
 }
