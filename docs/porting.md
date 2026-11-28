@@ -65,8 +65,9 @@
 | S3f | 홈 달력 몸과 마감 점 | `home.view`의 `CalendarPanel`(날짜 칸 놓기, 한 주 시작과 고정 일정 설정), `DayCell`의 마감 점과 툴팁(#447). 요일 줄과 제목 줄은 #453 | 26번, 데이터 절의 한 주(D-91) | [docs/porting/home.md](porting/home.md) |
 | S3g | 홈 달력 머리와 달 옮기기 | `CalendarPanel`의 요일 줄, 제목 줄(달 제목, `CircleButton` 꺾쇠 둘, "오늘" 버튼의 흐림과 툴팁), 이전 달과 다음 달(#453) | 데이터 절의 한 주(D-91) | [docs/porting/home.md](porting/home.md) |
 | S3h | 홈 달력 누르기와 고른 날 잇기 | `CalendarPanel`의 날짜 칸과 "오늘" 버튼 누르기(`HomeController.pick`), 고른 날 `setHomeDay` 잇기, 알림 받아 다시 그리기, 날 바뀜에 고른 날 옮기기(#448) | 16번 다시 세기, 23번 T-DAYW-4(05 홈 입력 항목 2, 3, D-60) | [docs/porting/home.md](porting/home.md) |
-| S3i | 둥근 막대 | `common.view`의 `Bar`(비율 막대, 칸 막대, 바탕 색, #457). 펫 카드의 배경 장면과 색 도우미는 #458, 말풍선은 #459 | 없음(05 홈 "펫 카드", [디자인 시스템](design-system.md) 5절 진행 막대) | [docs/porting/home.md](porting/home.md) |
-| S3j | 펫 카드 배경 장면과 색 도우미 | `home.view`의 패키지 안 `PetCardArt`의 `scene`(하늘, 구름, 언덕, 풀밭, 풀잎), `mix`, `withAlpha`(#458). 말풍선은 #459 | 없음(05 홈 "펫 카드", [디자인 시스템](design-system.md) 10절 홈) | [docs/porting/home.md](porting/home.md) |
+| S3i | 둥근 막대 | `common.view`의 `Bar`(비율 막대, 칸 막대, 바탕 색, #457). 펫 카드의 배경 장면과 색 도우미는 #458, 말풍선 줄바꿈은 #459, 말풍선 그리기는 #462 | 없음(05 홈 "펫 카드", [디자인 시스템](design-system.md) 5절 진행 막대) | [docs/porting/home.md](porting/home.md) |
+| S3j | 펫 카드 배경 장면과 색 도우미 | `home.view`의 패키지 안 `PetCardArt`의 `scene`(하늘, 구름, 언덕, 풀밭, 풀잎), `mix`, `withAlpha`(#458). 말풍선 줄바꿈은 #459, 말풍선 그리기는 #462 | 없음(05 홈 "펫 카드", [디자인 시스템](design-system.md) 10절 홈) | [docs/porting/home.md](porting/home.md) |
+| S3k | 펫 말풍선 줄바꿈 | `home.view`의 패키지 안 `PetCardArt.wrap`(띄어쓰기에서 바꿈, 긴 낱말 자르기, #459). 말풍선 그리기와 하트 아이콘은 #462 | 06 읽는 법의 글자 수(05 홈 "펫 카드", D-59) | [docs/porting/home.md](porting/home.md) |
 | S3 | 홈 목록 | `MainScreen`, `PetCard`, `CalendarPanel`, `TaskRows`(홈 목록이 쓰므로 S5에서 당겨 온다). `RewardController.complete`, `uncomplete`는 S3a, `HomeController`는 S3b | 6번, 13번, 16번, 26번 | [docs/porting/home.md](porting/home.md) |
 | S4 | 일정 입력 창 | `TaskDialog`, `TaskController.add`, `update`, `delete`, 고르는 칸 `ComboUI`와 그것을 거는 `Theme.install`의 줄([theme.md](porting/theme.md)) | 2~5번, 14번 | `docs/porting/task-dialog.md` |
 | S5 | 일정관리 | `ScheduleScreen`, `TimetablePanel`, `TimeEditor`, `TaskController.clearTime` | 4번의 시각 고치기 창, 7번, 19번 | `docs/porting/schedule.md` |
