@@ -50,7 +50,14 @@ class TaskRowTest {
         public LoadResult load() { return LoadResult.firstRun(); }
         public void save(AppData d) { }
     }, e -> { });
-    private final TaskRows rows = new TaskRows(data, new RewardController(data, app), t -> { }, t -> { }, (t, day, at) -> { });
+    /** 수정, 삭제, 시각 함수가 받은 것과 시각 함수가 받은 알약. */
+    private final List<String> heard = new ArrayList<>();
+    private final List<Component> anchors = new ArrayList<>();
+    private final TaskRows rows = new TaskRows(data, new RewardController(data, app), t -> heard.add("수정 " + t.getTitle()),
+            t -> heard.add("삭제 " + t.getTitle()), (t, day, at) -> {
+                heard.add("시각 " + t.getTitle() + " " + day);
+                anchors.add(at);
+            });
 
     TaskRowTest() {
         data.addPet(new PetState(PetKind.CAT, "나비"));
@@ -60,6 +67,16 @@ class TaskRowTest {
     private static Task task(Kind kind, String title, LocalTime start, int minutes, boolean done) {
         return new Task(title, 1, kind, title, TODAY, start, minutes, "", false, Category.OTHER, null, null, null, null, done,
                 done ? TODAY : null, 0, 0, null, null);
+    }
+
+    /** 11-16부터 11-22까지의 시각 없는 기간 할 일 "지원서" 60분. */
+    private static Task period(boolean done) {
+        return new Task("p", 2, Kind.TASK, "지원서", LocalDate.of(2026, 11, 16), null, 60, "", false, Category.OTHER, null, null,
+                LocalDate.of(2026, 11, 22), LocalDate.of(2026, 11, 16), done, done ? TODAY : null, 0, 0, null, null);
+    }
+
+    private static TimePill pill(JPanel row) {
+        return (TimePill) ((JPanel) row.getComponent(2)).getComponent(0);
     }
 
     /** 줄을 만들어 앱처럼 Theme.clear를 건 뒤 폭 w, 알맞은 높이로 배치한다. */
@@ -177,5 +194,47 @@ class TaskRowTest {
         assertFalse(t.isDone());
         assertEquals(0, data.getPoints());
         assertEquals("체크를 풀었어. -10P", app.getBubble().getLine());
+    }
+
+    @Test
+    void eRow8EditAndDelete() {
+        JPanel east = (JPanel) row(task(Kind.TASK, "보고서", LocalTime.of(10, 0), 60, false), "10:00~11:00", TODAY, 480).getComponent(2);
+        for (int i = 2; i < 4; i++) {
+            CircleButton b = (CircleButton) east.getComponent(i);
+            assertEquals(new Dimension(28, 28), b.getPreferredSize());
+            assertEquals(i == 2 ? "수정" : "삭제", b.getToolTipText());
+            assertEquals(b.getToolTipText(), b.getAccessibleContext().getAccessibleName());
+            b.doClick();
+        }
+        assertEquals(List.of("수정 보고서", "삭제 보고서"), heard);
+    }
+
+    @Test
+    void eRow9PillOpens() {
+        TimePill timed = pill(row(task(Kind.TASK, "보고서", LocalTime.of(10, 0), 60, false), "10:00~11:00", TODAY, 480));
+        assertEquals("10:00~11:00", timed.getText());
+        assertEquals("눌러서 시각을 바꿔요", timed.getToolTipText());
+        timed.doClick();
+        TimePill empty = pill(row(period(false), "", LocalDate.of(2026, 11, 20), 480));
+        assertEquals("시각 정하기", empty.getText());
+        empty.doClick();
+        assertEquals(List.of("시각 보고서 2026-11-18", "시각 지원서 2026-11-20"), heard);
+        assertEquals(List.of(timed, empty), anchors);
+    }
+
+    @Test
+    void eRow10PillLock() {
+        LocalDate past = LocalDate.of(2026, 11, 17);
+        String why = "지난 날에는 시각을 정할 수 없어요";
+        String open = "눌러서 시각을 바꿔요";
+        Object[][] cases = {{task(Kind.TASK, "빨래", null, 30, true), TODAY, null}, {period(false), past, why}, {period(true), past, null},
+            {period(false), TODAY, open}, {period(false), LocalDate.of(2026, 11, 20), open}, {task(Kind.TASK, "빨래", null, 30, false), past, open}};
+        for (Object[] c : cases) {
+            TimePill p = pill(row((Task) c[0], "", (LocalDate) c[1], 480));
+            assertEquals(open.equals(c[2]), p.isEnabled());
+            assertEquals(c[2], p.getToolTipText());
+            p.doClick();
+        }
+        assertEquals(List.of("시각 지원서 2026-11-18", "시각 지원서 2026-11-20", "시각 빨래 2026-11-17"), heard);
     }
 }

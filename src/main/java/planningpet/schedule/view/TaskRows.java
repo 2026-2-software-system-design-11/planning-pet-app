@@ -197,8 +197,13 @@ public final class TaskRows extends JPanel {
         minutes.setForeground(t.isDone() ? Theme.INK_DIM : Theme.INK_SUB);
         minutes.setPreferredSize(new Dimension(Math.max(34, minutes.getPreferredSize().width), 20));
         CircleButton pencil = new CircleButton(Icons.Kind.PENCIL, 28, "수정", true);
+        pencil.addActionListener(e -> onEdit.accept(t));
         CircleButton trash = new CircleButton(Icons.Kind.TRASH, 28, "삭제", true);
-        TimePill when = new TimePill(time, t.isDone(), t.isDone(), null);
+        trash.addActionListener(e -> onDelete.accept(t));
+        // D-94: 끝낸 줄과 지난 날 목록의 기간 할 일은 시각을 정하지 않는다.
+        boolean pastPeriod = !t.isDone() && t.period() && listDay.isBefore(data.today());
+        TimePill when = new TimePill(time, t.isDone(), t.isDone() || pastPeriod, pastPeriod ? "지난 날에는 시각을 정할 수 없어요" : null);
+        when.addActionListener(e -> onTime.open(t, listDay, when));
         row.add(middle(box), BorderLayout.WEST);
         row.add(new TitleLabel(t), BorderLayout.CENTER);
         row.add(middle(when, minutes, pencil, trash), BorderLayout.EAST);
