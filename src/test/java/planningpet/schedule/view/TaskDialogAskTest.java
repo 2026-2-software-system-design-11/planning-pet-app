@@ -1,14 +1,20 @@
 package planningpet.schedule.view;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.awt.HeadlessException;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.IntStream;
 import javax.swing.JOptionPane;
 import org.junit.jupiter.api.Test;
 import planningpet.schedule.model.Category;
+import planningpet.schedule.model.DeleteScope;
+import planningpet.schedule.model.EditScope;
 import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Overlap;
 import planningpet.schedule.model.Repeat;
@@ -71,5 +77,33 @@ class TaskDialogAskTest {
         List<String> scopes = List.of("이 일정만", "이후 반복 모두", "취소");
         assertEquals(asked("'대학수학'은 반복 일정이에요.", scopes, "취소"), shown(TaskDialog.deletePane(task("대학수학", true))));
         assertEquals(asked("'과제'는 반복 일정이에요.", scopes, "취소"), shown(TaskDialog.deletePane(task("과제", true))));
+    }
+
+    @Test
+    void eAsk5Answer() {
+        JOptionPane pane = TaskDialog.scopePane(task("과제", true));
+        List<Integer> got = new ArrayList<>(List.of(TaskDialog.answer(pane))); // 고르기 전
+        for (Object picked : new Object[] {"이 일정만", "이후 반복 모두", "취소", null, JOptionPane.UNINITIALIZED_VALUE}) {
+            pane.setValue(picked);
+            got.add(TaskDialog.answer(pane));
+        }
+        assertEquals(List.of(-1, 0, 1, 2, -1, -1), got);
+        assertEquals(List.of(true, false, false, false), IntStream.of(0, 1, 2, -1).mapToObj(TaskDialog::insert).toList());
+        // 창 없이는 띄우려 할 때 창을 만들지 못한다.
+        assertThrows(HeadlessException.class, () -> TaskDialog.askOverlap(null, new Overlap(task("과제", false), 30, true)));
+    }
+
+    @Test
+    void eAsk5Scope() {
+        Task one = task("과제", false);
+        Task copy = task("과제", true);
+        assertEquals(Arrays.asList(EditScope.ONLY_THIS, EditScope.THIS_AND_AFTER, null, null),
+                IntStream.of(0, 1, 2, -1).mapToObj(TaskDialog::editScope).toList());
+        assertEquals(Arrays.asList(DeleteScope.ONLY_THIS, null, null),
+                IntStream.of(0, 1, -1).mapToObj(a -> TaskDialog.deleteScope(one, a)).toList());
+        assertEquals(Arrays.asList(DeleteScope.ONLY_THIS, DeleteScope.THIS_AND_AFTER, null, null),
+                IntStream.of(0, 1, 2, -1).mapToObj(a -> TaskDialog.deleteScope(copy, a)).toList());
+        assertThrows(HeadlessException.class, () -> TaskDialog.chooseScope(null, copy));
+        assertThrows(HeadlessException.class, () -> TaskDialog.confirmDelete(null, one));
     }
 }
