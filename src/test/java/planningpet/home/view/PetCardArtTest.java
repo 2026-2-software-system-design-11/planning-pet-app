@@ -182,4 +182,17 @@ class PetCardArtTest {
         assertEquals(List.of("가", "나", "다"), wrap("가나다", 15));
         assertEquals(List.of("가", "나", "다"), wrap("가나다", 10));
     }
+
+    private static final String SMILE = "😀";
+    private static final String FRONT = "\uD83D";
+    private static final String BACK = "\uDE00";
+
+    @Test
+    void eWrap5EmojiAtCut() {
+        assertEquals(List.of("가" + FRONT, BACK + "나"), wrap("가😀나", 20));
+        assertEquals(List.of(SMILE + FRONT, BACK + SMILE), wrap("😀😀😀", 30));
+        assertEquals(List.of(SMILE, SMILE, SMILE), wrap("😀😀😀", 25));
+        assertEquals(List.of("가", SMILE + FRONT, BACK), wrap("가 😀😀", 30));
+        assertEquals(List.of("가나" + FRONT, BACK), wrap("가나😀", 30));
+    }
 }
