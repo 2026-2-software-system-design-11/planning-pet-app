@@ -363,4 +363,79 @@ class MainScreenTest {
                         + s.sampleButton.getInsets() + " / " + inList(s, s.rows.getParent().getParent()));
         looks("sample", s);
     }
+
+    @Test
+    void eScreen11QuickLimit() {
+        MainScreen m = screen();
+        List<String> got = new ArrayList<>();
+        for (String in : new String[] {"a".repeat(101), "가".repeat(101), "😀".repeat(101)}) {
+            m.quick.setText(in);
+            got.add(m.quick.getText().codePointCount(0, m.quick.getText().length()) + " " + m.quick.getText().length());
+        }
+        m.quick.setText("a".repeat(100));
+        m.quick.setCaretPosition(50);
+        m.quick.replaceSelection("b");
+        got.add(m.quick.getText().contains("b") + "");
+        m.quick.setText("a".repeat(98));
+        m.quick.setCaretPosition(98);
+        m.quick.replaceSelection("xyz");
+        got.add(m.quick.getText().substring(95));
+        m.quick.setText("a".repeat(100));
+        m.quick.select(10, 20);
+        m.quick.replaceSelection("가나다");
+        got.add(m.quick.getText().length() + " " + m.quick.getText().substring(8, 15));
+        assertEquals(List.of("100 100", "100 100", "100 200", "false", "aaaxy", "93 aa가나다aa"), got);
+    }
+
+    @Test
+    void eScreen12AddDims() {
+        MainScreen m = screen();
+        List<Boolean> got = new ArrayList<>();
+        for (String in : new String[] {"", " ", " \t ", "\u3000", "\n", "가", " 가 ", ""}) {
+            m.quick.setText(in);
+            got.add(m.quickButton.isEnabled());
+        }
+        assertEquals(List.of(false, false, false, false, false, true, true, false), got);
+    }
+
+    @Test
+    void eScreen13EnterIsC4() {
+        base();
+        MainScreen m = screen();
+        data.changed();
+        m.quick.setText("새 일");
+        m.quick.postActionEvent();
+        m.quickButton.doClick();
+        assertEquals("새 일 0 0 " + "[ ] 보고서 / 시각 없는 할 일 / [ ] 토익 공부 / 끝낸 일 1개 / [x] 빨래", m.quick.getText() + " "
+                + m.quick.getActionListeners().length + " " + m.quickButton.getActionListeners().length + " " + rows(m.rows));
+    }
+
+    @Test
+    void eScreen14Functions() {
+        base();
+        MainScreen m = screen();
+        data.changed();
+        JPanel east = (JPanel) ((JPanel) m.rows.getComponent(0)).getComponent(2);
+        Runnable all = () -> {
+            for (int i : new int[] {2, 3, 0}) {
+                ((AbstractButton) east.getComponent(i)).doClick();
+            }
+            m.sampleButton.doClick();
+            m.pet.getActionMap().get("open").actionPerformed(null);
+            m.addButton.doClick();
+        };
+        all.run();
+        List<String> heard = new ArrayList<>();
+        m.onEdit = t -> heard.add("수정 " + t.getTitle());
+        m.onDelete = t -> heard.add("삭제 " + t.getTitle());
+        m.onTime = (t, day, at) -> heard.add("시각 " + t.getTitle() + " " + day + " " + (at == east.getComponent(0)));
+        m.clearSamples = () -> heard.add("예시 지우기");
+        m.openCharacter = () -> heard.add("캐릭터 창");
+        m.openAdd = day -> heard.add("일정 추가 " + day);
+        all.run();
+        press(m, 18);
+        m.addButton.doClick();
+        assertEquals(List.of("수정 보고서", "삭제 보고서", "시각 보고서 2026-11-14 true", "예시 지우기", "캐릭터 창", "일정 추가 2026-11-14",
+                "일정 추가 2026-11-18"), heard);
+    }
 }
