@@ -9,12 +9,15 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import planningpet.app.controller.AppController;
 import planningpet.app.model.AppData;
 import planningpet.common.view.Card;
 import planningpet.common.view.Icons;
 import planningpet.common.view.RoundField;
 import planningpet.common.view.Theme;
+import planningpet.common.view.Ui;
 import planningpet.home.controller.HomeController;
 import planningpet.reward.controller.RewardController;
 import planningpet.schedule.view.TaskRows;
@@ -106,11 +109,32 @@ public final class MainScreen extends JPanel {
         }
     }
 
-    /** 빠른 추가 줄(05 입력 항목 5, D-40): 둥근 칸, 옆 "추가"(처음은 흐림), 아래 안내. */
+    /** 빠른 추가 줄(05 입력 항목 5, D-40): 100자까지 받는 둥근 칸, 옆 "추가"(칸이 비면 흐림), 아래 안내. Enter와 "추가"는 C4가 잇는다. */
     private JPanel quickAdd() {
         JPanel panel = new JPanel(new BorderLayout(8, 6));
         panel.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
+        Ui.limit(quick, 100);
         quickButton.setEnabled(false);
+        quick.getDocument().addDocumentListener(new DocumentListener() {
+            private void sync() {
+                quickButton.setEnabled(!quick.getText().isBlank());
+            }
+
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                sync();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                sync();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                sync();
+            }
+        });
         JLabel hint = new JLabel("제목을 쓰고 Enter나 추가를 누르면 30분짜리 할 일로 들어가요");
         hint.setForeground(Theme.INK_SUB);
         hint.setFont(Theme.font(12));
