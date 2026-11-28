@@ -81,6 +81,7 @@
 | S3v | 목록 줄의 할 일 한 줄 | `TaskRows`의 생성자(앱 데이터, `RewardController`, 수정과 삭제와 시각 알약을 받는 함수), 패키지 안 `row`와 `middle`(프로토타입 같은 이름, #478). 마우스 올림은 #487, 메모 툴팁은 #488, 일정관리 목록의 줄은 S5 | 8번, 9번을 부른다(05 홈 "할 일 목록", 입력 항목 4, 8, D-33, D-35, D-59, D-94) | [docs/porting/task-rows.md](porting/task-rows.md) |
 | S3z | 목록 줄의 마우스 올림 | `TaskRows.row`의 마우스 올림 바탕(프로토타입 `over`와 `hover`, #487) | 없음(05 홈 "할 일 목록", [디자인 시스템](design-system.md) 10절 홈) | [docs/porting/task-rows.md](porting/task-rows.md) |
 | S3aa | 목록 줄의 메모 툴팁 | `TaskRows`의 패키지 안 static `memoTip`과 그것을 거는 `row`(프로토타입 같은 이름, #488). 일정관리 목록의 `lockedTip`은 S5 | 06 읽는 법의 글자 수(05 홈 "할 일 목록", D-33) | [docs/porting/task-rows.md](porting/task-rows.md) |
+| S3w | 목록 줄의 그날 목록 | `TaskRows`의 `showPlan`(맨 위 `dueToday`, `timed`, "시각 없는 할 일"과 "기간 안에 할 일" 묶음, 빈 날 안내), 감춘 `group`, `Scrollable`(프로토타입 같은 이름, #479). "끝낸 일" 묶음은 #480, 홈 화면에 놓기는 `MainScreen` | 6번 T-LIST-1, T-LIST-9(05 홈 "할 일 목록", D-31, D-33, D-41, D-70) | [docs/porting/task-rows.md](porting/task-rows.md) |
 | S3 | 홈 목록 | `MainScreen`, `PetCard`, `CalendarPanel`, `TaskRows`(홈 목록이 쓰므로 S5에서 당겨 온다). `RewardController.complete`, `uncomplete`는 S3a, `HomeController`는 S3b | 6번, 13번, 16번, 26번 | [docs/porting/home.md](porting/home.md) |
 | S4 | 일정 입력 창 | `TaskDialog`, `TaskController.add`, `update`, `delete`, 고르는 칸 `ComboUI`와 그것을 거는 `Theme.install`의 줄([theme.md](porting/theme.md)) | 2~5번, 14번 | `docs/porting/task-dialog.md` |
 | S5 | 일정관리 | `ScheduleScreen`, `TimetablePanel`, `TimeEditor`, `TaskController.clearTime` | 4번의 시각 고치기 창, 7번, 19번 | `docs/porting/schedule.md` |

@@ -9,6 +9,7 @@ import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -17,21 +18,24 @@ import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.Scrollable;
 import planningpet.app.model.AppData;
 import planningpet.common.view.CircleButton;
 import planningpet.common.view.Icons;
 import planningpet.common.view.Theme;
 import planningpet.common.view.Ui;
 import planningpet.reward.controller.RewardController;
+import planningpet.schedule.model.DayPlan;
 import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Task;
 
 /** 할 일 줄 목록(07). 홈의 그날 목록과 일정관리 오른쪽 목록이 같이 쓴다. 옮기는 몫은 docs/porting/task-rows.md. */
-public final class TaskRows extends JPanel {
+public final class TaskRows extends JPanel implements Scrollable {
     /** 시각 알약을 누르면 할 일, 그 줄이 보이는 목록의 날, 누른 알약을 받는다. 시각 고치기 창(S5)이 알약 아래에 뜬다. */
     public interface TimeOpener {
         void open(Task t, LocalDate day, Component anchor);
@@ -53,6 +57,41 @@ public final class TaskRows extends JPanel {
         this.onEdit = onEdit;
         this.onDelete = onDelete;
         this.onTime = onTime;
+        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+    }
+
+    /**
+     * 홈 그날 목록(06 6번, D-31): 맨 위 "오늘 마감"인 기간 할 일, 시각 있는 일정을 시각과 함께, 그 아래 "시각 없는 할 일"(D-41), 맨
+     * 아래 "기간 안에 할 일"(D-70). 일정이 하나도 없는 날은 흐린 안내다(D-33). 끝낸 일은 빠진다. 체크한 자리에 머물기와 맨 아래 "끝낸 일" 묶음은 #480이다(docs/porting/task-rows.md S3w).
+     */
+    public void showPlan(DayPlan plan) {
+        removeAll();
+        if (plan.isEmpty()) {
+            JLabel none = Ui.hint("아직 일정이 없어요. 작은 계획을 추가해 보세요.");
+            none.setFont(Theme.font(13));
+            none.setForeground(Theme.INK_SUB);
+            none.setBorder(BorderFactory.createEmptyBorder(16, 6, 0, 0));
+            add(none);
+        }
+        plan.dueToday().forEach(t -> add(row(t, "", plan.date())));
+        plan.timed().stream().filter(t -> !t.isDone()).forEach(t -> add(row(t, data.getBook().timeText(t), plan.date())));
+        group("시각 없는 할 일", plan.untimed().stream().filter(t -> !t.isDone()).toList(), plan.date());
+        group("기간 안에 할 일", plan.period(), plan.date());
+        revalidate();
+        repaint();
+    }
+
+    /** 제목 아래에 묶음의 줄. 비면 제목도 없다. */
+    private void group(String name, List<Task> tasks, LocalDate day) {
+        if (tasks.isEmpty()) {
+            return;
+        }
+        JLabel head = Ui.hint(name);
+        head.setFont(Theme.bold(12));
+        head.setForeground(Theme.INK_SUB);
+        head.setBorder(BorderFactory.createEmptyBorder(14, 6, 4, 0));
+        add(head);
+        tasks.forEach(t -> add(row(t, "", day)));
     }
 
     /**
@@ -266,5 +305,31 @@ public final class TaskRows extends JPanel {
             p.add(parts[i], k);
         }
         return p;
+    }
+
+    /** 목록 폭을 보이는 칸에 맞춰서 긴 제목이 버튼을 밀어내지 않게 한다. 제목은 남는 폭에서 줄어든다(D-94). */
+    @Override
+    public boolean getScrollableTracksViewportWidth() {
+        return true;
+    }
+
+    @Override
+    public boolean getScrollableTracksViewportHeight() {
+        return false;
+    }
+
+    @Override
+    public Dimension getPreferredScrollableViewportSize() {
+        return getPreferredSize();
+    }
+
+    @Override
+    public int getScrollableUnitIncrement(Rectangle visible, int orientation, int direction) {
+        return 16;
+    }
+
+    @Override
+    public int getScrollableBlockIncrement(Rectangle visible, int orientation, int direction) {
+        return 64;
     }
 }
