@@ -96,7 +96,8 @@
 | S7 | 나의 방 | `PetScreen`, `RoomView`, `ShopPanel`, `ShopController` | 20번 | `docs/porting/room.md` |
 | S8 | 캐릭터 창 | `CharacterDialog`, `PetController.step`, `rename`, `pose`, `applyWear` | 27번, 28번, 30번 | `docs/porting/character.md` |
 | S9 | 통계 화면 | `StatsScreen`, 통계 화면일 때 창 바탕의 자는 고양이([icons.md](porting/icons.md)) | 29번 | `docs/porting/stats-screen.md` |
-| S10 | 설정 | `SettingsScreen`, `SettingsController`, `Autostart`, `OsAutostart` | 25번의 컴퓨터 켤 때 실행 | `docs/porting/settings.md` |
+| S10a | 컴퓨터 켤 때 실행과 설정 controller | `Autostart`, `OsAutostart`(macOS와 Windows 등록, 설치된 앱인지는 `jpackage.app-path`), `SettingsController`의 `setCalendarFixed`, `setWeekStart`, `setAutostart`(#523). `setListClickTime`은 C3 | 25번의 컴퓨터 켤 때 실행(T-WIN-4~6의 등록 몫, 프로토타입 기준 없음), 데이터 절 `calendarFixed`, `weekStart` | [docs/porting/settings.md](porting/settings.md) |
+| S10 | 설정 | `SettingsScreen`, `Main.open`이 설정을 앱 창에 붙이고 다시 그리기를 거는 일(#525). `Autostart`, `OsAutostart`, `SettingsController`는 S10a, "목록 누르기" 줄은 C3, "예시 지우기"의 세기와 지우기는 C5 | 25번의 컴퓨터 켤 때 실행(T-WIN-4~6의 화면 몫) | [docs/porting/settings.md](porting/settings.md) |
 | S11 | 트레이, 알림, 하나만 실행 | `Tray`, `AppController.dueReminders`, `onClose`, `quit`, `SingleInstance` | 17번, 24번, 25번(프로토타입 기준 없음) | `docs/porting/tray.md` |
 | C1 | 칸에 쳐 넣기 | `Typed` | 32번 | `docs/porting/typed.md` |
 | C2 | 끌어 놓기와 되돌리기 | `TaskBook.placeAt`, `dropRange`, `dropStart`, `TaskController.placeAt`, `undoPlace` | 4번의 끌어 놓기 | `docs/porting/drag.md` |
