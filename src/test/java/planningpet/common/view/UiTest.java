@@ -160,11 +160,12 @@ class UiTest {
         assertEquals("…", fit("   가나", 10));
     }
 
+    /** 프로토타입과 일부러 다름: 06 읽는 법대로 코드 포인트로 자른다(프로토타입은 이모지의 앞 반쪽이 남았다). */
     @Test
     void eFit4EmojiAtCut() {
-        assertEquals("가나\uD83D…", fit("가나" + SMILE + "다", 40));
+        assertEquals("가나…", fit("가나" + SMILE + "다", 40));
         assertEquals("가나" + SMILE + "다", fit("가나" + SMILE + "다", 50));
         assertEquals(SMILE + "…", fit(SMILE.repeat(3), 30));
-        assertEquals("\uD83D…", fit(SMILE, 5));
+        assertEquals(SMILE + "…", fit(SMILE, 5));
     }
 }

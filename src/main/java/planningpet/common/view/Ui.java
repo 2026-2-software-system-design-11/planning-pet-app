@@ -42,15 +42,16 @@ public final class Ui {
 
     /**
      * max 폭에 들어가게 끝을 "…"로 줄인다. 끝에서 한 자씩 빼며 앞뒤 공백을 지운 글과 "…"가 들어가면 멈추고, 한 자가 남으면 폭을 넘어도
-     * 멈춘다(docs/porting/home.md S3d).
+     * 멈춘다(docs/porting/home.md S3d). 글자는 06 읽는 법대로 코드 포인트로 세어 이모지가 반쪽으로 잘리지 않는다. 프로토타입과 일부러
+     * 다름(UTF-16 단위로 잘랐다, docs/porting.md 4절).
      */
     public static String fit(String s, FontMetrics fm, int max) {
         if (fm.stringWidth(s) <= max) {
             return s;
         }
         String cut = s;
-        while (cut.length() > 1 && fm.stringWidth(cut.strip() + "…") > max) {
-            cut = cut.substring(0, cut.length() - 1);
+        while (cut.codePointCount(0, cut.length()) > 1 && fm.stringWidth(cut.strip() + "…") > max) {
+            cut = cut.substring(0, cut.offsetByCodePoints(cut.length(), -1));
         }
         return cut.strip() + "…";
     }
