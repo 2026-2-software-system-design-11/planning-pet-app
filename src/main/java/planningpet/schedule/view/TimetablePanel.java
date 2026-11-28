@@ -133,7 +133,7 @@ public final class TimetablePanel extends JComponent {
         return t == null ? null : tip(t);
     }
 
-    /** 블록의 툴팁. 마지막으로 그린 모양을 따른다. 좁지 않으면 목록 줄과 같은 메모 툴팁이다. */
+    /** 블록의 툴팁. 마지막으로 그린 모양을 따른다. 좁지 않으면 목록 줄과 같은 메모 툴팁이다. 글자 수는 코드 포인트로 센다(06 읽는 법). */
     String tip(Task t) {
         String memo = TaskRows.memoTip(t);
         if (!narrow.contains(t)) {
@@ -141,7 +141,9 @@ public final class TimetablePanel extends JComponent {
         }
         String head = "<b>" + Ui.esc(t.getTitle()) + "</b> " + data.getBook().timeText(t);
         String m = t.getMemo();
-        String body = m.isBlank() ? "" : "<br>" + Ui.esc(m.length() > 200 ? m.substring(0, 200) + "…" : m).replace("\n", "<br>");
+        // 프로토타입과 일부러 다름: 프로토타입은 UTF-16 단위로 잘라 200번째 자리의 이모지를 반쪽으로 남겼다(porting.md 4절).
+        String cut = m.codePointCount(0, m.length()) > 200 ? m.substring(0, m.offsetByCodePoints(0, 200)) + "…" : m;
+        String body = m.isBlank() ? "" : "<br>" + Ui.esc(cut).replace("\n", "<br>");
         return "<html><div style='width:280px'>" + head + body + "</div></html>";
     }
 

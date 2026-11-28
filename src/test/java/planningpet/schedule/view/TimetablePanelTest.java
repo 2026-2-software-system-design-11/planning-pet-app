@@ -246,7 +246,8 @@ class TimetablePanelTest {
         assertNull(tipAt(300, 500));
         String e = "\uD83D\uDE00";
         String[][] memos = {{"<a>\n줄", "&lt;a&gt;<br>줄"}, {"가".repeat(201), "가".repeat(200) + "…"},
-            {"가".repeat(199) + e + "나", "가".repeat(199) + e.charAt(0) + "…"}};
+            {"가".repeat(199) + e + "나", "가".repeat(199) + e + "…"}, {e.repeat(101), e.repeat(101)},
+            {e.repeat(201), e.repeat(200) + "…"}};
         for (String[] m : memos) {
             Task t = at("C", "09:00", 60).memo(m[0]).task();
             show(t, at("D", "09:30", 60).task());
