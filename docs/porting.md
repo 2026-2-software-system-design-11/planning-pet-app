@@ -97,7 +97,7 @@
 | S8 | 캐릭터 창 | `CharacterDialog`, `PetController.step`, `rename`, `pose`, `applyWear` | 27번, 28번, 30번 | `docs/porting/character.md` |
 | S9 | 통계 화면 | `StatsScreen`, 통계 화면일 때 창 바탕의 자는 고양이([icons.md](porting/icons.md)) | 29번 | `docs/porting/stats-screen.md` |
 | S10 | 설정 | `SettingsScreen`, `SettingsController`, `Autostart`, `OsAutostart` | 25번의 컴퓨터 켤 때 실행 | `docs/porting/settings.md` |
-| S11 | 트레이, 알림, 하나만 실행 | `Tray`, `AppController.dueReminders`, `onClose`, `quit`, `SingleInstance` | 17번, 24번, 25번(프로토타입 기준 없음) | `docs/porting/tray.md` |
+| S11 | 트레이, 알림, 하나만 실행 | `AppController.dueReminders`, `onClose`, `quit`, `CloseAction`, `SingleInstance`(#522). `Tray`의 아이콘, 메뉴, 알림과 창 닫기 잇기는 #524 | 17번, 24번, 25번(프로토타입 기준 없음) | [docs/porting/tray.md](porting/tray.md) |
 | C1 | 칸에 쳐 넣기 | `Typed` | 32번 | `docs/porting/typed.md` |
 | C2 | 끌어 놓기와 되돌리기 | `TaskBook.placeAt`, `dropRange`, `dropStart`, `TaskController.placeAt`, `undoPlace` | 4번의 끌어 놓기 | `docs/porting/drag.md` |
 | C3 | 설정 "목록 누르기" | `SettingsController.setListClickTime`, `TaskRows` | 데이터 절 `listClickTime` | `docs/porting/list-click.md` |
