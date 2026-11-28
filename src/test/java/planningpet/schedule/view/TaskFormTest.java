@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import javax.swing.AbstractButton;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
@@ -41,7 +42,7 @@ import planningpet.schedule.model.Tasks;
 
 /**
  * 일정 입력 창의 칸, 추가 창과 수정 창의 처음 값, 칸끼리 켜고 끄기, 손댄 값 지키기와 날짜 따라가기, 칸 아래 오류 글. 번호는
- * docs/porting/task-dialog.md S4f~S4j 2절.
+ * docs/porting/task-dialog.md S4f~S4k 2절.
  */
 class TaskFormTest {
     private static final LocalDateTime NOW = LocalDateTime.of(2026, 11, 18, 10, 7);
@@ -83,7 +84,8 @@ class TaskFormTest {
     void eForm1LinesInPrototypeOrder() {
         TaskForm f = form(d(20));
         assertEquals(List.of("종류 = 할 일 고정 일정", "제목 = JTextField", " = ''!", "유형 = JComboBox", "날짜 = JSpinner",
-                "기간 = 기간 안에 하기 '반복 일정은 기간을 정할 수 없어요'! '마감일'! JSpinner!", " = ''!",
+                "기간 = 기간 안에 하기 '반복 일정은 기간을 정할 수 없어요'! '마감이 지난 일은 날짜를 바꿀 수 없어요'! '마감일'! JSpinner!",
+                " = ''!",
                 "시작 시각 = 정하기 JSpinner ''", " = ''!", "걸리는 시간 (분) = JSpinner ''", " = ''!", " = '안 바꾸면 30분으로 들어가요'",
                 "반복 = JComboBox 월 화 수 목 금 토 일", " = '반복 끝나는 날' JSpinner", " = ''!",
                 " = '기간 안에 하는 할 일은 반복할 수 없어요'!", "메모 = JScrollPane", " = ''!"), lines(f));
@@ -751,5 +753,117 @@ class TaskFormTest {
         String range = "10분부터 720분까지, 5분 단위예요";
         assertEquals(List.of(List.of(7, range), List.of(723, range), List.of(725, range)), got);
         assertEquals(30, form(d(20)).minutes.getValue());
+    }
+
+    /** 칸이 누를 수 있는지와 툴팁. 날짜 칸은 글 칸의 툴팁도 본다. */
+    private static List<Object> lock(TaskForm f) {
+        JComponent dateText = ((JSpinner.DefaultEditor) f.date.getEditor()).getTextField();
+        return Arrays.asList(f.date.isEnabled(), f.period.isEnabled(), f.due.isEnabled(), f.lockHint.isVisible(),
+                f.date.getToolTipText(), dateText.getToolTipText(), f.period.getToolTipText(), f.due.getToolTipText());
+    }
+
+    @Test
+    void tEdit41PastDueLocksDates() {
+        Task q = Tasks.task("Q", d(10)).period(d(10), d(16)).task();
+        TaskForm f = new TaskForm(q, NOW, DayOfWeek.MONDAY);
+        String why = TaskForm.LOCKED;
+        assertEquals(Arrays.asList(false, false, false, true, why, why, why, why), lock(f));
+        assertEquals(List.of(true, true, true, true, true), List.of(f.period.isSelected(), f.title.isEnabled(),
+                f.category.isEnabled(), f.minutes.isEnabled(), f.memo.isEnabled()));
+        assertEquals("마감이 지난 일은 날짜를 바꿀 수 없어요", f.lockHint.getText());
+        f.title.setText("Q2");
+        f.minutes.setValue(60);
+        assertTrue(f.draft().validate().isEmpty());
+        book(q, d(18)).update(q, f.draft(), EditScope.ONLY_THIS);
+        assertEquals(List.of("Q2", 60, d(10), d(16)), List.of(q.getTitle(), q.getDurationMinutes(), q.getStartDay(), q.getDueDate()));
+        TaskForm p = edit(Tasks.task("P", d(16)).period(d(16), d(20)));
+        assertEquals(Arrays.asList(true, true, true, false, null, null, null, null), lock(p));
+    }
+
+    /** 오늘 11-18. 기간 할 일 "계획" 11-17부터 마감 last, 11-19 10:00에 정해 둠의 수정 창. */
+    private static TaskForm plan(LocalDate last) {
+        return edit(Tasks.task("계획", d(19)).at("10:00").period(d(17), last));
+    }
+
+    @Test
+    void tVal22DueBeforePlacedDay() {
+        TaskForm f = plan(d(20));
+        assertEquals(d(19), f.draft().placed());
+        Ui.setDate(f.due, d(18));
+        assertEquals("마감일이 시각을 정해 둔 11/19(목)보다 전이에요", f.errorText());
+        Ui.setDate(f.due, d(19));
+        assertEquals("", f.errorText());
+        Ui.setDate(f.due, d(16));
+        assertEquals("마감일이 시작일보다 전이에요", f.errorText());
+        assertNull(edit(Tasks.task("보고서", d(18)).period(d(16), d(22))).draft().placed());
+    }
+
+    @Test
+    void tVal24StartAfterPlacedDay() {
+        TaskForm f = plan(d(22));
+        Ui.setDate(f.date, d(20));
+        assertEquals("시작일이 시각을 정해 둔 11/19(목)보다 후예요", f.errorText());
+        Ui.setDate(f.due, d(18));
+        assertEquals("마감일이 시작일보다 전이에요", f.errorText());
+        Ui.setDate(f.due, d(22));
+        Ui.setDate(f.date, d(19));
+        assertEquals("", f.errorText());
+    }
+
+    @Test
+    void tVal23DueBeforeTodayInEditWindow() {
+        TaskForm p = edit(Tasks.task("P", d(16)).period(d(16), d(20)));
+        Ui.setDate(p.due, d(17));
+        assertEquals(List.of(d(18), "마감일이 오늘보다 전이에요"), List.of(p.draft().today(), p.errorText()));
+        TaskForm plain = edit(Tasks.task("일", d(15)));
+        plain.period.doClick();
+        Ui.setDate(plain.due, d(16));
+        assertEquals("마감일이 오늘보다 전이에요", plain.errorText());
+        Task end = Tasks.task("끝", d(10)).period(d(10), d(16)).done(d(15)).task();
+        TaskForm f = new TaskForm(end, NOW, DayOfWeek.MONDAY);
+        f.title.setText("끝2");
+        assertEquals(Arrays.asList(null, true, ""), Arrays.asList(f.draft().today(), f.due.isEnabled(), f.errorText()));
+        assertTrue(f.draft().validate().isEmpty());
+        book(end, d(18)).update(end, f.draft(), EditScope.ONLY_THIS);
+        assertEquals(List.of("끝2", d(16)), List.of(end.getTitle(), end.getDueDate()));
+        assertNull(edit(Tasks.task("Q", d(10)).period(d(10), d(16))).draft().today());
+    }
+
+    @Test
+    void tDef23EditStartFollowsDate() {
+        LocalDateTime at1412 = LocalDateTime.of(2026, 11, 17, 14, 12);
+        TaskForm timed = new TaskForm(Tasks.task("운동", d(18)).at("10:00").task(), at1412, DayOfWeek.MONDAY);
+        Ui.setDate(timed.date, d(17));
+        TaskForm untimed = new TaskForm(Tasks.task("빨래", d(18)).task(), at1412, DayOfWeek.MONDAY);
+        List<Object> got = new ArrayList<>(List.of(timed.start.getValue(), untimed.start.getValue()));
+        Ui.setDate(untimed.date, d(17));
+        got.add(untimed.start.getValue());
+        Ui.setDate(at1441(untimed).date, d(18));
+        Ui.setDate(untimed.date, d(17));
+        got.add(untimed.start.getValue());
+        assertEquals(List.of("10:00", "09:00", "14:15", "14:45"), got);
+    }
+
+    @Test
+    void eForm16LockAtClockMoment() {
+        Task t = Tasks.task("보고서", d(16)).period(d(16), d(18)).task();
+        TaskForm f = new TaskForm(t, LocalDateTime.of(2026, 11, 19, 3, 50), DayOfWeek.MONDAY);
+        Ui.setDate(f.due, d(25));
+        assertEquals(List.of(true, false), List.of(f.due.isEnabled(), f.lockHint.isVisible()));
+        f.clock = () -> LocalDateTime.of(2026, 11, 19, 4, 5);
+        f.title.setText("보고서2");
+        assertEquals(Arrays.asList(false, false, false, true), lock(f).subList(0, 4));
+        assertEquals(List.of("2026-11-16 (월)", true, "2026-11-18", ""), List.of(text(f.date), f.period.isSelected(), text(f.due),
+                f.errorText()));
+        book(t, d(19)).update(t, f.draft(), EditScope.ONLY_THIS);
+        assertEquals(List.of("보고서2", d(16), d(18)), List.of(t.getTitle(), t.getStartDay(), t.getDueDate()));
+        TaskForm g = new TaskForm(Tasks.task("계획", d(16)).period(d(16), d(18)).task(), LocalDateTime.of(2026, 11, 19, 3, 50),
+                DayOfWeek.MONDAY);
+        g.period.doClick();
+        Ui.setDate(g.date, d(20));
+        g.clock = () -> LocalDateTime.of(2026, 11, 19, 4, 5);
+        TaskDraft got = g.draft();
+        assertEquals(Arrays.asList(d(16), d(18), null), Arrays.asList(got.date(), got.dueDate(), got.today()));
+        assertFalse(g.date.isEnabled());
     }
 }
