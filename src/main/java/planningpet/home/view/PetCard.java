@@ -52,7 +52,7 @@ public final class PetCard extends JComponent {
     long start;
     double t;
 
-    /** 마지막으로 그린 말풍선 자리(말이 없으면 null)와 줄였는지. #472의 툴팁이 전체 글을 보일지 정한다. */
+    /** 마지막으로 그린 말풍선 자리(말이 없으면 null)와 줄였는지. 툴팁이 전체 글을 보일지 정한다(S3q). */
     Rectangle bubbleBox;
     boolean bubbleCut;
     /** 마우스가 카드 위에 있는지(올림 테두리). */
@@ -73,6 +73,7 @@ public final class PetCard extends JComponent {
         add(doneBar);
         setFocusable(true);
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        setToolTipText("");
         getAccessibleContext().setAccessibleName("펫 카드. 누르면 캐릭터 창이 열려요");
         addMouseListener(new MouseAdapter() {
             @Override
@@ -161,6 +162,15 @@ public final class PetCard extends JComponent {
     @Override
     public Dimension getMinimumSize() {
         return new Dimension(300, 210);
+    }
+
+    /** 마지막으로 그린 말풍선을 줄였고 마우스가 그 위면 펫 말 전체, 아니면 "캐릭터 창 열기"(S3q). */
+    @Override
+    public String getToolTipText(MouseEvent e) {
+        if (bubbleCut && bubbleBox != null && bubbleBox.contains(e.getPoint())) {
+            return "<html><div style='width:260px'>" + Ui.esc(bubbleText()) + "</div></html>";
+        }
+        return "캐릭터 창 열기";
     }
 
     @Override
