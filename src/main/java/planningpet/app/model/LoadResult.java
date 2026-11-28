@@ -1,6 +1,6 @@
 package planningpet.app.model;
 
-/** 06 21번 load의 결과. 읽었으면 data가, 읽을 수 없으면 reason이 있다. 화면 글은 그 창을 옮기는 S1이 정한다. */
+/** 06 21번 load의 결과. 읽었으면 data가, 읽을 수 없으면 reason이 있다. 화면 글은 못 읽음 창 app.view.UnreadableDialog가 갖는다(05). */
 public record LoadResult(Status status, AppData data, Reason reason) {
     public enum Status { LOADED, FIRST_RUN, UNREADABLE }
 
