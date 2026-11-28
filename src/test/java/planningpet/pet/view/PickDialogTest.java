@@ -13,6 +13,8 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
@@ -31,6 +33,7 @@ import javax.swing.UIManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import planningpet.common.view.RoundField;
 import planningpet.common.view.Snap;
 import planningpet.common.view.Theme;
 import planningpet.pet.model.PetKind;
@@ -64,6 +67,17 @@ class PickDialogTest {
         c.paint(g);
         g.dispose();
         return img.getRGB(0, 0, PickCard.W, PickCard.H, null, 0, PickCard.W);
+    }
+
+    /** 이름 칸을 예시 글과 글자 수가 없는 같은 글꼴과 열의 칸으로 바꿔 끼운다. */
+    private static void plainName(RoundField name) {
+        Container bar = name.getParent();
+        GridBagConstraints at = ((GridBagLayout) bar.getLayout()).getConstraints(name);
+        RoundField plain = new RoundField(null, null);
+        plain.setFont(name.getFont());
+        plain.setColumns(12);
+        bar.remove(name);
+        bar.add(plain, at, 1);
     }
 
     /** 글을 모두 비우고 두 카드를 글 없는 카드로 바꿔 끼운 패널을 기준 그림과 맞춘다. */
@@ -225,6 +239,29 @@ class PickDialogTest {
         assertEquals(800, narrow.panel.getPreferredSize().width);
     }
 
+    @Test
+    void eDlg12NameBar() throws IOException {
+        PickDialog d = new PickDialog();
+        JPanel bar = d.nameBar();
+        Snap.layOut(bar, 516, 83);
+        assertEquals(List.of(false, new Insets(10, 20, 14, 22), new Dimension(516, 83), new Dimension(516, 83)),
+                List.of(bar.isOpaque(), bar.getInsets(), bar.getPreferredSize(), bar.getMaximumSize()));
+        JLabel label = (JLabel) bar.getComponent(0);
+        JLabel hint = (JLabel) bar.getComponent(2);
+        assertEquals(List.of("반려동물의 이름을 지어주세요!", 22, Theme.bold(15), 8, new Insets(0, 0, 0, 6), d.name),
+                List.of(label.getText(), label.getIcon().getIconWidth(), label.getFont(), label.getIconTextGap(), label.getInsets(),
+                        label.getLabelFor()));
+        assertEquals(List.of(Theme.font(14), 12, new Insets(8, 18, 8, 68), "반려동물 이름", "", "0 / 10"), List.of(d.name.getFont(),
+                d.name.getColumns(), d.name.getInsets(), d.name.getAccessibleContext().getAccessibleName(), d.name.getText(),
+                d.name.countText()));
+        assertEquals(List.of("비워 두면 나비, 바둑이로 불러요", new Insets(0, 18, 0, 6)), List.of(hint.getText(), hint.getInsets()));
+        assertEquals(rects(20, 19, 216, 22, 252, 10, 242, 40, 252, 54, 169, 15),
+                List.of(label.getBounds(), d.name.getBounds(), hint.getBounds()));
+        plainName(d.name);
+        Snap.blank(bar);
+        Snap.assertLaidOutLooksLikePrototype("pickdlg-name-516x83", bar, 516, 83);
+    }
+
     private static List<Object> state(Graphics2D g) {
         return List.of(g.getColor(), g.getStroke(), g.getTransform(), g.getClipBounds(), g.getFont(),
                 g.getRenderingHint(RenderingHints.KEY_ANTIALIASING));
@@ -233,7 +270,7 @@ class PickDialogTest {
     @Test
     void eDlg11CallerGraphicsState() throws ReflectiveOperationException {
         PickDialog d = new PickDialog();
-        for (Component c : List.of(d.panel, d.panel.getComponent(1), d.panel.getComponent(3))) {
+        for (Component c : List.of(d.panel, d.panel.getComponent(1), d.panel.getComponent(3), d.nameBar())) {
             c.setSize(800, 416);
             Graphics2D g = new BufferedImage(810, 430, BufferedImage.TYPE_INT_ARGB).createGraphics();
             g.setColor(Color.RED);
