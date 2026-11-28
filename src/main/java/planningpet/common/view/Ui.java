@@ -129,7 +129,10 @@ public final class Ui {
         JSpinner.DefaultEditor editor = new JSpinner.DefaultEditor(s);
         JFormattedTextField field = editor.getTextField();
         field.setEditable(true);
-        field.setFormatterFactory(new DefaultFormatterFactory(new DateFormatter(new SimpleDateFormat(pattern, Locale.KOREAN))));
+        SimpleDateFormat format = new SimpleDateFormat(pattern, Locale.KOREAN);
+        // 없는 날짜(11-31)를 다음 달로 굴려 받지 않고 형식 오류처럼 이전 값으로 돌아간다. 프로토타입과 일부러 다름(porting.md 4절).
+        format.setLenient(false);
+        field.setFormatterFactory(new DefaultFormatterFactory(new DateFormatter(format)));
         s.setEditor(editor);
     }
 

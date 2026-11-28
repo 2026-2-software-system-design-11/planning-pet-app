@@ -302,7 +302,9 @@ class UiTest {
                 type(s, typed);
                 assertEquals(NOV16, Ui.dateOf(s), typed);
             }
-            type(s, "2026-11-20 (월)"); // 친 요일은 읽지 않는다
+            type(s, "2026-11-20 (월)"); // 프로토타입과 일부러 다름: 날짜와 맞지 않는 요일도 이전 값이다(프로토타입은 11-20)
+            assertEquals(NOV16, Ui.dateOf(s));
+            type(s, "2026-11-20 (금)");
             assertEquals(List.of(LocalDate.of(2026, 11, 20), "2026-11-20 (금)"), List.of(Ui.dateOf(s), editor(s).getText()));
         });
     }
@@ -324,18 +326,17 @@ class UiTest {
         }
     }
 
+    /** 프로토타입과 일부러 다름: 없는 날짜를 굴려 받지 않고 이전 값이다(프로토타입은 12-01, 2027-01-01, 03-02). */
     @Test
     void eUi5NonexistentDate() {
-        inLocale(Locale.KOREA, () -> {
-            JSpinner s = day(WEEKDAY, NOV16);
-            type(s, "2026-11-31 (월)");
-            assertEquals(LocalDate.of(2026, 12, 1), Ui.dateOf(s));
-            type(s, "2026-13-01 (월)");
-            assertEquals(LocalDate.of(2027, 1, 1), Ui.dateOf(s));
-        });
+        JSpinner s = day(WEEKDAY, NOV16);
+        type(s, "2026-11-31 (월)");
+        assertEquals(NOV16, Ui.dateOf(s));
+        type(s, "2026-13-01 (월)");
+        assertEquals(NOV16, Ui.dateOf(s));
         JSpinner plain = day("yyyy-MM-dd", NOV16);
         type(plain, "2026-02-30");
-        assertEquals(LocalDate.of(2026, 3, 2), Ui.dateOf(plain));
+        assertEquals(NOV16, Ui.dateOf(plain));
     }
 
     @Test
