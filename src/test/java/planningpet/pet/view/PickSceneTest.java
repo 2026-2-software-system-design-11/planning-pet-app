@@ -8,6 +8,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.function.Consumer;
 import org.junit.jupiter.api.Test;
+import planningpet.common.view.Images;
 import planningpet.common.view.Snap;
 
 /** 고르기 창의 그림 도구. 번호는 docs/porting/pick.md 2절. 기준 그림은 proto/pick-scene-*.png. */
@@ -66,5 +67,24 @@ class PickSceneTest {
             PickScene.ribbon(g, 640, 20, 60, 20);
             PickScene.ribbon(g, 740, 20, 0, 0);
         });
+    }
+
+    private static void clouds(Graphics2D g, BufferedImage im) {
+        PickScene.cloud(g, im, 10, 10, 120);
+        PickScene.cloud(g, im, 150.5, 20.25, 56);
+        PickScene.cloud(g, im, 230, 10, 0);
+        PickScene.cloud(g, im, 250, 10, 1);
+    }
+
+    @Test
+    void ePick5Clouds() throws IOException {
+        same("pick-scene-clouds", 320, 80, g -> clouds(g, Images.CLOUD));
+        same("pick-scene-clouds-no-image", 320, 80, g -> clouds(g, null));
+    }
+
+    @Test
+    void ePick6Corners() throws IOException {
+        same("pick-scene-corners-800x651", 800, 651, g -> PickScene.corners(g, 800, 651));
+        same("pick-scene-corners-800x200", 800, 200, g -> PickScene.corners(g, 800, 200));
     }
 }

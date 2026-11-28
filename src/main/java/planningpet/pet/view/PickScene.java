@@ -10,6 +10,7 @@ import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
+import java.awt.image.BufferedImage;
 
 /**
  * 반려동물 고르기 창의 그림 도구(2026-11-23 고르기 예시, 디자인 시스템 10절 "고르기 창").
@@ -24,6 +25,45 @@ final class PickScene {
         g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+    }
+
+    /** 양 아래 모서리의 덤불, 데이지, 꽃봉오리와 양옆의 반짝이 별. 바탕(w x h)의 높이 600을 1로 잰다. */
+    static void corners(Graphics2D g, int w, int h) {
+        double u = h / 600.0;
+        // 양 아래 모서리 덤불과 꽃. 바깥 모서리가 두껍고 가운데로 갈수록 작아진다.
+        for (int side = 0; side < 2; side++) {
+            boolean right = side == 1;
+            double x0 = right ? w : 0;
+            double dir = right ? -1 : 1;
+            bush(g, x0 + dir * 20 * u, h - 70 * u, 74 * u);
+            bush(g, x0 + dir * 62 * u, h - 28 * u, 80 * u);
+            bush(g, x0 + dir * 128 * u, h - 6 * u, 60 * u);
+            daisy(g, x0 + dir * 24 * u, h - 118 * u, 13 * u, -0.2 * dir);
+            daisy(g, x0 + dir * 58 * u, h - 86 * u, 12 * u, 0.3 * dir);
+            daisy(g, x0 + dir * 22 * u, h - 52 * u, 14 * u, 0.1);
+            daisy(g, x0 + dir * 92 * u, h - 46 * u, 11 * u, -0.4);
+            daisy(g, x0 + dir * 60 * u, h - 16 * u, 12 * u, 0.2);
+            daisy(g, x0 + dir * 140 * u, h - 30 * u, 9 * u, 0.5);
+            daisy(g, x0 + dir * 196 * u, h - 12 * u, 8 * u, -0.2);
+            bud(g, x0 + dir * 96 * u, h - 96 * u, 6 * u);
+            bud(g, x0 + dir * 118 * u, h - 66 * u, 5 * u);
+            bud(g, x0 + dir * 170 * u, h - 20 * u, 5 * u);
+            bud(g, x0 + dir * 236 * u, h - 8 * u, 4 * u);
+        }
+        star(g, w * 0.14, h * 0.75, 12 * u);
+        star(g, w * 0.86, h * 0.74, 12 * u);
+    }
+
+    /** 구름: (x, y)가 왼쪽 위, 폭 cw. 그림 im이 있으면 예시 구름 그림, 없으면 도형. */
+    static void cloud(Graphics2D g, BufferedImage im, double x, double y, double cw) {
+        if (im != null) {
+            int ch = (int) (cw * im.getHeight() / im.getWidth());
+            g.drawImage(im, (int) x, (int) y, (int) cw, ch, null);
+            return;
+        }
+        g.setColor(new Color(255, 255, 255, 220));
+        g.fill(new Ellipse2D.Double(x, y + cw * 0.15, cw, cw * 0.3));
+        g.fill(new Ellipse2D.Double(x + cw * 0.25, y, cw * 0.45, cw * 0.4));
     }
 
     /** 풀 덤불: 아래 가운데 (cx, bottom), 폭 s. 둥근 잎 뭉치 여섯을 세 가지 초록으로 겹친다. */
