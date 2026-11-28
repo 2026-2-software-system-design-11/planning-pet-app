@@ -85,6 +85,21 @@ class TitleLabelTest {
     }
 
     @Test
+    void eTitle3Memo() {
+        TaskRows.TitleLabel l = label("토익 공부", "단어 50개", false, 200, 24);
+        draws(l, "토익 공부", 17, -1, true);
+        assertEquals("<html>토익 공부 <font size='2' color='#8A96A0'>메모</font></html>", l.getText());
+        draws(label(LONG, "단어 50개", false, 120, 24), "졸업 작품 기획…", 17, -1, true);
+    }
+
+    @Test
+    void eTitle4BlankMemo() {
+        TaskRows.TitleLabel l = label("토익 공부", "   ", false, 200, 24);
+        draws(l, "토익 공부", 17, -1, false);
+        assertEquals("<html>토익 공부</html>", l.getText());
+    }
+
+    @Test
     void eTitle6Html() {
         TaskRows.TitleLabel l = label("<b>A&B</b>", "", false, 200, 24);
         draws(l, "<b>A&B</b>", 17, -1, false);
@@ -95,6 +110,7 @@ class TitleLabelTest {
     void eTitle7Narrow() {
         draws(label(LONG, "", false, 20, 24), "졸…", 17, -1, false);
         draws(label(LONG, "", false, 0, 24), "졸…", 17, -1, false);
+        draws(label(LONG, "m", false, 10, 24), "졸…", 17, -1, true);
         draws(label("가", "", false, 5, 24), "가…", 17, -1, false);
         Task t = new Task("a", 1, Kind.TASK, "토익 공부", DAY, null, 30, "", false, Category.OTHER, null, null, null, null, false, null,
                 0, 0, null, null);
