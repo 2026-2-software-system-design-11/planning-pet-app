@@ -98,22 +98,26 @@ class UiTest {
         assertEquals("xyz" + TEN, f.getText());
     }
 
+    /** 프로토타입과 일부러 다름: 06 읽는 법대로 코드 포인트로 센다(프로토타입은 UTF-16 단위라 반쪽이 들어갔다). */
     @Test
     void eLimit6Emoji() {
         JTextField f = field(10, "가나다라마바사아자");
         f.replaceSelection(SMILE);
-        assertEquals("가나다라마바사아자\uD83D", f.getText());
+        assertEquals("가나다라마바사아자" + SMILE, f.getText());
         f = field(10, "가나다라마바사아자");
         f.replaceSelection(SMILE + SMILE);
-        assertEquals("가나다라마바사아자\uD83D", f.getText());
-        for (int n : new int[] {6, 11}) {
-            f = field(10, null);
-            f.replaceSelection(SMILE.repeat(n));
-            assertEquals(SMILE.repeat(5), f.getText(), n + "개");
-        }
+        assertEquals("가나다라마바사아자" + SMILE, f.getText());
+        f = field(10, null);
+        f.replaceSelection(SMILE.repeat(6));
+        assertEquals(SMILE.repeat(6), f.getText());
+        f = field(10, null);
+        f.replaceSelection(SMILE.repeat(11));
+        assertEquals(SMILE.repeat(10), f.getText());
+        f.replaceSelection("가");
+        assertEquals(SMILE.repeat(10), f.getText());
         f = field(10, SMILE.repeat(5));
         f.select(0, 2);
         f.replaceSelection("가나다");
-        assertEquals("가나" + SMILE.repeat(4), f.getText());
+        assertEquals("가나다" + SMILE.repeat(4), f.getText());
     }
 }

@@ -4,6 +4,7 @@ import javax.swing.JLabel;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
 import javax.swing.text.DocumentFilter;
 import javax.swing.text.JTextComponent;
 
@@ -20,14 +21,20 @@ public final class Ui {
         return l;
     }
 
-    /** 칸에 max자를 넘게 써지지 않게 한다(붙여 넣으면 max자에서 자른다). */
+    /**
+     * 칸에 max자를 넘게 써지지 않게 한다(붙여 넣으면 max자에서 자른다). 글자는 06 읽는 법대로 코드 포인트로 세어
+     * 이모지 하나가 한 자이고 반쪽만 들어가지 않는다. 프로토타입과 일부러 다름(UTF-16 단위로 셌다, docs/porting.md 4절).
+     */
     public static void limit(JTextComponent c, int max) {
         ((AbstractDocument) c.getDocument()).setDocumentFilter(new DocumentFilter() {
             @Override
             public void replace(FilterBypass fb, int off, int len, String text, AttributeSet a) throws BadLocationException {
-                int room = max - fb.getDocument().getLength() + len;
+                Document d = fb.getDocument();
+                String all = d.getText(0, d.getLength());
+                int room = max - all.codePointCount(0, all.length()) + all.codePointCount(off, off + len);
                 String t = text == null ? "" : text;
-                super.replace(fb, off, len, t.length() > room ? t.substring(0, Math.max(0, room)) : t, a);
+                boolean over = t.codePointCount(0, t.length()) > room;
+                super.replace(fb, off, len, over ? t.substring(0, t.offsetByCodePoints(0, Math.max(0, room))) : t, a);
             }
         });
     }
