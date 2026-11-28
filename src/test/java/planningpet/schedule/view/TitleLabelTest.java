@@ -8,6 +8,8 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.time.LocalDate;
+import java.util.List;
+import javax.swing.JLabel;
 import org.junit.jupiter.api.Test;
 import planningpet.common.view.Theme;
 import planningpet.schedule.model.Category;
@@ -141,5 +143,21 @@ class TitleLabelTest {
         draws(label("😀공부", "", false, 30, 24), "😀…", 17, -1, false);
         draws(label("가나😀다라", "", false, 48, 24), "가나…", 17, -1, false);
         draws(label("가나😀다라", "", false, 49, 24), "가나😀…", 17, -1, false);
+    }
+
+    /**
+     * E-TITLE-10(#502): 같은 이름과 크기의 HTML 라벨을 먼저 재어도 제목 칸은 그리는 글꼴 자신의 글자로 잰다. Linux에서는 이모지 없는 HTML
+     * 라벨(달력 날짜 칸 같은 것)이 대체 글꼴 붙은 합성 글꼴로 FontMetrics 캐시 자리를 먼저 잡는다. 다른 검사가 쓰지 않는 크기 15로 본다.
+     */
+    @Test
+    void eTitle10OwnFont() {
+        JLabel html = new JLabel("<html>가나다라</html>");
+        html.setFont(Theme.font(15));
+        html.getPreferredSize();
+        TaskRows.TitleLabel narrow = label("가나😀다라", "", false, 52, 24);
+        TaskRows.TitleLabel wide = label("가나😀다라", "", false, 53, 24);
+        narrow.setFont(Theme.font(15));
+        wide.setFont(Theme.font(15));
+        assertEquals(List.of("가나…", "가나😀…"), List.of(narrow.shown(), wide.shown()));
     }
 }
