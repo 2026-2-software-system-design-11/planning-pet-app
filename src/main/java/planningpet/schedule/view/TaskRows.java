@@ -279,9 +279,9 @@ public final class TaskRows extends JPanel implements Scrollable {
 
     /**
      * 제목 아래 둘째 줄 왼쪽의 표시(D-94). 흐린 마감 글("~11/22까지", D-65)과 하려던 일("17일에 하려던 일", D-67), 빨간 "오늘 마감"이나
-     * "마감"(D-70, D-93) 순이다. 하나도 없으면 null(docs/porting/task-rows.md S3u).
+     * "마감"(D-70, D-93), 빨간 "지난 날"(D-44, 일정관리 목록) 순이다. 하나도 없으면 null(docs/porting/task-rows.md S3u).
      */
-    static JLabel marks(String due, String note, String tag) {
+    static JLabel marks(String due, String note, String tag, boolean past) {
         StringBuilder html = new StringBuilder();
         BiConsumer<String, String> part = (text, color) -> {
             if (text != null) {
@@ -292,6 +292,7 @@ public final class TaskRows extends JPanel implements Scrollable {
         part.accept(due, "#8A96A0");
         part.accept(note, "#8A96A0");
         part.accept(tag, "#C0392B");
+        part.accept(past ? "지난 날" : null, "#C0392B");
         if (html.length() == 0) {
             return null;
         }
@@ -400,7 +401,7 @@ public final class TaskRows extends JPanel implements Scrollable {
         row.add(label, BorderLayout.CENTER);
         row.add(middle(when, minutes, pencil, trash), BorderLayout.EAST);
         // D-94: 마감 글, 하려던 일, "오늘 마감"과 "마감"은 제목 아래 둘째 줄 왼쪽이다. 제목이 줄의 폭을 먼저 받는다.
-        JLabel marks = marks(data.getBook().dueText(t), missedNote(t, today), dueTag(t, listDay, today));
+        JLabel marks = marks(data.getBook().dueText(t), missedNote(t, today), dueTag(t, listDay, today), false);
         if (marks != null) {
             row.add(marks, BorderLayout.SOUTH);
         }
@@ -447,6 +448,13 @@ public final class TaskRows extends JPanel implements Scrollable {
         // 줄과 줄 안 버튼 위에 있는 동안이다. 듣는이가 없는 걸리는 시간, 둘째 줄, "고정" 위의 마우스는 줄이 받는다.
         List.of(row, label, box, pencil, trash, when).forEach(c -> c.addMouseListener(hover));
         return row;
+    }
+
+    /** 일정관리 목록의 마감이 지난 줄의 툴팁(D-99). 메모가 있으면 그 아래에 memoTip과 같은 꼴로 잇는다(docs/porting/schedule.md S5a). */
+    static String lockedTip(Task t) {
+        String why = "마감이 지난 일은 옮길 수 없어요";
+        String memo = memoTip(t);
+        return memo == null ? why : memo.replace("<div style='width:280px'>", "<div style='width:280px'>" + why + "<br>");
     }
 
     /** 메모가 있으면 마우스를 올렸을 때 200자까지 보인다(D-33). 글자 수는 코드 포인트로 센다(06 읽는 법). 공백뿐이면 null(docs/porting/task-rows.md S3aa). */

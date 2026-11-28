@@ -368,6 +368,16 @@ class TaskRowTest {
         tip(e.repeat(201), DIV + e.repeat(200) + "…" + END);
     }
 
+    /** 일정관리 목록의 마감이 지난 줄의 툴팁. 까닭이 먼저이고 메모는 memoTip의 꼴로 그 아래다(docs/porting/schedule.md S5a). */
+    @Test
+    void eWrow5LockedTip() {
+        String why = "마감이 지난 일은 옮길 수 없어요";
+        assertEquals(why, TaskRows.lockedTip(period(false)));
+        Task t = new Task("m", 1, Kind.TASK, "메모 일", TODAY, null, 30, "자료\n<b>찾기</b>", false, Category.OTHER, null, null, null, null,
+                false, null, 0, 0, null, null);
+        assertEquals(DIV + why + "<br>자료<br>&lt;b&gt;찾기&lt;/b&gt;" + END, TaskRows.lockedTip(t));
+    }
+
     /** 부품에 단추(1, 2, 3), 누름 수, 팝업 깃발의 마우스 사건을 보낸다. */
     private static void press(Component c, int id, int button, int count, boolean popup) {
         c.dispatchEvent(new MouseEvent(c, id, 0, 0, 10, 12, count, popup, button));
