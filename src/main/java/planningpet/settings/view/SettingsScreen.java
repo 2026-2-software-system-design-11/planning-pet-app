@@ -3,8 +3,10 @@ package planningpet.settings.view;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.time.DayOfWeek;
+import java.util.function.BiConsumer;
 import java.util.function.IntSupplier;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
@@ -12,6 +14,7 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import planningpet.app.model.AppData;
@@ -25,6 +28,8 @@ public final class SettingsScreen extends JPanel {
     static final String VERSION = "0.1.0";
     /** 05 설정 1번. 실행 JAR와 Linux에서 체크박스 아래에 보인다(Linux 글은 잠정, S10b). */
     static final String UNAVAILABLE = "설치 파일로 설치했을 때만 쓸 수 있어요";
+    /** 등록이나 빼기에 실패한 창의 제목(잠정, S10b). 내용은 운영체제가 준 이유다. */
+    static final String AUTOSTART_FAILED = "컴퓨터 켤 때 실행을 바꾸지 못했어요";
     private final AppData data;
     private final Autostart os;
     private int row;
@@ -43,6 +48,9 @@ public final class SettingsScreen extends JPanel {
     public IntSupplier samples = () -> 0;
     /** "예시 지우기"를 누르면 부른다(D-74). 확인과 지우기는 C5가 넣는다. */
     public Runnable clearSamples = () -> { };
+    /** 제목과 내용으로 오류 창을 띄우고 확인을 기다린다. 검사가 바꿔 끼운다. */
+    BiConsumer<String, Object> alert = (title, message) -> new JOptionPane(message, JOptionPane.ERROR_MESSAGE,
+            JOptionPane.DEFAULT_OPTION, null, new Object[] {"확인"}, "확인").createDialog(this, title).setVisible(true);
 
     /** folder는 데이터 폴더(06 21번)다. 데이터 변경 알림에 refresh를 거는 일은 화면을 넣는 쪽(Main)이 한다. */
     public SettingsScreen(AppData data, SettingsController settings, Autostart os, Path folder) {
@@ -52,6 +60,7 @@ public final class SettingsScreen extends JPanel {
         setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
         autostart.setEnabled(os.available());
         autostartHint.setVisible(!os.available());
+        autostart.addActionListener(e -> setAutostart(settings));
         Path full = folder.toAbsolutePath();
         line(new JLabel("<html><b>시작</b></html>"), autostart);
         line(new JLabel(), autostartHint);
@@ -85,6 +94,16 @@ public final class SettingsScreen extends JPanel {
         int count = samples.getAsInt();
         sampleButton.setEnabled(count > 0);
         sampleCount.setText(count > 0 ? "예시 일정 " + count + "개가 남아 있어요" : "예시 일정이 없어요");
+    }
+
+    /** 05 설정 1번. 실패하면 이유를 창으로 알리고, 성공해도 실패해도 체크는 운영체제에서 다시 읽은 등록 상태다. */
+    private void setAutostart(SettingsController settings) {
+        try {
+            settings.setAutostart(autostart.isSelected());
+        } catch (IOException e) {
+            alert.accept(AUTOSTART_FAILED, e.getMessage());
+        }
+        autostart.setSelected(os.registered());
     }
 
     private void line(JComponent label, JComponent value) {

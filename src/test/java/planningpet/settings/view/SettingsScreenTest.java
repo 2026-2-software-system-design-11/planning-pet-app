@@ -22,13 +22,15 @@ import planningpet.common.view.ThemeOn;
 import planningpet.settings.controller.SettingsController;
 import planningpet.settings.model.Autostart;
 
-/** 설정 화면. 번호는 docs/porting/settings.md S10b 2절. */
+/** 설정 화면. 번호는 docs/porting/settings.md S10b 2절. 창은 띄우지 않고 받은 것을 적는다. */
 @ExtendWith(ThemeOn.class)
 class SettingsScreenTest {
     private final AppData data = Apps.data("2026-11-18T10:00");
     private final MemoryStore store = new MemoryStore();
     private final List<String> errors = new ArrayList<>();
     private final Os os = new Os();
+    /** 띄우려던 창의 제목과 내용. */
+    private final List<String> alerts = new ArrayList<>();
     @TempDir
     Path folder;
 
@@ -51,8 +53,20 @@ class SettingsScreenTest {
     /** Main처럼 변경 알림에 refresh를 건 화면. */
     private SettingsScreen screen() {
         SettingsScreen s = new SettingsScreen(data, new SettingsController(data, new AppController(data, store, errors::add), os), os, folder);
+        s.alert = (title, message) -> alerts.add(title + " " + message);
         data.onChange(s::refresh);
         return s;
+    }
+
+    @Test
+    void tWin4CheckRegistersAndStays() {
+        SettingsScreen s = screen();
+        assertTrue(s.autostart.isEnabled());
+        s.autostart.doClick();
+        assertTrue(os.on);
+        s.refresh();
+        assertTrue(s.autostart.isSelected());
+        assertEquals(List.of(0, 0), List.of(store.saves, alerts.size()));
     }
 
     @Test
@@ -77,6 +91,20 @@ class SettingsScreenTest {
     @Test
     void eSet6InstalledHasNoText() {
         assertFalse(screen().autostartHint.isVisible());
+    }
+
+    @Test
+    void eSet7RefusedGoesBackAndTells() {
+        os.refuse = new IOException("액세스가 거부되었습니다.");
+        SettingsScreen s = screen();
+        s.autostart.doClick();
+        assertFalse(s.autostart.isSelected());
+        os.on = true;
+        s.refresh();
+        s.autostart.doClick();
+        assertTrue(s.autostart.isSelected());
+        assertEquals(List.of("컴퓨터 켤 때 실행을 바꾸지 못했어요 액세스가 거부되었습니다.", "컴퓨터 켤 때 실행을 바꾸지 못했어요 액세스가 거부되었습니다."),
+                alerts);
     }
 
     @Test
