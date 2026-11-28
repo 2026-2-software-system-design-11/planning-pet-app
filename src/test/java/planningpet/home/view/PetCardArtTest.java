@@ -3,14 +3,19 @@ package planningpet.home.view;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.time.Duration;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import planningpet.common.view.Snap;
 import planningpet.common.view.Theme;
@@ -131,5 +136,99 @@ class PetCardArtTest {
         assertEquals(new Color(1, 2, 3, 200), PetCardArt.withAlpha(new Color(1, 2, 3, 9), 200));
         assertThrows(IllegalArgumentException.class, () -> PetCardArt.withAlpha(Theme.GRASS_FAR, 256));
         assertThrows(IllegalArgumentException.class, () -> PetCardArt.withAlpha(Theme.GRASS_FAR, -1));
+    }
+
+    /** 글꼴에 기대지 않게 UTF-16 한 단위를 폭 10으로 잰다(공백도 10, 이모지는 20). wrap은 stringWidth만 쓴다. */
+    private static final FontMetrics TEN_EACH = new FontMetrics(new Font(Font.DIALOG, Font.PLAIN, 10)) {
+        @Override
+        public int stringWidth(String s) {
+            return 10 * s.length();
+        }
+    };
+
+    private static List<String> wrap(String text, int max) {
+        return PetCardArt.wrap(text, TEN_EACH, max);
+    }
+
+    @Test
+    void eWrap1FitsOneLine() {
+        assertEquals(List.of("가나다"), wrap("가나다", 30));
+        assertEquals(List.of("가나다"), wrap("가나다", 100));
+        assertEquals(List.of(""), wrap("", 30));
+    }
+
+    @Test
+    void eWrap2BreaksAtSpaces() {
+        assertEquals(List.of("가나 다라", "마바"), wrap("가나 다라 마바", 50));
+        assertEquals(List.of("가나", "다라", "마바"), wrap("가나 다라 마바", 49));
+        assertEquals(List.of("가나 다라 마바"), wrap("가나 다라 마바", 80));
+        assertEquals(List.of("가", "나", "다"), wrap("가 나 다", 10));
+    }
+
+    @Test
+    void eWrap3Spaces() {
+        assertEquals(List.of("가  나"), wrap("가  나", 100));
+        assertEquals(List.of("가나 ", "다라"), wrap("가나  다라", 40));
+        assertEquals(List.of("가나"), wrap(" 가나", 40));
+        assertEquals(List.of("가나"), wrap("가나 ", 40));
+        assertEquals(List.of(""), wrap("   ", 40));
+        assertEquals(List.of("가\n나"), wrap("가\n나", 40));
+    }
+
+    @Test
+    void eWrap4LongWord() {
+        assertEquals(List.of("가나다라", "마바"), wrap("가나다라마바", 40));
+        assertEquals(List.of("가", "나다라마", "바사"), wrap("가 나다라마바사", 40));
+        assertEquals(List.of("가나다", "라마바", "사아자", "차카"), wrap("가나다라마바사아자차카", 30));
+        assertEquals(List.of("가나", "다"), wrap("가나다", 29));
+        assertEquals(List.of("가", "나", "다"), wrap("가나다", 15));
+        assertEquals(List.of("가", "나", "다"), wrap("가나다", 10));
+    }
+
+    private static final String SMILE = "😀";
+
+    /** 프로토타입과 일부러 다름(06 읽는 법): 코드 포인트로 잘라 이모지는 통째로 다음 줄로 간다. */
+    @Test
+    void eWrap5EmojiAtCut() {
+        assertEquals(List.of("가", SMILE, "나"), wrap("가😀나", 20));
+        assertEquals(List.of(SMILE, SMILE, SMILE), wrap("😀😀😀", 30));
+        assertEquals(List.of(SMILE, SMILE, SMILE), wrap("😀😀😀", 25));
+        assertEquals(List.of("가", SMILE, SMILE), wrap("가 😀😀", 30));
+        assertEquals(List.of("가나", SMILE), wrap("가나😀", 30));
+    }
+
+    /**
+     * TEN_EACH처럼 재되, 100000번 넘게 재면 예외를 던진다. 끝나지 않는 wrap을 멈추려는 것이다. Java 21은 도는 스레드를 멈출 수
+     * 없어 시간 제한만 두면 제한 뒤에도 빈 줄을 더하며 메모리를 먹는다(home.md S3k 2절).
+     */
+    private static FontMetrics counting() {
+        return new FontMetrics(new Font(Font.DIALOG, Font.PLAIN, 10)) {
+            private int calls;
+
+            @Override
+            public int stringWidth(String s) {
+                if (++calls > 100_000) {
+                    throw new IllegalStateException("100000번 넘게 재었다");
+                }
+                return 10 * s.length();
+            }
+        };
+    }
+
+    /** 끝나지 않으면 재기만 되풀이하다 counting의 예외가 나서 테스트가 실패한다. */
+    private static List<String> bounded(String text, int max) {
+        return assertTimeoutPreemptively(Duration.ofSeconds(5), () -> PetCardArt.wrap(text, counting(), max));
+    }
+
+    /** 프로토타입과 일부러 다름(끝나지 않음): 한 글자는 폭을 넘어도 한 줄에 둔다. */
+    @Test
+    void eWrap6NarrowerThanOneLetter() {
+        assertEquals(List.of("가"), bounded("가", 5));
+        assertEquals(List.of("가"), bounded("가", 0));
+        assertEquals(List.of("가"), bounded("가", -5));
+        assertEquals(List.of("가", "나"), bounded("가나", 9));
+        assertEquals(List.of("가", "나"), bounded("가 나", 5));
+        assertEquals(List.of("가"), bounded(" 가", -5));
+        assertEquals(List.of(SMILE), bounded(SMILE, 10));
     }
 }
