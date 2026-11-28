@@ -2,6 +2,7 @@ package planningpet.common.view;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -11,11 +12,15 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Rectangle;
+import java.text.ParseException;
 import java.util.List;
 import javax.swing.JButton;
+import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JSpinner;
 import javax.swing.JTextField;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.text.BadLocationException;
 import org.junit.jupiter.api.Test;
 
@@ -190,6 +195,20 @@ class UiTest {
         assertThrows(NullPointerException.class, () -> Ui.esc(null));
     }
 
+    private static JFormattedTextField editor(JSpinner s) {
+        return ((JSpinner.DefaultEditor) s.getEditor()).getTextField();
+    }
+
+    /** 칸 글을 typed로 바꾸고 넣어 본다. 형식 오류면 값이 그대로다. */
+    private static void type(JSpinner s, String typed) {
+        editor(s).setText(typed);
+        try {
+            editor(s).commitEdit();
+        } catch (ParseException e) {
+            // 칸을 벗어날 때 이전 값으로 돌아간다(05 일정 입력 창 3번).
+        }
+    }
+
     @Test
     void eUi1Flow() {
         JLabel label = new JLabel("가");
@@ -206,5 +225,28 @@ class UiTest {
         p.doLayout();
         assertEquals(List.of(new Rectangle(4, 3, 30, 20), new Rectangle(38, 0, 50, 26)), List.of(label.getBounds(), button.getBounds()));
         assertEquals(new Dimension(8, 0), Ui.flow().getPreferredSize());
+    }
+
+    @Test
+    void eUi2Minutes() {
+        JSpinner s = Ui.minutes(30);
+        SpinnerNumberModel m = (SpinnerNumberModel) s.getModel();
+        assertEquals(List.of(30, 10, 720, 5), List.of(s.getValue(), m.getMinimum(), m.getMaximum(), m.getStepSize()));
+        assertInstanceOf(JSpinner.NumberEditor.class, s.getEditor());
+        s.setValue(10);
+        assertNull(s.getPreviousValue());
+        s.setValue(720);
+        assertNull(s.getNextValue());
+        assertEquals(715, s.getPreviousValue());
+        assertEquals("5분 단위가 아님", assertThrows(IllegalArgumentException.class, () -> s.setValue(27)).getMessage());
+        s.setValue(730); // 범위는 보지 않는다
+        assertEquals(730, s.getValue());
+        for (String typed : List.of("27", "730", "5", "45")) {
+            JSpinner t = Ui.minutes(30);
+            type(t, typed);
+            assertEquals(typed.equals("45") ? 45 : 30, t.getValue(), typed);
+        }
+        assertThrows(IllegalArgumentException.class, () -> Ui.minutes(5));
+        assertEquals(27, Ui.minutes(27).getValue());
     }
 }
