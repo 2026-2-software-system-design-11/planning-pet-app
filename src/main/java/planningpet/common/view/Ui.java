@@ -5,6 +5,7 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextLayout;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -129,10 +130,18 @@ public final class Ui {
         JSpinner.DefaultEditor editor = new JSpinner.DefaultEditor(s);
         JFormattedTextField field = editor.getTextField();
         field.setEditable(true);
-        SimpleDateFormat format = new SimpleDateFormat(pattern, Locale.KOREAN);
-        // 없는 날짜(11-31)를 다음 달로 굴려 받지 않고 형식 오류처럼 이전 값으로 돌아간다. 프로토타입과 일부러 다름(porting.md 4절).
-        format.setLenient(false);
-        field.setFormatterFactory(new DefaultFormatterFactory(new DateFormatter(format)));
+        // 날짜 자리만 엄격히 읽어 없는 날짜(11-31)를 다음 달로 굴려 받지 않고 형식 오류처럼 이전 값으로 돌아간다. 프로토타입과 일부러
+        // 다름(porting.md 4절). 친 요일은 프로토타입처럼 읽지 않아 "2026-11-20 (월)"도 11-20이다. parse는 날짜 뒤의 요일 글을 남겨 둔다.
+        SimpleDateFormat day = new SimpleDateFormat(pattern.replace(" (E)", ""), Locale.KOREAN);
+        day.setLenient(false);
+        field.setFormatterFactory(new DefaultFormatterFactory(new DateFormatter(new SimpleDateFormat(pattern, Locale.KOREAN)) {
+            @Override
+            public Object stringToValue(String text) throws ParseException {
+                Object value = super.stringToValue(text);
+                day.parse(text);
+                return value;
+            }
+        }));
         s.setEditor(editor);
     }
 

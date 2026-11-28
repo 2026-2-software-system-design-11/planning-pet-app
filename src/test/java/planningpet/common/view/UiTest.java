@@ -302,10 +302,11 @@ class UiTest {
                 type(s, typed);
                 assertEquals(NOV16, Ui.dateOf(s), typed);
             }
-            type(s, "2026-11-20 (월)"); // 프로토타입과 일부러 다름: 날짜와 맞지 않는 요일도 이전 값이다(프로토타입은 11-20)
-            assertEquals(NOV16, Ui.dateOf(s));
-            type(s, "2026-11-20 (금)");
+            type(s, "2026-11-20 (월)"); // 친 요일은 읽지 않는다
             assertEquals(List.of(LocalDate.of(2026, 11, 20), "2026-11-20 (금)"), List.of(Ui.dateOf(s), editor(s).getText()));
+            Ui.setDate(s, LocalDate.of(2026, 11, 19));
+            type(s, "2026-11-20 (목)"); // 날짜 숫자만 고침
+            assertEquals(LocalDate.of(2026, 11, 20), Ui.dateOf(s));
         });
     }
 
