@@ -1,7 +1,9 @@
 package planningpet.pet.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.time.Clock;
@@ -128,5 +130,49 @@ class PetControllerTest {
         assertEquals(List.of(), data.getPets());
         assertNull(data.getActiveKind());
         assertEquals(List.of("반려동물 고르기 저장에 실패해서 바꾸기 전으로 돌렸어요."), errors);
+    }
+
+    @Test
+    void T_PET_1_adopt() {
+        data.addPet(new PetState(PetKind.CAT, "나비"));
+        data.setActiveKind(PetKind.CAT);
+        assertTrue(pets.adopt(PetKind.DOG, " "));
+        assertFalse(pets.adopt(PetKind.DOG, "x"));
+        assertEquals(2, data.getPets().size());
+        assertEquals(PetKind.DOG, data.getActiveKind());
+        assertEquals("바둑이", data.activePet().getName());
+        assertEquals(0, data.activePet().getExp());
+        assertEquals(Pose.SIT, data.activePet().getPose());
+        assertEquals(Map.of(Slot.NECK, WearId.BASIC_NECKLACE), data.activePet().getWear());
+        assertEquals(1, saves);
+        assertEquals(1, heard);
+    }
+
+    @Test
+    void T_TALK_13_adoptedTalks() {
+        data.addPet(new PetState(PetKind.CAT, "나비"));
+        pets.adopt(PetKind.DOG, " ");
+        assertEquals("안녕, 나는 바둑이야. 이제 경험치는 내가 받을게!", app.getBubble().getLine());
+        assertEquals("안녕, 나는 바둑이야. 이제 경험치는 내가 받을게!", app.getBubble().getRoomLine());
+    }
+
+    @Test
+    void E_PET_14_adoptNameRule() {
+        data.addPet(new PetState(PetKind.CAT, "나비"));
+        pets.adopt(PetKind.DOG, "가나다라마바사아자차카");
+        assertEquals("가나다라마바사아자차", data.pet(PetKind.DOG).getName());
+    }
+
+    @Test
+    void E_PET_15_adoptSaveFails() {
+        data.addPet(new PetState(PetKind.CAT, "나비"));
+        data.setActiveKind(PetKind.CAT);
+        failing = true;
+        assertFalse(pets.adopt(PetKind.DOG, ""));
+        assertEquals(1, data.getPets().size());
+        assertEquals(PetKind.CAT, data.getActiveKind());
+        assertEquals("", app.getBubble().getLine());
+        assertNull(app.getBubble().getRoomLine());
+        assertEquals(List.of("펫 데려오기 저장에 실패해서 바꾸기 전으로 돌렸어요."), errors);
     }
 }
