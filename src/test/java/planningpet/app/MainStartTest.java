@@ -85,6 +85,8 @@ class MainStartTest {
         public void exit(int code) { calls.add("끝내기 " + code); }
 
         public void signal(Runnable shown) { signalled = shown; }
+
+        public void front() { calls.add("앞으로"); }
     };
 
     /** Main.main처럼 부품을 만들기 전에 Theme를 건다. 검사마다 되돌린다. */

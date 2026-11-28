@@ -75,6 +75,9 @@ public final class Main {
 
         /** 두 번째 실행의 신호를 받으면 지금 창을 앞으로 가져온 뒤 shown을 부른다(06 24번, docs/porting/tray.md). */
         void signal(Runnable shown);
+
+        /** 지금 창을 보이고 앞으로 가져온다. 트레이의 열기와 알림 누르기가 부른다. */
+        void front();
     }
 
     /** 실제 창을 띄운다. 창이 떠야 해서 검사하지 않는다. */
@@ -107,7 +110,7 @@ public final class Main {
         }
 
         /** 내려 둔 창도 펴서 보이고 앞으로 가져온다. */
-        void front() {
+        public void front() {
             if (front instanceof Frame f) {
                 f.setExtendedState(f.getExtendedState() & ~Frame.ICONIFIED);
             }
@@ -152,7 +155,7 @@ public final class Main {
         shell.main(window.root());
         app.onWindowShown();
         shell.signal(app::onWindowShown); // 고르기 창일 때의 신호는 15번을 부르지 않는다(E-ONE-5).
-        shell.timer(new Tray(app, watcher, clock));
+        shell.timer(new Tray(app, watcher, clock, shell::front));
     }
 
     /** 데이터 폴더. --data-dir 뒤에 경로가 없으면 IllegalArgumentException. 모르는 인자는 무시한다. */

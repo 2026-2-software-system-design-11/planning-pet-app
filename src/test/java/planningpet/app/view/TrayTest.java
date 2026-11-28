@@ -25,7 +25,7 @@ class TrayTest {
     private static final LocalDateTime AT_1450 = LocalDateTime.of(2026, 11, 16, 14, 50);
     private static final String ALERT = "플래닝펫 통계 과제 10분 뒤 시작";
     private int heard;
-    /** 운영체제 알림의 차례. */
+    /** 운영체제 알림과 창 앞으로 가져오기의 차례. */
     private final List<String> got = new ArrayList<>();
     private AppData data;
     private AppController app;
@@ -39,7 +39,7 @@ class TrayTest {
     private void open(Task... tasks) {
         data = Apps.data("2026-11-16T14:50", tasks);
         app = new AppController(data, new MemoryStore(), e -> { });
-        tray = new Tray(app, new DayWatcher(data, app), Apps.clock("2026-11-16T14:50"));
+        tray = new Tray(app, new DayWatcher(data, app), Apps.clock("2026-11-16T14:50"), () -> got.add("앞으로"));
         tray.notify = (title, text) -> got.add(title + " " + text);
     }
 
@@ -57,7 +57,7 @@ class TrayTest {
         }, e -> { });
         DayWatcher watcher = new DayWatcher(data, app);
         data.onChange(() -> heard++);
-        Tray tray = new Tray(app, watcher, at(LocalDateTime.of(2026, 11, 17, 4, 0, 10)));
+        Tray tray = new Tray(app, watcher, at(LocalDateTime.of(2026, 11, 17, 4, 0, 10)), () -> { });
         assertEquals(30_000, tray.timer().getDelay());
         assertTrue(tray.timer().isRepeats());
         tray.timer().getActionListeners()[0].actionPerformed(null);
@@ -70,5 +70,16 @@ class TrayTest {
         tray.tick(AT_1450);
         tray.tick(AT_1450.plusSeconds(30));
         assertEquals(List.of(ALERT), got);
+    }
+
+    @Test
+    void E_TRAY_7_menuOpensAndQuits() {
+        open();
+        app.setQuit(() -> got.add("끝냄"));
+        assertEquals(List.of("열기", "끝내기"), List.copyOf(tray.menu().keySet()));
+        tray.menu().get("열기").run();
+        assertEquals(List.of(List.of("앞으로"), Tasks.d(16)), List.of(List.copyOf(got), data.getLastOpenDay()));
+        tray.menu().get("끝내기").run();
+        assertEquals(List.of("앞으로", "끝냄"), got);
     }
 }
