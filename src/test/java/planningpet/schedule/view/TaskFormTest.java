@@ -710,6 +710,27 @@ class TaskFormTest {
     }
 
     @Test
+    void eForm12SeriesCopyShowsItsRepeat() {
+        Repeat monWed = Repeat.weekly(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY);
+        List<Task> copies = new ArrayList<>();
+        for (int day : new int[] {16, 18, 23}) {
+            copies.add(Tasks.task("영어", d(day)).id("e" + day).series("S", monWed).done(day == 23 ? d(23) : null).task());
+        }
+        Task t = copies.get(1);
+        TaskForm f = new TaskForm(t, NOW, DayOfWeek.MONDAY);
+        f.showSeries(t.getRepeat(), new TaskBook(copies, () -> 4, () -> d(18)).seriesEnd(t));
+        Ui.setDate(f.date, d(19));
+        assertEquals(List.of("요일", "월, 수", false, false, false, "2026-11-23"), List.of(f.repeat.getSelectedItem(), picked(f),
+                f.repeat.isEnabled(), f.days[0].isEnabled(), f.repeatEnd.isEnabled(), text(f.repeatEnd)));
+        assertEquals(List.of(false, false, false), List.of(f.period.isSelected(), f.period.isEnabled(), f.periodHint.isVisible()));
+        TaskDraft got = f.draft();
+        assertEquals(List.of(monWed, d(23), ""), List.of(got.repeat(), got.repeatEnd(), saveError(f, "반복")));
+        TaskForm daily = edit(Tasks.task("운동", d(18)).series("D", Repeat.DAILY));
+        daily.showSeries(Repeat.DAILY, d(20));
+        assertEquals("매일", daily.repeat.getSelectedItem());
+    }
+
+    @Test
     void eForm13OffStepStoredValues() {
         assertThrows(IllegalArgumentException.class, () -> edit(Tasks.task("운동", d(20)).at("09:03")));
         assertThrows(IllegalArgumentException.class, () -> edit(Tasks.task("운동", d(20)).at("10:00").minutes(27)));
