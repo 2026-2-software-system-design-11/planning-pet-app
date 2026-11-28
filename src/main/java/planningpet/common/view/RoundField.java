@@ -1,5 +1,6 @@
 package planningpet.common.view;
 
+import java.awt.Dimension;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -21,6 +22,12 @@ public final class RoundField extends JTextField {
         setOpaque(false);
         setFont(Theme.font(14));
         setBorder(BorderFactory.createEmptyBorder(8, kind == null ? 18 : 40, 8, 16));
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+        Dimension d = super.getPreferredSize();
+        return new Dimension(d.width, Math.max(d.height, 40));
     }
 
     @Override

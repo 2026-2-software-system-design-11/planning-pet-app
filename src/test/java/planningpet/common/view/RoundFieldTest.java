@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
+import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -44,6 +45,22 @@ class RoundFieldTest {
         assertFalse(f.isOpaque());
         assertEquals(Theme.font(14), f.getFont());
         looks("none", f, 300, 40);
+    }
+
+    @Test
+    void eRound6Sizes() throws IOException {
+        looks("300x60", pencil(), 300, 60);
+        looks("120x40", pencil(), 120, 40);
+        looks("30x40", pencil(), 30, 40);
+        looks("4x4", pencil(), 4, 4);
+        looks("0x0", pencil(), 0, 0);
+        assertEquals(new Dimension(57, 40), pencil().getPreferredSize());
+        RoundField wide = new RoundField(null, null);
+        wide.setColumns(12);
+        assertEquals(new Dimension(178, 40), wide.getPreferredSize());
+        RoundField big = pencil();
+        big.setFont(Theme.font(30));
+        assertEquals(new Dimension(57, 53), big.getPreferredSize());
     }
 
     @Test
