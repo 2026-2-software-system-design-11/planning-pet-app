@@ -17,7 +17,7 @@ import planningpet.common.view.Theme;
 
 /**
  * 할 일 줄의 둥근 체크(05 입력 항목 4, D-59). 안 끝냄은 흰 바탕에 CARD_LINE 테두리, 끝냄은 민트 채움(MINT_TOP에서 MINT_DEEP)에
- * 흰 체크다. 마우스를 올리면 테두리가 MINT다(docs/porting/task-rows.md S3r).
+ * 흰 체크다. 마우스를 올리면 테두리가 MINT, 키보드 초점은 바깥 민트 고리다(docs/porting/task-rows.md S3r).
  */
 final class RoundCheck {
     static final int SIZE = 20;
@@ -61,6 +61,11 @@ final class RoundCheck {
                 g.setColor(over ? Theme.MINT : Theme.CARD_LINE);
                 g.setStroke(new BasicStroke(1.5f));
                 g.drawRoundRect(1, 1, s - 2, s - 2, 7, 7);
+            }
+            if (b.isFocusOwner()) {
+                g.setColor(new Color(0x1F, 0xB9, 0x9C, 110));
+                g.setStroke(new BasicStroke(1.5f));
+                g.drawRoundRect(-2, -2, s + 4, s + 4, 11, 11);
             }
             g.dispose();
         }

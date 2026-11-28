@@ -5,9 +5,12 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.awt.Component;
 import java.awt.Cursor;
+import java.awt.DefaultKeyboardFocusManager;
 import java.awt.Dimension;
 import java.awt.Insets;
+import java.awt.KeyboardFocusManager;
 import java.io.IOException;
 import javax.swing.JCheckBox;
 import org.junit.jupiter.api.Test;
@@ -55,6 +58,27 @@ class RoundCheckTest {
         b = box(true);
         b.setEnabled(false);
         looks("on", b, 24, 24);
+    }
+
+    @Test
+    void eRchk4KeyboardFocus() throws IOException {
+        class Focus extends DefaultKeyboardFocusManager {
+            void own(Component c) {
+                setGlobalFocusOwner(c);
+            }
+        }
+        Focus focus = new Focus();
+        KeyboardFocusManager.setCurrentKeyboardFocusManager(focus);
+        try {
+            String[] names = {"focus", "focus-on", "focus-over"};
+            JCheckBox[] boxes = {box(false), box(true), over(false)};
+            for (int i = 0; i < boxes.length; i++) {
+                focus.own(boxes[i]);
+                looks(names[i], boxes[i], 24, 24);
+            }
+        } finally {
+            KeyboardFocusManager.setCurrentKeyboardFocusManager(null);
+        }
     }
 
     @Test
