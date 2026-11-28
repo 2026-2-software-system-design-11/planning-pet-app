@@ -6,7 +6,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Graphics2D;
 import java.awt.Insets;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -77,6 +80,21 @@ class TaskPlanTest {
         return String.join(", ", out);
     }
 
+    /** 글을 비우고 줄의 제목 칸을 숨겨 그린 그림을 기준 그림 proto/plan-{name}.png와 견준다. */
+    private static void looks(String name, TaskRows rows) throws IOException {
+        Snap.blank(rows);
+        for (Component c : rows.getComponents()) {
+            if (c instanceof JPanel row) {
+                row.getComponent(1).setVisible(false);
+            }
+        }
+        BufferedImage img = new BufferedImage(rows.getWidth() + 4, rows.getHeight() + 4, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = img.createGraphics();
+        rows.paint(g);
+        g.dispose();
+        Snap.assertLooksLikePrototype("plan-" + name, img);
+    }
+
     @Test
     void ePlan1EmptyDay() {
         TaskRows rows = plan(day(18).atTime(10, 0), day(18));
@@ -101,6 +119,28 @@ class TaskPlanTest {
     }
 
     @Test
+    void ePlan3FourGroups() throws IOException {
+        TaskRows rows = plan(day(18).atTime(10, 0), day(18), mix());
+        assertEquals("기획서 시각 정하기 0,0 480x54, 보고서 10:00~11:00 0,54 480x39, [시각 없는 할 일] 0,93 75x33, "
+                + "토익 공부 시각 정하기 0,126 480x39, [기간 안에 할 일] 0,165 75x33, 지원서 시각 정하기 0,198 480x54", kids(rows));
+        JLabel head = (JLabel) rows.getComponent(2);
+        assertEquals(Theme.bold(12), head.getFont());
+        assertEquals(Theme.INK_SUB, head.getForeground());
+        assertEquals(new Insets(14, 6, 4, 0), head.getInsets());
+        assertFalse(head.isOpaque());
+        assertEquals(0f, head.getAlignmentX());
+        assertEquals(new Dimension(303, 252), rows.getPreferredSize());
+        looks("mix", rows);
+    }
+
+    @Test
+    void ePlan4EmptyGroups() {
+        Task[] mix = mix();
+        assertEquals("보고서 10:00~11:00 0,0 480x39", kids(plan(day(18).atTime(10, 0), day(18), mix[1])));
+        assertEquals("[기간 안에 할 일] 0,0 75x33, 지원서 시각 정하기 0,33 480x54", kids(plan(day(18).atTime(10, 0), day(20), mix)));
+    }
+
+    @Test
     void ePlan5OnlyDone() {
         TaskRows rows = plan(day(18).atTime(10, 0), day(18),
                 task(1, Kind.TASK, "빨래", day(18), LocalTime.of(10, 0), 60, null, true),
@@ -114,5 +154,19 @@ class TaskPlanTest {
         rows.showPlan(new AppData(Clock.systemDefaultZone()).getBook().dayPlan(day(18)));
         assertEquals(1, rows.getComponentCount());
         assertEquals("아직 일정이 없어요. 작은 계획을 추가해 보세요.", ((JLabel) rows.getComponent(0)).getText());
+    }
+
+    @Test
+    void tList1TimeThenSeq() {
+        TaskRows rows = plan(day(16).atTime(8, 0), day(16),
+                task(3, Kind.TASK, "A", day(16), LocalTime.of(15, 0), 30, null, false),
+                task(1, Kind.TASK, "B", day(16), null, 30, null, false),
+                task(4, Kind.TASK, "C", day(16), LocalTime.of(9, 0), 30, null, false),
+                task(2, Kind.TASK, "D", day(16), LocalTime.of(15, 0), 30, null, false),
+                task(6, Kind.FIXED, "E", day(16), LocalTime.of(10, 30), 30, null, false),
+                task(5, Kind.TASK, "F", day(16), null, 30, null, true));
+        // 끝낸 F는 "끝낸 일" 묶음(#480) 전에는 빠진다(docs/porting/task-rows.md S3w).
+        assertEquals("C 09:00~09:30 0,0 480x39, E 10:30~11:00 0,39 480x39, D 15:00~15:30 0,78 480x39, A 15:00~15:30 0,117 480x39, "
+                + "[시각 없는 할 일] 0,156 75x33, B 시각 정하기 0,189 480x39", kids(rows));
     }
 }

@@ -288,7 +288,7 @@
 
 ## S3w. 그날 목록 showPlan
 
-홈 할 일 목록의 그날 목록(05 홈 "할 일 목록", D-31, D-33, D-41, D-70)을 `TaskRows`의 `showPlan(DayPlan)`과 패키지 안 `group`으로 두고, `TaskRows`가 `Scrollable`이 되어 스크롤 창의 폭을 따른다. 기준은 06 6번(T-LIST-1, T-LIST-9, "화면은" 문단), 05 홈 "할 일 목록", 프로토타입 `TaskRows`의 `showPlan`, `group`과 끝의 `Scrollable` 함수 다섯이다.
+홈 할 일 목록의 그날 목록(05 홈 "할 일 목록", D-31, D-33, D-41, D-70)을 `TaskRows`의 `showPlan(DayPlan)`과 감춘 `group`으로 두고, `TaskRows`가 `Scrollable`이 되어 스크롤 창의 폭을 따른다. 기준은 06 6번(T-LIST-1, T-LIST-9, "화면은" 문단), 05 홈 "할 일 목록", 프로토타입 `TaskRows`의 `showPlan`, `group`과 끝의 `Scrollable` 함수 다섯이다.
 
 이 단위가 옮기지 않는 것:
 
@@ -314,7 +314,7 @@
 
 ### 2. 입력의 경계와 프로토타입 결과
 
-프로토타입 결과는 develop `50eea10`(프로토타입의 마지막 변경 `2ac06b6`, 클래스 경로에 `prototype/`)에서 얻었다. 프로토타입 앱을 `Main.create`로 창 없이 만들고 앱의 데이터에 일정을 넣은 뒤, 새 `TaskRows`에 `dayPlan`을 넘겨 `showPlan`을 부르고 `Theme.clear` 뒤 폭 480, 알맞은 높이로 배치했다. 따로 적지 않으면 오늘은 11-18 10:00이다. 그림은 S3v처럼 라벨과 버튼의 글을 비우고 제목 칸을 숨겨 둘레 4가 더 큰 그림에 그렸고, 글 그대로 그린 그림은 이 맥에서만 견줬다. `Theme.install` 앞과 뒤의 수와 그림이 같다. 결과는 `TaskPlanTest`가 번호 이름의 테스트로 확인한다.
+프로토타입 결과는 develop `50eea10`(프로토타입의 마지막 변경 `2ac06b6`, 클래스 경로에 `prototype/`)에서 얻었다. 프로토타입 앱을 `Main.create`로 창 없이 만들고 앱의 데이터에 일정을 넣은 뒤, 새 `TaskRows`에 `dayPlan`을 넘겨 `showPlan`을 부르고 `Theme.clear` 뒤 폭 480, 알맞은 높이로 배치했다. 따로 적지 않으면 오늘은 11-18 10:00이다. 그림은 S3v처럼 라벨과 버튼의 글을 비우고 제목 칸을 숨겨 둘레 4가 더 큰 그림에 그렸다. 글 그대로 그린 E-PLAN-1, E-PLAN-3 그림은 이 맥에서만 견줬고 픽셀이 같았다. `Theme.install` 앞과 뒤의 수와 그림이 같다. 결과는 `TaskPlanTest`가 번호 이름의 테스트로 확인한다.
 
 | 번호 | 입력과 경계 | 넣은 값 | 프로토타입 결과 | 본 구현 |
 |---|---|---|---|---|
