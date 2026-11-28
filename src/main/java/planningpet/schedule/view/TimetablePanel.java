@@ -6,6 +6,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -15,9 +16,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 import planningpet.app.model.AppData;
 import planningpet.common.view.Theme;
 import planningpet.common.view.Ui;
+import planningpet.reward.controller.RewardController;
 import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Slot;
 import planningpet.schedule.model.Task;
@@ -25,7 +28,7 @@ import planningpet.schedule.model.TimetableLayout;
 
 /**
  * 일정관리의 일주일 시간표(07, 05 일정관리). 0시부터 다음 날 4시(28:00)까지 그린다(D-77). 옮기는 몫은 docs/porting/schedule.md
- * S5b. 끌어 놓기는 C2, 자동 배치 뒤 진하게 보이기는 S5d가 더한다.
+ * S5b와 S5c2(누르기). 끌어 놓기는 C2, 자동 배치 뒤 진하게 보이기는 S5d가 더한다.
  */
 public final class TimetablePanel extends JComponent {
     /** 한 시간의 높이. */
@@ -45,10 +48,33 @@ public final class TimetablePanel extends JComponent {
     /** 열을 나눴거나 제목이 잘린 블록(D-87). 마지막으로 그린 모양이다. */
     private final Set<Task> narrow = new HashSet<>();
 
-    public TimetablePanel(AppData data) {
+    /** 체크 칸은 reward의 complete와 uncomplete를 부른다(docs/porting/schedule.md S5c2). */
+    public TimetablePanel(AppData data, RewardController reward) {
         this.data = data;
         setPreferredSize(new Dimension(300, HOUR * HOURS));
         setToolTipText("");
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                // 체크 칸은 왼쪽 버튼 한 번으로만 바뀐다. 나중에 그린(위에 있는) 블록의 것을 먼저 본다.
+                Task boxed = null;
+                for (Map.Entry<Rectangle, Task> b : boxes.entrySet()) {
+                    if (b.getKey().contains(e.getPoint())) {
+                        boxed = b.getValue();
+                    }
+                }
+                if (boxed != null && e.getClickCount() == 1) {
+                    if (SwingUtilities.isLeftMouseButton(e)) {
+                        // UC-07, UC-08: 끝내지 않은 일은 끝내고 끝낸 일은 체크를 푼다.
+                        if (boxed.isDone()) {
+                            reward.uncomplete(boxed);
+                        } else {
+                            reward.complete(boxed);
+                        }
+                    }
+                }
+            }
+        });
     }
 
     /** h번째 시각 줄의 글. 자정 아래는 00:00부터 다시 적는다(D-77). */

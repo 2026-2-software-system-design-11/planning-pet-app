@@ -15,10 +15,13 @@ import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import planningpet.app.controller.AppController;
 import planningpet.app.model.AppData;
 import planningpet.app.model.Apps;
+import planningpet.app.model.MemoryStore;
 import planningpet.common.view.Snap;
 import planningpet.common.view.Theme;
+import planningpet.reward.controller.RewardController;
 import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Task;
 import planningpet.schedule.model.Tasks.Spec;
@@ -28,6 +31,7 @@ class TimetablePanelTest {
     private static final int H = TimetablePanel.HOUR * TimetablePanel.HOURS;
     private AppData data;
     private TimetablePanel panel;
+    private final MemoryStore store = new MemoryStore();
 
     private BufferedImage show(Task... tasks) {
         return show(752, tasks);
@@ -36,7 +40,8 @@ class TimetablePanelTest {
     /** 일정 tasks가 있는 앱 데이터로 11-16 주의 시간표를 만들어 폭 w로 그린다. */
     private BufferedImage show(int w, Task... tasks) {
         data = Apps.data("2026-11-18T10:00", tasks);
-        panel = new TimetablePanel(data);
+        RewardController reward = new RewardController(data, new AppController(data, store, e -> { }));
+        panel = new TimetablePanel(data, reward);
         panel.monday = d(16);
         return Snap.paint(panel, w, H);
     }
@@ -242,5 +247,36 @@ class TimetablePanelTest {
             show(t, at("D", "09:30", 60).task());
             assertEquals(DIV + "<b>C</b> 09:00~10:00<br>" + m[1] + END, tipAt(260, 420));
         }
+    }
+
+    /** 시간표 자리 (x, y)에 마우스 사건 하나를 보낸다. */
+    private void press(int id, int x, int y, int button, int count, boolean popup) {
+        panel.dispatchEvent(new MouseEvent(panel, id, 0, 0, x, y, count, popup, button));
+    }
+
+    @Test
+    void eTbl10CheckBox() {
+        Task a = at("A", "09:00", 60).task();
+        show(a);
+        press(MouseEvent.MOUSE_CLICKED, 260, 405, MouseEvent.BUTTON1, 1, false);
+        assertEquals(List.of(true, 1), List.of(a.isDone(), store.saves));
+        press(MouseEvent.MOUSE_CLICKED, 260, 405, MouseEvent.BUTTON1, 1, false);
+        assertEquals(List.of(false, 2), List.of(a.isDone(), store.saves));
+    }
+
+    /** 칸을 오른쪽 버튼으로 한 번 누르고, 두 블록의 칸이 겹친 자리를 누른다. */
+    @Test
+    void eTbl11BoxOtherPresses() {
+        Task a = at("A", "09:00", 60).task();
+        show(a);
+        press(MouseEvent.MOUSE_CLICKED, 260, 405, MouseEvent.BUTTON3, 1, false);
+        assertEquals(List.of(false, 0), List.of(a.isDone(), store.saves));
+        Task s = at("S", "09:00", 10).task();
+        Task b = at("B", "09:10", 30).task();
+        show(s, b);
+        assertEquals(List.of(new Rectangle(257, 400, 12, 12), new Rectangle(257, 407, 12, 12)),
+                List.copyOf(panel.boxAreas().keySet()));
+        press(MouseEvent.MOUSE_CLICKED, 260, 409, MouseEvent.BUTTON1, 1, false);
+        assertEquals(List.of(false, true), List.of(s.isDone(), b.isDone()));
     }
 }

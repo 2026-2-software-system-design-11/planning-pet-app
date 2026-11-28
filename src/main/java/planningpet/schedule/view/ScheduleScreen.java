@@ -69,7 +69,7 @@ public final class ScheduleScreen extends JPanel {
         this.clock = clock;
         setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 12));
         start = thisWeekStart();
-        table = new TimetablePanel(data);
+        table = new TimetablePanel(data, reward);
         untimed = new TaskRows(data, reward, t -> onEdit.accept(t), t -> onDelete.accept(t), (t, day, at) -> onTime.open(t, day, at));
         prev.addActionListener(e -> move(start.minusWeeks(1)));
         next.addActionListener(e -> move(start.plusWeeks(1)));
