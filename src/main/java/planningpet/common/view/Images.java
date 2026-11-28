@@ -1,5 +1,7 @@
 package planningpet.common.view;
 
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.InputStream;
 import java.util.EnumMap;
@@ -73,5 +75,33 @@ public final class Images {
             }
         }
         return x0 < x1 && y0 < y1 ? im.getSubimage(x0, y0, x1 - x0 + 1, y1 - y0 + 1) : im;
+    }
+
+    /** 비율을 지키며 상자를 빈틈없이 덮게 그리고 넘치는 몫은 상자 가운데를 기준으로 양쪽에 나눈다. 상자 밖은 부르는 쪽이 잘라 낸다. */
+    public static void cover(Graphics2D g, BufferedImage im, int x, int y, int w, int h) {
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+        double scale = Math.max((double) w / im.getWidth(), (double) h / im.getHeight());
+        int dw = (int) Math.ceil(im.getWidth() * scale);
+        int dh = (int) Math.ceil(im.getHeight() * scale);
+        g.drawImage(im, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh, null);
+    }
+
+    /** 비율을 지키며 상자 안 가운데에 맞춰 그린다. */
+    public static void fit(Graphics2D g, BufferedImage im, int x, int y, int w, int h) {
+        place(g, im, x, y, w, h, 0.5);
+    }
+
+    /** 비율을 지키며 상자 안에 맞추고 가로는 가운데, 세로는 아래에 붙인다(바닥에 놓는 러그와 털실 공). */
+    public static void fitBottom(Graphics2D g, BufferedImage im, int x, int y, int w, int h) {
+        place(g, im, x, y, w, h, 1.0);
+    }
+
+    /** 상자 안에 맞춘 그림의 폭과 높이는 버림하고, 남는 높이의 vertical 몫(0은 위, 1은 아래)을 위에 둔다. */
+    private static void place(Graphics2D g, BufferedImage im, int x, int y, int w, int h, double vertical) {
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+        double scale = Math.min((double) w / im.getWidth(), (double) h / im.getHeight());
+        int dw = (int) (im.getWidth() * scale);
+        int dh = (int) (im.getHeight() * scale);
+        g.drawImage(im, x + (w - dw) / 2, y + (int) ((h - dh) * vertical), dw, dh, null);
     }
 }
