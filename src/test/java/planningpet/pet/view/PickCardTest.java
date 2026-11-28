@@ -65,6 +65,22 @@ class PickCardTest {
         c.dispatchEvent(new MouseEvent(c, id, 0, 0, 5, 5, 0, false));
     }
 
+    private static long nanos(double seconds) {
+        return Math.round(seconds * 1e9);
+    }
+
+    /** 만든 때에서 t초, 고른 때에서 since초 지난 시각으로 센 카드. since가 99면 고른 때를 두지 않는다. */
+    private static PickCard at(PetKind kind, boolean selected, double t, double since) {
+        PickCard c = blank(kind, selected);
+        if (since != 99) {
+            c.pickedAt = c.start + nanos(t - since);
+        }
+        c.tick(c.start + nanos(t));
+        assertEquals(t, c.t);
+        assertEquals(since, c.since);
+        return c;
+    }
+
     private static String described(String about) {
         return new PickCard("x", PetKind.CAT, false, about).getAccessibleContext().getAccessibleDescription();
     }
@@ -232,5 +248,52 @@ class PickCardTest {
         assertEquals(Theme.font(9), g.getFont());
         assertEquals(RenderingHints.VALUE_ANTIALIAS_OFF, g.getRenderingHint(RenderingHints.KEY_ANTIALIASING));
         g.dispose();
+    }
+
+    @Test
+    void eCard14PickedAt() {
+        PickCard cat = new PickCard("고양이", PetKind.CAT, true, CAT_ABOUT);
+        PickCard dog = new PickCard("강아지", PetKind.DOG, false, DOG_ABOUT);
+        assertEquals(0, cat.pickedAt);
+        cat.tick(cat.start + nanos(5));
+        assertEquals(5.0, cat.t);
+        assertEquals(99.0, cat.since);
+        ButtonGroup group = new ButtonGroup();
+        group.add(cat);
+        group.add(dog);
+        dog.doClick(0);
+        assertTrue(dog.pickedAt != 0);
+        dog.tick(dog.pickedAt + nanos(0.2));
+        assertEquals(0.2, dog.since);
+        dog.pickedAt = 7;
+        dog.doClick(0);
+        assertEquals(7, dog.pickedAt);
+        cat.doClick(0);
+        assertTrue(cat.pickedAt != 0);
+        assertEquals(7, dog.pickedAt);
+        PickCard lone = blank(PetKind.CAT, false);
+        lone.setSelected(true);
+        assertTrue(lone.pickedAt != 0);
+        lone.pickedAt = 7;
+        lone.setSelected(false);
+        assertEquals(7, lone.pickedAt);
+        lone.setSelected(true);
+        assertTrue(lone.pickedAt != 7 && lone.pickedAt != 0);
+        PickCard off = blank(PetKind.DOG, false);
+        off.setEnabled(false);
+        off.doClick(0);
+        assertEquals(0, off.pickedAt);
+    }
+
+    @Test
+    void eCard15Moving() throws IOException {
+        looks("cat-t1.1-s99.0", at(PetKind.CAT, false, 1.1, 99), 248, 262);
+        looks("cat-t1.3-s99.0", at(PetKind.CAT, false, 1.3, 99), 248, 262);
+        looks("dog-t0.6-s99.0", at(PetKind.DOG, false, 0.6, 99), 248, 262);
+        looks("dog-t1000000.0-s99.0", at(PetKind.DOG, false, 1e6, 99), 248, 262);
+        looks("cat-on-t0.0-s0.0", at(PetKind.CAT, true, 0, 0), 248, 262);
+        looks("cat-on-t1.3-s0.2", at(PetKind.CAT, true, 1.3, 0.2), 248, 262);
+        looks("dog-on-t0.0-s0.1", at(PetKind.DOG, true, 0, 0.1), 248, 262);
+        looks("dog-on-t2.0-s0.3499", at(PetKind.DOG, true, 2.0, 0.3499), 248, 262);
     }
 }

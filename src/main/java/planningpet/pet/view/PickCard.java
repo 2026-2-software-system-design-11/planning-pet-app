@@ -22,7 +22,7 @@ import planningpet.pet.model.WearId;
 /**
  * 반려동물 고르기 창의 동물 카드(05 입력 항목 1, 디자인 시스템 10절 "고르기 창"). 부품은 05대로 `JRadioButton`이고 모양만 카드로 그린다.
  * 흰 바깥 테 안에 종류별 바탕(고양이 차가운 하늘빛, 강아지 따뜻한 크림), 작은 언덕 위의 PetArt 펫, 발자국과 종류 이름, 설명 두 줄.
- * 고른 카드는 민트 테두리와 체크 배지, 펫 옆 강조선이다. 펫의 움직임은 #424가 더한다(docs/porting/pick.md).
+ * 고른 카드는 민트 테두리와 체크 배지, 펫 옆 강조선이고 고를 때 펫이 살짝 튄다.
  */
 public final class PickCard extends JRadioButton {
     /** 1배 크기. 창 폭 800에 두 장과 사이 20이 들어간다. */
@@ -34,6 +34,12 @@ public final class PickCard extends JRadioButton {
     private final Set<WearId> wear;
     /** 이름 아래 설명 두 줄(D-113, 줄은 \n으로 나눈다). */
     private final String about;
+    /** 만든 때와 고른 때(고른 적이 없으면 0). System.nanoTime 값이고 테스트가 tick(long)에 넘길 시각을 여기서 센다. */
+    final long start = System.nanoTime();
+    long pickedAt;
+    /** 펫의 움직임 시각(만든 뒤 지난 초)과 고른 뒤 시간(고른 적이 없으면 99). */
+    double t;
+    double since = 99;
 
     public PickCard(String text, PetKind kind, boolean selected, String about) {
         super(text, selected);
@@ -47,7 +53,12 @@ public final class PickCard extends JRadioButton {
         setRolloverEnabled(true);
         setFont(Theme.heavy(22));
         getAccessibleContext().setAccessibleDescription(about.replace("\n", " "));
-        addItemListener(e -> repaint());
+        addItemListener(e -> {
+            if (isSelected()) {
+                pickedAt = System.nanoTime();
+            }
+            repaint();
+        });
     }
 
     @Override
@@ -63,6 +74,12 @@ public final class PickCard extends JRadioButton {
     @Override
     public Dimension getMaximumSize() {
         return getPreferredSize();
+    }
+
+    /** now(System.nanoTime 값) 때의 움직임 시각과 고른 뒤 시간을 센다. */
+    void tick(long now) {
+        t = (now - start) / 1e9;
+        since = pickedAt == 0 ? 99 : (now - pickedAt) / 1e9;
     }
 
     @Override
@@ -104,8 +121,7 @@ public final class PickCard extends JRadioButton {
         double cx = getWidth() / 2.0;
         double ground = hillTop + 16;
         double size = 140;
-        // 움직임 시각 0, 고른 뒤 시간 99는 시계가 돌기 전의 값이다(시계는 #424).
-        PetArt.drawAt(in, kind, wear, 0, 99, cx, ground, size);
+        PetArt.drawAt(in, kind, wear, t, since, cx, ground, size);
         if (on) {
             double petTop = ground - size * PetArt.heightRatio(kind);
             Icons.draw(in, Icons.Kind.SPARK, (int) (cx - size * 0.48), (int) (petTop + 2), 26, Theme.SPARK);
