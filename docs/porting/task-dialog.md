@@ -313,7 +313,7 @@
 07 안에서 정한 것과 그 까닭:
 
 - **수정 창 생성자는 `TaskForm(일정, 지금, 한 주 시작)`이다.** 프로토타입은 생성자 하나가 일정과 고른 날을 함께 받고 일정이 null이면 추가 창이다. 수정 창에서 고른 날은 시작 칸의 처음 값에만 쓰이고 생성자 끝의 `sync()`가 일정의 날짜로 다시 재므로(코드) 받지 않는다. 두 생성자는 패키지 안 생성자 하나로 모인다.
-- **`TaskBook.seriesEnd`는 07 [class-schedule](../diagrams/class-schedule.puml)에 없다.** 반복의 마지막 날짜는 일정 목록을 훑는 규칙이라 view가 아니라 model에 두고(D-109), 이슈 #513이 적은 이름 그대로 public으로 둔다. 07에 줄을 더할지는 메인에 알렸다.
+- **`TaskBook.seriesEnd`는 07 [class-schedule](../diagrams/class-schedule.puml)에 그리지 않은 읽는 메서드다.** 07 읽는 법은 "값을 읽기만 하거나 값 하나만 바꾸는 메서드는 그리지 않았다"고 적었고, 이 함수는 일정 목록을 읽기만 한다. 그래서 07은 고치지 않는다. 반복의 마지막 날짜(같은 반복 사본 가운데 가장 늦은 날짜, D-42)는 규칙이라 view가 `getTasks()`로 세지 않고 model에 둔다(D-109).
 - **`showSeries`를 부르는 것은 S4l이다.** 프로토타입은 `TaskDialog.form`이 반복 사본이면 `showSeries(사본의 반복, seriesEnd(사본))`을 부른다. `form`은 앱 시계와 함께 S4l이 옮기므로 이 몫의 검사는 `showSeries`를 그 값으로 부른다.
 - **옮기지 않는 것.** 마감이 지난 기간 할 일의 잠금(`pastDue`, 잠금 글), 시각을 정해 둔 기간 할 일의 `placed`, 끝낸 일과 마감이 지난 일의 오늘 없음은 S4k다. 그래서 이 몫의 `draft()`는 `placed`가 null이고 `today`는 앱 날짜 그대로다.
 
