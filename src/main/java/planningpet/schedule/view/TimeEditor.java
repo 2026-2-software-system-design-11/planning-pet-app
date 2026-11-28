@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.function.BiPredicate;
+import java.util.function.Function;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -16,6 +17,7 @@ import planningpet.common.view.Card;
 import planningpet.common.view.Theme;
 import planningpet.common.view.Ui;
 import planningpet.schedule.model.DefaultDates;
+import planningpet.schedule.model.EditScope;
 import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Task;
 import planningpet.schedule.model.TaskDraft;
@@ -44,14 +46,20 @@ public final class TimeEditor {
      * 넣고, 저장에 실패하면 거짓을 돌려 창을 남긴다(O1, 05, 06이 정하지 않음, 페르소나 투표 전 잠정).
      */
     private final BiPredicate<Task, TaskDraft> onSave;
+    /** 시각 빼기 함수. 할 일과 범위를 받아 창을 닫아도 되면 참이다. S5f가 TaskController.clearTime을 넣는다(저장 실패는 onSave와 같다). */
+    private final BiPredicate<Task, EditScope> onClear;
+    /** 반복 사본의 시각 빼기 범위를 묻는다. 취소나 창 닫기는 null이다. 검사는 답을 바꿔 넣는다. */
+    Function<Task, EditScope> askClear = t -> TaskDialog.chooseClear(panel, t);
     /** 창을 닫는다. 띄우는 쪽(S5f)이 넣는다. */
     Runnable close = () -> { };
 
     /** 할 일 task를 창을 연 목록의 날 day와 앱 시계의 지금 now로 연다. */
-    TimeEditor(Task task, LocalDate day, LocalDateTime now, BiPredicate<Task, TaskDraft> onSave) {
+    TimeEditor(Task task, LocalDate day, LocalDateTime now, BiPredicate<Task, TaskDraft> onSave,
+            BiPredicate<Task, EditScope> onClear) {
         this.day = day;
         this.task = task;
         this.onSave = onSave;
+        this.onClear = onClear;
         // D-67: 정한 날에 못 끝낸 기간 할 일은 시각 없는 할 일처럼 연다.
         boolean placed = task.onTimetable(AppDay.of(now));
         int from = placed ? task.startMinute() : DefaultDates.defaultStart(day, now);
@@ -79,6 +87,7 @@ public final class TimeEditor {
         panel.add(buttons, BorderLayout.SOUTH);
         cancel.addActionListener(e -> close.run());
         save.addActionListener(e -> save());
+        clear.addActionListener(e -> clear());
     }
 
     /** 끝이 다음 날 04:00을 넘으면 문장, 아니면 null(D-77). */
@@ -103,6 +112,14 @@ public final class TimeEditor {
         if (problem != null) {
             error.setText(problem);
         } else if (onSave.test(task, draft())) {
+            close.run();
+        }
+    }
+
+    /** 시각 빼기 단추. 반복 사본이 아니면 묻지 않고 ONLY_THIS다. 범위 물음에서 취소하면 아무것도 하지 않고 창이 남는다(D-72). */
+    private void clear() {
+        EditScope scope = task.getSeriesId() == null ? EditScope.ONLY_THIS : askClear.apply(task);
+        if (scope != null && onClear.test(task, scope)) {
             close.run();
         }
     }

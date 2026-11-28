@@ -19,7 +19,9 @@ import java.util.List;
 import javax.swing.JLabel;
 import org.junit.jupiter.api.Test;
 import planningpet.common.view.Theme;
+import planningpet.schedule.model.EditScope;
 import planningpet.schedule.model.Kind;
+import planningpet.schedule.model.Repeat;
 import planningpet.schedule.model.Task;
 import planningpet.schedule.model.TaskDraft;
 
@@ -32,13 +34,13 @@ class TimeEditorTest {
         return (at == null ? task("보고서", placedOn) : task("보고서", placedOn).at(at)).period(d(16), d(22)).task();
     }
 
-    /** 저장 함수가 받은 값과 "닫음"을 차례로 적는다. */
+    /** 저장 함수와 빼기 함수가 받은 값, "닫음"을 차례로 적는다. */
     private final List<Object> calls = new ArrayList<>();
-    /** 저장 함수가 돌려줄 값. */
+    /** 저장 함수와 빼기 함수가 돌려줄 값. */
     private boolean answer = true;
 
     private TimeEditor open(Task t, LocalDate day, LocalDateTime now) {
-        TimeEditor e = new TimeEditor(t, day, now, (x, v) -> calls.add(v) && answer);
+        TimeEditor e = new TimeEditor(t, day, now, (x, v) -> calls.add(v) && answer, (x, s) -> calls.add(s) && answer);
         e.close = () -> calls.add("닫음");
         return e;
     }
@@ -150,5 +152,30 @@ class TimeEditorTest {
         assertEquals(List.of(d(19), LocalTime.of(1, 30), true, 30), List.of(v.date(), v.startTime(), v.nextDay(), v.durationMinutes()));
         assertNull(v.dueDate());
         assertEquals(d(18), open(report(d(16), null), d(18)).draft().date());
+    }
+
+    @Test
+    void eTed8ClearAndScope() {
+        TimeEditor once = open(task("운동", d(18)).at("07:00").task(), d(18));
+        once.askClear = t -> { throw new AssertionError("묻지 않는다"); };
+        once.clear.doClick();
+        assertEquals(List.of(EditScope.ONLY_THIS, "닫음"), calls);
+        Task copy = task("운동", d(18)).at("07:00").series("s1", Repeat.DAILY).task();
+        for (EditScope scope : EditScope.values()) {
+            calls.clear();
+            TimeEditor e = open(copy, d(18));
+            e.askClear = t -> scope;
+            e.clear.doClick();
+            assertEquals(List.of(scope, "닫음"), calls);
+        }
+        // 취소나 창 닫기(null)는 빼기 함수를 부르지 않고, 함수가 거짓이면 창이 남는다.
+        calls.clear();
+        TimeEditor e = open(copy, d(18));
+        e.askClear = t -> null;
+        e.clear.doClick();
+        answer = false;
+        e.askClear = t -> EditScope.ONLY_THIS;
+        e.clear.doClick();
+        assertEquals(List.of(EditScope.ONLY_THIS), calls);
     }
 }
