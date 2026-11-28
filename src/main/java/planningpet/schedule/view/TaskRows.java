@@ -14,6 +14,7 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.font.FontRenderContext;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -242,8 +243,8 @@ public final class TaskRows extends JPanel implements Scrollable {
 
         /** 지금 폭에서 그리는 제목 글("…"로 줄였으면 그 글). 검사가 읽는다(T-LIST-9). */
         public String shown() {
-            FontMetrics fm = getFontMetrics(getFont());
-            return Ui.fit(t.getTitle(), fm, getWidth() - memoWidth(getFontMetrics(Theme.font(11))));
+            FontRenderContext frc = getFontMetrics(getFont()).getFontRenderContext();
+            return Ui.fit(t.getTitle(), getFont(), frc, getWidth() - memoWidth(getFontMetrics(Theme.font(11))));
         }
 
         @Override
@@ -256,7 +257,7 @@ public final class TaskRows extends JPanel implements Scrollable {
             g.setFont(getFont());
             g.setColor(t.isDone() ? Theme.INK_DIM : Theme.INK);
             g.drawString(text, 0, y);
-            int tw = fm.stringWidth(text);
+            int tw = Ui.width(text, getFont(), g.getFontRenderContext());
             if (t.isDone()) {
                 g.fillRect(0, y - fm.getAscent() / 3 - 1, tw, 1);
             }

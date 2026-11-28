@@ -1,6 +1,10 @@
 package planningpet.common.view;
 
+import java.awt.Font;
 import java.awt.FontMetrics;
+import java.awt.font.FontRenderContext;
+import java.awt.font.TextLayout;
+import java.util.function.ToIntFunction;
 import javax.swing.JLabel;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.AttributeSet;
@@ -51,11 +55,28 @@ public final class Ui {
      * 다름(UTF-16 단위로 잘랐다, docs/porting.md 4절).
      */
     public static String fit(String s, FontMetrics fm, int max) {
-        if (fm.stringWidth(s) <= max) {
+        return fit(s, fm::stringWidth, max);
+    }
+
+    /**
+     * fit과 같고 폭을 그리는 글꼴 자신의 글자로 잰다. JDK는 FontMetrics를 이름, 모양, 크기가 같은 글꼴끼리 나눠 써서, Linux에서 HTML 라벨의
+     * 대체 글꼴 붙은 합성 글꼴이 먼저 재어지면 Pretendard에 없는 글자의 폭이 그리는 것과 달라진다(docs/porting.md 4절, #502).
+     */
+    public static String fit(String s, Font font, FontRenderContext frc, int max) {
+        return fit(s, t -> width(t, font, frc), max);
+    }
+
+    /** font 자신의 글자로 잰 글 폭(FontMetrics.stringWidth처럼 반올림). */
+    public static int width(String s, Font font, FontRenderContext frc) {
+        return s.isEmpty() ? 0 : (int) (0.5 + new TextLayout(s, font, frc).getAdvance());
+    }
+
+    private static String fit(String s, ToIntFunction<String> width, int max) {
+        if (width.applyAsInt(s) <= max) {
             return s;
         }
         String cut = s;
-        while (cut.codePointCount(0, cut.length()) > 1 && fm.stringWidth(cut.strip() + "…") > max) {
+        while (cut.codePointCount(0, cut.length()) > 1 && width.applyAsInt(cut.strip() + "…") > max) {
             cut = cut.substring(0, cut.offsetByCodePoints(cut.length(), -1));
         }
         return cut.strip() + "…";
