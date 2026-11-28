@@ -21,7 +21,8 @@ import planningpet.app.model.LoadResult.Reason;
 
 /** 데이터 폴더의 sqlite 파일 planningpet.db 하나에 쓰고 읽는다(06 21번, 07 저장 형식, D-111). */
 public final class SqliteDataStore implements DataStore {
-    static final String FILE = "planningpet.db";
+    /** 데이터 파일 이름. 못 읽음 창에 파일 자리를 보이려고 Main이 읽는다. */
+    public static final String FILE = "planningpet.db";
     private final Path folder;
     /** 읽은 앱 데이터에 넘기는 시계(07 실행 모드). */
     private final Clock clock;

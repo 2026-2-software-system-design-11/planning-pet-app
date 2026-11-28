@@ -1,5 +1,6 @@
 package planningpet.app;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
@@ -8,6 +9,10 @@ import java.awt.Container;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -21,6 +26,7 @@ import org.junit.jupiter.api.io.TempDir;
 import planningpet.app.model.AppData;
 import planningpet.app.model.DataStore;
 import planningpet.app.model.LoadResult;
+import planningpet.app.model.LoadResult.Reason;
 import planningpet.app.store.SqliteDataStore;
 import planningpet.app.view.Tray;
 import planningpet.common.view.Card;
@@ -39,6 +45,8 @@ class MainStartTest {
     private PickDialog pick;
     private Runnable closed;
     private final Main.Shell shell = new Main.Shell() {
+        public void unreadable(Reason r, Path f) { calls.add("못 읽음 창 " + r + " " + f); }
+
         public void pick(PickDialog p, Runnable c) {
             pick = p;
             closed = c;
@@ -67,8 +75,8 @@ class MainStartTest {
         return d;
     }
 
-    /** 빈 폴더로 첫 실행을 한다. */
-    private void firstRun() {
+    /** 폴더의 SqliteDataStore로 연다. */
+    private void run() {
         Main.start(new SqliteDataStore(folder, CLOCK), folder, CLOCK, shell);
     }
 
@@ -127,14 +135,14 @@ class MainStartTest {
 
     @Test
     void eMain13FirstRun() throws IOException {
-        firstRun();
+        run();
         assertEquals(List.of("고르기 창"), calls);
         assertEquals(0, files());
     }
 
     @Test
     void eMain14FirstRunStart() throws IOException {
-        firstRun();
+        run();
         pick.dog.doClick();
         pick.start.doClick();
         assertEquals(List.of("고르기 창", "메인 창", "타이머"), calls);
@@ -145,7 +153,7 @@ class MainStartTest {
 
     @Test
     void eMain15FirstRunClose() throws IOException {
-        firstRun();
+        run();
         closed.run();
         assertEquals(List.of("고르기 창", "끝내기 0"), calls);
         assertEquals(0, files());
@@ -160,9 +168,32 @@ class MainStartTest {
 
     @Test
     void eMain17FirstRunExamples() throws IOException {
-        firstRun();
+        run();
         pick.examples.doClick();
         assertEquals(List.of("고르기 창"), calls);
         assertEquals(0, files());
+    }
+
+    @Test
+    void eMain18Unreadable() throws IOException {
+        Path file = folder.resolve(SqliteDataStore.FILE);
+        Files.writeString(file, "not a db");
+        run();
+        assertEquals(List.of("못 읽음 창 NOT_DATA_FILE " + file, "끝내기 1"), calls);
+        assertEquals("not a db", Files.readString(file));
+        assertEquals(1, files());
+    }
+
+    @Test
+    void eMain19UnreadableNewer() throws IOException, SQLException {
+        Path file = folder.resolve(SqliteDataStore.FILE);
+        try (Connection db = DriverManager.getConnection("jdbc:sqlite:" + file); Statement s = db.createStatement()) {
+            s.execute("PRAGMA user_version = 99");
+        }
+        byte[] before = Files.readAllBytes(file);
+        run();
+        assertEquals(List.of("못 읽음 창 NEWER_VERSION " + file, "끝내기 1"), calls);
+        assertArrayEquals(before, Files.readAllBytes(file));
+        assertEquals(1, files());
     }
 }
