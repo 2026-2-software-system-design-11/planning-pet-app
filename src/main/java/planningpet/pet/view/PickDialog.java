@@ -1,21 +1,31 @@
 package planningpet.pet.view;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.LayoutManager;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
+import planningpet.common.view.Card;
 import planningpet.common.view.Icons;
+import planningpet.common.view.RoundButtonUI;
+import planningpet.common.view.RoundField;
 import planningpet.common.view.Theme;
+import planningpet.common.view.Ui;
 import planningpet.pet.model.PetKind;
 
 /**
@@ -26,12 +36,21 @@ import planningpet.pet.model.PetKind;
 public final class PickDialog {
     /** 리본 아래 부제(05, 11-23 예시 글). */
     static final String SUBTITLE = "선택한 친구와 함께 일정을 관리하고,\n계획을 실천하며 성장할 수 있어요!";
+    /** 이름 칸 라벨(05, 11-23 예시 글). */
+    static final String NAME_LABEL = "반려동물의 이름을 지어주세요!";
+    /** 줄 폭: 카드 둘과 사이. 이름 줄 카드와 버튼 줄도 이 폭이다. */
+    private static final int ROW = PickCard.W * 2 + 20;
 
     public final PickCard cat = new PickCard("고양이", PetKind.CAT, true, "조용하고 편안한 성격으로\n언제나 곁에서 응원해요!");
     public final PickCard dog = new PickCard("강아지", PetKind.DOG, false, "활발하고 다정한 성격으로\n항상 힘이 되어줘요!");
+    public final RoundField name = new RoundField(null, "예시) 모찌, 코코, 하루").count(10);
+    /** D-74: 펫을 고른 다음 예시로 둘러볼지 바로 시작할지 고른다. 바로 시작이 주 행동이고 Enter와 같다. */
+    public final JButton examples = new JButton("예시로 둘러보기");
+    public final JButton start = new JButton("바로 시작");
     public final JPanel panel = new Backdrop();
 
     public PickDialog() {
+        Ui.limit(name, 10);
         ButtonGroup group = new ButtonGroup();
         group.add(cat);
         group.add(dog);
@@ -41,6 +60,8 @@ public final class PickDialog {
         panel.add(Box.createVerticalGlue());
         panel.add(new Logo("플래닝펫", "Planning Pet"));
         panel.add(Box.createVerticalStrut(4));
+        panel.add(new Ribbon("함께할 반려동물을 골라 주세요"));
+        panel.add(Box.createVerticalStrut(2));
         JLabel sub = new JLabel("<html><div style='text-align:center'>" + SUBTITLE.replace("\n", "<br>") + "</div></html>",
                 SwingConstants.CENTER);
         sub.setFont(Theme.font(16));
@@ -52,7 +73,83 @@ public final class PickDialog {
         animals.add(dog);
         animals.setMaximumSize(new Dimension(Integer.MAX_VALUE, PickCard.H));
         panel.add(animals);
+        panel.add(Box.createVerticalStrut(12));
+        panel.add(center(nameBar()));
+        panel.add(Box.createVerticalStrut(10));
+        JLabel later = Ui.hint("예시는 나중에 '예시 지우기'로 한 번에 지울 수 있어요");
+        JPanel choose = clear(new BorderLayout(0, 6));
+        later.setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 6));
+        later.setHorizontalAlignment(SwingConstants.CENTER);
+        choose.add(later, BorderLayout.NORTH);
+        JPanel buttons = clear(new FlowLayout(FlowLayout.CENTER, 10, 0));
+        big(examples);
+        big(start);
+        start.putClientProperty(RoundButtonUI.PRIMARY, Boolean.TRUE);
+        start.setIcon(Icons.icon(Icons.Kind.PAW, 18, Color.WHITE));
+        start.setIconTextGap(8);
+        buttons.add(examples);
+        buttons.add(start);
+        choose.add(buttons, BorderLayout.CENTER);
+        choose.setMaximumSize(new Dimension(ROW, Integer.MAX_VALUE));
+        choose.setPreferredSize(new Dimension(ROW, choose.getPreferredSize().height));
+        panel.add(center(choose));
         panel.add(Box.createVerticalGlue());
+    }
+
+    /** 이름 줄 카드: 연필, 라벨, 둥근 이름 칸, 칸 아래 안내(05). 테스트가 카드만 견주도록 패키지 안에 연다. */
+    JPanel nameBar() {
+        JPanel bar = new JPanel(new GridBagLayout()) {
+            @Override
+            protected void paintComponent(Graphics graphics) {
+                Graphics2D g = (Graphics2D) graphics.create();
+                PickScene.hints(g);
+                int w = getWidth() - 4;
+                int h = getHeight() - 6;
+                Card.shadow(g, 2, 1, w, h, 26);
+                g.setColor(PickScene.alpha(Theme.CARD_TOP, 225));
+                g.fillRoundRect(2, 1, w, h, 26, 26);
+                g.setColor(Theme.CARD_EDGE);
+                g.drawRoundRect(2, 1, w - 1, h - 1, 26, 26);
+                g.dispose();
+            }
+        };
+        bar.setOpaque(false);
+        bar.setBorder(BorderFactory.createEmptyBorder(10, 20, 14, 22));
+        JLabel label = new JLabel(NAME_LABEL, Icons.icon(Icons.Kind.PENCIL, 22, Theme.ICON), SwingConstants.LEFT);
+        label.setFont(Theme.bold(15));
+        label.setIconTextGap(8);
+        label.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 6));
+        label.setLabelFor(name);
+        name.setFont(Theme.font(14));
+        name.setColumns(12);
+        name.getAccessibleContext().setAccessibleName("반려동물 이름");
+        JLabel hint = Ui.hint("비워 두면 나비, 바둑이로 불러요");
+        // 오른쪽 빈 테: 배율이 바뀌면 글 폭이 조금 늘어 끝 글자가 잘린다(2배 그림에서 "불러요"가 잘림).
+        hint.setBorder(BorderFactory.createEmptyBorder(0, 18, 0, 6));
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridx = 0;
+        c.gridy = 0;
+        c.anchor = GridBagConstraints.WEST;
+        c.insets = new Insets(0, 0, 0, 16);
+        bar.add(label, c);
+        c.gridx = 1;
+        c.weightx = 1;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.insets = new Insets(0, 0, 0, 0);
+        bar.add(name, c);
+        c.gridy = 1;
+        c.fill = GridBagConstraints.NONE;
+        c.insets = new Insets(4, 0, 0, 0);
+        bar.add(hint, c);
+        bar.setPreferredSize(new Dimension(ROW, bar.getPreferredSize().height));
+        bar.setMaximumSize(bar.getPreferredSize());
+        return bar;
+    }
+
+    /** 큰 알약 버튼(예시의 시작 버튼 크기를 창 크기에 맞춤). */
+    private static void big(JButton b) {
+        b.setFont(Theme.bold(16));
+        b.setBorder(BorderFactory.createEmptyBorder(12, 26, 13, 26));
     }
 
     private static JPanel clear(LayoutManager layout) {
@@ -134,6 +231,41 @@ public final class PickDialog {
             Icons.draw(left, Icons.Kind.SPARK, 0, y + 2, s, Theme.SPARK);
             left.dispose();
             Icons.draw(g, Icons.Kind.SPARK, tx + wordW + 12, y + 2, s, Theme.SPARK);
+            g.dispose();
+        }
+    }
+
+    /** 리본 제목. 글은 라벨 글이라 화면 읽기와 QA가 그대로 읽는다. 하늘 발자국 둘이 양옆에 붙는다. */
+    private static final class Ribbon extends JLabel {
+        Ribbon(String text) {
+            super(text, SwingConstants.CENTER);
+            setFont(Theme.heavy(21));
+            setForeground(Color.WHITE);
+            setAlignmentX(0.5f);
+            setPreferredSize(new Dimension(800, 62));
+            setMaximumSize(new Dimension(Integer.MAX_VALUE, 62));
+        }
+
+        @Override
+        protected void paintComponent(Graphics graphics) {
+            Graphics2D g = (Graphics2D) graphics.create();
+            PickScene.hints(g);
+            FontMetrics fm = g.getFontMetrics(getFont());
+            int bandW = Math.max(380, fm.stringWidth(getText()) + 120);
+            int bandH = 40;
+            double bx = (getWidth() - bandW) / 2.0;
+            double by = 8;
+            PickScene.ribbon(g, bx, by, bandW, bandH);
+            PickScene.skyPaw(g, bx - 78, by + 32, 28, -0.25);
+            PickScene.skyPaw(g, bx + bandW + 78, by + 32, 28, 0.25);
+            g.setFont(getFont());
+            int tw = fm.stringWidth(getText());
+            int tx = (getWidth() - tw) / 2;
+            int ty = (int) (by + bandH / 2.0 + (fm.getAscent() - fm.getDescent()) / 2.0);
+            g.setColor(PickScene.alpha(Theme.RIBBON_DEEP.darker(), 120));
+            g.drawString(getText(), tx, ty + 1);
+            g.setColor(getForeground());
+            g.drawString(getText(), tx, ty);
             g.dispose();
         }
     }
