@@ -97,4 +97,23 @@ class UiTest {
         f.getDocument().insertString(0, "xyz", null);
         assertEquals("xyz" + TEN, f.getText());
     }
+
+    @Test
+    void eLimit6Emoji() {
+        JTextField f = field(10, "가나다라마바사아자");
+        f.replaceSelection(SMILE);
+        assertEquals("가나다라마바사아자\uD83D", f.getText());
+        f = field(10, "가나다라마바사아자");
+        f.replaceSelection(SMILE + SMILE);
+        assertEquals("가나다라마바사아자\uD83D", f.getText());
+        for (int n : new int[] {6, 11}) {
+            f = field(10, null);
+            f.replaceSelection(SMILE.repeat(n));
+            assertEquals(SMILE.repeat(5), f.getText(), n + "개");
+        }
+        f = field(10, SMILE.repeat(5));
+        f.select(0, 2);
+        f.replaceSelection("가나다");
+        assertEquals("가나" + SMILE.repeat(4), f.getText());
+    }
 }
