@@ -244,6 +244,13 @@ public final class TaskBook {
         return all;
     }
 
+    /** 반복의 마지막 날짜(D-42). 끝낸 사본도 센다. 반복 사본이 아니면 그 날짜다. 수정 창의 반복 끝 칸이 보인다. */
+    public LocalDate seriesEnd(Task task) {
+        String series = task.getSeriesId();
+        return tasks.stream().filter(t -> series != null && series.equals(t.getSeriesId())).map(Task::getDate)
+                .max(LocalDate::compareTo).orElse(task.getDate());
+    }
+
     /** task와 같은 반복에서 날짜가 from과 같거나 뒤인 끝내지 않은 다른 사본(D-42). 반복 사본이 아니면 없다. */
     private List<Task> laterCopies(Task task, LocalDate from) {
         String series = task.getSeriesId();

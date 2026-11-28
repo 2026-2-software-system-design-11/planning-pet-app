@@ -187,6 +187,18 @@ class TaskBookEditTest {
     }
 
     @Test
+    void E_SERIES_1_lastCopyDate() {
+        for (int d = 16; d <= 20; d++) {
+            put("운동", day(11, d), null, null, null, "S", d == 20 ? day(11, 20) : null);
+        }
+        Task first = tasks.get(0);
+        put("독서", day(11, 25), null, null, null, "R");
+        Task alone = put("빨래", day(11, 18), null, null, null, null);
+        book();
+        assertEquals(List.of(day(11, 20), day(11, 18)), List.of(book.seriesEnd(first), book.seriesEnd(alone)));
+    }
+
+    @Test
     void T_EDIT_41_pastDuePeriod() {
         Task t = put("Q", day(11, 10), null, day(11, 10), day(11, 16), null);
         book().update(t, draft(t, "Q2", day(11, 10), day(11, 16), null, 60), EditScope.ONLY_THIS);
