@@ -66,6 +66,8 @@ public final class PickDialog {
         animals.add(dog);
         animals.setMaximumSize(new Dimension(Integer.MAX_VALUE, PickCard.H));
         panel.add(animals);
+        panel.add(Box.createVerticalStrut(12));
+        panel.add(center(nameBar()));
         panel.add(Box.createVerticalGlue());
     }
 

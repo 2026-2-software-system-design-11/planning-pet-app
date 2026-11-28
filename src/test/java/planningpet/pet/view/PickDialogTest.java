@@ -80,7 +80,7 @@ class PickDialogTest {
         bar.add(plain, at, 1);
     }
 
-    /** 글을 모두 비우고 두 카드를 글 없는 카드로 바꿔 끼운 패널을 기준 그림과 맞춘다. */
+    /** 글을 모두 비우고 두 카드를 글 없는 카드로, 이름 칸을 plainName으로 바꿔 끼운 패널을 기준 그림과 맞춘다. */
     private static void looksLikePrototype(String name, int w, int h) throws IOException {
         PickDialog d = new PickDialog();
         Container row = d.cat.getParent();
@@ -89,6 +89,7 @@ class PickDialogTest {
         row.add(new PickCard("", PetKind.DOG, false, ""));
         d.panel.remove(1);
         d.panel.add(new PickDialog.Logo("", ""), 1);
+        plainName(d.name);
         Snap.blank(d.panel);
         Snap.assertLaidOutLooksLikePrototype("pickdlg-" + name, d.panel, w, h);
     }
@@ -105,7 +106,7 @@ class PickDialogTest {
         assertTrue(d.panel.isOpaque());
         assertEquals(BoxLayout.Y_AXIS, ((BoxLayout) d.panel.getLayout()).getAxis());
         assertEquals(new Insets(16, 0, 22, 0), d.panel.getInsets());
-        assertEquals(9, d.panel.getComponentCount());
+        assertEquals(11, d.panel.getComponentCount());
         JPanel row = (JPanel) d.cat.getParent();
         FlowLayout flow = (FlowLayout) row.getLayout();
         assertEquals(List.of(FlowLayout.CENTER, 20, 0), List.of(flow.getAlignment(), flow.getHgap(), flow.getVgap()));
@@ -155,29 +156,29 @@ class PickDialogTest {
     @Test
     void eDlg3DefaultSize() throws IOException {
         PickDialog d = new PickDialog();
-        assertEquals(List.of(new Dimension(800, 480), new Dimension(556, 402)),
+        assertEquals(List.of(new Dimension(800, 575), new Dimension(556, 491)),
                 List.of(d.panel.getPreferredSize(), d.panel.getMinimumSize()));
         assertEquals(rects(0, 16, 800, 60, 0, 80, 800, 62, 0, 144, 800, 40, 285, 0, 230, 40, 0, 196, 800, 262, 142, 0, 248, 262,
-                410, 0, 248, 262), places(800, 480));
-        looksLikePrototype("800x480", 800, 480);
+                410, 0, 248, 262, 0, 470, 800, 83, 142, 0, 516, 83), places(800, 575));
+        looksLikePrototype("800x575", 800, 575);
     }
 
     @Test
     void eDlg4BigWindow() throws IOException {
-        assertEquals(rects(0, 226, 1200, 60, 0, 290, 1200, 62, 0, 354, 1200, 40, 485, 0, 230, 40, 0, 406, 1200, 262, 342, 0, 248, 262,
-                610, 0, 248, 262), places(1200, 900));
+        assertEquals(rects(0, 178, 1200, 60, 0, 242, 1200, 62, 0, 306, 1200, 40, 485, 0, 230, 40, 0, 358, 1200, 262, 342, 0, 248, 262,
+                610, 0, 248, 262, 0, 632, 1200, 83, 342, 0, 516, 83), places(1200, 900));
         looksLikePrototype("1200x900", 1200, 900);
     }
 
     @Test
     void eDlg5SmallWindows() throws IOException {
         assertEquals(rects(0, 16, 800, 18, 0, 38, 800, 26, 0, 66, 800, 40, 285, 0, 230, 40, 0, 118, 800, 262, 142, 0, 248, 262,
-                410, 0, 248, 262), places(800, 300));
-        assertEquals(rects(42, 0, 248, 262, 310, 0, 248, 262), places(600, 480).subList(5, 7));
-        assertEquals(rects(-124, 0, 248, 262, -124, 262, 248, 262), places(0, 480).subList(5, 7));
+                410, 0, 248, 262, 0, 392, 800, 77, 142, 0, 516, 83), places(800, 300));
+        assertEquals(rects(42, 0, 248, 262, 310, 0, 248, 262, 0, 470, 600, 83, 42, 0, 516, 83), places(600, 575).subList(5, 9));
+        assertEquals(rects(-124, 0, 248, 262, -124, 262, 248, 262, 0, 470, 0, 83, -258, 0, 516, 83), places(0, 575).subList(5, 9));
         looksLikePrototype("800x300", 800, 300);
-        looksLikePrototype("600x480", 600, 480);
-        looksLikePrototype("0x480", 0, 480);
+        looksLikePrototype("600x575", 600, 575);
+        looksLikePrototype("0x575", 0, 575);
         looksLikePrototype("1x1", 1, 1);
     }
 
@@ -185,7 +186,7 @@ class PickDialogTest {
     void eDlg6BlankPreferredSize() {
         PickDialog d = new PickDialog();
         Snap.blank(d.panel);
-        assertEquals(new Dimension(800, 440), d.panel.getPreferredSize());
+        assertEquals(new Dimension(800, 535), d.panel.getPreferredSize());
     }
 
     @Test
@@ -233,7 +234,7 @@ class PickDialogTest {
         PickDialog d = new PickDialog();
         Dimension wide = new Dimension(1000, 5);
         d.panel.add(new Box.Filler(wide, wide, wide));
-        assertEquals(new Dimension(1000, 485), d.panel.getPreferredSize());
+        assertEquals(new Dimension(1000, 580), d.panel.getPreferredSize());
         PickDialog narrow = new PickDialog();
         narrow.panel.remove(1);
         assertEquals(800, narrow.panel.getPreferredSize().width);
