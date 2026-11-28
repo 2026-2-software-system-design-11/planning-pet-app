@@ -2,8 +2,10 @@ package planningpet.reward.controller;
 
 import planningpet.app.controller.AppController;
 import planningpet.app.model.AppData;
+import planningpet.pet.model.PetState;
 import planningpet.pet.model.PetTalk;
 import planningpet.pet.model.Situation;
+import planningpet.reward.model.Level;
 import planningpet.reward.model.RewardResult;
 import planningpet.reward.model.Rewards;
 import planningpet.schedule.model.Task;
@@ -36,6 +38,19 @@ public final class RewardController {
         app.change("할 일 완료", () -> {
             RewardResult result = rewards.complete(task, data.today());
             app.say(talk.say(Situation.COMPLETED, result, task), null);
+        });
+    }
+
+    /**
+     * 06 9번, UC-08. 풀고 UNCOMPLETED를 말한다. 포인트와 레벨은 풀기 전에 읽고, 레벨은 보상을 받은 펫(없으면 고른 펫)으로 구한다(D-48).
+     */
+    public void uncomplete(Task task) {
+        app.change("할 일 완료 취소", () -> {
+            int points = task.getRewardPoints();
+            PetState pet = task.getRewardPet() != null ? data.pet(task.getRewardPet()) : data.activePet();
+            Level before = Level.of(pet.getExp());
+            rewards.uncomplete(task, data.today());
+            app.say(talk.say(Situation.UNCOMPLETED, points, before, Level.of(pet.getExp())), null);
         });
     }
 }

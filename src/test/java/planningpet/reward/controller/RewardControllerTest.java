@@ -177,4 +177,73 @@ class RewardControllerTest {
         assertEquals("10P 10 2026-11-20/1", totals());
         assertEquals("오늘 할 일을 다 끝냈어! 푹 쉬어.", app.getBubble().getLine());
     }
+
+    @Test
+    void T_TALK_7_uncompleteLevelDown() {
+        Task t = tasks(d(16), "가", "나");
+        data.activePet().setExp(45);
+        reward.complete(t);
+        reward.uncomplete(t);
+        assertEquals("false 0 0 null null null", rewardOf(t));
+        assertEquals("0P 45 2026-11-16/0", totals());
+        assertEquals("체크를 풀었어. -10P, 이제 Lv.1", app.getBubble().getLine());
+        assertEquals("저장 2 알림 2", "저장 " + saves + " 알림 " + heard);
+    }
+
+    @Test
+    void T_TALK_8_uncompleteCapped() {
+        Task t = tasks(d(16), "가", "나");
+        data.setRewardCount(d(16), 20);
+        data.setPoints(50);
+        reward.complete(t);
+        assertEquals("잘했어! 오늘 보상은 다 받았지만 체크는 계속 돼.", app.getBubble().getLine());
+        reward.uncomplete(t);
+        assertEquals("50P 0 2026-11-16/20", totals());
+        assertEquals("체크를 풀었어.", app.getBubble().getLine());
+    }
+
+    @Test
+    void E_HOME_4_levelOfPetThatGotIt() {
+        Task t = tasks(d(16), "가", "나");
+        data.addPet(new PetState(PetKind.DOG, "바둑이"));
+        data.pet(PetKind.DOG).setExp(45);
+        data.setActiveKind(PetKind.DOG);
+        reward.complete(t);
+        data.setActiveKind(PetKind.CAT);
+        reward.uncomplete(t);
+        assertEquals("45 0", data.pet(PetKind.DOG).getExp() + " " + data.pet(PetKind.CAT).getExp());
+        assertEquals("체크를 풀었어. -10P, 이제 Lv.1", app.getBubble().getLine());
+    }
+
+    @Test
+    void E_HOME_5_oldDataWithoutPet() {
+        Task t = tasks(d(16), "가", "나");
+        data.activePet().setExp(55);
+        data.setPoints(10);
+        t.finish(d(15), 10, 10, null);
+        reward.uncomplete(t);
+        assertEquals("0P 45 null/0", totals());
+        assertEquals("체크를 풀었어. -10P, 이제 Lv.1", app.getBubble().getLine());
+    }
+
+    @Test
+    void E_HOME_6_uncompleteNotDone() {
+        Task t = tasks(d(16), "가", "나");
+        assertThrows(IllegalStateException.class, () -> reward.uncomplete(t));
+        assertEquals("false 0 0 null null null", rewardOf(t));
+        assertEquals("", app.getBubble().getLine());
+        assertEquals("저장 0 알림 1", "저장 " + saves + " 알림 " + heard);
+    }
+
+    @Test
+    void E_HOME_7_uncompleteSaveFails() {
+        Task t = tasks(d(16), "가", "나");
+        reward.complete(t);
+        failing = true;
+        reward.uncomplete(t);
+        assertEquals("true 10 10 2026-11-16 CAT 2026-11-16", rewardOf(t));
+        assertEquals("10P 10 2026-11-16/1", totals());
+        assertEquals("잘했어! +10P", app.getBubble().getLine());
+        assertEquals(List.of("할 일 완료 취소 저장에 실패해서 바꾸기 전으로 돌렸어요."), errors);
+    }
 }
