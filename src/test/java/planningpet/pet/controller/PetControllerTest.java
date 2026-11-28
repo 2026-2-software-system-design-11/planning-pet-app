@@ -79,8 +79,9 @@ class PetControllerTest {
     @Test
     void E_PET_11_emojiName() {
         String e = "😀";
-        assertEquals(e.repeat(5), cat(e.repeat(10)));
-        assertEquals("가나다라마바사아자\uD83D", cat("가나다라마바사아자" + e));
+        assertEquals(e.repeat(10), cat(e.repeat(10)));
+        assertEquals(e.repeat(10), cat(e.repeat(11)));
+        assertEquals("가나다라마바사아자" + e, cat("가나다라마바사아자" + e));
     }
 
     @Test

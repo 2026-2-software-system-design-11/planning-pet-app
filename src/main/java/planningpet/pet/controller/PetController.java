@@ -25,7 +25,8 @@ public final class PetController {
     /** D-27: 앞뒤 공백을 지우고 10자까지, 비우면 고양이는 나비, 강아지는 바둑이. choose, adopt, rename이 같이 쓴다. */
     static String nameOf(PetKind kind, String name) {
         String n = name.strip();
-        String picked = n.length() > 10 ? n.substring(0, 10) : n;
+        // 06 읽는 법: 글자 수는 코드 포인트로 센다. 프로토타입은 UTF-16 단위로 잘라 이모지가 반쪽만 남았다.
+        String picked = n.codePointCount(0, n.length()) > 10 ? n.substring(0, n.offsetByCodePoints(0, 10)) : n;
         return !picked.isEmpty() ? picked : kind == PetKind.DOG ? "바둑이" : "나비";
     }
 
