@@ -133,6 +133,17 @@ class TrayTest {
     }
 
     @Test
+    void E_TRAY_6_noticeClearsAlertDay() {
+        open(stats());
+        window.show("일정관리");
+        tray.tick(AT_1450);
+        tray.notice();
+        tray.clicked();
+        assertEquals(List.of(ALERT, "플래닝펫 플래닝펫은 트레이에서 계속 알림을 보내요", "앞으로"), got);
+        assertEquals("일정관리", window.current());
+    }
+
+    @Test
     void E_TRAY_7_menuOpensAndQuits() {
         open();
         app.setQuit(() -> got.add("끝냄"));

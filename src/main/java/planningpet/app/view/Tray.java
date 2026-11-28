@@ -21,6 +21,8 @@ import planningpet.schedule.model.Reminder;
 public final class Tray {
     /** 06 17번과 23번의 30초. */
     static final int PERIOD_MS = 30_000;
+    /** 05 그 밖의 창과 알림의 처음 창 닫기 안내(06 25번). */
+    static final String NOTICE = "플래닝펫은 트레이에서 계속 알림을 보내요";
     private final AppController app;
     private final DayWatcher watcher;
     private final AppWindow window;
@@ -73,6 +75,12 @@ public final class Tray {
         window.show("홈");
         home.showDay(day);
         app.onWindowShown();
+    }
+
+    /** 처음 창 닫기 안내(UC-19 1a). 제목은 앱 이름이다. 남은 일정 시작 알림의 날짜를 지워 다음 사건은 열기와 같다. */
+    public void notice() {
+        alerted = null;
+        notify.accept("플래닝펫", NOTICE);
     }
 
     /** 아이콘과 메뉴를 운영체제 트레이에 단다. 달면 true다. 화면에 아이콘이 생겨 검사하지 않는다(docs/porting/tray.md 3절). */

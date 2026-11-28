@@ -358,4 +358,30 @@ class AppWindowTest {
     void eWin11WindowIcon() throws IOException {
         Snap.assertLooksLikePrototype("frame-icon", AppWindow.icon());
     }
+
+    /** 창 닫기 버튼의 close가 부른 일(docs/porting/tray.md E-CLOSE-4~6). */
+    private List<String> close(boolean... traySupported) {
+        List<String> got = new ArrayList<>();
+        app.setQuit(() -> got.add("끝내기"));
+        AppWindow w = window();
+        for (boolean tray : traySupported) {
+            w.close(tray, () -> got.add("숨기기"), () -> got.add("안내"));
+        }
+        return got;
+    }
+
+    @Test
+    void eClose4FirstCloseHidesWithNotice() {
+        assertEquals(List.of("숨기기", "안내"), close(true));
+    }
+
+    @Test
+    void eClose5SecondCloseHidesOnly() {
+        assertEquals(List.of("숨기기", "안내", "숨기기"), close(true, true));
+    }
+
+    @Test
+    void eClose6NoTrayQuits() {
+        assertEquals(List.of("끝내기"), close(false));
+    }
 }
