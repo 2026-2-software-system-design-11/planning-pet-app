@@ -5,6 +5,7 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.time.LocalDate;
 import java.util.function.BiConsumer;
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
@@ -86,5 +87,21 @@ public final class TaskRows extends JPanel {
         label.setFont(Theme.font(12));
         label.setBorder(BorderFactory.createEmptyBorder(0, RoundCheck.SIZE + 10, 0, 0));
         return label;
+    }
+
+    /** D-67: 시각을 정한 날에 못 끝낸 기간 할 일이면 "{일}일에 하려던 일"(정한 날의 일), 아니면 null. */
+    static String missedNote(Task t, LocalDate today) {
+        return t.missed(today) ? t.getDate().getDayOfMonth() + "일에 하려던 일" : null;
+    }
+
+    /**
+     * D-70, D-93: 끝내지 않은 기간 할 일을 마감 날 목록(listDay)에서 보면, 그날이 오늘이면 "오늘 마감", 앞날이면 "마감"이다. 마감이
+     * 지났으면 null이다.
+     */
+    static String dueTag(Task t, LocalDate listDay, LocalDate today) {
+        if (!t.period() || t.isDone() || !t.getDueDate().equals(listDay)) {
+            return null;
+        }
+        return listDay.equals(today) ? "오늘 마감" : listDay.isAfter(today) ? "마감" : null;
     }
 }
