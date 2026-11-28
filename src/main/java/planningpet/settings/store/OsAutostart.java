@@ -31,6 +31,9 @@ public final class OsAutostart implements Autostart {
 
     @Override
     public void set(boolean on) throws IOException {
+        if (!available()) {
+            throw new IllegalStateException("설치 파일로 설치했을 때만 쓸 수 있어요");
+        }
         if (on) {
             Files.createDirectories(plist().getParent());
             Files.writeString(plist(), plistText());
@@ -47,8 +50,9 @@ public final class OsAutostart implements Autostart {
         return home.resolve("Library").resolve("LaunchAgents").resolve(LABEL + ".plist");
     }
 
-    /** RunAtLoad인 LaunchAgent. */
+    /** RunAtLoad인 LaunchAgent. 앱 자리를 XML 글자로 바꿔 넣는다. */
     private String plistText() {
+        String path = app.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
         return """
                 <?xml version="1.0" encoding="UTF-8"?>
                 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -65,6 +69,6 @@ public final class OsAutostart implements Autostart {
                   <true/>
                 </dict>
                 </plist>
-                """.formatted(LABEL, app);
+                """.formatted(LABEL, path);
     }
 }

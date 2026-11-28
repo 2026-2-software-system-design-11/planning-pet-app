@@ -80,11 +80,24 @@ class OsAutostartTest {
     }
 
     @Test
+    void eAuto5EscapesPath() throws IOException {
+        mac("/Applications/A & B <1>/PlanningPet").set(true);
+        String text = Files.readString(mac(APP).plist());
+        assertTrue(text.contains("<string>/Applications/A &amp; B &lt;1&gt;/PlanningPet</string>"), text);
+    }
+
+    @Test
     void eAuto6CannotWrite() throws IOException {
         Files.createDirectories(home.resolve("Library"));
         Files.writeString(home.resolve("Library/LaunchAgents"), "파일");
         assertThrows(IOException.class, () -> mac(APP).set(true));
         assertFalse(mac(APP).registered());
+    }
+
+    @Test
+    void eAuto7SetWhenUnavailableChangesNothing() {
+        assertThrows(IllegalStateException.class, () -> mac(null).set(true));
+        assertFalse(Files.exists(home.resolve("Library")));
     }
 
     @Test
