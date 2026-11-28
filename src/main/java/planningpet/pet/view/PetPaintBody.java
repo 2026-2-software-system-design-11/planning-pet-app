@@ -84,7 +84,7 @@ final class PetPaintBody extends PetPaintHead {
         }
         redraw(body);
         if (has(WearId.VEST)) {
-            vest(body, 200, 258);
+            vest(body, 200, 258, true);
         }
         // 뒷다리 허벅지 선
         stroke(new QuadCurve2D.Double(92, 268, 108, 250, 126, 262), line * 0.7f, ink);
@@ -167,8 +167,8 @@ final class PetPaintBody extends PetPaintHead {
     }
 
     /**
-     * 자는 펫: 옆으로 엎드린 몸이 3.6초 주기로 숨쉬고, 누운 꼬리, 앞발 둘, 왼쪽에 기울인 잠든 머리와 오른쪽 위 Zzz.
-     * 목 장신구는 바닥(y=300) 아래를 잘라 그린다.
+     * 자는 펫: 옆으로 엎드린 몸이 3.6초 주기로 숨쉬고(조끼와 망토도 함께), 누운 꼬리, 앞발 둘, 왼쪽에 기울인 잠든 머리와 오른쪽 위 Zzz.
+     * 목 장신구는 바닥(y=300) 아래를 잘라 그린다. 망토는 몸 뒤가 아니라 등 위에 덮고 조끼는 단추가 없다.
      */
     void sleep() {
         AffineTransform base = g.getTransform();
@@ -188,6 +188,12 @@ final class PetPaintBody extends PetPaintHead {
         }
         shadeIn(body, ell(170, 304, 120, 14), furShade);
         redraw(body);
+        if (has(WearId.VEST)) {
+            vest(body, 214, 270, false);
+        }
+        if (has(WearId.CAPE)) {
+            capeOnBack(body);
+        }
         g.setTransform(base);
         lyingTail();
         paw(150, 290, 0);
@@ -202,7 +208,7 @@ final class PetPaintBody extends PetPaintHead {
 
     /**
      * 기지개 켜는 펫: 오른쪽 뒷다리로 엉덩이를 들고(고양이는 엉덩이에서 위로 선 꼬리, 강아지는 짧은 꼬리), 앞으로 기운 둥근 몸이 2.8초
-     * 주기로 조금 흔들리며, 왼쪽 앞으로 뻗은 앞다리 위에 기지개 표정의 머리를 둔다.
+     * 주기로 조금 흔들리며, 왼쪽 앞으로 뻗은 앞다리 위에 기지개 표정의 머리를 둔다. 망토는 등 위에 덮고 조끼는 단추가 없다.
      */
     void stretch() {
         AffineTransform base = g.getTransform();
@@ -233,6 +239,12 @@ final class PetPaintBody extends PetPaintHead {
         }
         shadeIn(body, ell(0, 44, 100, 16), furShade);
         redraw(body);
+        if (has(WearId.VEST)) {
+            vest(body, -40, 40, false);
+        }
+        if (has(WearId.CAPE)) {
+            capeOnBack(body);
+        }
         g.setTransform(base);
         Path2D front = new Path2D.Double();
         front.moveTo(118, 262);

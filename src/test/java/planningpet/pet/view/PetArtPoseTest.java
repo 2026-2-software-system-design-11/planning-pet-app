@@ -183,6 +183,37 @@ class PetArtPoseTest {
         }
     }
 
+    /** 색 c인 픽셀만의 상자를 (160, 300)에서 잰다. */
+    private static String colorBox(BufferedImage img, Color c) {
+        BufferedImage only = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        for (int y = 0; y < img.getHeight(); y++) {
+            for (int x = 0; x < img.getWidth(); x++) {
+                only.setRGB(x, y, img.getRGB(x, y) == c.getRGB() ? c.getRGB() : 0);
+            }
+        }
+        return PetArtTest.paintedBox(only, 160, 300);
+    }
+
+    /** 누운 자세의 망토는 등 위에 덮여 바닥보다 위에만 있다. 앉으면 몸 뒤로 퍼져 바닥 아래까지 내려온다. */
+    @Test
+    void ePose10LyingCapeOnBack() {
+        Set<WearId> cape = Set.of(WearId.CAPE);
+        assertEquals(List.of("42 -85 90 -41", "25 -114 72 -66", "50 -83 90 -43", "31 -114 72 -72"),
+                Arrays.stream(KINDS).flatMap(k -> Arrays.stream(LYING).map(p -> colorBox(draw(k, p, cape, 0), PetPaintBase.CAPE))).toList());
+        assertEquals("-107 -54 107 10", colorBox(draw(PetKind.CAT, Pose.SIT, cape, 0), PetPaintBase.CAPE));
+    }
+
+    /** 조끼의 금색 단추는 앉은 자세들(앉기, 밥 먹기, 노래)에만 단다. */
+    @Test
+    void ePose11VestButtonsWhenSitting() {
+        for (PetKind kind : KINDS) {
+            for (Pose pose : Pose.values()) {
+                boolean sits = pose == Pose.SIT || pose == Pose.EAT || pose == Pose.SING;
+                assertEquals(sits, count(draw(kind, pose, Set.of(WearId.VEST), 0), PetPaintBase.GOLD) > 0, kind + " " + pose);
+            }
+        }
+    }
+
     /** Z 셋만 320x320 그림에 상자 좌표 그대로 그린다. */
     private static BufferedImage zzz(double t) {
         BufferedImage img = new BufferedImage(320, 320, BufferedImage.TYPE_INT_ARGB);
