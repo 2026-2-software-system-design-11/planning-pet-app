@@ -1,6 +1,7 @@
 package planningpet.schedule.view;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
@@ -11,19 +12,45 @@ import java.awt.Insets;
 import java.awt.RenderingHints;
 import java.time.LocalDate;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import javax.swing.BorderFactory;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import planningpet.app.model.AppData;
 import planningpet.common.view.CircleButton;
 import planningpet.common.view.Icons;
 import planningpet.common.view.Theme;
 import planningpet.common.view.Ui;
+import planningpet.reward.controller.RewardController;
 import planningpet.schedule.model.Task;
 
 /** 할 일 줄 목록(07). 홈의 그날 목록과 일정관리 오른쪽 목록이 같이 쓴다. 옮기는 몫은 docs/porting/task-rows.md. */
 public final class TaskRows extends JPanel {
+    /** 시각 알약을 누르면 할 일, 그 줄이 보이는 목록의 날, 누른 알약을 받는다. 시각 고치기 창(S5)이 알약 아래에 뜬다. */
+    public interface TimeOpener {
+        void open(Task t, LocalDate day, Component anchor);
+    }
+
+    private final AppData data;
+    private final RewardController reward;
+    private final Consumer<Task> onEdit;
+    private final Consumer<Task> onDelete;
+    private final TimeOpener onTime;
+
+    /**
+     * 둥근 체크는 reward의 complete와 uncomplete를 부르고, 연필, 휴지통, 시각 알약은 누르면 onEdit, onDelete, onTime에 알린다. 그것이
+     * 여는 일정 입력 창(S4), 삭제 확인, 시각 고치기 창(S5)은 그 단위가 잇는다(docs/porting/task-rows.md S3v).
+     */
+    public TaskRows(AppData data, RewardController reward, Consumer<Task> onEdit, Consumer<Task> onDelete, TimeOpener onTime) {
+        this.data = data;
+        this.reward = reward;
+        this.onEdit = onEdit;
+        this.onDelete = onDelete;
+        this.onTime = onTime;
+    }
+
     /**
      * 제목 칸. 글(getText)은 HTML(화면 읽기 프로그램이 읽는다)이고, 그림은 한 줄로 그려 칸 폭을 넘으면 "…"로 줄인다. HTML 라벨은 좁으면
      * 두 줄로 꺾여 줄 높이를 넘었다. 끝낸 일은 흐린 글에 취소선, 메모가 있으면 끝에 흐린 "메모"다(docs/porting/task-rows.md S3t).
@@ -155,6 +182,16 @@ public final class TaskRows extends JPanel {
         row.setAlignmentX(LEFT_ALIGNMENT);
         JCheckBox box = RoundCheck.style(new JCheckBox());
         box.setSelected(t.isDone());
+        box.putClientProperty(Task.class, t);
+        box.getAccessibleContext().setAccessibleName((t.isDone() ? "끝냄 취소: " : "끝냄: ") + t.getTitle());
+        // UC-07, UC-08: 끝내지 않은 일은 끝내고 끝낸 일은 체크를 푼다(프로토타입 TaskController.check의 갈래).
+        box.addActionListener(e -> {
+            if (t.isDone()) {
+                reward.uncomplete(t);
+            } else {
+                reward.complete(t);
+            }
+        });
         JLabel minutes = new JLabel(t.getDurationMinutes() + "분", JLabel.RIGHT);
         minutes.setFont(Theme.font(13));
         minutes.setForeground(t.isDone() ? Theme.INK_DIM : Theme.INK_SUB);

@@ -3,6 +3,7 @@ package planningpet.schedule.view;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.Component;
@@ -12,8 +13,10 @@ import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.AbstractButton;
@@ -21,10 +24,17 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import org.junit.jupiter.api.Test;
+import planningpet.app.controller.AppController;
+import planningpet.app.model.AppData;
+import planningpet.app.model.DataStore;
+import planningpet.app.model.LoadResult;
 import planningpet.common.view.CircleButton;
 import planningpet.common.view.Icons;
 import planningpet.common.view.Snap;
 import planningpet.common.view.Theme;
+import planningpet.pet.model.PetKind;
+import planningpet.pet.model.PetState;
+import planningpet.reward.controller.RewardController;
 import planningpet.schedule.model.Category;
 import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Task;
@@ -32,10 +42,23 @@ import planningpet.schedule.model.Task;
 /** 홈 목록의 할 일 한 줄. 번호는 docs/porting/task-rows.md S3v 2절. 기준 그림 proto/row-*.png는 글을 비우고 제목 칸을 숨긴 줄이다. */
 class TaskRowTest {
     private static final LocalDate TODAY = LocalDate.of(2026, 11, 18);
-    private final TaskRows rows = new TaskRows();
+    /** 앱 데이터의 일정은 끝내지 않은 "토익 공부"와 "보고서"다. */
+    private final AppData data = new AppData(Clock.fixed(TODAY.atTime(10, 0).atZone(ZoneId.systemDefault()).toInstant(),
+            ZoneId.systemDefault()), List.of(task(Kind.TASK, "토익 공부", null, 30, false),
+            task(Kind.TASK, "보고서", LocalTime.of(10, 0), 60, false)), List.of());
+    private final AppController app = new AppController(data, new DataStore() {
+        public LoadResult load() { return LoadResult.firstRun(); }
+        public void save(AppData d) { }
+    }, e -> { });
+    private final TaskRows rows = new TaskRows(data, new RewardController(data, app), t -> { }, t -> { }, (t, day, at) -> { });
+
+    TaskRowTest() {
+        data.addPet(new PetState(PetKind.CAT, "나비"));
+        data.setActiveKind(PetKind.CAT);
+    }
 
     private static Task task(Kind kind, String title, LocalTime start, int minutes, boolean done) {
-        return new Task("a", 1, kind, title, TODAY, start, minutes, "", false, Category.OTHER, null, null, null, null, done,
+        return new Task(title, 1, kind, title, TODAY, start, minutes, "", false, Category.OTHER, null, null, null, null, done,
                 done ? TODAY : null, 0, 0, null, null);
     }
 
@@ -136,5 +159,23 @@ class TaskRowTest {
             assertEquals(new Dimension(w[1], 20), m.getPreferredSize());
             assertEquals(w[2], p.getComponent(1).getWidth());
         }
+    }
+
+    @Test
+    void eRow7Check() {
+        Task t = data.getBook().getTasks().get(0);
+        AbstractButton box = (AbstractButton) ((JPanel) row(t, "", TODAY, 480).getComponent(0)).getComponent(0);
+        assertEquals("끝냄: 토익 공부", box.getAccessibleContext().getAccessibleName());
+        assertSame(t, box.getClientProperty(Task.class));
+        box.doClick();
+        assertTrue(t.isDone());
+        assertEquals(10, data.getPoints());
+        assertEquals("잘했어! +10P", app.getBubble().getLine());
+        box = (AbstractButton) ((JPanel) row(t, "", TODAY, 480).getComponent(0)).getComponent(0);
+        assertEquals("끝냄 취소: 토익 공부", box.getAccessibleContext().getAccessibleName());
+        box.doClick();
+        assertFalse(t.isDone());
+        assertEquals(0, data.getPoints());
+        assertEquals("체크를 풀었어. -10P", app.getBubble().getLine());
     }
 }
