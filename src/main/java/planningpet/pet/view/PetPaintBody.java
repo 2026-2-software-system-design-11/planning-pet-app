@@ -19,8 +19,8 @@ final class PetPaintBody extends PetPaintHead {
     }
 
     /**
-     * 앉은 펫을 그린다. 몸은 바닥을 기준으로 2.6초 주기로 숨쉬며 위아래로 조금 부풀고, 머리는 3.4초 주기로 좌우로 기울며 몸을 따라
-     * 오르내린다(t).
+     * 앉은 펫을 그린다. 몸은 바닥을 기준으로 2.6초 주기로 숨쉬며 위아래로 조금 부풀고, 목걸이와 머리는 몸을 따라 오르내린다. 머리는
+     * 3.4초 주기로 좌우로 기운다(t).
      */
     void sit() {
         AffineTransform base = g.getTransform();
@@ -47,6 +47,7 @@ final class PetPaintBody extends PetPaintHead {
         paw(138, 294);
         paw(182, 294);
         g.setTransform(base);
+        neckWear(160, 202 + (breathe - 1) * -110, 58);
         head(160, 134 + (breathe - 1) * -110, headRot);
     }
 

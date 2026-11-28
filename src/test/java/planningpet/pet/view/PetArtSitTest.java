@@ -15,6 +15,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 import planningpet.common.view.Snap;
 import planningpet.pet.model.PetKind;
+import planningpet.pet.model.WearId;
 
 /** 앉은 펫(drawAt)과 그 몸 부품. 번호는 docs/porting/pet-art.md 4절. 기준 그림은 proto/pet-sit-*.png. */
 class PetArtSitTest {
@@ -58,7 +59,7 @@ class PetArtSitTest {
     }
 
     /** 크기마다 한 변이 cell(크기)인 칸을 한 줄로 두고 칸 가운데, 그림 아래에서 4 위를 바닥으로 그린다. 기준 그림과 같은 배치다. */
-    private static BufferedImage sizes(PetKind kind, double... sizes) {
+    static BufferedImage sizes(PetKind kind, Set<WearId> wear, double... sizes) {
         int w = 0;
         int h = 0;
         for (double s : sizes) {
@@ -69,7 +70,7 @@ class PetArtSitTest {
         Graphics2D g = img.createGraphics();
         int x = 0;
         for (double s : sizes) {
-            PetArt.drawAt(g, kind, Set.of(), 0, 99, x + cell(s) / 2.0, h - 4, s);
+            PetArt.drawAt(g, kind, wear, 0, 99, x + cell(s) / 2.0, h - 4, s);
             x += cell(s);
         }
         g.dispose();
@@ -88,7 +89,7 @@ class PetArtSitTest {
     @Test
     void eSit2SizesAndPlaces() throws IOException {
         for (PetKind kind : KINDS) {
-            Snap.assertLooksLikePrototype("pet-sit-sizes-" + name(kind), sizes(kind, 0, 1, 7, 48, 140, 320, 141.5));
+            Snap.assertLooksLikePrototype("pet-sit-sizes-" + name(kind), sizes(kind, Set.of(), 0, 1, 7, 48, 140, 320, 141.5));
         }
         Snap.assertLooksLikePrototype("pet-sit-neg140", one(PetKind.CAT, 80, 10, -140));
         Snap.assertLooksLikePrototype("pet-sit-moved", one(PetKind.DOG, 77.5, 150.25, 140));
