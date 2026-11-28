@@ -70,4 +70,10 @@ class PetStateTest {
         cat.restore(copy);
         assertEquals(values(copy), values(cat));
     }
+
+    /** 이름 옆 작은 종류(D-81). 프로토타입 PetState.kindName이다(docs/porting/home.md S3n E-PCOL-2). */
+    @Test
+    void ePcol2KindLabel() {
+        assertEquals(List.of("고양이", "강아지"), Arrays.stream(PetKind.values()).map(PetKind::label).toList());
+    }
 }
