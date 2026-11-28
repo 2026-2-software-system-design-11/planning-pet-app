@@ -142,6 +142,30 @@ class PetArtPoseTest {
         assertEquals(-152, box(PetKind.DOG, Pose.STRETCH, 0)[1]);
     }
 
+    /** 480x400 그림의 (240, 300)에 크기 320으로 그려 칠한 상자를 잰다. fit이 거짓이면 줄이지 않고 상자 좌표 그대로 그린다. */
+    private static String wideBox(PetKind kind, Pose pose, boolean fit) {
+        BufferedImage img = new BufferedImage(480, 400, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = img.createGraphics();
+        if (fit) {
+            PetArt.drawAt(g, kind, pose, COLLAR, 0, 99, 240, 300, 320);
+        } else {
+            PetPaintBase.hints(g);
+            g.translate(80, 0);
+            new PetPaintBody(g, kind, pose, COLLAR, 0).paint();
+        }
+        g.dispose();
+        return PetArtTest.paintedBox(img, 240, 300);
+    }
+
+    /** 누운 자세는 0.86배로 줄여 상자 폭(가운데에서 -160부터 159) 안에 든다. 줄이지 않으면 고양이 기지개는 왼쪽, 강아지 자기는 오른쪽으로 넘친다. */
+    @Test
+    void ePose8LyingFitsBox() {
+        assertEquals(List.of("-149 -164 112 10", "-160 -198 110 9", "-141 -161 153 7", "-153 -152 111 9"),
+                Arrays.stream(KINDS).flatMap(k -> Arrays.stream(LYING).map(p -> wideBox(k, p, true))).toList());
+        assertEquals("-186 -231 128 10", wideBox(PetKind.CAT, Pose.STRETCH, false));
+        assertEquals("-163 -188 178 8", wideBox(PetKind.DOG, Pose.SLEEP, false));
+    }
+
     /** 자는 펫의 목 장신구는 바닥 아래를 잘라 낸다. 잘라 내지 않은 스카프는 바닥 아래까지 내려오지만, 입혀 그려도 바닥 줄부터 아래는 픽셀이 같다. */
     @Test
     void ePose9SleepNeckClipped() {
