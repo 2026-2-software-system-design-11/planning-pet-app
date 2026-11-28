@@ -7,18 +7,24 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.DefaultKeyboardFocusManager;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
+import java.awt.KeyboardFocusManager;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
+import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import javax.swing.ButtonGroup;
 import javax.swing.JComponent;
 import javax.swing.RepaintManager;
+import javax.swing.Timer;
 import org.junit.jupiter.api.Test;
 import planningpet.common.view.Snap;
 import planningpet.common.view.Theme;
@@ -42,12 +48,44 @@ class PickCardTest {
         }
     }
 
+    /** 창 없이 초점을 주려고 setGlobalFocusOwner를 연다(RoundFieldTest와 같다). 검사 동안만 건다. */
+    private static final class Focus extends DefaultKeyboardFocusManager {
+        void own(Component c) {
+            setGlobalFocusOwner(c);
+        }
+    }
+
     private static PickCard blank(PetKind kind, boolean selected) {
         return new PickCard("", kind, selected, "");
     }
 
     private static void looks(String name, PickCard c, int w, int h) throws IOException {
         Snap.assertLaidOutLooksLikePrototype("pickcard-" + name, c, w, h);
+    }
+
+    private static void mouse(PickCard c, int id) {
+        c.dispatchEvent(new MouseEvent(c, id, 0, 0, 5, 5, 0, false));
+    }
+
+    private static long nanos(double seconds) {
+        return Math.round(seconds * 1e9);
+    }
+
+    /** 만든 때에서 t초, 고른 때에서 since초 지난 시각으로 센 카드. since가 99면 고른 때를 두지 않는다. */
+    private static PickCard at(PetKind kind, boolean selected, double t, double since) {
+        PickCard c = blank(kind, selected);
+        if (since != 99) {
+            c.pickedAt = c.start + nanos(t - since);
+        }
+        c.tick(c.start + nanos(t));
+        assertEquals(t, c.t);
+        assertEquals(since, c.since);
+        return c;
+    }
+
+    /** 시계의 리스너를 테스트에서 부른다. 시계가 40밀리초 뒤 부르기를 기다리지 않는다. */
+    private static void fire(PickCard c) {
+        Arrays.stream(c.clock.getActionListeners()).forEach(l -> l.actionPerformed(null));
     }
 
     private static String described(String about) {
@@ -140,6 +178,55 @@ class PickCardTest {
     }
 
     @Test
+    void eCard6RolloverAndDisabled() throws IOException {
+        for (PetKind kind : PetKind.values()) {
+            String name = kind == PetKind.CAT ? "cat" : "dog";
+            PickCard c = blank(kind, false);
+            mouse(c, MouseEvent.MOUSE_ENTERED);
+            looks(name + "-over", c, 248, 262);
+            mouse(c, MouseEvent.MOUSE_EXITED);
+            looks(name, c, 248, 262);
+            PickCard on = blank(kind, true);
+            mouse(on, MouseEvent.MOUSE_ENTERED);
+            assertTrue(on.getModel().isRollover());
+            looks(name + "-on", on, 248, 262);
+        }
+        for (boolean selected : new boolean[] {false, true}) {
+            PickCard off = blank(PetKind.CAT, selected);
+            off.setEnabled(false);
+            looks(selected ? "cat-on" : "cat", off, 248, 262);
+            mouse(off, MouseEvent.MOUSE_ENTERED);
+            off.getModel().setRollover(true);
+            assertFalse(off.getModel().isRollover());
+            looks(selected ? "cat-on" : "cat", off, 248, 262);
+        }
+    }
+
+    @Test
+    void eCard7KeyboardFocus() throws IOException {
+        Focus focus = new Focus();
+        KeyboardFocusManager.setCurrentKeyboardFocusManager(focus);
+        try {
+            for (PetKind kind : PetKind.values()) {
+                for (boolean selected : new boolean[] {false, true}) {
+                    PickCard c = blank(kind, selected);
+                    focus.own(c);
+                    assertTrue(c.isFocusOwner());
+                    looks((kind == PetKind.CAT ? "cat" : "dog") + (selected ? "-on" : "") + "-focus", c, 248, 262);
+                }
+            }
+            PickCard over = blank(PetKind.CAT, false);
+            focus.own(over);
+            mouse(over, MouseEvent.MOUSE_ENTERED);
+            looks("cat-focus-over", over, 248, 262);
+            focus.own(blank(PetKind.DOG, false));
+            looks("cat-over", over, 248, 262);
+        } finally {
+            KeyboardFocusManager.setCurrentKeyboardFocusManager(null);
+        }
+    }
+
+    @Test
     void eCard8Sizes() throws IOException {
         int[][] sizes = {{496, 524}, {300, 300}, {100, 100}, {8, 9}, {4, 4}, {0, 0}};
         for (int[] s : sizes) {
@@ -168,5 +255,106 @@ class PickCardTest {
         assertEquals(Theme.font(9), g.getFont());
         assertEquals(RenderingHints.VALUE_ANTIALIAS_OFF, g.getRenderingHint(RenderingHints.KEY_ANTIALIASING));
         g.dispose();
+    }
+
+    @Test
+    void eCard14PickedAt() {
+        PickCard cat = new PickCard("고양이", PetKind.CAT, true, CAT_ABOUT);
+        PickCard dog = new PickCard("강아지", PetKind.DOG, false, DOG_ABOUT);
+        assertEquals(0, cat.pickedAt);
+        cat.tick(cat.start + nanos(5));
+        assertEquals(5.0, cat.t);
+        assertEquals(99.0, cat.since);
+        ButtonGroup group = new ButtonGroup();
+        group.add(cat);
+        group.add(dog);
+        dog.doClick(0);
+        assertTrue(dog.pickedAt != 0);
+        dog.tick(dog.pickedAt + nanos(0.2));
+        assertEquals(0.2, dog.since);
+        dog.pickedAt = 7;
+        dog.doClick(0);
+        assertEquals(7, dog.pickedAt);
+        cat.doClick(0);
+        assertTrue(cat.pickedAt != 0);
+        assertEquals(7, dog.pickedAt);
+        PickCard lone = blank(PetKind.CAT, false);
+        lone.setSelected(true);
+        assertTrue(lone.pickedAt != 0);
+        lone.pickedAt = 7;
+        lone.setSelected(false);
+        assertEquals(7, lone.pickedAt);
+        lone.setSelected(true);
+        assertTrue(lone.pickedAt != 7 && lone.pickedAt != 0);
+        PickCard off = blank(PetKind.DOG, false);
+        off.setEnabled(false);
+        off.doClick(0);
+        assertEquals(0, off.pickedAt);
+    }
+
+    @Test
+    void eCard15Moving() throws IOException {
+        looks("cat-t1.1-s99.0", at(PetKind.CAT, false, 1.1, 99), 248, 262);
+        looks("cat-t1.3-s99.0", at(PetKind.CAT, false, 1.3, 99), 248, 262);
+        looks("dog-t0.6-s99.0", at(PetKind.DOG, false, 0.6, 99), 248, 262);
+        looks("dog-t1000000.0-s99.0", at(PetKind.DOG, false, 1e6, 99), 248, 262);
+        looks("cat-on-t0.0-s0.0", at(PetKind.CAT, true, 0, 0), 248, 262);
+        looks("cat-on-t1.3-s0.2", at(PetKind.CAT, true, 1.3, 0.2), 248, 262);
+        looks("dog-on-t0.0-s0.1", at(PetKind.DOG, true, 0, 0.1), 248, 262);
+        looks("dog-on-t2.0-s0.3499", at(PetKind.DOG, true, 2.0, 0.3499), 248, 262);
+    }
+
+    @Test
+    void eCard12Clock() {
+        PickCard c = blank(PetKind.CAT, false);
+        assertEquals(null, c.clock);
+        c.addNotify();
+        try {
+            Timer clock = c.clock;
+            assertTrue(c.isShowing() && clock.isRunning() && clock.isRepeats());
+            assertEquals(40, clock.getDelay());
+            assertEquals(40, clock.getInitialDelay());
+            c.removeNotify();
+            assertFalse(c.isShowing() || clock.isRunning());
+            c.addNotify();
+            c.addNotify();
+            assertTrue(clock == c.clock && clock.isRunning());
+            assertEquals(1, clock.getActionListeners().length);
+        } finally {
+            c.removeNotify();
+        }
+        assertFalse(c.clock.isRunning());
+        PickCard never = blank(PetKind.DOG, false);
+        never.removeNotify();
+        assertEquals(null, never.clock);
+    }
+
+    @Test
+    void eCard13TicksOnlyWhenShowing() {
+        PickCard c = blank(PetKind.CAT, false);
+        c.setSize(248, 262);
+        Dirty dirty = new Dirty();
+        try {
+            c.addNotify();
+            c.clock.stop();
+            c.setVisible(false);
+            double t = c.t;
+            RepaintManager.setCurrentManager(dirty);
+            fire(c);
+            assertTrue(c.t == t && c.since == 99 && dirty.all.isEmpty());
+            c.removeNotify();
+            c.setVisible(true);
+            fire(c);
+            assertTrue(c.t == t && c.since == 99 && dirty.all.isEmpty());
+            c.addNotify();
+            c.clock.stop();
+            dirty.all.clear();
+            fire(c);
+            assertTrue(c.t > 0 && c.since == 99);
+            assertEquals(Set.of(new Rectangle(0, 0, 248, 262)), dirty.all);
+        } finally {
+            RepaintManager.setCurrentManager(null);
+            c.removeNotify();
+        }
     }
 }
