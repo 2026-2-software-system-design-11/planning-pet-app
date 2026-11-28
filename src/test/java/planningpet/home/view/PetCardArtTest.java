@@ -261,8 +261,12 @@ class PetCardArtTest {
 
     /** 줄 line(위 y+8에서 17씩)의 글 자리에 INK 잉크가 있는지. 운영체제마다 다른 글자 픽셀 대신 줄이 있는지만 본다. */
     private static boolean inked(Drawn d, int line) {
+        return inked(d, line, d.box().x + 30, d.box().x + d.box().width - 4);
+    }
+
+    private static boolean inked(Drawn d, int line, int fromX, int toX) {
         for (int y = d.box().y + 8 + 17 * line; y < d.box().y + 25 + 17 * line; y++) {
-            for (int x = d.box().x + 30; x < d.box().x + d.box().width - 4; x++) {
+            for (int x = fromX; x < toX; x++) {
                 int p = d.img().getRGB(x, y);
                 int dist = Math.abs((p >> 16 & 255) - Theme.INK.getRed()) + Math.abs((p >> 8 & 255) - Theme.INK.getGreen())
                         + Math.abs((p & 255) - Theme.INK.getBlue());
@@ -316,5 +320,52 @@ class PetCardArtTest {
         assertTrue(inked(three, 2));
         assertFalse(three.cut());
         looks("three", three);
+    }
+
+    private static final String TEN = "가나다라마바사아자차";
+    private static final String W6 = String.join(" ", TEN, TEN, TEN, TEN, TEN, TEN);
+
+    @Test
+    void eBub4TooManyLines() throws IOException {
+        Drawn card = bubble(W6, 152, 147, 192, 221, 360, 240);
+        assertEquals(new Rectangle(152, 147, 192, 67), card.box());
+        assertTrue(card.cut());
+        assertFalse(inked(card, 2, 152 + 32 + 154, 360));
+        looks("six-room3", card);
+        Drawn tall = bubble(W6, 152, 147, 192, 400, 360, 412);
+        assertEquals(new Rectangle(152, 147, 192, 84), tall.box());
+        assertTrue(tall.cut());
+        assertTrue(inked(tall, 3));
+        assertFalse(inked(tall, 3, 152 + 32 + 154, 360));
+        looks("six-tall", tall);
+    }
+
+    @Test
+    void eBub5LittleRoomBelow() throws IOException {
+        Object[][] cases = {{"six-room2", W6, 200, 50}, {"three-room2", W3, 197, 50}, {"six-below-top", W6, 100, 33}};
+        for (Object[] c : cases) {
+            Drawn d = bubble((String) c[1], 152, 147, 192, (int) c[2], 360, 240);
+            assertEquals(new Rectangle(152, 147, 192, (int) c[3]), d.box());
+            assertTrue(d.cut());
+            looks((String) c[0], d);
+        }
+    }
+
+    @Test
+    void eBub6Moved() throws IOException {
+        Drawn d = bubble(W2, 30, 20, 192, 221, 360, 240);
+        assertEquals(new Rectangle(30, 20, 192, 50), d.box());
+        looks("moved", d);
+    }
+
+    /** 프로토타입은 wrap이 끝나지 않아 결과가 없다. S3k E-WRAP-6의 고침대로 한 줄에 한 글자씩 놓인다. */
+    @Test
+    void eBub7NarrowerThanOneLetter() {
+        Drawn narrow = assertTimeoutPreemptively(Duration.ofSeconds(5), () -> bubble("잘했어! +10P", 152, 147, 40, 400, 360, 412));
+        assertEquals(new Rectangle(152, 147, 40, 84), narrow.box());
+        assertTrue(narrow.cut());
+        Drawn zero = assertTimeoutPreemptively(Duration.ofSeconds(5), () -> bubble("잘했어", 152, 147, 0, 400, 360, 412));
+        assertEquals(new Rectangle(152, 147, 0, 67), zero.box());
+        assertFalse(zero.cut());
     }
 }
