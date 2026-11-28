@@ -15,6 +15,7 @@ import planningpet.app.model.LoadResult;
 import planningpet.pet.model.PetKind;
 import planningpet.pet.model.PetState;
 import planningpet.schedule.model.Category;
+import planningpet.schedule.model.DeleteScope;
 import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.TaskDraft;
 
@@ -67,5 +68,38 @@ class HomeControllerTest {
         add("가", d(16), null, null);
         home.pick(d(16));
         assertEquals("오늘 할 일 1개 남았어. 새 말 1 세는 날 2026-11-16 알림 1 저장 0", said());
+    }
+
+    @Test
+    void T_TALK_26_periodOnlyDay() {
+        at(18);
+        add("E사 지원서", d(18), null, d(22));
+        home.pick(d(19));
+        String first = app.getBubble().getLine();
+        home.pick(d(18));
+        assertEquals("11월 19일은 할 일이 없어. 기간 할 일 1개가 있어.|오늘은 할 일이 없어. E사 지원서는 22일까지야, 4일 남았어. 새 말 2"
+                + " 세는 날 2026-11-18 알림 2 저장 0", first + "|" + said());
+    }
+
+    @Test
+    void E_HOME_9_recountAfterPick() {
+        at(14);
+        add("가", d(16), null, null);
+        add("나", d(16), null, null);
+        home.pick(d(16));
+        app.change("일정 삭제", () -> data.getBook().delete(data.getBook().getTasks().get(1), DeleteScope.ONLY_THIS));
+        assertEquals("11월 16일 할 일은 1개야. 새 말 1 세는 날 2026-11-16 알림 2 저장 1", said());
+    }
+
+    @Test
+    void E_HOME_10_monthAndYearChange() {
+        at(16);
+        home.pick(LocalDate.of(2026, 12, 1));
+        String lines = app.getBubble().getLine();
+        home.pick(LocalDate.of(2026, 12, 31));
+        lines += "|" + app.getBubble().getLine();
+        home.pick(LocalDate.of(2027, 1, 1));
+        assertEquals("12월 1일은 할 일이 없어.|12월 31일은 할 일이 없어.|1월 1일은 할 일이 없어. 새 말 3 세는 날 2027-01-01 알림 3 저장 0",
+                lines + "|" + said());
     }
 }
