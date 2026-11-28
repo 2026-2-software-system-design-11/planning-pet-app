@@ -10,6 +10,8 @@ import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -98,6 +100,18 @@ public final class PetCard extends JComponent {
                 if (click && SwingUtilities.isLeftMouseButton(e)) {
                     open.run();
                 }
+            }
+        });
+        // 초점을 얻고 잃을 때 포커스 고리를 다시 그린다.
+        addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                repaint();
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                repaint();
             }
         });
         getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "open");
@@ -260,6 +274,11 @@ public final class PetCard extends JComponent {
         g.setColor(down ? Theme.MINT : over ? Theme.MINT_LINE : Theme.CARD_EDGE);
         g.setStroke(new BasicStroke(down ? 2f : 1.2f));
         g.draw(new RoundRectangle2D.Double(f.x + 0.5, f.y + 0.5, f.width - 1, f.height - 1, r, r));
+        if (isFocusOwner()) {
+            g.setColor(new Color(0x1F, 0xB9, 0x9C, 110));
+            g.setStroke(new BasicStroke(2f));
+            g.draw(new RoundRectangle2D.Double(f.x + 3, f.y + 3, f.width - 6, f.height - 6, r - 4, r - 4));
+        }
         g.dispose();
     }
 

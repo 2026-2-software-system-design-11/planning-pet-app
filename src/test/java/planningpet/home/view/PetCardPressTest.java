@@ -6,7 +6,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.Component;
 import java.awt.Cursor;
+import java.awt.DefaultKeyboardFocusManager;
 import java.awt.KeyboardFocusManager;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -134,6 +137,13 @@ class PetCardPressTest {
                 new int[] {RELEASE, 1, 180, 120}));
     }
 
+    /** 창 없이 초점을 주려고 setGlobalFocusOwner를 연다(S3c CircleButtonTest와 같다). 검사 동안만 건다. */
+    private static final class Focus extends DefaultKeyboardFocusManager {
+        void own(Component c) {
+            setGlobalFocusOwner(c);
+        }
+    }
+
     /** 카드의 (5, 5)에 사건들을 차례로 보낸다. 누름과 뗌은 왼쪽 단추다. */
     private static PetCard at(PetCard c, int... ids) {
         for (int id : ids) {
@@ -161,6 +171,25 @@ class PetCardPressTest {
     }
 
     @Test
+    void ePpress6FocusRing() throws IOException {
+        Focus focus = new Focus();
+        KeyboardFocusManager.setCurrentKeyboardFocusManager(focus);
+        try {
+            for (int[] s : new int[][] {{360, 240}, {300, 210}, {800, 500}, {0, 0}, {4, 8}, {20, 20}, {120, 60}}) {
+                String n = s[0] + "x" + s[1];
+                PetCard f = card();
+                focus.own(f);
+                if (s[0] >= 300) {
+                    PetCardTest.assertCovered("press-focus-" + n, f, s[0], s[1]);
+                }
+                PetCardTest.assertCovered("press-focus-down-" + n, at(f, ENTER, PRESS), s[0], s[1]);
+            }
+        } finally {
+            KeyboardFocusManager.setCurrentKeyboardFocusManager(null);
+        }
+    }
+
+    @Test
     void ePpress6Repaint() {
         PetCard c = card();
         c.setSize(360, 240);
@@ -174,9 +203,13 @@ class PetCardPressTest {
         });
         try {
             at(c, ENTER, PRESS, RELEASE, EXIT);
+            for (FocusListener l : c.getFocusListeners()) {
+                l.focusGained(new FocusEvent(c, FocusEvent.FOCUS_GAINED));
+                l.focusLost(new FocusEvent(c, FocusEvent.FOCUS_LOST));
+            }
         } finally {
             RepaintManager.setCurrentManager(before);
         }
-        assertEquals(Collections.nCopies(4, "true 0,0,360,240"), asked);
+        assertEquals(Collections.nCopies(6, "true 0,0,360,240"), asked);
     }
 }
