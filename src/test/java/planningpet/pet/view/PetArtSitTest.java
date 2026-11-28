@@ -137,6 +137,15 @@ class PetArtSitTest {
         assertEquals("-51 -108 48 2", box(PetKind.DOG, 140));
     }
 
+    /** 강조선 자리의 비율은 크기 320으로 잰 꼭대기(E-SIT-5, 목걸이를 입어도 같다 E-WEAR-8)를 둘째 자리에서 반올림한 값이다. */
+    @Test
+    void eCard11HeightRatio() {
+        assertEquals(0.88, PetArt.heightRatio(PetKind.CAT));
+        assertEquals(0.77, PetArt.heightRatio(PetKind.DOG));
+        assertEquals(Math.round(282 / 320.0 * 100) / 100.0, PetArt.heightRatio(PetKind.CAT));
+        assertEquals(Math.round(247 / 320.0 * 100) / 100.0, PetArt.heightRatio(PetKind.DOG));
+    }
+
     @Test
     void eSit6CallerStateKept() throws IOException {
         BufferedImage img = new BufferedImage(200, 200, BufferedImage.TYPE_INT_ARGB);
