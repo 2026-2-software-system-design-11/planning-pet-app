@@ -45,6 +45,19 @@ class PetCardArtTest {
     }
 
     @Test
+    void eScene3GroundEnds() throws IOException {
+        Snap.assertLooksLikePrototype("scene-ground-top", scene(new Rectangle(2, 1, 356, 232), 1));
+        Snap.assertLooksLikePrototype("scene-ground-below", scene(new Rectangle(2, 1, 356, 232), 1 + 232 + 30));
+    }
+
+    @Test
+    void eScene4TinyCards() throws IOException {
+        Snap.assertLooksLikePrototype("scene-card-4x8", card(4, 8));
+        Snap.assertLooksLikePrototype("scene-zero", scene(new Rectangle(0, 0, 0, 0), -14));
+        Snap.assertLooksLikePrototype("scene-card-120x60", card(120, 60));
+    }
+
+    @Test
     void eMix1() {
         Color a = Theme.GRASS;
         Color b = Theme.GRASS_FAR;
