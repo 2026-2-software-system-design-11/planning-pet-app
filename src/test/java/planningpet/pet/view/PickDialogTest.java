@@ -16,9 +16,14 @@ import java.util.List;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultButtonModel;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.UIManager;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import planningpet.common.view.Snap;
+import planningpet.common.view.Theme;
 import planningpet.pet.model.PetKind;
 
 /**
@@ -28,6 +33,19 @@ import planningpet.pet.model.PetKind;
 class PickDialogTest {
     private static final String CAT_ABOUT = "조용하고 편안한 성격으로\n언제나 곁에서 응원해요!";
     private static final String DOG_ABOUT = "활발하고 다정한 성격으로\n항상 힘이 되어줘요!";
+
+    @BeforeEach
+    void install() {
+        Theme.install();
+    }
+
+    @AfterEach
+    void undoInstall() {
+        for (Object key : List.copyOf(UIManager.getLookAndFeelDefaults().keySet())) {
+            UIManager.put(key, null);
+        }
+        UIManager.put("swing.boldMetal", null);
+    }
 
     /** 카드를 그린 픽셀. 같은 맥에서 두 카드를 견주므로 글이 들어도 된다. */
     private static int[] pixels(PickCard c) {
@@ -46,6 +64,8 @@ class PickDialogTest {
         row.removeAll();
         row.add(new PickCard("", PetKind.CAT, true, ""));
         row.add(new PickCard("", PetKind.DOG, false, ""));
+        d.panel.remove(1);
+        d.panel.add(new PickDialog.Logo("", ""), 1);
         Snap.blank(d.panel);
         Snap.assertLaidOutLooksLikePrototype("pickdlg-" + name, d.panel, w, h);
     }
@@ -62,7 +82,7 @@ class PickDialogTest {
         assertTrue(d.panel.isOpaque());
         assertEquals(BoxLayout.Y_AXIS, ((BoxLayout) d.panel.getLayout()).getAxis());
         assertEquals(new Insets(16, 0, 22, 0), d.panel.getInsets());
-        assertEquals(3, d.panel.getComponentCount());
+        assertEquals(5, d.panel.getComponentCount());
         JPanel row = (JPanel) d.cat.getParent();
         FlowLayout flow = (FlowLayout) row.getLayout();
         assertEquals(List.of(FlowLayout.CENTER, 20, 0), List.of(flow.getAlignment(), flow.getHgap(), flow.getVgap()));
@@ -86,8 +106,18 @@ class PickDialogTest {
 
     @Test
     void eDlg3DefaultSize() throws IOException {
-        assertEquals(new Dimension(800, 300), new PickDialog().panel.getPreferredSize());
-        looksLikePrototype("800x300", 800, 300);
+        assertEquals(new Dimension(800, 364), new PickDialog().panel.getPreferredSize());
+        looksLikePrototype("800x364", 800, 364);
+    }
+
+    @Test
+    void eDlg7Logo() throws IOException {
+        JLabel logo = (JLabel) new PickDialog().panel.getComponent(1);
+        assertEquals(List.of("플래닝펫 Planning Pet", new Dimension(800, 60), 60, 0.5f, false), List.of(logo.getText(),
+                logo.getPreferredSize(), logo.getMaximumSize().height, logo.getAlignmentX(), logo.isOpaque()));
+        Snap.assertLaidOutLooksLikePrototype("pickdlg-logo-800x60", new PickDialog.Logo("", ""), 800, 60);
+        Snap.assertLaidOutLooksLikePrototype("pickdlg-logo-300x60", new PickDialog.Logo("", ""), 300, 60);
+        Snap.assertLaidOutLooksLikePrototype("pickdlg-logo-0x0", new PickDialog.Logo("", ""), 0, 0);
     }
 
     @Test
@@ -95,6 +125,6 @@ class PickDialogTest {
         PickDialog d = new PickDialog();
         Dimension wide = new Dimension(1000, 5);
         d.panel.add(new Box.Filler(wide, wide, wide));
-        assertEquals(new Dimension(1000, 305), d.panel.getPreferredSize());
+        assertEquals(new Dimension(1000, 369), d.panel.getPreferredSize());
     }
 }
