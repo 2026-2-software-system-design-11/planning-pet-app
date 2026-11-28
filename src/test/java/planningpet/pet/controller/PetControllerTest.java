@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.time.Clock;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -227,6 +228,7 @@ class PetControllerTest {
     @Test
     void E_PET_17_recountAfterSelect() {
         twoPetsThreeTasks();
+        app.setHomeDay(() -> LocalDate.of(2026, 11, 20)); // 메인에서 다른 날을 골라도 SELECTED는 오늘 목록을 따른다
         pets.select(PetKind.CAT);
         int said = app.getBubble().getNewLines();
         app.change("일정 삭제", () -> data.getBook().delete(data.getBook().getTasks().get(0), DeleteScope.ONLY_THIS));
