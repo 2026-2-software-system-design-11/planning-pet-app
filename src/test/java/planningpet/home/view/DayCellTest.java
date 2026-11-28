@@ -73,6 +73,33 @@ class DayCellTest {
     }
 
     @Test
+    void eCell3NumberAndCountPlace() {
+        for (int[] s : new int[][] {{46, 44}, {60, 56}}) {
+            int w = s[0];
+            int h = s[1];
+            int[] alone = ink(paint(cell(18, NONE, false, false), w, h), Theme.INK, 0, h);
+            assertTrue(Math.abs(alone[1] - (h - 1 - alone[3])) <= 2, "가운데 높이");
+            assertTrue(Math.abs(alone[0] - (w - 1 - alone[2])) <= 2, "가운데 폭");
+            BufferedImage img = paint(cell(18, TWO, false, false), w, h);
+            int[] number = ink(img, Theme.INK, 0, h);
+            int[] count = ink(img, Theme.TASK_TEXT, 0, h);
+            assertTrue(number[3] <= h / 2 && number[1] < alone[1], "숫자는 위로 올라 바닥선 h/2-1");
+            assertTrue(count[1] > number[3] + 2 && count[3] < h, "수는 숫자 아래");
+            assertTrue(Math.abs(count[0] - (w - 1 - count[2])) <= 2, "수도 가로 가운데");
+        }
+    }
+
+    @Test
+    void eCell4CountColor() {
+        int[] open = ink(paint(cell(18, TWO, false, false), 46, 44), Theme.TASK_TEXT, 23, 44);
+        assertTrue(open[4] > 0 && open[5] > 102);
+        BufferedImage done = paint(cell(18, new CellPreview(1, false, List.of()), false, false), 46, 44);
+        int[] dim = ink(done, Theme.INK, 23, 44);
+        assertTrue(dim[4] > 0 && dim[5] <= 102, "INK_DIM은 알파 102");
+        assertEquals(0, ink(done, Theme.TASK_TEXT, 0, 44)[4]);
+    }
+
+    @Test
     void eCell5Bold() {
         int plain = ink(paint(cell(18, NONE, false, false), 46, 44), Theme.INK, 0, 44)[6];
         int picked = ink(paint(cell(18, NONE, false, true), 46, 44), Theme.INK, 0, 44)[6];
@@ -96,10 +123,20 @@ class DayCellTest {
     }
 
     @Test
+    void eCell7NarrowCount() {
+        CellPreview twelve = new CellPreview(12, true, List.of());
+        int[] wide = ink(paint(cell(18, twelve, false, false), 46, 44), Theme.TASK_TEXT, 22, 44);
+        int[] narrow = ink(paint(cell(18, twelve, false, false), 20, 30), Theme.TASK_TEXT, 15, 30);
+        assertTrue(narrow[2] - narrow[0] < wide[2] - wide[0], "줄인 글");
+        assertTrue(narrow[0] >= 2 && narrow[2] <= 20 - 3, "칸 안 여백 3");
+    }
+
+    @Test
     void eCell8WeekdayColors() {
-        BufferedImage sunday = paint(cell(15, NONE, false, false), 46, 44);
+        BufferedImage sunday = paint(cell(15, new CellPreview(1, true, List.of()), false, false), 46, 44);
         assertTrue(ink(sunday, Theme.SUNDAY, 0, 22)[4] > 0);
         assertEquals(0, ink(sunday, Theme.INK, 0, 44)[4]);
+        assertTrue(ink(sunday, Theme.TASK_TEXT, 22, 44)[4] > 0);
         BufferedImage saturday = paint(cell(21, NONE, false, false), 46, 44);
         assertTrue(ink(saturday, Theme.SATURDAY, 0, 44)[4] > 0);
         assertEquals(0, ink(saturday, Theme.INK, 0, 44)[4]);

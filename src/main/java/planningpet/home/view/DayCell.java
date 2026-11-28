@@ -9,11 +9,12 @@ import java.time.LocalDate;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 import planningpet.common.view.Theme;
+import planningpet.common.view.Ui;
 import planningpet.schedule.model.CellPreview;
 
 /**
  * 홈 달력의 날짜 칸 하나(05 홈 "달력", D-86, 06 26번). 프로토타입 CalendarPanel.cell의 칸이다(docs/porting/home.md S3e).
- * 글(getText)은 숫자, 일의 수, 마감 표시의 HTML이고(QA와 화면 읽기 프로그램이 읽는다), 그림은 손수 그린다: 숫자.
+ * 글(getText)은 숫자, 일의 수, 마감 표시의 HTML이고(QA와 화면 읽기 프로그램이 읽는다), 그림은 손수 그린다: 숫자와 그 아래 "{수}개".
  * 오늘은 DAY_TODAY 둥근 네모, 고른 날은 MINT 테두리다.
  */
 final class DayCell extends JLabel {
@@ -61,11 +62,19 @@ final class DayCell extends JLabel {
         }
         g.setFont(today || picked ? Theme.bold(14) : Theme.font(14));
         FontMetrics fm = g.getFontMetrics();
+        String count = preview.text();
         String n = blank ? "" : String.valueOf(date.getDayOfMonth());
-        int numY = (h + fm.getAscent() - fm.getDescent()) / 2;
+        int numY = count.isEmpty() ? (h + fm.getAscent() - fm.getDescent()) / 2 : h / 2 - 1;
         int dow = date.getDayOfWeek().getValue() % 7;
         g.setColor(dow == 0 ? Theme.SUNDAY : dow == 6 ? Theme.SATURDAY : Theme.INK);
         g.drawString(n, (w - fm.stringWidth(n)) / 2, numY);
+        if (!count.isEmpty()) {
+            g.setFont(Theme.font(11));
+            FontMetrics pf = g.getFontMetrics();
+            String p = blank ? "" : Ui.fit(count, pf, w - 6);
+            g.setColor(preview.open() ? Theme.TASK_TEXT : Theme.INK_DIM);
+            g.drawString(p, (w - pf.stringWidth(p)) / 2, numY + 3 + pf.getAscent());
+        }
         g.dispose();
     }
 }
