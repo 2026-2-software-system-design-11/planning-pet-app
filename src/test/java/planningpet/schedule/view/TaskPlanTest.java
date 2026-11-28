@@ -88,13 +88,20 @@ class TaskPlanTest {
         }, e -> { });
         TaskRows rows = new TaskRows(data, new RewardController(data, app), t -> { }, t -> { }, (t, d, at) -> { });
         data.onChange(() -> rows.resort.run());
+        rows.putClientProperty(AppData.class, data);
+        pick(rows, list);
+        return rows;
+    }
+
+    /** 홈 달력에서 그날을 고른 것처럼 그날 목록을 그리고, 그 뒤 resort도 그날을 다시 그린다. */
+    private static void pick(TaskRows rows, LocalDate day) {
+        AppData data = (AppData) rows.getClientProperty(AppData.class);
         rows.resort = () -> {
-            rows.showPlan(data.getBook().dayPlan(list));
+            rows.showPlan(data.getBook().dayPlan(day));
             Theme.clear(rows);
             Snap.layOut(rows, 480, rows.getPreferredSize().height);
         };
         rows.resort.run();
-        return rows;
     }
 
     /** 자식마다 자리와 크기, 줄이면 제목과 알약 글, 라벨이면 [글], 단추면 <글>과 자리. */
@@ -365,5 +372,46 @@ class TaskPlanTest {
         rows.doneHead.doClick();
         box(rows, "B").doClick();
         assertEquals(ABC + " false false", kids(rows) + " " + box(rows, "B").isSelected() + " " + rows.settling());
+    }
+
+    @Test
+    void eDone7DoneOnOtherDay() {
+        TaskRows rows = plan(day(18).atTime(10, 0), day(20), mix()[3]);
+        box(rows, "지원서").doClick();
+        assertEquals("[아직 일정이 없어요. 작은 계획을 추가해 보세요.] 0,0 239x33 true", kids(rows) + " " + rows.settling());
+        pick(rows, day(18));
+        assertEquals("[시각 없는 할 일] 0,0 75x33, 지원서 시각 정하기 0,33 480x54 true", kids(rows) + " " + box(rows, "지원서").isSelected());
+        rows.settle();
+        assertEquals("<끝낸 일 1개> 0,0, 지원서 시각 정하기 0,33 480x54", kids(rows));
+    }
+
+    @Test
+    void eDone8OtherDayAndBack() {
+        TaskRows rows = plan(day(16).atTime(8, 0), day(16), task(1, Kind.TASK, "B", day(16), null, 30, null, false),
+                task(2, Kind.TASK, "C", day(16), null, 30, null, false));
+        box(rows, "B").doClick();
+        pick(rows, day(17));
+        assertEquals("[아직 일정이 없어요. 작은 계획을 추가해 보세요.] 0,0 239x33 true", kids(rows) + " " + rows.settling());
+        pick(rows, day(16));
+        assertEquals("[시각 없는 할 일] 0,0 75x33, B 시각 정하기 0,33 480x39, C 시각 정하기 0,72 480x39 true true",
+                kids(rows) + " " + box(rows, "B").isSelected() + " " + rows.settling());
+    }
+
+    @Test
+    void tList10PeriodStays() {
+        Task job = new Task("지원서", 1, Kind.TASK, "지원서", day(18), LocalTime.of(9, 0), 60, "", false, Category.OTHER, null, null,
+                day(22), day(16), false, null, 0, 0, null, null);
+        TaskRows rows = plan(day(18).atTime(8, 0), day(18), job, task(2, Kind.TASK, "보고서", day(16), null, 30, day(25), false),
+                task(3, Kind.TASK, "토익", day(18), null, 30, null, false));
+        box(rows, "지원서").doClick();
+        assertEquals("지원서 09:00~10:00 0,0 480x54, [시각 없는 할 일] 0,54 75x33, 토익 시각 정하기 0,87 480x39, [기간 안에 할 일] 0,126 75x33, "
+                + "보고서 시각 정하기 0,159 480x54 true", kids(rows) + " " + box(rows, "지원서").isSelected());
+        rows.settle();
+        box(rows, "보고서").doClick();
+        assertEquals("[시각 없는 할 일] 0,0 75x33, 토익 시각 정하기 0,33 480x39, [기간 안에 할 일] 0,72 75x33, 보고서 시각 정하기 0,105 480x54, "
+                + "<끝낸 일 1개> 0,159, 지원서 시각 정하기 0,192 480x54", kids(rows));
+        rows.settle();
+        assertEquals("[시각 없는 할 일] 0,0 75x33, 토익 시각 정하기 0,33 480x39, <끝낸 일 2개> 0,72, 지원서 시각 정하기 0,105 480x54, "
+                + "보고서 시각 정하기 0,159 480x54", kids(rows));
     }
 }
