@@ -68,6 +68,42 @@ class PetArtTest {
     }
 
     @Test
+    void eFace4PaintedBox() {
+        BufferedImage img = new BufferedImage(600, 600, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = img.createGraphics();
+        PetArt.drawFace(g, 300, 300, 230);
+        g.dispose();
+        int[] box = {600, 600, -1, -1};
+        for (int y = 0; y < 600; y++) {
+            for (int x = 0; x < 600; x++) {
+                if (img.getRGB(x, y) >>> 24 != 0) {
+                    box = new int[] {Math.min(box[0], x), Math.min(box[1], y), Math.max(box[2], x), Math.max(box[3], y)};
+                }
+            }
+        }
+        assertEquals("-126 -115 125 72", (box[0] - 300) + " " + (box[1] - 300) + " " + (box[2] - 300) + " " + (box[3] - 300));
+    }
+
+    /** w x h 그림의 (x, y)에 bw x bh 상자로 로고를 그린다. */
+    private static BufferedImage logo(int w, int h, double x, double y, double bw, double bh) {
+        BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = img.createGraphics();
+        PetArt.drawLogo(g, x, y, bw, bh);
+        g.dispose();
+        return img;
+    }
+
+    @Test
+    void eLogo1To5Boxes() throws IOException {
+        Snap.assertLooksLikePrototype("pet-logo-side", logo(124, 64, 18, 0, 88, 64));
+        Snap.assertLooksLikePrototype("pet-logo-pick", logo(74, 51, 0, 0, 74, 51));
+        Snap.assertLooksLikePrototype("pet-logo-wide", logo(200, 64, 0, 0, 200, 64));
+        Snap.assertLooksLikePrototype("pet-logo-tall", logo(88, 200, 0, 0, 88, 200));
+        Snap.assertLooksLikePrototype("pet-logo-0x0", logo(10, 10, 5, 5, 0, 0));
+        Snap.assertLooksLikePrototype("pet-logo-moved", logo(100, 90, 7.5, 13.25, 80, 60));
+    }
+
+    @Test
     void eFace5CallerStateKept() {
         Graphics2D g = new BufferedImage(100, 100, BufferedImage.TYPE_INT_ARGB).createGraphics();
         g.setColor(Color.RED);
