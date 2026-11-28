@@ -38,4 +38,8 @@ jar {
 test {
     useJUnitPlatform()
     systemProperty 'java.awt.headless', 'true'
+    // 임시 진단(#496, 병합하지 않음): 진단 검사의 출력과 실패 메시지를 CI 기록에 보인다. Font.getFont2D를 읽는다.
+    testLogging { showStandardStreams = true
+        exceptionFormat = 'full' }
+    jvmArgs '--add-opens=java.desktop/java.awt=ALL-UNNAMED'
 }
