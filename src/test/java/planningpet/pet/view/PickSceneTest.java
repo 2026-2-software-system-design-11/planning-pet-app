@@ -2,8 +2,10 @@ package planningpet.pet.view;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.function.Consumer;
@@ -113,5 +115,25 @@ class PickSceneTest {
     @Test
     void ePick10NoCloudImage() throws IOException {
         same("pick-scene-800x651-no-cloud", 800, 651, g -> PickScene.backdrop(g, 800, 651, null));
+    }
+
+    /** 빨강, 굵기 5, 앤티에일리어싱 없음인 그래픽에 draw로 그린 뒤의 색(ARGB), 굵기, 앤티에일리어싱. */
+    private static String after(Consumer<Graphics2D> draw) {
+        Graphics2D g = new BufferedImage(200, 200, BufferedImage.TYPE_INT_ARGB).createGraphics();
+        g.setColor(Color.RED);
+        g.setStroke(new BasicStroke(5));
+        draw.accept(g);
+        return Integer.toHexString(g.getColor().getRGB()) + " " + ((BasicStroke) g.getStroke()).getLineWidth() + " "
+                + (g.getRenderingHint(RenderingHints.KEY_ANTIALIASING) == RenderingHints.VALUE_ANTIALIAS_ON);
+    }
+
+    @Test
+    void ePick11CallerState() {
+        assertEquals("ffffffff 5.0 true", after(g -> PickScene.backdrop(g, 100, 100)));
+        assertEquals("5affffff 1.8181819 false", after(g -> PickScene.ribbon(g, 10, 10, 100, 40)));
+        assertEquals("46ffffff 5.0 false", after(g -> PickScene.bush(g, 50, 50, 40)));
+        assertEquals("ffffffff 5.0 false", after(g -> PickScene.star(g, 50, 50, 12)));
+        assertEquals("ffff0000 5.0 false", after(g -> PickScene.daisy(g, 50, 50, 7, 0.2)));
+        assertEquals("ffff0000 5.0 false", after(g -> PickScene.skyPaw(g, 50, 50, 28, 0.25)));
     }
 }
