@@ -6,9 +6,14 @@ import java.nio.file.Path;
 import java.util.List;
 import planningpet.settings.model.Autostart;
 
-/** 06 25번의 운영체제 등록. macOS는 LaunchAgents의 plist다(docs/porting/settings.md S10a). */
+/**
+ * 06 25번의 운영체제 등록. macOS는 LaunchAgents의 plist(docs/porting/settings.md S10a), Windows는 reg 명령으로 다루는 Run 키의
+ * 값이다(S10a, S10c).
+ */
 public final class OsAutostart implements Autostart {
     static final String LABEL = "com.planningpet.app";
+    static final String RUN = "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run";
+    static final String NAME = "PlanningPet";
     private final String os;
     private final Path home;
     private final String app;
@@ -43,11 +48,19 @@ public final class OsAutostart implements Autostart {
 
     @Override
     public boolean available() {
-        return app != null && !app.isBlank() && mac();
+        return app != null && !app.isBlank() && (mac() || windows());
     }
 
+    /** Windows는 reg query의 종료 코드가 0인지다. 명령을 돌리지 못하면 false다. */
     @Override
     public boolean registered() {
+        if (windows()) {
+            try {
+                return runner.run(List.of("reg", "query", RUN, "/v", NAME)).code() == 0;
+            } catch (IOException e) {
+                return false;
+            }
+        }
         return mac() && Files.exists(plist());
     }
 
@@ -56,7 +69,13 @@ public final class OsAutostart implements Autostart {
         if (!available()) {
             throw new IllegalStateException("설치 파일로 설치했을 때만 쓸 수 있어요");
         }
-        if (on) {
+        if (windows()) {
+            if (on) {
+                reg(List.of("reg", "add", RUN, "/v", NAME, "/t", "REG_SZ", "/d", "\\\"" + app + "\\\" --autostart", "/f"));
+            } else if (registered()) {
+                reg(List.of("reg", "delete", RUN, "/v", NAME, "/f"));
+            }
+        } else if (on) {
             Files.createDirectories(plist().getParent());
             Files.writeString(plist(), plistText());
         } else {
@@ -66,6 +85,18 @@ public final class OsAutostart implements Autostart {
 
     private boolean mac() {
         return os.startsWith("Mac");
+    }
+
+    private boolean windows() {
+        return os.startsWith("Windows");
+    }
+
+    /** reg 명령이 0이 아닌 코드로 끝나면 그 출력을 이유로 IOException이다(05 설정 1번의 창이 보인다). */
+    private void reg(List<String> command) throws IOException {
+        Result r = runner.run(command);
+        if (r.code() != 0) {
+            throw new IOException(r.output());
+        }
     }
 
     /** 실제 프로세스. 출력은 이 컴퓨터의 글자 인코딩(native.encoding)으로 읽는다. */
