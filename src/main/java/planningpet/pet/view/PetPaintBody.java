@@ -10,25 +10,42 @@ import java.awt.geom.QuadCurve2D;
 import java.awt.geom.RoundRectangle2D;
 import java.util.Set;
 import planningpet.pet.model.PetKind;
+import planningpet.pet.model.Pose;
 import planningpet.pet.model.WearId;
 
 /**
- * PetArt 펫 그림의 몸: 앉은 자세(D-50의 처음 자세)의 몸, 앞발, 꼬리와 그 위의 머리(docs/porting/pet-art.md 4절). 좌표는 320x320
- * 상자이고 발이 닿는 바닥은 y=300, 가운데는 x=160이다.
+ * PetArt 펫 그림의 몸: 앉은 자세들(D-50의 앉기, 밥 먹기, 노래)의 몸, 앞발, 꼬리와 그 위의 머리, 밥그릇과 음표
+ * (docs/porting/pet-art.md 4절, docs/porting/character.md S8b). 좌표는 320x320 상자이고 발이 닿는 바닥은 y=300, 가운데는 x=160이다.
  */
 final class PetPaintBody extends PetPaintHead {
+    final Pose pose;
+
+    /** 앉기로 그린다. */
     PetPaintBody(Graphics2D g, PetKind kind, Set<WearId> wear, double t) {
+        this(g, kind, Pose.SIT, wear, t);
+    }
+
+    /** 자세 pose로 그린다. 표정은 자세를 따른다. */
+    PetPaintBody(Graphics2D g, PetKind kind, Pose pose, Set<WearId> wear, double t) {
         super(g, kind, wear, t);
+        this.pose = pose;
+        face = pose == Pose.EAT ? Face.EAT : Face.HAPPY;
     }
 
     /**
      * 앉은 펫을 그린다. 몸은 바닥을 기준으로 2.6초 주기로 숨쉬며 위아래로 조금 부풀고(조끼도 함께), 목 둘레와 머리는 몸을 따라 오르내린다. 머리는
-     * 3.4초 주기로 좌우로 기운다(t). 망토 뒤판은 꼬리보다 먼저 몸 뒤에 그려 숨쉬지 않는다.
+     * 3.4초 주기로 좌우로 기운다(t). 망토 뒤판은 꼬리보다 먼저 몸 뒤에 그려 숨쉬지 않는다. 밥 먹기는 머리를 숙여 0.7초 주기로 까딱이며
+     * 밥그릇에 댄다.
      */
     void sit() {
         AffineTransform base = g.getTransform();
         double breathe = wave(t, 2.6, 1.0, 1.022, 0);
         double headRot = wave(t, 3.4, -2.5, 2.5, 0.2);
+        double headY = 0;
+        if (pose == Pose.EAT) {
+            headY = 14 + wave(t, 0.7, 0, 7, 0);
+            headRot = 0;
+        }
         Shape body = sitBody();
         if (has(WearId.CAPE)) {
             capeBehind(160, 200, 62);
@@ -56,8 +73,11 @@ final class PetPaintBody extends PetPaintHead {
         paw(138, 294);
         paw(182, 294);
         g.setTransform(base);
-        neckWear(160, 202 + (breathe - 1) * -110, 58);
-        head(160, 134 + (breathe - 1) * -110, headRot);
+        neckWear(160, 202 + (breathe - 1) * -110 + headY * 0.3, 58);
+        if (pose == Pose.EAT) {
+            bowl();
+        }
+        head(160, 134 + headY + (breathe - 1) * -110, headRot);
     }
 
     static Shape sitBody() {

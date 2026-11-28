@@ -24,6 +24,15 @@ public final class PetArt {
      */
     public static void drawAt(Graphics2D g0, PetKind kind, Set<WearId> wear, double t, double since, double x, double ground,
             double size) {
+        drawAt(g0, kind, Pose.SIT, wear, t, since, x, ground, size);
+    }
+
+    /**
+     * 자세 pose(D-50)로 그린다. 나머지는 앉은 펫과 같다. 밥 먹기는 밥그릇 아래 끝이 바닥보다 상자의 약 2% 아래까지 내려온다. 자기와
+     * 기지개는 아직 앉기로 그린다(docs/porting/character.md S8b).
+     */
+    public static void drawAt(Graphics2D g0, PetKind kind, Pose pose, Set<WearId> wear, double t, double since, double x,
+            double ground, double size) {
         Graphics2D g = (Graphics2D) g0.create();
         PetPaintBase.hints(g);
         g.translate(x, ground);
@@ -31,7 +40,7 @@ public final class PetArt {
         double pop = since < 0.35 ? 0.9 + 0.1 * PetPaintBase.easeOutBack(since / 0.35) : 1.0;
         g.scale(k * pop, k * pop);
         g.translate(-160, -300);
-        new PetPaintBody(g, kind, wear, t).sit();
+        new PetPaintBody(g, kind, pose, wear, t).sit();
         g.dispose();
     }
 

@@ -19,10 +19,31 @@ import planningpet.pet.model.WearId;
 /** 자세(D-50)와 모습 단계 크기, 얼굴 그림. 번호는 docs/porting/character.md S8b. */
 class PetArtPoseTest {
     private static final PetKind[] KINDS = {PetKind.CAT, PetKind.DOG};
+    private static final Set<WearId> COLLAR = Set.of(WearId.BASIC_NECKLACE);
 
-    /** 자세마다의 높이 비율(Pose 차례). */
+    /** 320x340 그림에 크기 320(1배), 바닥 y=300, 가운데 x=160으로 시각 t에 그린다. 그림 좌표가 상자 좌표다. */
+    private static BufferedImage draw(PetKind kind, Pose pose, Set<WearId> wear, double t) {
+        BufferedImage img = new BufferedImage(320, 340, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = img.createGraphics();
+        PetArt.drawAt(g, kind, pose, wear, t, 99, 160, 300, 320);
+        g.dispose();
+        return img;
+    }
+
+    /** 칠한 픽셀의 상자(왼쪽, 위, 오른쪽, 아래)를 (160, 300)에서 잰다. */
+    private static int[] box(PetKind kind, Pose pose, double t) {
+        String box = PetArtTest.paintedBox(draw(kind, pose, COLLAR, t), 160, 300);
+        return Arrays.stream(box.split(" ")).mapToInt(Integer::parseInt).toArray();
+    }
+
+    /** 칠한 위 끝을 상자 320으로 나눠 둘째 자리에서 반올림한 값이 자세의 높이 비율이다(모자 없이 기본 목걸이, 시각 0). Pose 차례의 값도 본다. */
     @Test
     void ePose1HeightRatio() {
+        for (PetKind kind : KINDS) {
+            for (Pose pose : new Pose[] {Pose.SIT, Pose.EAT}) {
+                assertEquals(Math.round(-box(kind, pose, 0)[1] / 320.0 * 100) / 100.0, PetArt.heightRatio(kind, pose), kind + " " + pose);
+            }
+        }
         assertEquals(List.of(0.88, 0.51, 0.62, 0.83, 0.92), Arrays.stream(Pose.values()).map(p -> PetArt.heightRatio(PetKind.CAT, p)).toList());
         assertEquals(List.of(0.77, 0.50, 0.47, 0.73, 0.86), Arrays.stream(Pose.values()).map(p -> PetArt.heightRatio(PetKind.DOG, p)).toList());
     }
@@ -32,7 +53,10 @@ class PetArtPoseTest {
         assertEquals(List.of(0.72, 0.72, 0.86, 1.0, 1.0), IntStream.range(0, 5).mapToObj(PetArt::stageScale).toList());
     }
 
-    /** 밥그릇은 사료 윗면 타원(가운데 (160, 268), 반지름 58과 12)과 아래 끝 y=306의 그릇에 굵기 6의 외곽선이라 바닥 아래 8줄까지 칠한다. */
+    /**
+     * 밥그릇은 사료 윗면 타원(가운데 (160, 268), 반지름 58과 12)과 아래 끝 y=306의 그릇에 굵기 6의 외곽선이라 바닥 아래 8줄까지 칠한다.
+     * 밥 먹기 자세의 아래 끝도 그릇이다. 앉기의 아래 끝은 고양이 7, 강아지 5다.
+     */
     @Test
     void ePose3BowlBelowGround() {
         BufferedImage img = new BufferedImage(320, 340, BufferedImage.TYPE_INT_ARGB);
@@ -41,6 +65,8 @@ class PetArtPoseTest {
         new PetPaintBody(g, PetKind.CAT, Set.of(), 0).bowl();
         g.dispose();
         assertEquals("-61 -47 60 8", PetArtTest.paintedBox(img, 160, 300));
+        assertEquals(List.of(7, 8), List.of(box(PetKind.CAT, Pose.SIT, 0)[3], box(PetKind.CAT, Pose.EAT, 0)[3]));
+        assertEquals(List.of(5, 8), List.of(box(PetKind.DOG, Pose.SIT, 0)[3], box(PetKind.DOG, Pose.EAT, 0)[3]));
     }
 
     /** 음표만 320x320 그림에 상자 좌표 그대로 그린다. */
