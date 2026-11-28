@@ -1,6 +1,7 @@
 package planningpet.pet.view;
 
 import planningpet.common.view.Icons;
+import planningpet.common.view.Images;
 import planningpet.common.view.Theme;
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -25,6 +26,59 @@ final class PickScene {
         g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+    }
+
+    /** 창 바탕: 하늘, 구름, 먼 산, 언덕, 바닥 꽃밭, 반짝이 별. 글과 카드가 놓이는 가운데는 비워 둔다. */
+    static void backdrop(Graphics2D g, int w, int h) {
+        backdrop(g, w, h, Images.CLOUD);
+    }
+
+    /** 구름 그림 cloudImage로 그린다. null이면 구름을 도형으로 그린다(그림 파일이 없을 때). */
+    static void backdrop(Graphics2D g, int w, int h, BufferedImage cloudImage) {
+        hints(g);
+        g.setPaint(new GradientPaint(0, 0, Theme.SKY_TOP, 0, h * 0.62f, Theme.SKY_BOTTOM));
+        g.fillRect(0, 0, w, h);
+        cloud(g, cloudImage, w * 0.04, h * 0.10, w * 0.15);
+        cloud(g, cloudImage, w * 0.17, h * 0.21, w * 0.08);
+        cloud(g, cloudImage, w * 0.80, h * 0.08, w * 0.14);
+        cloud(g, cloudImage, w * 0.86, h * 0.24, w * 0.10);
+        cloud(g, cloudImage, w * 0.70, h * 0.06, w * 0.07);
+        cloud(g, cloudImage, w * 0.88, h * 0.42, w * 0.09);
+        cloud(g, cloudImage, w * 0.02, h * 0.36, w * 0.09);
+        // 먼 산: 양옆이 높고 가운데로 낮아지는 하늘빛 능선.
+        Path2D far = new Path2D.Double();
+        far.moveTo(0, h * 0.58);
+        far.curveTo(w * 0.06, h * 0.50, w * 0.12, h * 0.52, w * 0.18, h * 0.57);
+        far.curveTo(w * 0.30, h * 0.66, w * 0.70, h * 0.66, w * 0.82, h * 0.57);
+        far.curveTo(w * 0.88, h * 0.51, w * 0.94, h * 0.50, w, h * 0.56);
+        far.lineTo(w, h);
+        far.lineTo(0, h);
+        far.closePath();
+        g.setPaint(new GradientPaint(0, h * 0.50f, Theme.MOUNTAIN, 0, h * 0.72f, Theme.SKY_BOTTOM));
+        g.fill(far);
+        // 언덕: 양옆에서 올라오는 연두 둔덕.
+        Path2D hill = new Path2D.Double();
+        hill.moveTo(0, h * 0.66);
+        hill.curveTo(w * 0.10, h * 0.62, w * 0.20, h * 0.68, w * 0.30, h * 0.76);
+        hill.curveTo(w * 0.42, h * 0.84, w * 0.58, h * 0.84, w * 0.70, h * 0.76);
+        hill.curveTo(w * 0.80, h * 0.68, w * 0.90, h * 0.62, w, h * 0.65);
+        hill.lineTo(w, h);
+        hill.lineTo(0, h);
+        hill.closePath();
+        g.setPaint(new GradientPaint(0, h * 0.62f, alpha(Theme.GRASS_FAR, 230), 0, h, alpha(Theme.GRASS, 255)));
+        g.fill(hill);
+        // 바닥 풀 띠: 가운데는 얇고 양 아래 모서리는 두껍다.
+        Path2D near = new Path2D.Double();
+        near.moveTo(0, h * 0.80);
+        near.curveTo(w * 0.12, h * 0.78, w * 0.22, h * 0.88, w * 0.34, h * 0.95);
+        near.curveTo(w * 0.45, h * 0.985, w * 0.55, h * 0.985, w * 0.66, h * 0.95);
+        near.curveTo(w * 0.78, h * 0.88, w * 0.88, h * 0.78, w, h * 0.79);
+        near.lineTo(w, h);
+        near.lineTo(0, h);
+        near.closePath();
+        g.setPaint(new GradientPaint(0, h * 0.78f, Theme.GRASS, 0, h, mix(Theme.GRASS, Theme.GRASS_DEEP, 0.5)));
+        g.fill(near);
+        corners(g, w, h);
     }
 
     /** 양 아래 모서리의 덤불, 데이지, 꽃봉오리와 양옆의 반짝이 별. 바탕(w x h)의 높이 600을 1로 잰다. */

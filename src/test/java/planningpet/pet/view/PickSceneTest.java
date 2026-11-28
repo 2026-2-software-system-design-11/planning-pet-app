@@ -87,4 +87,31 @@ class PickSceneTest {
         same("pick-scene-corners-800x651", 800, 651, g -> PickScene.corners(g, 800, 651));
         same("pick-scene-corners-800x200", 800, 200, g -> PickScene.corners(g, 800, 200));
     }
+
+    private static void back(int w, int h) throws IOException {
+        same("pick-scene-" + w + "x" + h, w, h, g -> PickScene.backdrop(g, w, h));
+    }
+
+    @Test
+    void ePick7UsualWindow() throws IOException {
+        back(800, 651);
+    }
+
+    @Test
+    void ePick8OtherWindowSizes() throws IOException {
+        back(1600, 1302);
+        back(1200, 651);
+        back(800, 200);
+    }
+
+    @Test
+    void ePick9ZeroAndOne() throws IOException {
+        back(0, 0);
+        back(1, 1);
+    }
+
+    @Test
+    void ePick10NoCloudImage() throws IOException {
+        same("pick-scene-800x651-no-cloud", 800, 651, g -> PickScene.backdrop(g, 800, 651, null));
+    }
 }
