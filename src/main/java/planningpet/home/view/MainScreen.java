@@ -1,0 +1,117 @@
+package planningpet.home.view;
+
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.time.LocalDate;
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import planningpet.app.controller.AppController;
+import planningpet.app.model.AppData;
+import planningpet.common.view.Card;
+import planningpet.common.view.Icons;
+import planningpet.common.view.RoundField;
+import planningpet.common.view.Theme;
+import planningpet.home.controller.HomeController;
+import planningpet.reward.controller.RewardController;
+import planningpet.schedule.view.TaskRows;
+
+/**
+ * 홈(05 메인, D-59). 왼쪽 위 펫 카드, 왼쪽 아래 달력, 오른쪽 위아래 할 일 목록이다. 값은 디자인 시스템 10절 "홈"에 있다
+ * (docs/porting/home.md S3ab).
+ */
+public final class MainScreen extends JPanel {
+    private static final String WEEK = "월화수목금토일";
+    private final AppData data;
+    final CalendarPanel calendar;
+    final TaskRows rows;
+    final PetCard pet;
+    final JLabel listTitle = new JLabel();
+    final RoundField quick = new RoundField(Icons.Kind.PENCIL, "할 일을 쓰고 Enter");
+    /** D-40: 칸 옆 "추가"는 Enter와 같다(넣는 일은 C4). "일정 추가"는 목록 제목 줄 오른쪽이다. */
+    final JButton quickButton = new JButton("추가");
+    final JButton addButton = new JButton("일정 추가");
+
+    /** 펫 카드, 달력 카드, 할 일 카드를 이 차례로 갖는다. 데이터 변경 알림에 refresh를 거는 일은 화면을 넣는 쪽(Main)이 한다. */
+    public MainScreen(AppData data, AppController app, HomeController home, RewardController reward) {
+        super(null);
+        this.data = data;
+        calendar = new CalendarPanel(data, home, app);
+        rows = new TaskRows(data, reward, t -> { }, t -> { }, (t, day, at) -> { });
+        pet = new PetCard(data, app.getBubble(), () -> { });
+
+        Card list = new Card(new BorderLayout(0, 8));
+        listTitle.setFont(Theme.heavy(21));
+        listTitle.setIcon(Icons.icon(Icons.Kind.CHECKLIST, 24, Theme.ICON));
+        listTitle.setIconTextGap(8);
+        addButton.setIcon(Icons.icon(Icons.Kind.PLUS, 16, Theme.ICON));
+        addButton.setIconTextGap(6);
+        JPanel head = new JPanel(new BorderLayout());
+        head.add(listTitle, BorderLayout.CENTER);
+        head.add(addButton, BorderLayout.EAST);
+        head.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Theme.CARD_EDGE),
+                BorderFactory.createEmptyBorder(0, 0, 8, 0)));
+        JPanel top = new JPanel(new BorderLayout());
+        top.add(head, BorderLayout.NORTH);
+        list.add(top, BorderLayout.NORTH);
+        JScrollPane scroll = new JScrollPane(rows, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scroll.setBorder(BorderFactory.createEmptyBorder());
+        list.add(scroll, BorderLayout.CENTER);
+        list.add(quickAdd(), BorderLayout.SOUTH);
+
+        Card calendarCard = new Card(new BorderLayout());
+        calendarCard.setBorder(BorderFactory.createEmptyBorder(14, 16, 14, 16));
+        calendarCard.add(calendar);
+        add(pet);
+        add(calendarCard);
+        add(list);
+    }
+
+    /**
+     * 왼쪽 열은 본문 폭의 0.47(360에서 760 사이), 펫 카드 높이는 본문 높이의 0.42(236에서 400 사이)이고 나머지가 달력이다.
+     * 오른쪽 할 일 카드는 위아래를 다 쓴다(D-59).
+     */
+    @Override
+    public void doLayout() {
+        int w = getWidth();
+        int h = getHeight();
+        int gap = Theme.GAP;
+        int leftW = (int) Math.max(360, Math.min(760, w * 0.47));
+        int petH = (int) Math.max(236, Math.min(400, h * 0.42));
+        Component[] parts = getComponents();
+        parts[0].setBounds(0, 0, leftW, petH);
+        parts[1].setBounds(0, petH + gap, leftW, h - petH - gap);
+        parts[2].setBounds(leftW + gap, 0, w - leftW - gap, h);
+        for (Component c : parts) {
+            c.doLayout();
+        }
+    }
+
+    /** 빠른 추가 줄(05 입력 항목 5, D-40): 둥근 칸, 옆 "추가"(처음은 흐림), 아래 안내. */
+    private JPanel quickAdd() {
+        JPanel panel = new JPanel(new BorderLayout(8, 6));
+        panel.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
+        quickButton.setEnabled(false);
+        JLabel hint = new JLabel("제목을 쓰고 Enter나 추가를 누르면 30분짜리 할 일로 들어가요");
+        hint.setForeground(Theme.INK_SUB);
+        hint.setFont(Theme.font(12));
+        hint.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 0));
+        quickButton.setBorder(BorderFactory.createEmptyBorder(9, 18, 11, 18));
+        panel.add(quick, BorderLayout.CENTER);
+        panel.add(quickButton, BorderLayout.EAST);
+        panel.add(hint, BorderLayout.SOUTH);
+        return panel;
+    }
+
+    /** 고른 날의 목록 제목과 목록, 달력, 펫 카드를 다시 그린다. */
+    public void refresh() {
+        LocalDate date = calendar.selected();
+        listTitle.setText(date.getMonthValue() + "월 " + date.getDayOfMonth() + "일 ("
+                + WEEK.charAt(date.getDayOfWeek().getValue() - 1) + ") 할 일");
+        rows.showPlan(data.getBook().dayPlan(date));
+        calendar.refresh();
+        pet.repaint();
+    }
+}
