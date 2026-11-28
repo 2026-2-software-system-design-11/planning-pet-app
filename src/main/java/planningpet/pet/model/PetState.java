@@ -34,6 +34,7 @@ public final class PetState {
     }
 
     // 값 하나를 넣는 메서드. 저장의 읽기가 쓰고, 규칙(06 10번, 28번, 30번)은 그 규칙을 옮기는 단위가 이것을 부르는 메서드로 더한다.
+    public void setName(String name) { this.name = name; }
     public void setExp(int exp) { this.exp = exp; }
     public void setPose(Pose pose) { this.pose = pose; }
     /** 입은 장신구를 이 모음으로 바꾼다. 안 입은 칸은 넣지 않는다(D-51). */

@@ -11,6 +11,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -28,7 +29,7 @@ import planningpet.schedule.model.DeleteScope;
 import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.TaskDraft;
 
-/** 06 30번 choose, adopt, select의 검사 줄과 docs/porting/pet-controller.md 2절의 경계. 지금은 11-16 10:00이다. */
+/** 06 28번, 30번의 검사 줄과 docs/porting/pet-controller.md 2절, docs/porting/character.md S8a 2절의 경계. 지금은 11-16 10:00이다. */
 class PetControllerTest {
     private final AppData data = new AppData(Clock.fixed(
             LocalDateTime.of(2026, 11, 16, 10, 0).atZone(ZoneId.systemDefault()).toInstant(), ZoneId.systemDefault()));
@@ -244,5 +245,194 @@ class PetControllerTest {
         assertEquals(PetKind.DOG, data.getActiveKind());
         assertEquals("", app.getBubble().getLine());
         assertEquals(List.of("고른 펫 바꾸기 저장에 실패해서 바꾸기 전으로 돌렸어요."), errors);
+    }
+
+    /** 고른 고양이 나비 하나. exp는 누적 경험치다(레벨 3은 130, 레벨 10은 1600, D-20). */
+    private PetState oneCat(int exp) {
+        PetState cat = new PetState(PetKind.CAT, "나비");
+        cat.setExp(exp);
+        data.addPet(cat);
+        data.setActiveKind(PetKind.CAT);
+        return cat;
+    }
+
+    @Test
+    void T_PET_2_arrowSteps() {
+        twoPetsThreeTasks();
+        data.setActiveKind(PetKind.CAT);
+        pets.step(1);
+        assertEquals(PetKind.DOG, data.getActiveKind());
+        assertEquals("이제 경험치는 내가 받을게! 오늘 할 일 3개 남았어.", app.getBubble().getLine());
+        pets.step(1);
+        assertEquals(PetKind.CAT, data.getActiveKind());
+        assertEquals(2, saves);
+        assertEquals(2, heard);
+    }
+
+    @Test
+    void E_PET_19_stepBackWraps() {
+        twoPetsThreeTasks();
+        data.setActiveKind(PetKind.CAT);
+        pets.step(-1);
+        assertEquals(PetKind.DOG, data.getActiveKind());
+    }
+
+    @Test
+    void E_PET_20_stepWithOnePet() {
+        oneCat(0);
+        pets.step(1);
+        pets.step(-1);
+        assertEquals(PetKind.CAT, data.getActiveKind());
+        assertEquals("", app.getBubble().getLine());
+        assertEquals(0, saves);
+        assertEquals(0, heard);
+    }
+
+    @Test
+    void T_PET_3_renameRule() {
+        oneCat(0);
+        pets.rename(PetKind.CAT, "  ");
+        assertEquals("나비", data.pet(PetKind.CAT).getName());
+        pets.rename(PetKind.CAT, "가나다라마바사아자차카");
+        assertEquals("가나다라마바사아자차", data.pet(PetKind.CAT).getName());
+    }
+
+    @Test
+    void T_PET_7_renamedTalks() {
+        oneCat(0).setName("콩");
+        pets.rename(PetKind.CAT, "보리");
+        assertEquals("보리", data.pet(PetKind.CAT).getName());
+        assertEquals("이제 내 이름은 보리야.", app.getBubble().getLine());
+        assertNull(app.getBubble().getRoomLine());
+        assertEquals(1, saves);
+        assertEquals(1, heard);
+    }
+
+    @Test
+    void E_PET_21_renameSaveFails() {
+        oneCat(0);
+        failing = true;
+        pets.rename(PetKind.CAT, "보리");
+        assertEquals("나비", data.pet(PetKind.CAT).getName());
+        assertEquals("", app.getBubble().getLine());
+        assertEquals(List.of("펫 이름 바꾸기 저장에 실패해서 바꾸기 전으로 돌렸어요."), errors);
+    }
+
+    @Test
+    void E_PET_22_sameName() {
+        oneCat(0);
+        pets.rename(PetKind.CAT, "나비");
+        assertEquals("나비", data.pet(PetKind.CAT).getName());
+        assertEquals("이제 내 이름은 나비야.", app.getBubble().getLine());
+        assertEquals(1, saves);
+        assertEquals(1, heard);
+    }
+
+    @Test
+    void T_PET_4_pose() {
+        oneCat(0);
+        pets.pose(PetKind.CAT, Pose.SLEEP);
+        pets.pose(PetKind.CAT, null); // 06의 "춤" 자리. 다섯 자세 밖의 값은 Pose로 넘길 수 없다
+        assertEquals(Pose.SLEEP, data.pet(PetKind.CAT).getPose());
+        assertEquals(1, saves);
+        assertEquals(1, heard);
+    }
+
+    @Test
+    void E_PET_23_samePose() {
+        oneCat(0);
+        pets.pose(PetKind.CAT, Pose.SIT);
+        assertEquals(Pose.SIT, data.pet(PetKind.CAT).getPose());
+        assertEquals(1, saves);
+        assertEquals(1, heard);
+    }
+
+    @Test
+    void E_PET_24_poseSaveFails() {
+        oneCat(0);
+        failing = true;
+        pets.pose(PetKind.CAT, Pose.SLEEP);
+        assertEquals(Pose.SIT, data.pet(PetKind.CAT).getPose());
+        assertEquals(List.of("자세 고르기 저장에 실패해서 바꾸기 전으로 돌렸어요."), errors);
+    }
+
+    @Test
+    void T_WEAR_1_onlyOpenWear() {
+        oneCat(130);
+        pets.applyWear(PetKind.CAT, Map.of(Slot.NECK, WearId.STAR_NECKLACE, Slot.HAT, WearId.STRAW_HAT,
+                Slot.CLOTHES, WearId.SCARF));
+        assertEquals(Map.of(Slot.HAT, WearId.STRAW_HAT, Slot.CLOTHES, WearId.SCARF), data.pet(PetKind.CAT).getWear());
+        assertEquals(1, saves);
+        assertEquals(1, heard);
+    }
+
+    @Test
+    void T_WEAR_3_levelTenWearsAll() {
+        Map<Slot, WearId> all = Map.of(Slot.NECK, WearId.CROWN_NECKLACE, Slot.ACCESSORY, WearId.GLASSES,
+                Slot.HAT, WearId.CROWN, Slot.CLOTHES, WearId.CAPE);
+        oneCat(1600);
+        pets.applyWear(PetKind.CAT, all);
+        assertEquals(all, data.pet(PetKind.CAT).getWear());
+    }
+
+    @Test
+    void E_WEAR_9_wrongSlotDropped() {
+        oneCat(1600);
+        pets.applyWear(PetKind.CAT, Map.of(Slot.HAT, WearId.GLASSES, Slot.NECK, WearId.RIBBON_NECKLACE));
+        assertEquals(Map.of(Slot.NECK, WearId.RIBBON_NECKLACE), data.pet(PetKind.CAT).getWear());
+    }
+
+    @Test
+    void E_WEAR_10_takeAllOff() {
+        oneCat(1600);
+        Map<Slot, WearId> hatOff = new EnumMap<>(Slot.class);
+        hatOff.put(Slot.HAT, null);
+        pets.applyWear(PetKind.CAT, hatOff);
+        assertEquals(Map.of(), data.pet(PetKind.CAT).getWear());
+        pets.applyWear(PetKind.CAT, Map.of(Slot.HAT, WearId.CROWN));
+        pets.applyWear(PetKind.CAT, Map.of());
+        assertEquals(Map.of(), data.pet(PetKind.CAT).getWear());
+        assertEquals(3, saves);
+        assertEquals(3, heard);
+    }
+
+    @Test
+    void E_WEAR_11_wearSaveFails() {
+        oneCat(130);
+        failing = true;
+        pets.applyWear(PetKind.CAT, Map.of(Slot.HAT, WearId.STRAW_HAT));
+        assertEquals(Map.of(Slot.NECK, WearId.BASIC_NECKLACE), data.pet(PetKind.CAT).getWear());
+        assertEquals(List.of("펫 꾸미기 저장에 실패해서 바꾸기 전으로 돌렸어요."), errors);
+    }
+
+    @Test
+    void E_WEAR_12_otherPetsLevel() {
+        oneCat(1600);
+        data.addPet(new PetState(PetKind.DOG, "바둑이"));
+        pets.applyWear(PetKind.DOG, Map.of(Slot.NECK, WearId.BASIC_NECKLACE, Slot.HAT, WearId.CROWN));
+        assertEquals(Map.of(Slot.NECK, WearId.BASIC_NECKLACE), data.pet(PetKind.DOG).getWear());
+        assertEquals(Map.of(Slot.NECK, WearId.BASIC_NECKLACE), data.pet(PetKind.CAT).getWear());
+        assertEquals(PetKind.CAT, data.getActiveKind());
+    }
+
+    @Test
+    void E_PET_25_missingKindDoesNothing() {
+        oneCat(1600);
+        pets.rename(PetKind.DOG, "보리");
+        pets.pose(PetKind.DOG, Pose.SLEEP);
+        pets.applyWear(PetKind.DOG, Map.of(Slot.HAT, WearId.CROWN));
+        assertEquals(1, data.getPets().size());
+        assertEquals("나비", data.activePet().getName());
+        assertEquals("", app.getBubble().getLine());
+        assertEquals(0, saves);
+        assertEquals(0, heard);
+    }
+
+    @Test
+    void E_PET_26_stepWithNoPets() {
+        pets.step(1);
+        assertNull(data.getActiveKind());
+        assertEquals(0, saves);
+        assertEquals(0, heard);
     }
 }
