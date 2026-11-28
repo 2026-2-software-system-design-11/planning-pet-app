@@ -5,7 +5,7 @@
 이 단위가 옮기지 않는 것:
 
 - `choose`의 `examples` 인자와 31번 `Examples.fill` 부르기는 예시로 둘러보기 단위 C5가 더한다. 이 단위의 `choose`는 바로 시작 갈래다. S2a(#407)가 `PetArt.drawFace`의 펫 종류 인자를 S2b로 넘긴 것과 같은 꼴이다.
-- `step`, `rename`, `pose`, `applyWear`는 S8 캐릭터 창이 옮긴다.
+- `step`, `rename`, `pose`, `applyWear`는 S8 캐릭터 창의 S8a(#540)가 옮긴다([character.md](character.md)).
 - 고르기 창의 바로 시작이 `choose`를 부르는 일은 #435([pick.md](pick.md))가, 나의 방의 "+"와 데려오기 창, 펫 칩이 `adopt`와 `select`를 부르는 일은 S7 나의 방이 한다.
 
 07 안에서 정한 것과 그 까닭:
