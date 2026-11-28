@@ -236,6 +236,13 @@ class PetArtPoseTest {
         assertEquals(PetPaintBase.BLUE.getRGB(), zzz(1.3).getRGB(237, 128));
     }
 
+    /** 음수 시각도 2.6초 주기로 본다. 시각 -1.3의 첫 Z는 1.3과 같은 자리에 보인다(프로토타입은 알파가 음수라 멈춘다). */
+    @Test
+    void ePose14NegativeTimeZzz() {
+        assertEquals(PetPaintBase.BLUE.getRGB(), zzz(-1.3).getRGB(237, 128));
+        assertTrue(box(PetKind.DOG, Pose.SLEEP, -0.3)[1] < 0);
+    }
+
     /** 머리만 상자 좌표 (160, 160)에 표정 face로 그린다. */
     private static BufferedImage head(PetKind kind, PetPaintBase.Face face) {
         BufferedImage img = new BufferedImage(320, 320, BufferedImage.TYPE_INT_ARGB);

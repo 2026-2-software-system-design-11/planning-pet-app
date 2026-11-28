@@ -296,10 +296,16 @@ final class PetPaintBody extends PetPaintHead {
         }
     }
 
-    /** 자는 펫 오른쪽 위의 Z 셋. 2.6초 주기로 커지며 오른쪽 위로 오르고, 3분의 1 주기씩 어긋나 나타났다 사라진다(t). */
+    /**
+     * 자는 펫 오른쪽 위의 Z 셋. 2.6초 주기로 커지며 오른쪽 위로 오르고, 3분의 1 주기씩 어긋나 나타났다 사라진다(t). 음수 시각도 주기로
+     * 본다(프로토타입과 일부러 다름, character.md E-POSE-14).
+     */
     void zzz() {
         for (int i = 0; i < 3; i++) {
             double p = (t / 2.6 + i / 3.0) % 1.0;
+            if (p < 0) {
+                p += 1;
+            }
             double s = 9 + p * 8;
             double x = 214 + p * 46;
             double y = 176 - p * 70;
