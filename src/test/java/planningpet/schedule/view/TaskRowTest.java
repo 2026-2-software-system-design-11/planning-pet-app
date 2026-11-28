@@ -85,7 +85,7 @@ class TaskRowTest {
 
     /** 줄을 만들어 앱처럼 Theme.clear를 건 뒤 폭 w, 알맞은 높이로 배치한다. */
     private JPanel row(Task t, String time, LocalDate list, int w) {
-        JPanel p = rows.row(t, time, list);
+        JPanel p = rows.row(t, time, null, list);
         Theme.clear(p);
         Snap.layOut(p, w, p.getPreferredSize().height);
         return p;

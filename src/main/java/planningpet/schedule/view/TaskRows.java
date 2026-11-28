@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -132,8 +133,8 @@ public final class TaskRows extends JPanel implements Scrollable {
         groups.put("untimed", new ArrayList<>(plan.untimed().stream().filter(down.negate()).toList()));
         groups.put("period", new ArrayList<>(plan.period()));
         stay(groups, plan.date());
-        groups.get("due").forEach(t -> add(row(t, "", plan.date())));
-        groups.get("timed").forEach(t -> add(row(t, data.getBook().timeText(t), plan.date())));
+        groups.get("due").forEach(t -> add(row(t, "", null, plan.date())));
+        groups.get("timed").forEach(t -> add(row(t, data.getBook().timeText(t), null, plan.date())));
         group("시각 없는 할 일", groups.get("untimed"), plan.date());
         group("기간 안에 할 일", groups.get("period"), plan.date());
         List<Task> done = new ArrayList<>(plan.timed().stream().filter(down).toList());
@@ -145,7 +146,7 @@ public final class TaskRows extends JPanel implements Scrollable {
             doneHead.getAccessibleContext().setAccessibleName("끝낸 일 " + done.size() + "개 " + (doneFolded ? "펼치기" : "접기"));
             add(doneHead);
             if (!doneFolded) {
-                done.forEach(t -> add(row(t, t.onTimetable(data.today()) ? data.getBook().timeText(t) : "", plan.date())));
+                done.forEach(t -> add(row(t, t.onTimetable(data.today()) ? data.getBook().timeText(t) : "", null, plan.date())));
             }
         }
         revalidate();
@@ -218,7 +219,7 @@ public final class TaskRows extends JPanel implements Scrollable {
         head.setForeground(Theme.INK_SUB);
         head.setBorder(BorderFactory.createEmptyBorder(14, 6, 4, 0));
         add(head);
-        tasks.forEach(t -> add(row(t, "", day)));
+        tasks.forEach(t -> add(row(t, "", null, day)));
     }
 
     /**
@@ -339,8 +340,13 @@ public final class TaskRows extends JPanel implements Scrollable {
         return tag;
     }
 
-    /** 홈 목록의 할 일 한 줄. time이 ""이면 "시각 정하기", listDay는 이 줄이 보이는 목록의 날이다(D-65). 순서는 D-59, 아래에 가는 선, 끝낸 줄은 민트빛 바탕. */
-    JPanel row(Task t, String time, LocalDate listDay) {
+    /**
+     * 할 일 한 줄. time이 ""이면 "시각 정하기", listDay는 이 줄이 보이는 목록의 날이다(D-65). 순서는 D-59, 아래에 가는 선, 끝낸 줄은
+     * 민트빛 바탕. rowDay가 있으면 일정관리 목록 줄이라 줄 앞에 그 날짜를 붙이고 작은 시계
+     * 단추와 연필, 휴지통을 둘째 줄에 둔다(time은 쓰지 않는다, D-102, docs/porting/schedule.md S5a2). 홈 목록은 null이다.
+     */
+    JPanel row(Task t, String time, LocalDate rowDay, LocalDate listDay) {
+        boolean withDate = rowDay != null;
         // 마우스를 올린 줄은 DAY 바탕이다(디자인 시스템 10절 홈, docs/porting/task-rows.md S3z).
         boolean[] over = {false};
         JPanel row = new JPanel(new BorderLayout(6, 0)) {
@@ -356,56 +362,88 @@ public final class TaskRows extends JPanel implements Scrollable {
                 g.fillRect(6, getHeight() - 1, getWidth() - 12, 1);
                 g.dispose();
             }
+
+            @Override
+            public Dimension getMaximumSize() {
+                // 일정관리 목록 줄은 둘째 줄이 한 줄인지 두 줄인지(D-94)에 따라 높이가 바뀐다.
+                return withDate ? new Dimension(Integer.MAX_VALUE, getPreferredSize().height) : super.getMaximumSize();
+            }
         };
         row.setOpaque(false);
-        row.setBorder(BorderFactory.createEmptyBorder(5, 6, 6, 4));
+        row.setBorder(withDate ? BorderFactory.createEmptyBorder(3, 6, 3, 4) : BorderFactory.createEmptyBorder(5, 6, 6, 4));
         row.setAlignmentX(LEFT_ALIGNMENT);
         JCheckBox box = RoundCheck.style(new JCheckBox());
         box.setSelected(t.isDone());
         box.putClientProperty(Task.class, t);
         box.getAccessibleContext().setAccessibleName((t.isDone() ? "끝냄 취소: " : "끝냄: ") + t.getTitle());
         // UC-07, UC-08: 끝내지 않은 일은 끝내고 끝낸 일은 체크를 푼다(프로토타입 TaskController.check의 갈래).
-        // D-88: 체크하면 제자리에 머물고 마지막 체크에서 1.5초 뒤 묶음으로 내려간다. 풀면 바로 제자리다.
+        // D-88: 홈 목록에서 체크하면 제자리에 머물고 마지막 체크에서 1.5초 뒤 묶음으로 내려간다. 풀면 바로 제자리다.
         box.addActionListener(e -> {
             if (t.isDone()) {
                 lingering.remove(t);
                 reward.uncomplete(t);
             } else {
-                lingering.add(t);
-                if (isShowing()) {
-                    settleTimer.restart();
+                if (!withDate) {
+                    lingering.add(t);
+                    if (isShowing()) {
+                        settleTimer.restart();
+                    }
                 }
                 reward.complete(t);
             }
         });
+        LocalDate today = data.today();
+        // D-69: 일정관리 목록의 지난 반복 사본은 흐린 제목과 걸리는 시간이다.
+        boolean dim = withDate && t.pastCopy(today);
         JLabel minutes = new JLabel(t.getDurationMinutes() + "분", JLabel.RIGHT);
         minutes.setFont(Theme.font(13));
-        minutes.setForeground(t.isDone() ? Theme.INK_DIM : Theme.INK_SUB);
+        minutes.setForeground(t.isDone() || dim ? Theme.INK_DIM : Theme.INK_SUB);
         minutes.setPreferredSize(new Dimension(Math.max(34, minutes.getPreferredSize().width), 20));
-        CircleButton pencil = new CircleButton(Icons.Kind.PENCIL, 28, "수정", true);
+        int iconButton = withDate ? 26 : 28;
+        CircleButton pencil = new CircleButton(Icons.Kind.PENCIL, iconButton, "수정", true);
         pencil.addActionListener(e -> onEdit.accept(t));
-        CircleButton trash = new CircleButton(Icons.Kind.TRASH, 28, "삭제", true);
+        CircleButton trash = new CircleButton(Icons.Kind.TRASH, iconButton, "삭제", true);
         trash.addActionListener(e -> onDelete.accept(t));
-        // D-94: 끝낸 줄과 지난 날 목록의 기간 할 일은 시각을 정하지 않는다.
-        LocalDate today = data.today();
-        boolean pastPeriod = !t.isDone() && t.period() && listDay.isBefore(today);
-        TimePill when = new TimePill(time, t.isDone(), t.isDone() || pastPeriod, pastPeriod ? "지난 날에는 시각을 정할 수 없어요" : null);
-        when.addActionListener(e -> onTime.open(t, listDay, when));
+        // D-94, D-102: 끝낸 줄은 시각을 정하지 않는다. 홈의 지난 날 목록에서 기간 할 일의 시각은 정하지 않는다. 일정관리 목록의 지난 날
+        // 줄은 마감이 남았으면 오늘로 정하고(D-99), 마감이 지났으면 정하지 않는다.
+        boolean pastPeriod = !t.isDone() && t.period() && listDay.isBefore(today) && (!withDate || t.getDueDate().isBefore(today));
+        String why = !pastPeriod ? null : withDate ? "마감이 지난 일은 시각을 정할 수 없어요" : "지난 날에는 시각을 정할 수 없어요";
+        TimePill when = withDate ? TimePill.icon(t.isDone(), t.isDone() || pastPeriod, why)
+                : new TimePill(time, t.isDone(), t.isDone() || pastPeriod, why);
+        // 마감이 지난 줄은 목록의 날(지난 날)을 그대로 넘겨 시각 고치기 창을 여는 쪽도 막는다(D-99, 06 T-EDIT-42).
+        boolean toToday = withDate && t.period() && listDay.isBefore(today) && !t.getDueDate().isBefore(today);
+        LocalDate openDay = toToday ? today : listDay;
+        when.addActionListener(e -> onTime.open(t, openDay, when));
         // D-35: 고정 일정도 체크한다. 체크 옆에 "고정" 꼬리표를 둔다.
         row.add(t.getKind() == Kind.FIXED ? middle(box, fixedTag()) : middle(box), BorderLayout.WEST);
-        TitleLabel label = new TitleLabel(t, "", false);
-        // D-33: 메모가 있으면 제목이나 줄 빈 곳에 마우스를 올렸을 때 보인다.
-        String tip = memoTip(t);
+        String date = withDate ? rowDay.getMonthValue() + "/" + rowDay.getDayOfMonth() + " " : "";
+        TitleLabel label = new TitleLabel(t, date, dim);
+        // D-33: 메모가 있으면 제목이나 줄 빈 곳에 마우스를 올렸을 때 보인다. 일정관리 목록의 마감이 지난 줄은 까닭이 먼저다(D-99).
+        String tip = withDate && t.pastDue(today) ? lockedTip(t) : memoTip(t);
         label.setToolTipText(tip);
         row.setToolTipText(tip);
         row.add(label, BorderLayout.CENTER);
-        row.add(middle(when, minutes, pencil, trash), BorderLayout.EAST);
         // D-94: 마감 글, 하려던 일, "오늘 마감"과 "마감"은 제목 아래 둘째 줄 왼쪽이다. 제목이 줄의 폭을 먼저 받는다.
-        JLabel marks = marks(data.getBook().dueText(t), missedNote(t, today), dueTag(t, listDay, today), false);
-        if (marks != null) {
-            row.add(marks, BorderLayout.SOUTH);
+        // D-44, D-69, D-78: 일정관리 목록에서 끝내지 않은 일의 세는 날이 지났으면 "지난 날"이다. 지난 반복 사본과 끝낸 일은 없다.
+        // D-102: 일정관리 목록의 마감 날 줄은 줄 앞 날짜가 마감 날이라 "~11/22까지"를 빼고 "마감", "오늘 마감"만 보인다.
+        boolean past = withDate && !t.isDone() && t.countDay().isBefore(today) && !t.pastCopy(today);
+        String tag = dueTag(t, listDay, today);
+        JLabel marks = marks(withDate && tag != null ? null : data.getBook().dueText(t), missedNote(t, today), tag, past);
+        if (withDate) {
+            // 일정관리 오른쪽 목록은 좁아서 걸리는 시간만 첫 줄 오른쪽이고 단추는 둘째 줄 오른쪽에 틈 없이 둔다(D-102).
+            row.add(middle(minutes), BorderLayout.EAST);
+            JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+            buttons.add(when);
+            buttons.add(pencil);
+            buttons.add(trash);
+            row.add(SecondLine.of(marks, buttons), BorderLayout.SOUTH);
+        } else {
+            row.add(middle(when, minutes, pencil, trash), BorderLayout.EAST);
+            if (marks != null) {
+                row.add(marks, BorderLayout.SOUTH);
+            }
+            row.setMaximumSize(new Dimension(Integer.MAX_VALUE, marks == null ? 44 : 62));
         }
-        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, marks == null ? 44 : 62));
         // 줄과 제목 칸을 오른쪽 버튼으로 누르면 수정, 삭제 메뉴다(05 홈 "할 일 고치기와 지우기", docs/porting/task-rows.md S3y).
         // 운영체제마다 누를 때나 뗄 때 팝업 깃발이 서서 둘 다 본다. 빨리 두 번 누르면 수정이다.
         MouseAdapter mouse = new MouseAdapter() {
