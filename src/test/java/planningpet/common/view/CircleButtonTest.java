@@ -56,6 +56,20 @@ class CircleButtonTest {
     }
 
     @Test
+    void eCbtn7NotSquare() throws IOException {
+        looks("60x32", button(Icons.Kind.LEFT, 32, false), 60, 32);
+        looks("32x60", button(Icons.Kind.LEFT, 32, false), 32, 60);
+        looks("size24-64x64", button(Icons.Kind.LEFT, 24, false), 64, 64);
+    }
+
+    @Test
+    void eCbtn8VerySmall() throws IOException {
+        looks("5x5", button(Icons.Kind.LEFT, 32, false), 5, 5);
+        looks("4x4", button(Icons.Kind.LEFT, 32, false), 4, 4);
+        looks("0x0", button(Icons.Kind.LEFT, 32, false), 0, 0);
+    }
+
+    @Test
     void eCbtn9Properties() {
         CircleButton b = button(Icons.Kind.LEFT, 32, false);
         assertEquals(new Dimension(32, 32), b.getPreferredSize());
@@ -73,5 +87,19 @@ class CircleButtonTest {
         assertEquals(new Dimension(0, 0), zero.getPreferredSize());
         assertNull(zero.getToolTipText());
         assertEquals("", zero.getAccessibleContext().getAccessibleName());
+    }
+
+    @Test
+    void eCbtn6Plain() throws IOException {
+        CircleButton b = button(Icons.Kind.RIGHT, 30, true);
+        looks("plain", b, 30, 30);
+        b.getModel().setRollover(true);
+        looks("plain-over", b, 30, 30);
+        b.getModel().setArmed(true);
+        b.getModel().setPressed(true);
+        looks("plain-down", b, 30, 30);
+        CircleButton off = button(Icons.Kind.LEFT, 30, true);
+        off.setEnabled(false);
+        looks("plain-disabled", off, 30, 30);
     }
 }
