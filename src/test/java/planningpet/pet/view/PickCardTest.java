@@ -11,6 +11,7 @@ import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
+import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -48,6 +49,10 @@ class PickCardTest {
 
     private static void looks(String name, PickCard c, int w, int h) throws IOException {
         Snap.assertLaidOutLooksLikePrototype("pickcard-" + name, c, w, h);
+    }
+
+    private static void mouse(PickCard c, int id) {
+        c.dispatchEvent(new MouseEvent(c, id, 0, 0, 5, 5, 0, false));
     }
 
     private static String described(String about) {
@@ -137,6 +142,31 @@ class PickCardTest {
     void eCard5Picked() throws IOException {
         looks("cat-on", blank(PetKind.CAT, true), 248, 262);
         looks("dog-on", blank(PetKind.DOG, true), 248, 262);
+    }
+
+    @Test
+    void eCard6RolloverAndDisabled() throws IOException {
+        for (PetKind kind : PetKind.values()) {
+            String name = kind == PetKind.CAT ? "cat" : "dog";
+            PickCard c = blank(kind, false);
+            mouse(c, MouseEvent.MOUSE_ENTERED);
+            looks(name + "-over", c, 248, 262);
+            mouse(c, MouseEvent.MOUSE_EXITED);
+            looks(name, c, 248, 262);
+            PickCard on = blank(kind, true);
+            mouse(on, MouseEvent.MOUSE_ENTERED);
+            assertTrue(on.getModel().isRollover());
+            looks(name + "-on", on, 248, 262);
+        }
+        for (boolean selected : new boolean[] {false, true}) {
+            PickCard off = blank(PetKind.CAT, selected);
+            off.setEnabled(false);
+            looks(selected ? "cat-on" : "cat", off, 248, 262);
+            mouse(off, MouseEvent.MOUSE_ENTERED);
+            off.getModel().setRollover(true);
+            assertFalse(off.getModel().isRollover());
+            looks(selected ? "cat-on" : "cat", off, 248, 262);
+        }
     }
 
     @Test

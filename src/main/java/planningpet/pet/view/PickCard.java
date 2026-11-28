@@ -70,6 +70,7 @@ public final class PickCard extends JRadioButton {
         Graphics2D g = (Graphics2D) graphics.create();
         PickScene.hints(g);
         boolean on = isSelected();
+        boolean over = getModel().isRollover() && isEnabled();
         boolean cat = kind == PetKind.CAT;
         int x = 4;
         int y = 2;
@@ -129,13 +130,13 @@ public final class PickCard extends JRadioButton {
             in.drawString(lines[i], (int) (cx - small.stringWidth(lines[i]) / 2.0), base + 25 + i * 20);
         }
         in.dispose();
-        // 안쪽 테두리: 고름은 민트 3, 나머지는 종류 색 1.5.
+        // 안쪽 테두리: 고름은 민트 3, 마우스는 MINT_LINE 2, 나머지는 종류 색 1.5.
         if (on) {
             g.setPaint(new GradientPaint(0, y, Theme.MINT_TOP, 0, y + h, Theme.MINT_DEEP));
             g.setStroke(new BasicStroke(3f));
         } else {
-            g.setColor(cat ? Theme.COOL_LINE : Theme.WARM_LINE);
-            g.setStroke(new BasicStroke(1.5f));
+            g.setColor(over ? Theme.MINT_LINE : cat ? Theme.COOL_LINE : Theme.WARM_LINE);
+            g.setStroke(new BasicStroke(over ? 2f : 1.5f));
         }
         g.draw(new RoundRectangle2D.Double(x + ring, y + ring, w - ring * 2, h - ring * 2, RADIUS - 8, RADIUS - 8));
         // 체크 배지: 색이 아니라 모양으로도 고름을 보인다(ICON 바탕은 카드 바탕과 5.7:1).
