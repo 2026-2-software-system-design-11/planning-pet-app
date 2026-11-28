@@ -19,6 +19,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import javax.swing.AbstractButton;
 import javax.swing.JLabel;
@@ -30,9 +31,12 @@ import org.junit.jupiter.api.Test;
 import planningpet.common.view.Theme;
 import planningpet.common.view.Ui;
 import planningpet.schedule.model.Category;
+import planningpet.schedule.model.EditScope;
 import planningpet.schedule.model.FieldError;
 import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Repeat;
+import planningpet.schedule.model.Task;
+import planningpet.schedule.model.TaskBook;
 import planningpet.schedule.model.TaskDraft;
 import planningpet.schedule.model.Tasks;
 
@@ -658,6 +662,51 @@ class TaskFormTest {
         TaskForm copy = edit(Tasks.task("영어", d(18)).series("S", Repeat.DAILY));
         assertEquals(List.of(false, false, false), List.of(copy.period.isSelected(), copy.period.isEnabled(), copy.periodHint.isVisible()));
         assertTrue(edit(Tasks.task("빨래", d(18))).period.isEnabled());
+    }
+
+    @Test
+    void tDef17StoredDueStays() {
+        TaskForm f = edit(Tasks.task("보고서", d(16)).period(d(16), d(12, 10)));
+        f.period.doClick();
+        Ui.setDate(f.date, d(20));
+        f.period.doClick();
+        assertEquals("2026-12-10", text(f.due));
+        Ui.setDate(f.date, d(12, 12));
+        assertEquals(List.of("2026-12-10", "마감일이 시작일보다 전이에요"), List.of(text(f.due), saveError(f, "마감")));
+    }
+
+    /** 창이 만든 draft()를 넣을 일정 묶음. 오늘은 today다. */
+    private static TaskBook book(Task t, LocalDate today) {
+        return new TaskBook(new ArrayList<>(List.of(t)), () -> 2, () -> today);
+    }
+
+    @Test
+    void tEdit11DueThenPeriodOffFromWindow() {
+        Task t = Tasks.task("P", d(16)).period(d(16), d(22)).task();
+        TaskBook book = book(t, d(16));
+        LocalDateTime now = LocalDateTime.of(2026, 11, 16, 10, 0);
+        TaskForm f = new TaskForm(t, now, DayOfWeek.MONDAY);
+        Ui.setDate(f.due, d(29));
+        book.update(t, f.draft(), EditScope.ONLY_THIS);
+        assertEquals(List.of(d(16), d(29)), List.of(t.getStartDay(), t.getDueDate()));
+        f = new TaskForm(t, now, DayOfWeek.MONDAY);
+        f.period.doClick();
+        assertNull(f.draft().dueDate());
+        book.update(t, f.draft(), EditScope.ONLY_THIS);
+        assertEquals(Arrays.asList(null, null), Arrays.asList(t.getStartDay(), t.getDueDate()));
+    }
+
+    @Test
+    void tEdit14LaterDueFromWindow() {
+        Task t = Tasks.task("P", d(18)).at("09:00").minutes(90).memo("초안").period(d(16), d(22)).task();
+        TaskForm f = new TaskForm(t, LocalDateTime.of(2026, 11, 17, 10, 0), DayOfWeek.MONDAY);
+        Ui.setDate(f.due, d(24));
+        TaskDraft got = f.draft();
+        assertEquals(Arrays.asList(d(16), d(24), null, 90, "초안", true), Arrays.asList(got.date(), got.dueDate(),
+                got.startTime(), got.durationMinutes(), got.memo(), got.editing()));
+        book(t, d(17)).update(t, got, EditScope.ONLY_THIS);
+        assertEquals(List.of(d(18), LocalTime.of(9, 0), d(16), d(24)), List.of(t.getDate(), t.getStartTime(),
+                t.getStartDay(), t.getDueDate()));
     }
 
     @Test
