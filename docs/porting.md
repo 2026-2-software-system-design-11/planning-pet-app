@@ -58,7 +58,8 @@
 | S2n | 펫 머리 장신구 | `PetPaintWear.headWear`(꽃 핀, 리본 핀, 안경, 밀짚모자, 베레모, 왕관)와 그것을 그리는 `PetArt.drawFace`, `drawAt`(#414). 옷은 #438 | 없음(D-51, [디자인 시스템](design-system.md) 10절) | [docs/porting/pet-art.md](porting/pet-art.md) |
 | S2o | 펫 옷 | `PetPaintWear`의 스카프와 망토 고리(`neckWear`), 조끼 `vest`, 망토 뒤판 `capeBehind`와 그것을 그리는 `PetArt.drawAt`(#438) | 없음(D-51, [디자인 시스템](design-system.md) 10절) | [docs/porting/pet-art.md](porting/pet-art.md) |
 | S3a | 할 일 끝내기와 체크 풀기 controller | `RewardController.complete`, `uncomplete`(#441) | 8번, 9번, 16번 `COMPLETED`, `UNCOMPLETED`, 22번 T-SAVE-1, T-SAVE-5 | [docs/porting/home.md](porting/home.md) |
-| S3 | 홈 목록 | `MainScreen`, `PetCard`, `CalendarPanel`, `HomeController`(#442), `TaskRows`(홈 목록이 쓰므로 S5에서 당겨 온다). `RewardController.complete`, `uncomplete`는 S3a | 6번, 13번, 16번, 26번 | [docs/porting/home.md](porting/home.md) |
+| S3b | 홈 달력에서 날 고르기 controller | `HomeController.pick`(#442) | 16번 `OTHER_DATE`, `USUAL`과 다시 세기(D-106) | [docs/porting/home.md](porting/home.md) |
+| S3 | 홈 목록 | `MainScreen`, `PetCard`, `CalendarPanel`, `TaskRows`(홈 목록이 쓰므로 S5에서 당겨 온다). `RewardController.complete`, `uncomplete`는 S3a, `HomeController`는 S3b | 6번, 13번, 16번, 26번 | [docs/porting/home.md](porting/home.md) |
 | S4 | 일정 입력 창 | `TaskDialog`, `TaskController.add`, `update`, `delete`, 고르는 칸 `ComboUI`와 그것을 거는 `Theme.install`의 줄([theme.md](porting/theme.md)) | 2~5번, 14번 | `docs/porting/task-dialog.md` |
 | S5 | 일정관리 | `ScheduleScreen`, `TimetablePanel`, `TimeEditor`, `TaskController.clearTime` | 4번의 시각 고치기 창, 7번, 19번 | `docs/porting/schedule.md` |
 | S6 | 자동 배치 결과 창 | `AutoPlaceDialog`, `TaskController.applyPlacement` | 18번 | `docs/porting/auto-place-dialog.md` |
