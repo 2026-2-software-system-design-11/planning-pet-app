@@ -26,7 +26,7 @@ opt 1a 앱이 이미 실행 중이다(false)
 end
 Main -> SqliteDataStore : load()
 opt 2b UNREADABLE
-  note right of Main : 창에 파일 위치와 원인.\n파일을 건드리지 않고 끝낸다
+  note right of Main : UnreadableDialog 창(05)에\n원인과 파일 자리.\n파일을 건드리지 않고 끝낸다
 end
 note right of Main : AppData와 controller를 만들어 잇는다.\n첫 실행이면 빈 AppData
 opt 2a FIRST_RUN

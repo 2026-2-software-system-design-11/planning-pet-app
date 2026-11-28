@@ -15,6 +15,10 @@ package planningpet.app {
 package planningpet.app.view {
   class AppWindow
   class Tray
+  class UnreadableDialog {
+    {static} + show(parent : Component, reason : Reason, file : Path) : void
+    {static} + pane(reason : Reason, file : Path) : JOptionPane
+  }
 }
 package planningpet.app.controller {
   class AppController {
