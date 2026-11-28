@@ -2,6 +2,9 @@ package planningpet.app.view;
 
 import java.awt.Component;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JTextArea;
 import planningpet.app.model.LoadResult.Reason;
@@ -27,10 +30,21 @@ public final class UnreadableDialog {
 
     /** 창 내용. 위에서 아래로 05의 글줄, 파일 위치, 파일 자리 칸이고 버튼은 확인 하나다. */
     public static JOptionPane pane(Reason reason, Path file) {
+        List<Object> lines = new ArrayList<>();
+        int width = 0;
+        for (String line : List.of(KEPT, cause(reason), next(reason), CLOSING, WHERE)) {
+            JLabel label = new JLabel(line);
+            width = Math.max(width, label.getPreferredSize().width);
+            lines.add(label);
+        }
+        // 05: 칸 폭은 위 글줄 가운데 가장 긴 줄이다. 경로에는 빈칸이 없을 때가 많아 글자 단위로 줄을 바꾼다.
         JTextArea where = new JTextArea(file.toString());
         where.setEditable(false);
-        Object[] lines = {KEPT, cause(reason), next(reason), CLOSING, WHERE, where};
-        return new JOptionPane(lines, JOptionPane.ERROR_MESSAGE, JOptionPane.DEFAULT_OPTION, null, new Object[] {OK}, OK);
+        where.setLineWrap(true);
+        where.setWrapStyleWord(false);
+        where.setSize(width, Short.MAX_VALUE); // 폭을 주면 줄을 바꾼 높이가 바라는 크기가 된다.
+        lines.add(where);
+        return new JOptionPane(lines.toArray(), JOptionPane.ERROR_MESSAGE, JOptionPane.DEFAULT_OPTION, null, new Object[] {OK}, OK);
     }
 
     /** 원인 글. */

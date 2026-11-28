@@ -1,6 +1,8 @@
 package planningpet.app.view;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.Component;
 import java.awt.Container;
@@ -88,5 +90,42 @@ class UnreadableDialogTest {
     void eUnread3ReadError() {
         assertEquals("파일을 읽다 오류가 났어요", UnreadableDialog.cause(Reason.READ_ERROR));
         assertEquals("백업해 둔 파일이 있으면 이 자리에 넣어 주세요", UnreadableDialog.next(Reason.READ_ERROR));
+    }
+
+    private static JTextArea where(JOptionPane pane) {
+        return parts(pane, JTextArea.class).get(0);
+    }
+
+    @Test
+    void eUnread6PathCopiedWhole() {
+        JTextArea where = where(UnreadableDialog.pane(Reason.NOT_DATA_FILE, FILE));
+        assertFalse(where.isEditable());
+        where.selectAll();
+        assertEquals("/Users/나비/Library/Application Support/PlanningPet/planningpet.db", where.getSelectedText());
+    }
+
+    @Test
+    void eUnread7WindowsPathAsIs() {
+        String windows = "C:\\Users\\나비\\AppData\\Roaming\\PlanningPet\\planningpet.db";
+        JTextArea where = where(UnreadableDialog.pane(Reason.READ_ERROR, Path.of(windows)));
+        where.selectAll();
+        assertEquals(windows, where.getSelectedText());
+    }
+
+    @Test
+    void eUnread8LongPathWrapsInsideWidestLine() {
+        String longPath = "/" + "a".repeat(400) + "/planningpet.db"; // 줄을 바꿀 빈칸이 없다.
+        JOptionPane shortPane = UnreadableDialog.pane(Reason.NEWER_VERSION, Path.of("/a")); // 한 줄
+        JOptionPane longPane = UnreadableDialog.pane(Reason.NEWER_VERSION, Path.of(longPath));
+        JTextArea where = where(longPane);
+        assertTrue(where.getLineWrap());
+        assertFalse(where.getWrapStyleWord());
+        int widest = parts(longPane, JLabel.class).stream().filter(l -> l.getText() != null)
+                .mapToInt(l -> l.getPreferredSize().width).max().getAsInt();
+        assertEquals(widest, where.getPreferredSize().width);
+        assertTrue(where.getPreferredSize().height >= 4 * where(shortPane).getPreferredSize().height);
+        assertEquals(shortPane.getPreferredSize().width, longPane.getPreferredSize().width);
+        where.selectAll();
+        assertEquals(longPath, where.getSelectedText());
     }
 }
