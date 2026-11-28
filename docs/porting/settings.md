@@ -2,12 +2,13 @@
 
 [본 구현으로 옮기기](../porting.md) 1절 표의 단위 S10이다. 설정(05 설정, UC-18)과 06 25번의 컴퓨터 켤 때 실행을 옮긴다. 기준은 05 설정과 그 그림 [ui-settings](../diagrams/ui-settings.puml), 06 25번(T-WIN-4~6), 06 데이터 절의 `calendarFixed`와 `weekStart`, 07 [class-home-settings](../diagrams/class-home-settings.puml), D-29, D-86, D-91, D-114, 프로토타입 `settings/view/SettingsScreen`(83줄)과 `settings/controller/SettingsController`(30줄)다. 프로토타입에는 컴퓨터 켤 때 실행 코드가 없고 설정 화면의 체크박스가 늘 비활성이다. 그래서 `Autostart`와 `OsAutostart`는 비교 기준이 없고 06 25번과 아래 경계 줄이 기준이다(porting.md 2절 6번).
 
-S10은 테스트를 더하면 약 740줄이라 PR 한도를 넘어 둘로 나눈다. S10a를 쓰다 실측이 한도를 넘어 Windows 등록과 `here()`를 S10b로 옮겼다. 아래 Windows 줄과 E-AUTO-9~12는 S10b가 옮긴다.
+S10은 테스트를 더하면 약 740줄이라 PR 한도를 넘어 나눈다. S10a를 쓰다 실측이 한도를 넘어 Windows 등록과 `here()`를 S10b로 옮겼고, S10b를 쓰다 실측(테스트 준비 코드를 넣어 약 560줄)이 한도를 넘어 Windows 등록을 S10c로 옮겼다. 아래 Windows 줄과 E-AUTO-9~12는 S10c가 옮겼다.
 
 | 몫 | 이슈 | 옮기는 것 |
 |---|---|---|
 | S10a | #523 | `settings.model.Autostart`, `settings.store.OsAutostart`의 macOS 등록, `settings.controller.SettingsController`의 `setCalendarFixed`, `setWeekStart`, `setAutostart` |
-| S10b | #525 | `settings.view.SettingsScreen`, `OsAutostart`의 Windows 등록과 이 컴퓨터의 값을 쓰는 `OsAutostart.here()`, `Main.open`이 설정을 앱 창에 붙이고 다시 그리기를 거는 일(#496 꼴), T-WIN-4~6의 화면 몫 |
+| S10b | #525 | `settings.view.SettingsScreen`, 이 컴퓨터의 값을 쓰는 `OsAutostart.here()`(macOS 등록만), `Main.open`이 설정을 앱 창에 붙이고 다시 그리기를 거는 일(#496 꼴), T-WIN-4~6의 화면 몫 |
+| S10c | #532 | `OsAutostart`의 Windows 등록(`reg` 명령을 돌리는 `Runner`와 그 결과 `Result`, `here()`가 넘기는 실제 실행), E-AUTO-9~12, 설정 화면을 고른 채일 때만 등록 상태를 읽는 `SettingsScreen.shown`(E-SET-15) |
 
 이 단위가 옮기지 않는 것: 설정 "목록 누르기"(체크박스 줄과 `SettingsController.setListClickTime`)는 C3다. "예시 지우기"의 남은 예시 세기와 지우기는 C5이고, S10b는 홈(#496)처럼 그 함수를 받는 필드만 둔다. 트레이, 창 닫기, `--autostart`로 창 없이 뜨기는 S11이다.
 
@@ -20,7 +21,7 @@ S10은 테스트를 더하면 약 740줄이라 PR 한도를 넘어 둘로 나눈
 - **Linux는 늘 쓸 수 없다.** 06 25번은 Windows와 macOS의 등록만 적고, 설치 파일도 두 운영체제용이다(D-29, D-114). 운영체제는 시스템 속성 `os.name`이 "Mac"이나 "Windows"로 시작하는지로 본다(06 21번의 데이터 폴더와 같은 꼴).
 - **macOS는 `~/Library/LaunchAgents/com.planningpet.app.plist` 파일이다.** 켜면 `Label` `com.planningpet.app`, `ProgramArguments`(앱 경로, `--autostart`), `RunAtLoad` true를 쓰고, 끄면 파일을 지운다. 등록 상태는 파일이 있는지다. `launchctl`은 부르지 않는다. 이 폴더의 파일은 다음 로그인 때 운영체제가 읽는다. 앱 경로는 XML 글자로 바꿔 넣는다(`&`, `<`, `>`).
 - **Windows는 `reg` 명령으로 `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`의 값 `PlanningPet`을 다룬다.** 켜면 `reg add`로 `"앱 경로" --autostart`를 쓰고, 끄면 등록되어 있을 때만 `reg delete`를 부른다. 등록 상태는 `reg query`의 종료 코드가 0인지다. 따옴표는 `reg`가 글로 받도록 `\"`로 넘긴다. 값 이름은 메인 에이전트와 맞췄다. 외부 의존성을 더하지 않으려고(D-108) 레지스트리 라이브러리 대신 운영체제에 든 `reg`를 쓴다.
-- **명령을 돌리는 일과 홈 폴더는 생성자로 받는다.** 검사는 `@TempDir` 폴더를 홈으로, 부른 명령을 적는 대역을 명령 실행(S10b)으로 넘긴다. 그래서 검사가 이 컴퓨터의 LaunchAgents나 레지스트리를 건드리지 않는다. 앱은 `OsAutostart.here()`로 이 컴퓨터의 값을 쓴다.
+- **명령을 돌리는 일과 홈 폴더는 생성자로 받는다.** 검사는 `@TempDir` 폴더를 홈으로, 부른 명령을 적는 대역을 명령 실행(S10c)으로 넘긴다. 그래서 검사가 이 컴퓨터의 LaunchAgents나 레지스트리를 건드리지 않는다. 앱은 `OsAutostart.here()`로 이 컴퓨터의 값을 쓴다.
 - **쓸 수 없는데 `set`을 부르면 `IllegalStateException`이고 아무것도 바꾸지 않는다.** 화면의 체크박스는 비활성이라 화면 밖 길이다. 등록 상태 읽기는 쓸 수 없어도 운영체제를 읽는다(설치한 앱이 등록해 둔 것을 실행 JAR에서 열어도 그대로 보인다).
 - **`SettingsController`는 07 이름을 쓴다.** 프로토타입 `showFixedOnCalendar`, `weekStart`는 07의 `setCalendarFixed`, `setWeekStart`다. 두 설정은 저장할 데이터라 22번 `change`로 감싸고, 저장 실패 창의 이름은 05 설정의 칸 이름 "달력에 고정 일정 보이기", "한 주 시작"이다(메인 에이전트와 맞춤). `setAutostart`는 운영체제 등록만 바꾸고 06 데이터 표에 없는 값이라 저장하지 않고 알림도 보내지 않는다. 화면은 `registered()`를 다시 읽어 보인다(06 25번).
 
@@ -35,13 +36,13 @@ S10은 테스트를 더하면 약 740줄이라 PR 한도를 넘어 둘로 나눈
 
 ### 2. 입력의 경계와 결과
 
-프로토타입 결과는 `work/impl/proto-kit`으로 프로토타입(마지막 변경 `2ac06b63`, JDK 21.0.11, macOS)의 `Main.create(MockData.empty())`에 부른 결과다. 컴퓨터 켤 때 실행은 프로토타입에 없어 "없음"이다. 앱 경로는 따로 적지 않으면 `/Applications/PlanningPet.app/Contents/MacOS/PlanningPet`이고 홈은 `@TempDir` 폴더다. "본 구현" 칸의 결과는 `OsAutostartTest`, `SettingsControllerTest`(E-AUTO-9~12는 S10b)가 번호 이름의 테스트로 확인한다.
+프로토타입 결과는 `work/impl/proto-kit`으로 프로토타입(마지막 변경 `2ac06b63`, JDK 21.0.11, macOS)의 `Main.create(MockData.empty())`에 부른 결과다. 컴퓨터 켤 때 실행은 프로토타입에 없어 "없음"이다. 앱 경로는 따로 적지 않으면 `/Applications/PlanningPet.app/Contents/MacOS/PlanningPet`이고 홈은 `@TempDir` 폴더다. "본 구현" 칸의 결과는 `OsAutostartTest`, `SettingsControllerTest`(E-AUTO-9~12는 S10c)가 번호 이름의 테스트로 확인한다.
 
 | 번호 | 입력과 경계 | 넣은 값 | 프로토타입 결과 | 본 구현 |
 |---|---|---|---|---|
 | T-WIN-4 | macOS, 설치된 앱, 등록 없음 | `set(true)`, 이어서 `registered()` | 없음 | plist가 생기고 `registered()` true. controller의 `setAutostart(true)`도 같고 저장하지 않는다 |
 | T-WIN-5 | T-WIN-4 뒤 운영체제에서 등록을 지움 | plist를 지우고 `registered()` | 없음 | false |
-| T-WIN-6 | 실행 JAR(`jpackage.app-path` 없음) | macOS의 `available()`(Windows는 S10b) | 없음(체크박스가 늘 비활성) | false |
+| T-WIN-6 | 실행 JAR(`jpackage.app-path` 없음) | macOS의 `available()`(Windows는 S10c) | 없음(체크박스가 늘 비활성) | false |
 | E-AUTO-1 | plist 내용 | `set(true)` | 없음 | `Label` `com.planningpet.app`, `ProgramArguments` 앱 경로와 `--autostart`, `RunAtLoad` true |
 | E-AUTO-2 | LaunchAgents 폴더가 없음 | 빈 홈에서 `set(true)` | 없음 | 폴더를 만들고 plist를 쓴다 |
 | E-AUTO-3 | 이미 등록됨 | `set(true)` 두 번, 둘째는 다른 경로 | 없음 | 파일 하나, 둘째 경로로 덮어쓴다 |
@@ -64,3 +65,95 @@ S10은 테스트를 더하면 약 740줄이라 PR 한도를 넘어 둘로 나눈
 
 - `OsAutostart.here()`가 실제 `reg` 프로세스를 돌리는 일과 이 컴퓨터의 홈 폴더를 쓰는 일은 검사하지 않는다. 검사가 이 컴퓨터를 실제로 등록하게 되기 때문이다.
 - Windows에서 `\"`로 넘긴 따옴표가 레지스트리 값에 따옴표로 들어가는지, macOS가 다음 로그인 때 plist를 읽어 앱을 `--autostart`로 띄우는지는 설치 파일(R 단위)로 손으로 본다.
+
+## S10b. 설정 화면과 앱 창 잇기
+
+S10a의 controller와 컴퓨터 켤 때 실행에 설정 화면(`SettingsScreen`)을 더하고, `Main.open`이 그것을 앱 창의 "설정"으로 붙인다(#525). 기준은 05 설정, 06 25번 T-WIN-4~6의 화면 몫, 프로토타입 `settings/view/SettingsScreen`과 `Main.create`다. 값(칸 이름, 안내 글, 여백 16, 줄 간격 6, 이름 칸 오른쪽 16)은 프로토타입 코드에서 옮겼다.
+
+07 안에서 정한 것과 그 까닭:
+
+- **`SettingsScreen`은 앱 데이터, `SettingsController`, `Autostart`, 데이터 폴더를 받는다.** 07은 `SettingsScreen`이 `SettingsController`와 `Autostart`에 기댄다고 그린다. 체크박스를 켤지와 체크 상태는 `available()`, `registered()`로 읽고, 바꾸는 일은 controller의 `setAutostart`로 한다. `Main.open`은 `OsAutostart.here()`로 이 컴퓨터의 등록기를 만든다.
+- **`refresh`는 public이고 `Main`이 `Theme.clear`보다 먼저 건다(#496 홈과 같은 꼴).** 화면 전환(`AppWindow.show`)도 다시 그리기를 부르므로 설정을 열 때마다 등록 상태를 운영체제에서 다시 읽는다(06 25번). 생성자가 한 번 불러 처음부터 값이 보인다. 프로토타입은 첫 알림 전까지 예시 글이 비어 있다.
+- **체크박스를 누른 뒤에는 성공해도 실패해도 `registered()`를 다시 읽어 체크에 보인다.** 05 설정 1번의 "체크를 되돌린다"를 운영체제의 실제 상태로 한다.
+- **"예시 지우기"는 홈(#496)처럼 함수 필드다.** 남은 예시 수는 `samples`(`IntSupplier`, 처음은 0), 누르면 `clearSamples`(처음은 아무것도 하지 않음)이고 C5가 채운다. 그래서 처음에는 단추가 흐리고 옆 글이 "예시 일정이 없어요"다.
+- **창과 파일 탐색기는 바꿔 끼우는 필드로 둔다.** 폴더 열기는 `opener`(처음은 `Desktop.open`), 오류 창은 `alert`(처음은 버튼 "확인" 하나인 오류 창)이다. 검사는 둘을 받은 것을 적는 대역으로 바꿔 창을 띄우지 않는다. `Desktop.open`이 던지는 `IOException`과 `RuntimeException`(폴더가 아직 없을 때의 `IllegalArgumentException` 같은 것)을 모두 열지 못함으로 본다.
+- **"목록 누르기" 줄은 C3이라 넣지 않는다.** 그 안내 글도 C3이 넣는다.
+
+05, 06이 정하지 않아 아래 글과 동작을 잠정으로 두었다. 모두 05, 06이 정하지 않음, 페르소나 투표 전 잠정이고, 글마다 `SettingsScreen`의 상수 하나다.
+
+| 잠정 | 화면과 경우 | 지금 보이는 것 | 상수 |
+|---|---|---|---|
+| 2a | Linux에서 설정을 엶 | 실행 JAR와 같은 "설치 파일로 설치했을 때만 쓸 수 있어요" | `UNAVAILABLE` |
+| 3 | 컴퓨터 켤 때 실행의 등록이나 빼기를 운영체제가 거절 | 제목 "컴퓨터 켤 때 실행을 바꾸지 못했어요", 내용은 운영체제가 준 이유 | `AUTOSTART_FAILED` |
+| 4 | "폴더 열기"로 폴더를 열지 못함 | 제목 "폴더를 열지 못했어요", "아래 경로를 복사해 파일 탐색기에서 열어 주세요."와 그 아래 읽기만 하는 경로 칸 | `FOLDER_FAILED`, `FOLDER_HELP` |
+| 5 | 데이터 위치 | 데이터 폴더의 실제 전체 경로 | 없음(폴더 값) |
+| 6 | 설치한 앱에서 설정을 엶 | 체크박스 아래에 글이 없다. 05 설정 그림(2026-11-23 전에 그림)은 "창을 닫아도 앱은 트레이에 남아 알림을 보내요"를 두어 열린 채로 둔다 | 없음(`UNAVAILABLE`을 숨김) |
+
+버전 글은 05 설정 그림의 "0.1.0"이고 상수 `VERSION`이다.
+
+### 1. 화면에서 따라 할 단계
+
+1. 앱을 열고 왼쪽 메뉴의 "설정"을 누른다. 본문 위에 톱니 아이콘, "설정", "플래닝펫을 내게 맞게 바꿔요."이고 그 아래가 설정 화면이다.
+2. 줄은 위에서부터 "시작"(컴퓨터 켤 때 같이 실행), "데이터 위치"(폴더 경로와 "폴더 열기"), "달력"(달력에 고정 일정 보이기와 안내), "한 주 시작"("월요일", "일요일"과 안내), "예시 일정"("예시 지우기"와 남은 수), "버전"("0.1.0")이다.
+3. `java -jar`로 열었거나 Linux면 "컴퓨터 켤 때 같이 실행"이 흐리고 그 아래에 "설치 파일로 설치했을 때만 쓸 수 있어요"가 보인다(T-WIN-6). 설치한 앱이면 눌리고 아래 글이 없다. 켜면 S10a 1절 1, 2단계대로 등록되고, 운영체제가 거절하면 체크가 돌아가고 "컴퓨터 켤 때 실행을 바꾸지 못했어요" 창에 이유가 보인다.
+4. "폴더 열기"를 누르면 파일 탐색기가 데이터 폴더를 연다. 열지 못하면 "폴더를 열지 못했어요" 창에 경로 칸이 보여 복사할 수 있다.
+5. "달력에 고정 일정 보이기"와 "한 주 시작"은 S10a 1절 4단계와 같다. 저장에 실패하면 체크나 고른 요일이 바꾸기 전으로 돌아간다.
+6. "예시 지우기"는 흐리고 옆에 "예시 일정이 없어요"가 보인다. 세기와 지우기는 C5가 붙인다.
+
+### 2. 입력의 경계와 결과
+
+프로토타입 결과 칸은 프로토타입 `SettingsScreen`(83줄)과 `Main.create` 코드를 읽어 적었다(돌리지 않았다). 따로 적지 않으면 설치한 앱이고 앱 데이터는 `Apps.data("2026-11-18T10:00")`, 데이터 폴더는 `@TempDir` 폴더다. "본 구현" 칸의 결과는 `SettingsScreenTest`와 `MainStartTest`(E-SET-14)가 번호 이름의 테스트로 확인한다.
+
+| 번호 | 입력과 경계 | 넣은 값 | 프로토타입 결과 | 본 구현 |
+|---|---|---|---|---|
+| T-WIN-4 | 화면 몫. 설치한 앱, 등록 없음 | 체크박스를 누르고 다시 그리기 | 없음(체크박스가 늘 비활성) | 등록되고 다시 그려도 체크된 채다. 저장하지 않고 창도 없다 |
+| T-WIN-5 | 화면 몫. 등록된 뒤 운영체제가 지움 | 다시 그리기 | 없음 | 체크가 꺼진다 |
+| T-WIN-6 | 화면 몫. 실행 JAR나 Linux(`available()` false) | 화면을 엶 | 체크박스 비활성, 아래에 "설치 파일로 설치했을 때만 쓸 수 있어요"가 늘 보인다 | 같음. Linux 글은 잠정 2a |
+| E-SET-6 | 설치한 앱 | 화면을 엶 | 없음(안내가 늘 보인다) | 체크박스 아래 글이 없다(잠정 6) |
+| E-SET-7 | 운영체제가 거절 | 거절하는 `Autostart`에서 체크를 켬, 등록된 채 끔 | 없음 | 체크가 운영체제 상태(꺼짐, 켜짐)로 돌아가고 두 번 다 창 "컴퓨터 켤 때 실행을 바꾸지 못했어요"에 이유(잠정 3) |
+| E-SET-8 | 폴더 열기와 데이터 위치 | "폴더 열기" 누르기 | 단추가 늘 비활성이고 경로 글은 늘 "~/Library/Application Support/PlanningPet" | 프로토타입과 일부러 다름(05 설정 2번, porting.md 4절): 데이터 폴더의 전체 경로로 열고 경로 글도 전체 경로다(잠정 5) |
+| E-SET-9 | 폴더를 열지 못함 | 여는 일이 `IOException`, `IllegalArgumentException` | 없음 | 두 번 다 창 "폴더를 열지 못했어요"에 "아래 경로를 복사해 파일 탐색기에서 열어 주세요."와 읽기만 하는 전체 경로 칸(잠정 4) |
+| E-SET-10 | 달력에 고정 일정 보이기 | 누르기, 저장 실패에서 다시 누르기 | 값 true, 알림 한 번. 저장하지 않는다 | 값 true, 저장 한 번. 실패면 체크가 켜진 채로 돌아가고 "달력에 고정 일정 보이기 저장에 실패해서 바꾸기 전으로 돌렸어요." |
+| E-SET-11 | 한 주 시작 | "일요일" 누르기, 다른 곳에서 월요일로 바꾼 알림, 저장 실패에서 "일요일" 누르기 | 일요일이 되고 알림 뒤 "월요일"이 골라진다 | 같음. 저장 한 번. 실패면 "월요일"로 돌아가고 "한 주 시작 저장에 실패해서 바꾸기 전으로 돌렸어요." |
+| E-SET-12 | 예시 일정 | 남은 예시 0, 3과 누르기 | 0이면 단추가 흐리고 "예시 일정이 없어요", 3이면 "예시 일정 3개가 남아 있어요"이고 누르면 `clearSamples` | 같음. 세기와 누름은 C5가 채우는 `samples`, `clearSamples`다 |
+| E-SET-13 | 줄과 버전 | 화면을 엶 | 시작, 데이터 위치와 "프로토타입은 아무것도 저장하지 않아요", 달력, 한 주 시작, 목록 누르기, 예시 일정, 버전 "0.1 프로토타입" | 목록 누르기 줄은 C3이라 없다. 저장 안내를 빼고 버전은 "0.1.0"이다. 프로토타입과 일부러 다름(본 구현은 저장한다, 05 설정 그림, porting.md 4절) |
+| E-SET-14 | 앱 창에 붙이기 | 앱을 열고 한 주 시작을 일요일로 바꾼 알림 | `Main.create`가 "설정", "플래닝펫을 내게 맞게 바꿔요."로 붙인다 | 메뉴가 "홈", "설정"이고 부제가 같다. 알림 뒤 "일요일"이 골라지고 설정 화면 안 불투명 판은 0개다(`refresh` 뒤에 `Theme.clear`) |
+
+### 3. 검사하지 못한 것
+
+- 실제 오류 창과 `Desktop.open`이 파일 탐색기를 여는 일은 창이 떠야 해서 검사하지 않는다.
+- `MainStartTest`는 `OsAutostart.here()`로 이 컴퓨터의 등록 상태를 읽기만 한다. 검사 JVM에는 `jpackage.app-path`가 없어 체크박스가 비활성이라 등록하지 않는다.
+- 설정 화면은 변경 알림마다 `registered()`를 다시 읽었다. Windows 등록(S10c)이 붙으며 알림마다 `reg query`를 돌리게 되어, S10c가 설정 화면을 고른 채일 때만 읽게 바꿨다(S10c 07 안에서 정한 것).
+
+## S10c. 컴퓨터 켤 때 실행의 Windows 등록
+
+S10a의 `OsAutostart`에 Windows 등록을 더한다(#532). 규칙(Run 키의 값 `PlanningPet`, `reg add`, `reg query`, `reg delete`, 따옴표 `\"`)은 S10a "07 안에서 정한 것"의 Windows 줄이고, 경계 줄 E-AUTO-9~12는 S10a 2절 표에 있다. 코드는 #525가 써서 넘긴 패치다. 프로토타입에는 컴퓨터 켤 때 실행이 없어 06 25번과 경계 줄이 기준이다.
+
+07 안에서 정한 것과 그 까닭:
+
+- **명령 실행은 `OsAutostart` 안의 `Runner`(명령 목록을 받아 `Result`를 돌려준다)로 받는다.** 07은 `OsAutostart` 안을 그리지 않는다. 검사가 부른 명령을 적는 대역을 넣어 이 컴퓨터의 레지스트리를 건드리지 않게 하는 자리라 패키지 안에만 둔다. `here()`는 실제 프로세스(`ProcessBuilder`)를 넘긴다.
+- **`Result`는 종료 코드와 표준 출력, 오류 출력을 합친 글이다.** `reg`가 거절하면 그 글이 `IOException`의 글이 되고 S10b 잠정 3의 창에 이유로 보인다. 출력은 이 컴퓨터의 글자 인코딩(`native.encoding`)으로 읽는다.
+- **`reg query`를 돌리지 못하면 등록 없음(false)이다.** 화면은 체크가 꺼진 채로 보이고, 켜기를 누르면 `reg add`가 같은 이유로 실패해 창이 뜬다.
+- **설정 화면은 앱 창이 그 화면을 고른 채일 때만 등록 상태를 읽는다.** S10b의 `refresh`는 데이터 변경 알림마다 불리므로, Windows에서는 다른 화면에서 일정을 끝내기만 해도 `reg` 프로세스를 하나 띄워 끝날 때까지 기다렸다. `SettingsScreen`에 고른 채인지를 묻는 `shown`(`BooleanSupplier`, 처음은 늘 true)을 두고, `Main.open`이 `AppWindow.current()`가 "설정"인지를 넣는다. `AppWindow.show`는 고른 이름을 바꾼 뒤 다시 그리므로 설정을 열 때 다시 읽고, 체크박스를 누른 뒤에도 지금처럼 읽는다. 그래서 06 25번(설정을 열면 다시 읽는다)과 T-WIN-5는 그대로다. 화면이 `AppWindow`를 알지 않도록 홈의 `samples`처럼 함수 필드로 받았다. 고른 이름은 `AppWindow`가 이미 `current()`로 내놓는다. 설정 화면을 만들 때의 첫 `refresh`는 `shown`을 넣기 전이라 앱을 열 때 한 번 읽는다.
+
+### 1. 화면에서 따라 할 단계
+
+1. 설치 파일로 설치한 앱을 Windows에서 열고 설정 화면에서 "컴퓨터 켤 때 같이 실행"을 켠다. 레지스트리 편집기의 `HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run`에 값 `PlanningPet`이 생기고 데이터는 `"앱 경로" --autostart`다. 다른 화면에 갔다 돌아오면 체크된 채다(T-WIN-4).
+2. 레지스트리 편집기에서 그 값을 지운 뒤 설정 화면을 다시 연다. 체크가 꺼진 채다(T-WIN-5). 작업 관리자의 시작 프로그램에서 끈 경우는 3절에 적었다.
+3. 체크를 끄면 그 값이 지워진다. 운영체제가 거절하면 체크가 돌아가고 "컴퓨터 켤 때 실행을 바꾸지 못했어요" 창에 `reg`의 출력이 보인다.
+4. `java -jar`로 연 앱의 설정 화면은 체크박스가 비활성이다(T-WIN-6).
+
+### 2. 입력의 경계와 결과
+
+E-AUTO-9~12는 S10a 2절 표에 있고 `OsAutostartTest`가 확인한다. 아래 줄은 `SettingsScreenTest`가 번호 이름의 테스트로 확인한다. 프로토타입에는 화면 전환 때 다시 읽는 일이 없다(체크박스가 늘 비활성).
+
+| 번호 | 입력과 경계 | 넣은 값 | 프로토타입 결과 | 본 구현 |
+|---|---|---|---|---|
+| E-SET-15 | 등록 상태를 읽는 때 | 앱 창이 "홈"을 고른 채 변경 알림, "설정"을 엶, 체크박스 누르기, "홈"으로 가서 변경 알림 | 없음 | 홈일 때 알림에는 `registered()`를 부르지 않고 체크도 그대로다. 설정을 열면 한 번 읽어 체크된다. 누른 뒤 한 번 읽는다. 홈으로 간 뒤의 알림에는 읽지 않는다 |
+
+### 3. 검사하지 못한 것
+
+- 실제 `reg` 프로세스와 레지스트리는 검사하지 않는다(S10a 3절). 검사는 명령을 적기만 하는 대역으로 돈다. 이 Mac에서는 실제 레지스트리와 컴퓨터 켤 때 실행을 건드리지 않았다.
+- `reg query` 한 번에 걸리는 시간은 재지 않았다. 이 컴퓨터에 Windows가 없어서다. 설정 화면을 열 때와 체크박스를 누른 뒤에는 EDT에서 `reg`를 돌려 끝날 때까지 기다리므로, 그 시간만큼 화면이 멈춘다. 설치 파일(R 단위)에서 Windows로 잰다. 길면 EDT 밖에서 읽는 길(SwingWorker)이 남아 있다.
+- `reg`의 출력을 `native.encoding`으로 읽은 글이 한국어 Windows에서 깨지지 않는지는 손으로 본다.
+- 작업 관리자의 시작 프로그램이나 Windows 설정의 시작 앱에서 끄면 Windows는 Run 키의 값을 지우지 않고 다른 키(`StartupApproved\Run`)에 꺼짐을 적는 것으로 안다. 그러면 `reg query`가 0이라 앱은 켜지지 않는데 체크는 켜진 채로 보인다. 이 Mac에서는 확인하지 못했다. 코드는 Run 키의 값만 본다. 설치 파일(R 단위)에서 Windows로 확인하고 맞으면 문제(porting.md 3절)로 고친다. macOS의 로그인 항목에서 끈 경우(S10a 1절 2단계)도 같이 본다.
