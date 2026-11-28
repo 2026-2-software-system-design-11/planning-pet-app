@@ -18,11 +18,13 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import javax.swing.ButtonGroup;
 import javax.swing.JComponent;
 import javax.swing.RepaintManager;
+import javax.swing.Timer;
 import org.junit.jupiter.api.Test;
 import planningpet.common.view.Snap;
 import planningpet.common.view.Theme;
@@ -79,6 +81,11 @@ class PickCardTest {
         assertEquals(t, c.t);
         assertEquals(since, c.since);
         return c;
+    }
+
+    /** 시계의 리스너를 테스트에서 부른다. 시계가 40밀리초 뒤 부르기를 기다리지 않는다. */
+    private static void fire(PickCard c) {
+        Arrays.stream(c.clock.getActionListeners()).forEach(l -> l.actionPerformed(null));
     }
 
     private static String described(String about) {
@@ -295,5 +302,59 @@ class PickCardTest {
         looks("cat-on-t1.3-s0.2", at(PetKind.CAT, true, 1.3, 0.2), 248, 262);
         looks("dog-on-t0.0-s0.1", at(PetKind.DOG, true, 0, 0.1), 248, 262);
         looks("dog-on-t2.0-s0.3499", at(PetKind.DOG, true, 2.0, 0.3499), 248, 262);
+    }
+
+    @Test
+    void eCard12Clock() {
+        PickCard c = blank(PetKind.CAT, false);
+        assertEquals(null, c.clock);
+        c.addNotify();
+        try {
+            Timer clock = c.clock;
+            assertTrue(c.isShowing() && clock.isRunning() && clock.isRepeats());
+            assertEquals(40, clock.getDelay());
+            assertEquals(40, clock.getInitialDelay());
+            c.removeNotify();
+            assertFalse(c.isShowing() || clock.isRunning());
+            c.addNotify();
+            c.addNotify();
+            assertTrue(clock == c.clock && clock.isRunning());
+            assertEquals(1, clock.getActionListeners().length);
+        } finally {
+            c.removeNotify();
+        }
+        assertFalse(c.clock.isRunning());
+        PickCard never = blank(PetKind.DOG, false);
+        never.removeNotify();
+        assertEquals(null, never.clock);
+    }
+
+    @Test
+    void eCard13TicksOnlyWhenShowing() {
+        PickCard c = blank(PetKind.CAT, false);
+        c.setSize(248, 262);
+        Dirty dirty = new Dirty();
+        try {
+            c.addNotify();
+            c.clock.stop();
+            c.setVisible(false);
+            double t = c.t;
+            RepaintManager.setCurrentManager(dirty);
+            fire(c);
+            assertTrue(c.t == t && c.since == 99 && dirty.all.isEmpty());
+            c.removeNotify();
+            c.setVisible(true);
+            fire(c);
+            assertTrue(c.t == t && c.since == 99 && dirty.all.isEmpty());
+            c.addNotify();
+            c.clock.stop();
+            dirty.all.clear();
+            fire(c);
+            assertTrue(c.t > 0 && c.since == 99);
+            assertEquals(Set.of(new Rectangle(0, 0, 248, 262)), dirty.all);
+        } finally {
+            RepaintManager.setCurrentManager(null);
+            c.removeNotify();
+        }
     }
 }
