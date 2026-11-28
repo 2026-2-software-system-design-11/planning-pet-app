@@ -2,14 +2,24 @@ package planningpet.home.view;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
+import java.awt.event.ActionEvent;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
+import javax.swing.AbstractAction;
 import javax.swing.JComponent;
+import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import planningpet.app.model.AppData;
 import planningpet.common.view.Bar;
@@ -23,7 +33,7 @@ import planningpet.reward.model.Level;
 
 /**
  * 홈의 펫 카드(05 홈 "펫 카드", D-59). 하늘과 풀밭 장면 왼쪽에 고른 펫(D-48)을 그린다. 값은 디자인 시스템 10절 "홈"에 있다.
- * 오른쪽 열에 이름과 레벨, 경험치 막대(S3n), 흰 작은 카드의 "오늘 끝낸 일", 그 아래 펫 말풍선(S3o)을 그린다. 누르기는 #467이 더한다(docs/porting/home.md).
+ * 오른쪽 열에 이름과 레벨, 경험치 막대(S3n), 흰 작은 카드의 "오늘 끝낸 일", 그 아래 펫 말풍선(S3o)을 그린다. 누르면 생성자로 받은 함수에 알린다(S3p, docs/porting/home.md).
  */
 public final class PetCard extends JComponent {
     /** 오른쪽 열의 위와 오른쪽 여백. */
@@ -40,20 +50,78 @@ public final class PetCard extends JComponent {
     long start;
     double t;
 
-    /** 마지막으로 그린 말풍선 자리(말이 없으면 null)와 줄였는지. #467의 툴팁이 전체 글을 보일지 정한다. */
+    /** 마지막으로 그린 말풍선 자리(말이 없으면 null)와 줄였는지. #472의 툴팁이 전체 글을 보일지 정한다. */
     Rectangle bubbleBox;
     boolean bubbleCut;
+    /** 마우스가 카드 위에 있는지(올림 테두리). */
+    private boolean over;
+    /** 카드 위에서 마우스 단추를 눌러 아직 떼지 않았는지(누름 테두리). 카드 밖으로 나가면 풀린다. */
+    private boolean down;
 
     /**
      * 고른 펫과 bubble의 펫 말(앱에서는 AppController.getBubble())을 그리고 데이터 변경 알림마다 다시 그린다. 메인 창은 펫을 고른 뒤
-     * 열려 고른 펫이 늘 있다(S3m).
+     * 열려 고른 펫이 늘 있다(S3m). 왼쪽 단추로 카드 안에서 누르고 떼거나, 초점이 있을 때 Enter나 Space를 누르면 open을 부른다
+     * (05 입력 항목 9, S3p). 앱에서는 캐릭터 창(S8)이 open에 잇는다(D-58).
      */
-    public PetCard(AppData data, Bubble bubble) {
+    public PetCard(AppData data, Bubble bubble, Runnable open) {
         this.data = data;
         this.bubble = bubble;
         setLayout(null);
         add(expBar);
         add(doneBar);
+        setFocusable(true);
+        setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                over = true;
+                repaint();
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                over = false;
+                down = false;
+                repaint();
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                down = true;
+                requestFocusInWindow();
+                repaint();
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                boolean click = down && contains(e.getPoint());
+                down = false;
+                repaint();
+                if (click && SwingUtilities.isLeftMouseButton(e)) {
+                    open.run();
+                }
+            }
+        });
+        // 초점을 얻고 잃을 때 포커스 고리를 다시 그린다.
+        addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                repaint();
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                repaint();
+            }
+        });
+        getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "open");
+        getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "open");
+        getActionMap().put("open", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                open.run();
+            }
+        });
         data.onChange(this::refresh);
         refresh();
     }
@@ -203,9 +271,14 @@ public final class PetCard extends JComponent {
         boolean[] cut = {false};
         bubbleBox = PetCardArt.bubble(g, bubbleText(), infoX(f), rows(f)[3], infoW(f), f.y + f.height - 12, cut);
         bubbleCut = cut[0];
-        g.setColor(Theme.CARD_EDGE);
-        g.setStroke(new BasicStroke(1.2f));
+        g.setColor(down ? Theme.MINT : over ? Theme.MINT_LINE : Theme.CARD_EDGE);
+        g.setStroke(new BasicStroke(down ? 2f : 1.2f));
         g.draw(new RoundRectangle2D.Double(f.x + 0.5, f.y + 0.5, f.width - 1, f.height - 1, r, r));
+        if (isFocusOwner()) {
+            g.setColor(new Color(0x1F, 0xB9, 0x9C, 110));
+            g.setStroke(new BasicStroke(2f));
+            g.draw(new RoundRectangle2D.Double(f.x + 3, f.y + 3, f.width - 6, f.height - 6, r - 4, r - 4));
+        }
         g.dispose();
     }
 
