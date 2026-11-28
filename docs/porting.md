@@ -4,8 +4,11 @@
 
 ## 프로토타입과 본 구현
 
-- 프로토타입은 본 구현이 옮길 동작의 비교 기준이다. 단위마다 경계를 프로토타입에 넣어 얻은 결과를 새 코드가 같게 내는지 본다(2절).
-- 비교 기준을 얻는 동안 프로토타입 코드를 바꾸지 않는다. 바꾸면 기준이 바뀐다. model의 경계는 `prototype/build.sh`가 만든 `prototype/out`을 클래스 경로에 두고 그 클래스를 부르는 버리는 Java 파일로 넣어 본다(`Store.now`로 시각을 정한다). 화면의 경계는 `prototype/qa/`의 창 없이 누르는 코드와 `prototype/snap.sh`로 넣어 본다.
+- 프로토타입은 본 구현이 옮길 동작과 값의 기준이다. 단위마다 경계에서 프로토타입이 내는 결과를 새 코드가 같게 내는지 본다(2절).
+- 프로토타입 결과는 프로토타입 코드를 읽어 적는다. 코드만으로 결과를 알 수 없을 때만 프로토타입을 돌린다.
+- 돌릴 때는 프로토타입 코드를 바꾸지 않는다. 바꾸면 기준이 바뀐다. model의 경계는 `prototype/build.sh`가 만든 `prototype/out`을 클래스 경로에 두고 그 클래스를 부르는 버리는 Java 파일로 넣어 본다(`Store.now`로 시각을 정한다). 화면의 경계는 `prototype/qa/`의 창 없이 누르는 코드로 넣어 본다.
+- 단위(1절 표의 줄)마다 프로토타입과 본 구현을 그림으로 그려 견주지 않는다. 이미 있는 그림 테스트는 그대로 둔다.
+- 프로토타입과의 화면 비교는 화면이 다 만들어진 뒤 한 번에 한다. 결과는 그 화면의 단위 기록 파일(1절 표의 "기록" 칸) 끝에 "화면 비교" 절을 더해 적는다. 프로토타입의 화면 그림은 `prototype/snap.sh`가 창 없이 그린다.
 - 프로토타입에 없는 기능(저장 21번, 22번, 알림 17번, 앱 하나만 실행 24번, 트레이와 컴퓨터 켤 때 실행 25번, [prototype/README.md](../prototype/README.md) "빠진 것")은 비교 기준이 없다. 그 단위는 06 검사 줄만 기준이다.
 
 ## 1. 옮기는 단위와 순서
@@ -90,13 +93,16 @@
 | S3 | 홈 목록 | `MainScreen`, `PetCard`, `CalendarPanel`, `TaskRows`(홈 목록이 쓰므로 S5에서 당겨 온다). `RewardController.complete`, `uncomplete`는 S3a, `HomeController`는 S3b | 6번, 13번, 16번, 26번 | [docs/porting/home.md](porting/home.md) |
 | S4a | 일정 입력 창 물음 창 셋 | `TaskDialog`의 물음 창 셋(겹침, 반복 사본 저장 범위, 삭제 확인)의 내용과 띄워 답을 받는 함수(#504). 나머지 S4 몫은 #505~#516([task-dialog.md](porting/task-dialog.md)) | 3번 T-OVL-1의 물음 글과 단추(05 그 밖의 창과 알림, D-41, D-42, D-87) | [docs/porting/task-dialog.md](porting/task-dialog.md) |
 | S4b | 입력 창 도우미 | `common.view`의 `Ui`(`flow`, `minutes`, `dayEditor`, `dateOf`, `setDate`), `schedule.view`의 패키지 안 `Times`(#505) | 14번 T-DEF-13, T-DEF-14의 글 꼴(05 일정 입력 창 3, 5, 6번, D-38, D-43, D-77) | [docs/porting/task-dialog.md](porting/task-dialog.md) |
+| S4c | 고르는 칸 | `Icons`의 `DOWN`, `common.view`의 `ComboUI`, `Theme.install`의 고르는 칸 줄(#506) | 없음(05 일정 입력 창, 디자인 시스템 5절, D-97) | [docs/porting/task-dialog.md](porting/task-dialog.md) |
+| S4f | 입력 창 칸과 처음 값 | `schedule.view`의 패키지 안 `TaskForm`(칸, `line`, 제목 100자와 메모 1000자 막기, 추가 창의 처음 값, `draft()`, #509) | 없음(05 일정 입력 창 1~11번, 06 14번의 처음 값, D-54, D-64, D-65, D-91, D-94) | [docs/porting/task-dialog.md](porting/task-dialog.md) |
 | S4 | 일정 입력 창 | `TaskDialog`, `TaskController.add`, `update`, `delete`, 고르는 칸 `ComboUI`와 그것을 거는 `Theme.install`의 줄([theme.md](porting/theme.md)) | 2~5번, 14번 | [docs/porting/task-dialog.md](porting/task-dialog.md) |
 | S5 | 일정관리 | `ScheduleScreen`, `TimetablePanel`, `TimeEditor`, `TaskController.clearTime` | 4번의 시각 고치기 창, 7번, 19번 | `docs/porting/schedule.md` |
 | S6 | 자동 배치 결과 창 | `AutoPlaceDialog`, `TaskController.applyPlacement` | 18번 | `docs/porting/auto-place-dialog.md` |
 | S7 | 나의 방 | `PetScreen`, `RoomView`, `ShopPanel`, `ShopController` | 20번 | `docs/porting/room.md` |
 | S8 | 캐릭터 창 | `CharacterDialog`, `PetController.step`, `rename`, `pose`, `applyWear` | 27번, 28번, 30번 | `docs/porting/character.md` |
 | S9 | 통계 화면 | `StatsScreen`, 통계 화면일 때 창 바탕의 자는 고양이([icons.md](porting/icons.md)) | 29번 | `docs/porting/stats-screen.md` |
-| S10 | 설정 | `SettingsScreen`, `SettingsController`, `Autostart`, `OsAutostart` | 25번의 컴퓨터 켤 때 실행 | `docs/porting/settings.md` |
+| S10a | 컴퓨터 켤 때 실행과 설정 controller | `Autostart`, `OsAutostart`의 macOS 등록(설치된 앱인지는 `jpackage.app-path`), `SettingsController`의 `setCalendarFixed`, `setWeekStart`, `setAutostart`(#523). `setListClickTime`은 C3 | 25번의 컴퓨터 켤 때 실행(T-WIN-4~6의 등록 몫, 프로토타입 기준 없음), 데이터 절 `calendarFixed`, `weekStart` | [docs/porting/settings.md](porting/settings.md) |
+| S10 | 설정 | `SettingsScreen`, `OsAutostart`의 Windows 등록과 `here()`, `Main.open`이 설정을 앱 창에 붙이고 다시 그리기를 거는 일(#525). `Autostart`, `OsAutostart`의 macOS 등록, `SettingsController`는 S10a, "목록 누르기" 줄은 C3, "예시 지우기"의 세기와 지우기는 C5 | 25번의 컴퓨터 켤 때 실행(T-WIN-4~6의 화면 몫) | [docs/porting/settings.md](porting/settings.md) |
 | S11 | 트레이, 알림, 하나만 실행 | `AppController.dueReminders`, `onClose`, `quit`, `CloseAction`, `SingleInstance`(#522). `Tray`의 아이콘, 메뉴, 알림과 창 닫기 잇기는 #524 | 17번, 24번, 25번(프로토타입 기준 없음) | [docs/porting/tray.md](porting/tray.md) |
 | C1 | 칸에 쳐 넣기 | `Typed` | 32번 | `docs/porting/typed.md` |
 | C2 | 끌어 놓기와 되돌리기 | `TaskBook.placeAt`, `dropRange`, `dropStart`, `TaskController.placeAt`, `undoPlace` | 4번의 끌어 놓기 | `docs/porting/drag.md` |
@@ -121,7 +127,7 @@
 
 1. **화면에서 따라 할 단계.** 그 단위가 하는 일을 사람이 따라 할 수 있게 쓴다. 어느 화면에서, 어느 칸에 무엇을 넣고, 화면에 적힌 이름 그대로 어느 단추를 누르면, 무엇이 보이는지. 화면 글자는 [05 화면 설계](05-ui-design.md)나 프로토타입 코드에서 옮긴다. 화면이 없는 model 단위는 그 규칙이 화면에 드러나는 곳을 쓰고, [유저플로우](user-flows.md)에 그 단계가 있으면 `UF-1-1`처럼 가리킨다.
 2. **입력의 경계.** 그 단위가 받는 입력마다 경계를 적는다. 빈 칸, 0, 가장 큰 값과 그보다 하나 큰 값, 자정(00:00)과 다음 날 04:00(앱 하루의 끝, D-77), 지난 날과 오늘, 한 주의 첫날과 마지막 날(D-91), 달과 해가 바뀌는 날 같은 것이다. 06 검사 줄에 이미 있는 경계는 그 번호(`T-DAY-2`)만 적는다. 06에 없는 경계는 06 검사 번호의 앞부분을 따라 `E-DAY-1`처럼 번호를 붙인다. 06은 명세가 바뀔 때만 고친다.
-3. **프로토타입 결과.** 경계마다 프로토타입에 넣은 값과 실제 결과를 적는다(넣는 방법은 위 "프로토타입과 본 구현"). 시각에 달린 결과는 넣은 시각도 적는다. 이 결과가 새 코드의 비교 기준이다.
+3. **프로토타입 결과.** 경계마다 넣는 값과 프로토타입의 결과를 적는다. 결과는 프로토타입 코드를 읽어 적고, 코드만으로 알 수 없을 때만 돌려서 얻는다(위 "프로토타입과 본 구현"). 시각에 달린 결과는 넣은 시각도 적는다. 이 결과가 새 코드의 비교 기준이다.
 
 | 번호 | 입력과 경계 | 넣은 값 | 프로토타입 결과 | 본 구현 |
 |---|---|---|---|---|
@@ -130,7 +136,7 @@
 
 위 표는 기록 파일의 꼴을 보이는 예다. "본 구현" 칸은 옮긴 뒤 "같음" 또는 "프로토타입과 일부러 다름"과 그 까닭이다.
 
-4. **옮기는 커밋.** 프로토타입과 똑같이 만든다. 경계 줄마다 JUnit 테스트 하나를 두고 이름에 번호를 넣는다. 06 검사 줄 가운데 그 단위까지 옮긴 클래스만으로 되는 줄의 테스트도 이 단위에 둔다. 프로토타입 결과가 06과 다르면 이 커밋의 테스트는 프로토타입 결과를 기대한다.
+4. **옮기는 커밋.** 프로토타입 코드의 값(색, 크기, 자리, 글)을 그대로 옮겨 프로토타입과 똑같이 만든다. 테스트는 동작(06 검사 줄과 경계 줄)을 본다. 경계 줄마다 JUnit 테스트 하나를 두고 이름에 번호를 넣는다. 06 검사 줄 가운데 그 단위까지 옮긴 클래스만으로 되는 줄의 테스트도 이 단위에 둔다. 프로토타입 결과가 06과 다르면 이 커밋의 테스트는 프로토타입 결과를 기대한다. 프로토타입과 그림을 견주는 테스트는 새로 두지 않는다(위 "프로토타입과 본 구현").
 5. **고치는 커밋.** 고칠 것(3절의 문제, 4절 표의 다른 점)은 다음 커밋에서 따로 고친다. 코드와 테스트의 기대를 함께 바꾸고, 기록 파일의 그 줄 "본 구현" 칸에 "프로토타입과 일부러 다름"과 까닭(D-번호나 3절의 문제 종류)을 적는다.
 6. **프로토타입 기준이 없는 단위.** 1, 2는 같고, 3의 프로토타입 결과 칸은 "없음"이다. 비교 기준은 06 검사 줄이다.
 
@@ -157,7 +163,7 @@
 |---|---|---|---|---|
 | M1 날짜 규칙 | 반려동물 고르기 창에서 이름을 "펫1"로 쓰고 바로 시작을 누른다 | "처음 만났네! 나는 펫1이야."(숫자를 읽는 소리로 받침을 본다) | 이름 마지막 글자가 받침 있는 한글이면 "이야", 그 밖이면 "야"라 "펫1야"였다. 06을 고침: 읽어서 받침이 있는 숫자(0, 1, 3, 6, 7, 8)도 "이야" | 06 16번 "하는 일", [day-rules.md](porting/day-rules.md) E-WORD-6 |
 | M1 날짜 규칙 | 홈 빠른 추가 칸에 이모지 15개를 쓰고 추가를 누른다 | 말풍선 "'{이모지 7개}…' 넣었구나!". 14번째 자리가 이모지 가운데면 깨진 글자와 "…" | 제목이 15자를 넘을 때만 앞 14자 뒤에 "…". 코드를 고침: 06 읽는 법에 글자 수는 코드 포인트로 센다고 적고 본 구현이 코드 포인트로 센다 | 06 16번 "하는 일", [day-rules.md](porting/day-rules.md) E-WORD-17~20 |
-| M2b 일정 입력 검사 | 일정 입력 창 제목 칸에 이모지 51개를 붙여 넣는다. 한글 99자 뒤에 이모지 하나를 넣는다. 메모 칸에 이모지 1000개를 붙여 넣는다 | 제목 칸에 50개만 들어간다. 99자 뒤에는 이모지의 앞 반쪽(깨진 글자)이 들어간다. 메모 칸에 500개만 들어간다. 칸과 저장 검사가 모두 UTF-16 단위로 잰다 | 글자 수는 코드 포인트로 센다. 제목은 100자, 메모는 1000자까지다. 저장 검사(`TaskDraft.validate`)는 M2b에서 고침. 칸의 글자 막기는 S4 일정 입력 창에서 고친다 | 06 읽는 법, 06 2번, [task-check.md](porting/task-check.md) E-VAL-1, 2, 7 |
+| M2b 일정 입력 검사 | 일정 입력 창 제목 칸에 이모지 51개를 붙여 넣는다. 한글 99자 뒤에 이모지 하나를 넣는다. 메모 칸에 이모지 1000개를 붙여 넣는다 | 제목 칸에 50개만 들어간다. 99자 뒤에는 이모지의 앞 반쪽(깨진 글자)이 들어간다. 메모 칸에 500개만 들어간다. 칸과 저장 검사가 모두 UTF-16 단위로 잰다 | 글자 수는 코드 포인트로 센다. 제목은 100자, 메모는 1000자까지다. 저장 검사(`TaskDraft.validate`)는 M2b에서 고침. 칸의 글자 막기는 S4f(#509)에서 고침: 제목 칸과 메모 칸에 코드 포인트로 재는 `Ui.limit`을 건다 | 06 읽는 법, 06 2번, [task-check.md](porting/task-check.md) E-VAL-1, 2, 7 |
 | M6 시각 고치기 창 | 고정 일정의 시각 빼기를 화면 밖 길로 부른다(화면에는 단추가 없다) | 시작 시각이 빠진 고정 일정이 된다 | 고정 일정은 시작 시각이 있어야 해서 바뀌지 않는다. 코드를 고침: `clearTime`이 아무것도 바꾸지 않는다 | 06 4번 T-EDIT-6, [task-edit.md](porting/task-edit.md) T-EDIT-6 |
 | M6 시각 고치기 창 | 일정관리 목록의 마감이 지난 기간 할 일이나 홈 지난 날 목록의 기간 할 일에서 시각 단추의 동작을 화면 밖 길로 부른다 | 지난 날의 그 시각으로 정해진다 | 창을 연 목록의 날이 오늘보다 앞이면 정하지 않고 이 함수가 막는다. 코드를 고침: `update`가 아무것도 바꾸지 않는다 | 06 4번, D-99, [task-edit.md](porting/task-edit.md) T-EDIT-42, E-EDIT-15 |
 | M7 앱 데이터 | 빈 폴더로 앱을 열어 반려동물 고르기 창에서 강아지를 고르고 바로 시작을 누른다 | 고르기 창 전에도 앱 데이터에 고양이 "나비"가 있고, 고르기 창이 펫 목록을 비우고 강아지를 넣는다 | 첫 실행은 빈 앱 데이터이고 고르기 창의 `choose`가 펫을 만들어 넣는다. 코드를 고침: 앱 데이터가 펫 없이 시작하고 그때 고른 펫은 `null`이다 | 07 seq-uc01, 06 30번, [app-data.md](porting/app-data.md) E-APP-4, 5 |
@@ -177,3 +183,4 @@
 | S3aa 메모 툴팁 | 홈 할 일 목록에서 메모가 있는 줄에 마우스를 올린다. 메모가 한글 199자, 이모지, "나"이거나 이모지 101개다 | 툴팁이 "가" 199자와 이모지의 앞 반쪽(깨진 글자)과 "…"다. 이모지 101개(101자)도 100개와 "…"로 줄인다. 프로토타입 `TaskRows.memoTip`이 UTF-16 단위로 200에서 자른다 | 글자 수는 코드 포인트로 센다. 메모 툴팁은 200자까지다. 코드를 고침: `memoTip`이 코드 포인트로 잘라 이모지는 통째로 남고 이모지 101개는 그대로 보인다 | 06 읽는 법, D-33, [task-rows.md](porting/task-rows.md) E-MEMO-4 |
 | S4b 입력 창 도우미 | 운영체제 로캘이 영어인 컴퓨터에서 일정 입력 창을 연다 | 날짜 칸이 "2026-11-16 (Mon)"처럼 운영체제 로캘의 요일을 보인다 | 05 일정 입력 창 그림이 "2026-11-14 (토)"다. 코드를 고침: 날짜 칸 형식이 로캘과 관계없이 한국어 요일을 쓴다 | 05 일정 입력 창([ui-form](diagrams/ui-form.puml)), [task-dialog.md](porting/task-dialog.md) E-UI-3 |
 | S4b 입력 창 도우미 | 일정 입력 창 날짜 칸에 "2026-11-31 (월)"이나 "2026-13-01 (월)"을, 반복 끝 칸에 "2026-02-30"을 치고 칸을 벗어난다 | 없는 날짜를 굴려 12-01, 2027-01-01, 03-02로 받는다 | 형식에 맞지 않게 쓰면 칸을 벗어날 때 이전 값으로 돌아간다. 코드를 고침: 날짜 칸이 날짜 자리를 엄격히 읽어 없는 날짜를 받지 않고 이전 값을 둔다. 친 요일은 프로토타입처럼 읽지 않아 날짜 숫자만 고친 "2026-11-20 (목)"도 11-20이다 | 05 일정 입력 창 3번, porting.md 3절, [task-dialog.md](porting/task-dialog.md) E-UI-3, E-UI-5 |
+| S10a 설정 controller | 화면 밖 길로 한 주 시작을 수요일이나 null로 바꾼다(설정 화면에는 "월요일", "일요일"만 있다) | 수요일이 저장된다. null은 저장된 뒤 홈 달력의 다시 그리기가 `NullPointerException`이다 | `weekStart`는 `MONDAY` 또는 `SUNDAY`다. 코드를 고침: `setWeekStart`가 `IllegalArgumentException`을 던지고 값, 저장, 알림이 그대로다 | 06 데이터 절 `weekStart`, D-91, [settings.md](porting/settings.md) E-SET-5 |
