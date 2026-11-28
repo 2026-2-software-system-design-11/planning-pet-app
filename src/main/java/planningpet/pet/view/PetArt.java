@@ -9,8 +9,8 @@ import planningpet.pet.model.WearId;
 
 /**
  * 펫 그림(D-48, D-50). 그림 파일이 아니라 도형 부품으로 그려 크게 그려도 흐려지지 않는다. 생김새는 나의 방 예시(2026-11-23)의
- * 고양이와 강아지다. 지금은 앉은 펫, 얼굴, 앱 로고를 그리고 장신구는 앉은 펫의 목걸이, 머리 장신구, 옷과 얼굴의 머리 장신구를
- * 그린다(docs/porting/pet-art.md).
+ * 고양이와 강아지다. 지금은 앉은 자세들(앉기, 밥 먹기, 노래)의 펫, 얼굴, 앱 로고를 그리고 장신구는 앉은 펫의 목걸이, 머리 장신구,
+ * 옷과 얼굴의 머리 장신구를 그린다(docs/porting/pet-art.md, docs/porting/character.md S8b).
  */
 public final class PetArt {
     private PetArt() {

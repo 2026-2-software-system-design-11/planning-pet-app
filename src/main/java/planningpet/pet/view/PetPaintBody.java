@@ -29,13 +29,13 @@ final class PetPaintBody extends PetPaintHead {
     PetPaintBody(Graphics2D g, PetKind kind, Pose pose, Set<WearId> wear, double t) {
         super(g, kind, wear, t);
         this.pose = pose;
-        face = pose == Pose.EAT ? Face.EAT : Face.HAPPY;
+        face = pose == Pose.EAT ? Face.EAT : pose == Pose.SING ? Face.SING : Face.HAPPY;
     }
 
     /**
      * 앉은 펫을 그린다. 몸은 바닥을 기준으로 2.6초 주기로 숨쉬며 위아래로 조금 부풀고(조끼도 함께), 목 둘레와 머리는 몸을 따라 오르내린다. 머리는
      * 3.4초 주기로 좌우로 기운다(t). 망토 뒤판은 꼬리보다 먼저 몸 뒤에 그려 숨쉬지 않는다. 밥 먹기는 머리를 숙여 0.7초 주기로 까딱이며
-     * 밥그릇에 댄다.
+     * 밥그릇에 대고, 노래는 머리를 조금 들어 1.6초 주기로 기울이고 오른 앞발을 들어 0.8초 주기로 흔들며 음표 둘을 띄운다.
      */
     void sit() {
         AffineTransform base = g.getTransform();
@@ -45,6 +45,9 @@ final class PetPaintBody extends PetPaintHead {
         if (pose == Pose.EAT) {
             headY = 14 + wave(t, 0.7, 0, 7, 0);
             headRot = 0;
+        } else if (pose == Pose.SING) {
+            headRot = wave(t, 1.6, -9, 5, 0);
+            headY = -4;
         }
         Shape body = sitBody();
         if (has(WearId.CAPE)) {
@@ -70,14 +73,21 @@ final class PetPaintBody extends PetPaintHead {
         // 뒷다리 허벅지 선
         stroke(new QuadCurve2D.Double(92, 268, 108, 250, 126, 262), line * 0.7f, ink);
         stroke(new QuadCurve2D.Double(228, 268, 212, 250, 194, 262), line * 0.7f, ink);
-        paw(138, 294);
-        paw(182, 294);
+        paw(138, 294, 0);
+        if (pose == Pose.SING) {
+            paw(206, 230 - wave(t, 0.8, 0, 8, 0), -30);
+        } else {
+            paw(182, 294, 0);
+        }
         g.setTransform(base);
         neckWear(160, 202 + (breathe - 1) * -110 + headY * 0.3, 58);
         if (pose == Pose.EAT) {
             bowl();
         }
         head(160, 134 + headY + (breathe - 1) * -110, headRot);
+        if (pose == Pose.SING) {
+            notes();
+        }
     }
 
     static Shape sitBody() {
@@ -92,10 +102,10 @@ final class PetPaintBody extends PetPaintHead {
         return p;
     }
 
-    /** 앞발 하나를 (x, y)에 그린다: 털색 타원에 발가락 선 둘. */
-    void paw(double x, double y) {
+    /** 앞발 하나를 (x, y)에 rot도 돌려 그린다: 털색 타원에 발가락 선 둘. */
+    void paw(double x, double y, double rot) {
         AffineTransform old = g.getTransform();
-        g.translate(x, y);
+        push(x, y, rot);
         filled(ell(0, -4, 21, 13), fur);
         stroke(new QuadCurve2D.Double(-6, -9, -7, -3, -6, 2), line * 0.55f, ink);
         stroke(new QuadCurve2D.Double(6, -9, 7, -3, 6, 2), line * 0.55f, ink);

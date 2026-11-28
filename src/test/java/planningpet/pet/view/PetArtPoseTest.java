@@ -40,7 +40,7 @@ class PetArtPoseTest {
     @Test
     void ePose1HeightRatio() {
         for (PetKind kind : KINDS) {
-            for (Pose pose : new Pose[] {Pose.SIT, Pose.EAT}) {
+            for (Pose pose : new Pose[] {Pose.SIT, Pose.EAT, Pose.SING}) {
                 assertEquals(Math.round(-box(kind, pose, 0)[1] / 320.0 * 100) / 100.0, PetArt.heightRatio(kind, pose), kind + " " + pose);
             }
         }
@@ -91,6 +91,22 @@ class PetArtPoseTest {
         BufferedImage at15 = notes(1.5);
         assertEquals(191, at15.getRGB(246, 44) >>> 24);
         assertEquals(PetPaintBase.NOTE.getRGB(), at15.getRGB(282, 72));
+    }
+
+    /** x=206 세로줄에서 y 200 아래 처음 나오는 선 색 픽셀(든 앞발의 위 테두리). */
+    private static int pawTop(double t) {
+        BufferedImage img = draw(PetKind.CAT, Pose.SING, Set.of(), t);
+        int y = 200;
+        while (img.getRGB(206, y) != PetPaintBase.CAT_INK.getRGB()) {
+            y++;
+        }
+        return y;
+    }
+
+    /** 노래의 오른 앞발은 0.8초 주기로 8만큼 오르내린다. 0.8초에는 숨쉬기로 몸이 부푼 만큼 1 높다. */
+    @Test
+    void ePose5RaisedPaw() {
+        assertEquals(List.of(209, 201, 208), List.of(pawTop(0), pawTop(0.4), pawTop(0.8)));
     }
 
     private static long count(BufferedImage img, Color c) {
