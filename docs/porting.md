@@ -75,6 +75,7 @@
 | S3p | 펫 카드 누르기와 상태 테두리 | `PetCard`의 생성자 누름 알림(`Runnable`), 마우스 왼쪽 단추로 누르고 떼기, Enter와 Space, 손 커서, 키보드 초점, 마우스 올림과 누름 테두리, 포커스 고리(#467). 화면 읽기와 툴팁은 #472 | 없음(05 홈 "펫 카드", 입력 항목 9, D-58) | [docs/porting/home.md](porting/home.md) |
 | S3q | 펫 카드 화면 읽기와 툴팁 | `PetCard`의 화면 읽기 단추 역할과 이름과 설명, 툴팁(줄인 말풍선이면 펫 말 전체, 아니면 "캐릭터 창 열기"), `common.view`의 `Ui.esc`(#472) | 없음(05 홈 "펫 카드", 입력 항목 9) | [docs/porting/home.md](porting/home.md) |
 | S3r | 목록 줄의 둥근 체크와 휴지통, 시계 아이콘 | `schedule.view`의 패키지 안 `RoundCheck`(프로토타입 `RoundCheck`), `common.view`의 `Icons`의 `TRASH`, `CLOCK`(#475). 목록 줄 `TaskRows`의 나머지는 #476~#481([task-rows.md](porting/task-rows.md)) | 없음(05 홈 "할 일 목록", 입력 항목 4, D-59, [디자인 시스템](design-system.md) 9절, 10절 홈) | [docs/porting/task-rows.md](porting/task-rows.md) |
+| S3s | 목록 줄의 시각 알약 | `schedule.view`의 패키지 안 `TimePill`의 홈 알약(프로토타입 `TimePill`, #476). 일정관리 목록의 작은 시계 단추는 S5 | 없음(05 홈 "할 일 목록", 입력 항목 7, D-94, D-102, [디자인 시스템](design-system.md) 9절) | [docs/porting/task-rows.md](porting/task-rows.md) |
 | S3 | 홈 목록 | `MainScreen`, `PetCard`, `CalendarPanel`, `TaskRows`(홈 목록이 쓰므로 S5에서 당겨 온다). `RewardController.complete`, `uncomplete`는 S3a, `HomeController`는 S3b | 6번, 13번, 16번, 26번 | [docs/porting/home.md](porting/home.md) |
 | S4 | 일정 입력 창 | `TaskDialog`, `TaskController.add`, `update`, `delete`, 고르는 칸 `ComboUI`와 그것을 거는 `Theme.install`의 줄([theme.md](porting/theme.md)) | 2~5번, 14번 | `docs/porting/task-dialog.md` |
 | S5 | 일정관리 | `ScheduleScreen`, `TimetablePanel`, `TimeEditor`, `TaskController.clearTime` | 4번의 시각 고치기 창, 7번, 19번 | `docs/porting/schedule.md` |
