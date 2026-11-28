@@ -2,16 +2,19 @@ package planningpet.home.view;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.FontMetrics;
 import java.awt.GradientPaint;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.geom.Path2D;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.List;
 import planningpet.common.view.Images;
 import planningpet.common.view.Theme;
 
-/** 홈 펫 카드(D-59)의 그림 도구: 하늘과 풀밭 장면과 그것이 쓰는 색 섞기, 알파 바꾸기. 값은 디자인 시스템 10절 "홈"에 있다(docs/porting/home.md S3j). */
+/** 홈 펫 카드(D-59)의 그림 도구: 하늘과 풀밭 장면과 그것이 쓰는 색 섞기, 알파 바꾸기, 말풍선 글 줄 바꾸기. 값은 디자인 시스템 10절 "홈"에 있다(docs/porting/home.md S3j). */
 final class PetCardArt {
     private PetCardArt() {
     }
@@ -81,5 +84,34 @@ final class PetCardArt {
 
     static Color withAlpha(Color c, int a) {
         return new Color(c.getRed(), c.getGreen(), c.getBlue(), a);
+    }
+
+    /** 띄어쓰기 단위로 max 폭에서 줄을 바꾼다. 띄어쓰기 없이 긴 글은 글자 단위로 자른다. */
+    static List<String> wrap(String text, FontMetrics fm, int max) {
+        List<String> lines = new ArrayList<>();
+        StringBuilder line = new StringBuilder();
+        for (String word : text.split(" ")) {
+            while (fm.stringWidth(word) > max) {
+                int cut = word.length() - 1;
+                while (cut > 1 && fm.stringWidth(word.substring(0, cut)) > max) {
+                    cut--;
+                }
+                if (line.length() > 0) {
+                    lines.add(line.toString());
+                    line = new StringBuilder();
+                }
+                lines.add(word.substring(0, cut));
+                word = word.substring(cut);
+            }
+            String next = line.length() == 0 ? word : line + " " + word;
+            if (fm.stringWidth(next) > max && line.length() > 0) {
+                lines.add(line.toString());
+                line = new StringBuilder(word);
+            } else {
+                line = new StringBuilder(next);
+            }
+        }
+        lines.add(line.toString());
+        return lines;
     }
 }

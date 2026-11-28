@@ -6,11 +6,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import planningpet.common.view.Snap;
 import planningpet.common.view.Theme;
@@ -131,5 +134,52 @@ class PetCardArtTest {
         assertEquals(new Color(1, 2, 3, 200), PetCardArt.withAlpha(new Color(1, 2, 3, 9), 200));
         assertThrows(IllegalArgumentException.class, () -> PetCardArt.withAlpha(Theme.GRASS_FAR, 256));
         assertThrows(IllegalArgumentException.class, () -> PetCardArt.withAlpha(Theme.GRASS_FAR, -1));
+    }
+
+    /** 글꼴에 기대지 않게 UTF-16 한 단위를 폭 10으로 잰다(공백도 10, 이모지는 20). wrap은 stringWidth만 쓴다. */
+    private static final FontMetrics TEN_EACH = new FontMetrics(new Font(Font.DIALOG, Font.PLAIN, 10)) {
+        @Override
+        public int stringWidth(String s) {
+            return 10 * s.length();
+        }
+    };
+
+    private static List<String> wrap(String text, int max) {
+        return PetCardArt.wrap(text, TEN_EACH, max);
+    }
+
+    @Test
+    void eWrap1FitsOneLine() {
+        assertEquals(List.of("가나다"), wrap("가나다", 30));
+        assertEquals(List.of("가나다"), wrap("가나다", 100));
+        assertEquals(List.of(""), wrap("", 30));
+    }
+
+    @Test
+    void eWrap2BreaksAtSpaces() {
+        assertEquals(List.of("가나 다라", "마바"), wrap("가나 다라 마바", 50));
+        assertEquals(List.of("가나", "다라", "마바"), wrap("가나 다라 마바", 49));
+        assertEquals(List.of("가나 다라 마바"), wrap("가나 다라 마바", 80));
+        assertEquals(List.of("가", "나", "다"), wrap("가 나 다", 10));
+    }
+
+    @Test
+    void eWrap3Spaces() {
+        assertEquals(List.of("가  나"), wrap("가  나", 100));
+        assertEquals(List.of("가나 ", "다라"), wrap("가나  다라", 40));
+        assertEquals(List.of("가나"), wrap(" 가나", 40));
+        assertEquals(List.of("가나"), wrap("가나 ", 40));
+        assertEquals(List.of(""), wrap("   ", 40));
+        assertEquals(List.of("가\n나"), wrap("가\n나", 40));
+    }
+
+    @Test
+    void eWrap4LongWord() {
+        assertEquals(List.of("가나다라", "마바"), wrap("가나다라마바", 40));
+        assertEquals(List.of("가", "나다라마", "바사"), wrap("가 나다라마바사", 40));
+        assertEquals(List.of("가나다", "라마바", "사아자", "차카"), wrap("가나다라마바사아자차카", 30));
+        assertEquals(List.of("가나", "다"), wrap("가나다", 29));
+        assertEquals(List.of("가", "나", "다"), wrap("가나다", 15));
+        assertEquals(List.of("가", "나", "다"), wrap("가나다", 10));
     }
 }
