@@ -7,23 +7,28 @@ import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.geom.Path2D;
+import java.awt.image.BufferedImage;
 import planningpet.common.view.Images;
 import planningpet.common.view.Theme;
 
-/** 홈 펫 카드(D-59)의 그림 도구. 값은 디자인 시스템 10절 "홈"에 있다(docs/porting/home.md S3j). */
+/** 홈 펫 카드(D-59)의 그림 도구: 하늘과 풀밭 장면과 그것이 쓰는 색 섞기, 알파 바꾸기. 값은 디자인 시스템 10절 "홈"에 있다(docs/porting/home.md S3j). */
 final class PetCardArt {
     private PetCardArt() {
     }
 
     /** 하늘 그라데이션, 구름 둘, 먼 언덕과 가까운 풀밭, 풀잎(홈 예시 펫 카드의 장면). */
     static void scene(Graphics2D g, Rectangle f, int ground) {
+        scene(g, f, ground, Images.CLOUD);
+    }
+
+    /** 구름 그림을 받는다. 그림이 없으면(null) 구름 없이 그린다. 그림 파일을 못 읽은 때를 검사하려고 연다(home.md S3j). */
+    static void scene(Graphics2D g, Rectangle f, int ground, BufferedImage cloud) {
         int x = f.x;
         int y = f.y;
         int w = f.width;
         int h = f.height;
         g.setPaint(new GradientPaint(0, y, Theme.SKY_TOP, 0, ground, Theme.SKY_BOTTOM));
         g.fillRect(x, y, w, h);
-        java.awt.image.BufferedImage cloud = Images.CLOUD;
         if (cloud != null) {
             g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
             int cw = Math.max(60, w / 6);

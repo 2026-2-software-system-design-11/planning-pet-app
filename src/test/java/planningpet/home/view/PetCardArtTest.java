@@ -1,8 +1,10 @@
 package planningpet.home.view;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
@@ -17,19 +19,44 @@ import planningpet.common.view.Theme;
 class PetCardArtTest {
     /** 프로토타입 PetCard처럼 안티에일리어싱과 품질 우선을 켜고, 틀보다 오른쪽과 아래로 4 큰 그림에 그린다. */
     private static BufferedImage scene(Rectangle f, int ground) {
-        BufferedImage img = new BufferedImage(f.x + f.width + 4, f.y + f.height + 4, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g = img.createGraphics();
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        BufferedImage img = image(f);
+        Graphics2D g = hinted(img);
         PetCardArt.scene(g, f, ground);
         g.dispose();
         return img;
     }
 
+    /** 구름 그림 없이 그린다. */
+    private static BufferedImage bare(Rectangle f, int ground) {
+        BufferedImage img = image(f);
+        Graphics2D g = hinted(img);
+        PetCardArt.scene(g, f, ground, null);
+        g.dispose();
+        return img;
+    }
+
+    private static BufferedImage image(Rectangle f) {
+        return new BufferedImage(f.x + f.width + 4, f.y + f.height + 4, BufferedImage.TYPE_INT_ARGB);
+    }
+
+    private static Graphics2D hinted(BufferedImage img) {
+        Graphics2D g = img.createGraphics();
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        return g;
+    }
+
     /** 카드 w x h의 PetCard 틀과 땅 선(틀 아래에서 높이의 1/11, 최소 14). */
+    private static Rectangle frame(int w, int h) {
+        return new Rectangle(2, 1, w - 4, h - 8);
+    }
+
+    private static int ground(Rectangle f) {
+        return f.y + f.height - Math.max(14, f.height / 11);
+    }
+
     private static BufferedImage card(int w, int h) {
-        Rectangle f = new Rectangle(2, 1, w - 4, h - 8);
-        return scene(f, f.y + f.height - Math.max(14, f.height / 11));
+        return scene(frame(w, h), ground(frame(w, h)));
     }
 
     @Test
@@ -55,6 +82,29 @@ class PetCardArtTest {
         Snap.assertLooksLikePrototype("scene-card-4x8", card(4, 8));
         Snap.assertLooksLikePrototype("scene-zero", scene(new Rectangle(0, 0, 0, 0), -14));
         Snap.assertLooksLikePrototype("scene-card-120x60", card(120, 60));
+    }
+
+    @Test
+    void eScene5NoCloudAndGraphicsAfter() throws IOException {
+        for (int[] s : new int[][] {{360, 240}, {300, 210}, {800, 500}, {120, 60}}) {
+            Rectangle f = frame(s[0], s[1]);
+            Snap.assertLooksLikePrototype("scene-no-cloud-card-" + s[0] + "x" + s[1], bare(f, ground(f)));
+        }
+        Snap.assertLooksLikePrototype("scene-no-cloud-moved", bare(new Rectangle(30, 20, 356, 232), 231));
+        Snap.assertLooksLikePrototype("scene-no-cloud-ground-top", bare(new Rectangle(2, 1, 356, 232), 1));
+        Snap.assertLooksLikePrototype("scene-no-cloud-ground-below", bare(new Rectangle(2, 1, 356, 232), 263));
+        Snap.assertLooksLikePrototype("scene-card-4x8", bare(frame(4, 8), ground(frame(4, 8))));
+        Snap.assertLooksLikePrototype("scene-zero", bare(new Rectangle(0, 0, 0, 0), -14));
+        Rectangle f = frame(360, 240);
+        Graphics2D g = hinted(image(f));
+        PetCardArt.scene(g, f, ground(f));
+        assertEquals(RenderingHints.VALUE_INTERPOLATION_BICUBIC, g.getRenderingHint(RenderingHints.KEY_INTERPOLATION));
+        assertEquals(Theme.GRASS_DEEP, g.getColor());
+        assertEquals(232 / 140f, ((BasicStroke) g.getStroke()).getLineWidth());
+        assertEquals(BasicStroke.CAP_ROUND, ((BasicStroke) g.getStroke()).getEndCap());
+        Graphics2D n = hinted(image(f));
+        PetCardArt.scene(n, f, ground(f), null);
+        assertNull(n.getRenderingHint(RenderingHints.KEY_INTERPOLATION));
     }
 
     @Test
