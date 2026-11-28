@@ -1,11 +1,13 @@
 package planningpet.home.view;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import planningpet.app.controller.AppController;
 import planningpet.app.model.AppData;
 import planningpet.common.view.Card;
+import planningpet.common.view.Theme;
 import planningpet.home.controller.HomeController;
 
 /**
@@ -30,5 +32,25 @@ public final class MainScreen extends JPanel {
         add(pet);
         add(calendarCard);
         add(list);
+    }
+
+    /**
+     * 왼쪽 열은 본문 폭의 0.47(360에서 760 사이), 펫 카드 높이는 본문 높이의 0.42(236에서 400 사이)이고 나머지가 달력이다.
+     * 오른쪽 할 일 카드는 위아래를 다 쓴다(D-59).
+     */
+    @Override
+    public void doLayout() {
+        int w = getWidth();
+        int h = getHeight();
+        int gap = Theme.GAP;
+        int leftW = (int) Math.max(360, Math.min(760, w * 0.47));
+        int petH = (int) Math.max(236, Math.min(400, h * 0.42));
+        Component[] parts = getComponents();
+        parts[0].setBounds(0, 0, leftW, petH);
+        parts[1].setBounds(0, petH + gap, leftW, h - petH - gap);
+        parts[2].setBounds(leftW + gap, 0, w - leftW - gap, h);
+        for (Component c : parts) {
+            c.doLayout();
+        }
     }
 }
