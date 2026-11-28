@@ -56,4 +56,15 @@ class PickSceneTest {
             PickScene.bush(g, 330, 70, 0);
         });
     }
+
+    @Test
+    void ePick4RibbonAndSkyPaw() throws IOException {
+        same("pick-scene-ribbon", 760, 80, g -> {
+            PickScene.ribbon(g, 120, 8, 380, 40);
+            PickScene.skyPaw(g, 120 - 78, 8 + 32, 28, -0.25);
+            PickScene.skyPaw(g, 500 + 78, 8 + 32, 28, 0.25);
+            PickScene.ribbon(g, 640, 20, 60, 20);
+            PickScene.ribbon(g, 740, 20, 0, 0);
+        });
+    }
 }
