@@ -1,13 +1,22 @@
 package planningpet.schedule.view;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static planningpet.schedule.model.Tasks.d;
 import static planningpet.schedule.model.Tasks.task;
 
+import java.awt.BorderLayout;
+import java.awt.Container;
+import java.awt.Insets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import javax.swing.JLabel;
 import org.junit.jupiter.api.Test;
+import planningpet.common.view.Theme;
+import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Task;
 
 /** 시각 고치기 창 내용. 번호는 docs/porting/schedule.md S5e 2절. 오늘은 11-18(수)이고 창은 띄우지 않는다. */
@@ -27,6 +36,10 @@ class TimeEditorTest {
         return open(t, day, NOW);
     }
 
+    private static BorderLayout layout(Container c) {
+        return (BorderLayout) c.getLayout();
+    }
+
     /** 시작 칸의 글, 걸리는 시간, 실제 시각 글. */
     private static List<Object> values(TimeEditor e) {
         return List.of(e.start.getValue(), e.minutes.getValue(), e.realTime.getText());
@@ -43,5 +56,48 @@ class TimeEditorTest {
         assertEquals(List.of("01:15(다음 날)", 30, "(목 01:15)"), values(dawn));
         // D-67: 11-17에 정해 두고 못 끝낸 계획은 시각 없는 할 일처럼 연다.
         assertEquals(List.of("15:25", 30, ""), values(open(report(d(17), "10:00"), d(18))));
+    }
+
+    @Test
+    void eTed2RealTime() {
+        TimeEditor e = open(task("독서", d(20)).at("01:30").nextDay().task(), d(20));
+        assertEquals("(토 01:30)", e.realTime.getText());
+        e.start.setValue("00:30(다음 날)");
+        assertEquals("(토 00:30)", e.realTime.getText());
+        e.start.setValue("23:55");
+        assertEquals("", e.realTime.getText());
+        // 시각 없는 기간 할 일은 창을 연 날로 옮겨지므로 그 날의 다음 날이다.
+        TimeEditor p = open(report(d(16), null), d(18));
+        p.start.setValue("01:00(다음 날)");
+        assertEquals("(목 01:00)", p.realTime.getText());
+    }
+
+    @Test
+    void eTed3ClearShown() {
+        assertTrue(open(task("운동", d(18)).at("10:00").task(), d(18)).clear.isVisible());
+        assertTrue(open(report(d(18), "10:00"), d(18)).clear.isVisible());
+        assertFalse(open(task("빨래", d(18)).task(), d(18)).clear.isVisible());
+        assertFalse(open(report(d(17), "10:00"), d(18)).clear.isVisible());
+    }
+
+    @Test
+    void tEdit6FixedHasNoClear() {
+        assertFalse(open(task("수업", d(18)).kind(Kind.FIXED).at("13:00").minutes(75).task(), d(18)).clear.isVisible());
+    }
+
+    @Test
+    void eTed4Content() {
+        TimeEditor e = open(task("<b>시험</b> & 발표", d(18)).at("10:00").task(), d(18));
+        assertEquals(new Insets(12, 14, 12, 14), e.panel.getInsets());
+        Container fields = (Container) layout(e.panel).getLayoutComponent(BorderLayout.NORTH);
+        JLabel title = (JLabel) layout(fields).getLayoutComponent(BorderLayout.NORTH);
+        assertEquals("<html><b>&lt;b&gt;시험&lt;/b&gt; &amp; 발표</b></html>", title.getText());
+        assertSame(e.error, layout(e.panel).getLayoutComponent(BorderLayout.CENTER));
+        assertEquals(List.of(" ", Theme.SUNDAY, 12), List.of(e.error.getText(), e.error.getForeground(), e.error.getFont().getSize()));
+        Container buttons = (Container) layout(e.panel).getLayoutComponent(BorderLayout.SOUTH);
+        assertSame(e.clear.getParent(), layout(buttons).getLayoutComponent(BorderLayout.WEST));
+        assertSame(e.save.getParent(), layout(buttons).getLayoutComponent(BorderLayout.EAST));
+        assertEquals(List.of(e.cancel, e.save), List.of(e.save.getParent().getComponents()));
+        assertEquals(List.of("시각 빼기", "취소", "저장"), List.of(e.clear.getText(), e.cancel.getText(), e.save.getText()));
     }
 }

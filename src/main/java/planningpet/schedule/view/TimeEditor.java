@@ -3,8 +3,10 @@ package planningpet.schedule.view;
 import java.awt.BorderLayout;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerListModel;
 import planningpet.common.model.AppDay;
@@ -45,6 +47,22 @@ public final class TimeEditor {
         realTime.setText(Times.real(base, from));
         minutes = Ui.minutes(task.getDurationMinutes());
         start.addChangeListener(e -> realTime.setText(Times.real(base, Times.minuteOf(start.getValue()))));
+        error.setForeground(Theme.SUNDAY);
+        error.setFont(Theme.font(12));
+        panel.setBorder(BorderFactory.createEmptyBorder(12, 14, 12, 14));
+        // D-43: 맨 위에 할 일 제목, 단추는 오른쪽 아래에 취소, 저장 차례이고 시각 빼기는 왼쪽 아래다.
+        JPanel fields = new JPanel(new BorderLayout(0, 4));
+        fields.add(new JLabel("<html><b>" + Ui.esc(task.getTitle()) + "</b></html>"), BorderLayout.NORTH);
+        JPanel row = new JPanel(new BorderLayout(12, 0));
+        row.add(Ui.flow(new JLabel("시작 시각"), start, realTime), BorderLayout.WEST);
+        row.add(Ui.flow(new JLabel("걸리는 시간"), minutes, new JLabel("분")), BorderLayout.CENTER);
+        fields.add(row, BorderLayout.CENTER);
+        panel.add(fields, BorderLayout.NORTH);
+        panel.add(error, BorderLayout.CENTER);
         clear.setVisible(placed && task.getKind() == Kind.TASK);
+        JPanel buttons = new JPanel(new BorderLayout());
+        buttons.add(Ui.flow(clear), BorderLayout.WEST);
+        buttons.add(Ui.flow(cancel, save), BorderLayout.EAST);
+        panel.add(buttons, BorderLayout.SOUTH);
     }
 }
