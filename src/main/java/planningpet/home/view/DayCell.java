@@ -1,11 +1,15 @@
 package planningpet.home.view;
 
 import java.awt.BasicStroke;
+import java.awt.Cursor;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.time.LocalDate;
+import java.util.function.Consumer;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 import planningpet.common.view.Theme;
@@ -15,17 +19,18 @@ import planningpet.schedule.model.CellPreview;
 /**
  * 홈 달력의 날짜 칸 하나(05 홈 "달력", D-86, 06 26번). 프로토타입 CalendarPanel.cell의 칸이다(docs/porting/home.md S3e).
  * 글(getText)은 숫자, 일의 수, 마감 표시의 HTML이고(QA와 화면 읽기 프로그램이 읽는다), 그림은 손수 그린다: 숫자와 그 아래 "{수}개".
- * 오늘은 DAY_TODAY 둥근 네모, 고른 날은 MINT 테두리다.
+ * 오늘은 DAY_TODAY 둥근 네모, 고른 날은 MINT 테두리, 마우스를 올리면 DAY다.
  */
 final class DayCell extends JLabel {
     private final LocalDate date;
     private final CellPreview preview;
     private final boolean today;
     private final boolean picked;
+    private boolean over;
     /** 기준 그림을 글 없이 그릴 때만 켠다. 숫자와 수를 빈 글로 그리고 자리는 그대로 잰다. */
     private boolean blank;
 
-    DayCell(LocalDate date, CellPreview preview, boolean today, boolean picked) {
+    DayCell(LocalDate date, CellPreview preview, boolean today, boolean picked, Consumer<LocalDate> onPick) {
         super("", SwingConstants.CENTER);
         this.date = date;
         this.preview = preview;
@@ -36,6 +41,25 @@ final class DayCell extends JLabel {
         setText("<html><center>" + day + (count.isEmpty() ? "" : "<br><font size='2' color='"
                 + (preview.open() ? "#28977F" : "#8A96A0") + "'>" + count + "</font>")
                 + (preview.due().isEmpty() ? "" : " <font size='2' color='#C0392B'>마감</font>") + "</center></html>");
+        setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                over = true;
+                repaint();
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                over = false;
+                repaint();
+            }
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                onPick.accept(date);
+            }
+        });
     }
 
     /** 기준 그림과 맞출 때 운영체제마다 다른 글자 픽셀을 빼고 그린다(검사용). */
@@ -51,8 +75,8 @@ final class DayCell extends JLabel {
         int w = getWidth();
         int h = getHeight();
         int r = 12;
-        if (today) {
-            g.setColor(Theme.DAY_TODAY);
+        if (today || over) {
+            g.setColor(today ? Theme.DAY_TODAY : Theme.DAY);
             g.fillRoundRect(2, 1, w - 4, h - 2, r, r);
         }
         if (picked) {

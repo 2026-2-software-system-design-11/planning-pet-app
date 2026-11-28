@@ -1,14 +1,21 @@
 package planningpet.home.view;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Graphics2D;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import javax.swing.SwingConstants;
 import org.junit.jupiter.api.Test;
 import planningpet.common.view.Snap;
 import planningpet.common.view.Theme;
@@ -21,13 +28,14 @@ import planningpet.schedule.model.CellPreview;
 class DayCellTest {
     private static final CellPreview NONE = new CellPreview(0, true, List.of());
     private static final CellPreview TWO = new CellPreview(2, true, List.of());
+    private final List<LocalDate> picks = new ArrayList<>();
 
     private static LocalDate d(int day) {
         return LocalDate.of(2026, 11, day);
     }
 
-    private static DayCell cell(int day, CellPreview preview, boolean today, boolean picked) {
-        return new DayCell(d(day), preview, today, picked);
+    private DayCell cell(int day, CellPreview preview, boolean today, boolean picked) {
+        return new DayCell(d(day), preview, today, picked, picks::add);
     }
 
     private static void looks(String name, DayCell c, int w, int h) throws IOException {
@@ -70,6 +78,32 @@ class DayCellTest {
             looks("picked", cell(18, NONE, false, true), s[0], s[1]);
             looks("today-picked", cell(18, NONE, true, true), s[0], s[1]);
         }
+    }
+
+    private static void mouse(DayCell c, int id) {
+        MouseEvent e = new MouseEvent(c, id, 0, 0, 5, 5, 1, false);
+        for (MouseListener l : c.getMouseListeners()) {
+            switch (id) {
+                case MouseEvent.MOUSE_ENTERED -> l.mouseEntered(e);
+                case MouseEvent.MOUSE_EXITED -> l.mouseExited(e);
+                default -> l.mouseClicked(e);
+            }
+        }
+    }
+
+    @Test
+    void eCell2Hover() throws IOException {
+        DayCell c = cell(18, NONE, false, false);
+        mouse(c, MouseEvent.MOUSE_ENTERED);
+        looks("over", c, 46, 44);
+        mouse(c, MouseEvent.MOUSE_EXITED);
+        looks("plain", c, 46, 44);
+        c = cell(18, NONE, true, false);
+        mouse(c, MouseEvent.MOUSE_ENTERED);
+        looks("today", c, 46, 44);
+        c = cell(18, NONE, false, true);
+        mouse(c, MouseEvent.MOUSE_ENTERED);
+        looks("over-picked", c, 46, 44);
     }
 
     @Test
@@ -143,5 +177,22 @@ class DayCellTest {
         BufferedImage wednesday = paint(cell(18, NONE, false, false), 46, 44);
         assertTrue(ink(wednesday, Theme.INK, 0, 44)[4] > 0);
         assertEquals(0, ink(wednesday, Theme.SUNDAY, 0, 44)[4] + ink(wednesday, Theme.SATURDAY, 0, 44)[4]);
+    }
+
+    @Test
+    void eCell9PickAndProperties() {
+        DayCell c = cell(18, NONE, false, false);
+        mouse(c, MouseEvent.MOUSE_ENTERED);
+        mouse(c, MouseEvent.MOUSE_EXITED);
+        assertEquals(List.of(), picks);
+        mouse(c, MouseEvent.MOUSE_CLICKED);
+        mouse(c, MouseEvent.MOUSE_CLICKED);
+        assertEquals(List.of(d(18), d(18)), picks);
+        mouse(cell(16, NONE, true, true), MouseEvent.MOUSE_CLICKED);
+        assertEquals(List.of(d(18), d(18), d(16)), picks);
+        assertEquals(Cursor.HAND_CURSOR, c.getCursor().getType());
+        assertFalse(c.isOpaque());
+        assertEquals(SwingConstants.CENTER, c.getHorizontalAlignment());
+        assertNull(c.getToolTipText());
     }
 }
