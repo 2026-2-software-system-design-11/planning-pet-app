@@ -2,13 +2,13 @@
 
 [본 구현으로 옮기기](../porting.md) 1절 표의 단위 S10이다. 설정(05 설정, UC-18)과 06 25번의 컴퓨터 켤 때 실행을 옮긴다. 기준은 05 설정과 그 그림 [ui-settings](../diagrams/ui-settings.puml), 06 25번(T-WIN-4~6), 06 데이터 절의 `calendarFixed`와 `weekStart`, 07 [class-home-settings](../diagrams/class-home-settings.puml), D-29, D-86, D-91, D-114, 프로토타입 `settings/view/SettingsScreen`(83줄)과 `settings/controller/SettingsController`(30줄)다. 프로토타입에는 컴퓨터 켤 때 실행 코드가 없고 설정 화면의 체크박스가 늘 비활성이다. 그래서 `Autostart`와 `OsAutostart`는 비교 기준이 없고 06 25번과 아래 경계 줄이 기준이다(porting.md 2절 6번).
 
-S10은 테스트를 더하면 약 740줄이라 PR 한도를 넘어 나눈다. S10a를 쓰다 실측이 한도를 넘어 Windows 등록과 `here()`를 S10b로 옮겼고, S10b를 쓰다 실측(테스트 준비 코드를 넣어 약 560줄)이 한도를 넘어 Windows 등록을 S10c로 옮겼다. 아래 Windows 줄과 E-AUTO-9~12는 S10c가 옮긴다.
+S10은 테스트를 더하면 약 740줄이라 PR 한도를 넘어 나눈다. S10a를 쓰다 실측이 한도를 넘어 Windows 등록과 `here()`를 S10b로 옮겼고, S10b를 쓰다 실측(테스트 준비 코드를 넣어 약 560줄)이 한도를 넘어 Windows 등록을 S10c로 옮겼다. 아래 Windows 줄과 E-AUTO-9~12는 S10c가 옮겼다.
 
 | 몫 | 이슈 | 옮기는 것 |
 |---|---|---|
 | S10a | #523 | `settings.model.Autostart`, `settings.store.OsAutostart`의 macOS 등록, `settings.controller.SettingsController`의 `setCalendarFixed`, `setWeekStart`, `setAutostart` |
 | S10b | #525 | `settings.view.SettingsScreen`, 이 컴퓨터의 값을 쓰는 `OsAutostart.here()`(macOS 등록만), `Main.open`이 설정을 앱 창에 붙이고 다시 그리기를 거는 일(#496 꼴), T-WIN-4~6의 화면 몫 |
-| S10c | #532 | `OsAutostart`의 Windows 등록(`reg` 명령을 돌리는 대역과 실제 실행), E-AUTO-9~12 |
+| S10c | #532 | `OsAutostart`의 Windows 등록(`reg` 명령을 돌리는 `Runner`와 그 결과 `Result`, `here()`가 넘기는 실제 실행), E-AUTO-9~12, 설정 화면을 고른 채일 때만 등록 상태를 읽는 `SettingsScreen.shown`(E-SET-15) |
 
 이 단위가 옮기지 않는 것: 설정 "목록 누르기"(체크박스 줄과 `SettingsController.setListClickTime`)는 C3다. "예시 지우기"의 남은 예시 세기와 지우기는 C5이고, S10b는 홈(#496)처럼 그 함수를 받는 필드만 둔다. 트레이, 창 닫기, `--autostart`로 창 없이 뜨기는 S11이다.
 
@@ -123,4 +123,37 @@ S10a의 controller와 컴퓨터 켤 때 실행에 설정 화면(`SettingsScreen`
 
 - 실제 오류 창과 `Desktop.open`이 파일 탐색기를 여는 일은 창이 떠야 해서 검사하지 않는다.
 - `MainStartTest`는 `OsAutostart.here()`로 이 컴퓨터의 등록 상태를 읽기만 한다. 검사 JVM에는 `jpackage.app-path`가 없어 체크박스가 비활성이라 등록하지 않는다.
-- 설정 화면은 변경 알림마다 `registered()`를 다시 읽는다. Windows 등록(S10c)이 붙으면 `reg query`를 알림마다 돌리고, 그 시간은 재지 않았다(설치 파일 R 단위에서 잰다).
+- 설정 화면은 변경 알림마다 `registered()`를 다시 읽었다. Windows 등록(S10c)이 붙으며 알림마다 `reg query`를 돌리게 되어, S10c가 설정 화면을 고른 채일 때만 읽게 바꿨다(S10c 07 안에서 정한 것).
+
+## S10c. 컴퓨터 켤 때 실행의 Windows 등록
+
+S10a의 `OsAutostart`에 Windows 등록을 더한다(#532). 규칙(Run 키의 값 `PlanningPet`, `reg add`, `reg query`, `reg delete`, 따옴표 `\"`)은 S10a "07 안에서 정한 것"의 Windows 줄이고, 경계 줄 E-AUTO-9~12는 S10a 2절 표에 있다. 코드는 #525가 써서 넘긴 패치다. 프로토타입에는 컴퓨터 켤 때 실행이 없어 06 25번과 경계 줄이 기준이다.
+
+07 안에서 정한 것과 그 까닭:
+
+- **명령 실행은 `OsAutostart` 안의 `Runner`(명령 목록을 받아 `Result`를 돌려준다)로 받는다.** 07은 `OsAutostart` 안을 그리지 않는다. 검사가 부른 명령을 적는 대역을 넣어 이 컴퓨터의 레지스트리를 건드리지 않게 하는 자리라 패키지 안에만 둔다. `here()`는 실제 프로세스(`ProcessBuilder`)를 넘긴다.
+- **`Result`는 종료 코드와 표준 출력, 오류 출력을 합친 글이다.** `reg`가 거절하면 그 글이 `IOException`의 글이 되고 S10b 잠정 3의 창에 이유로 보인다. 출력은 이 컴퓨터의 글자 인코딩(`native.encoding`)으로 읽는다.
+- **`reg query`를 돌리지 못하면 등록 없음(false)이다.** 화면은 체크가 꺼진 채로 보이고, 켜기를 누르면 `reg add`가 같은 이유로 실패해 창이 뜬다.
+- **설정 화면은 앱 창이 그 화면을 고른 채일 때만 등록 상태를 읽는다.** S10b의 `refresh`는 데이터 변경 알림마다 불리므로, Windows에서는 다른 화면에서 일정을 끝내기만 해도 `reg` 프로세스를 하나 띄워 끝날 때까지 기다렸다. `SettingsScreen`에 고른 채인지를 묻는 `shown`(`BooleanSupplier`, 처음은 늘 true)을 두고, `Main.open`이 `AppWindow.current()`가 "설정"인지를 넣는다. `AppWindow.show`는 고른 이름을 바꾼 뒤 다시 그리므로 설정을 열 때 다시 읽고, 체크박스를 누른 뒤에도 지금처럼 읽는다. 그래서 06 25번(설정을 열면 다시 읽는다)과 T-WIN-5는 그대로다. 화면이 `AppWindow`를 알지 않도록 홈의 `samples`처럼 함수 필드로 받았다. 고른 이름은 `AppWindow`가 이미 `current()`로 내놓는다. 설정 화면을 만들 때의 첫 `refresh`는 `shown`을 넣기 전이라 앱을 열 때 한 번 읽는다.
+
+### 1. 화면에서 따라 할 단계
+
+1. 설치 파일로 설치한 앱을 Windows에서 열고 설정 화면에서 "컴퓨터 켤 때 같이 실행"을 켠다. 레지스트리 편집기의 `HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run`에 값 `PlanningPet`이 생기고 데이터는 `"앱 경로" --autostart`다. 다른 화면에 갔다 돌아오면 체크된 채다(T-WIN-4).
+2. 레지스트리 편집기에서 그 값을 지운 뒤 설정 화면을 다시 연다. 체크가 꺼진 채다(T-WIN-5). 작업 관리자의 시작 프로그램에서 끈 경우는 3절에 적었다.
+3. 체크를 끄면 그 값이 지워진다. 운영체제가 거절하면 체크가 돌아가고 "컴퓨터 켤 때 실행을 바꾸지 못했어요" 창에 `reg`의 출력이 보인다.
+4. `java -jar`로 연 앱의 설정 화면은 체크박스가 비활성이다(T-WIN-6).
+
+### 2. 입력의 경계와 결과
+
+E-AUTO-9~12는 S10a 2절 표에 있고 `OsAutostartTest`가 확인한다. 아래 줄은 `SettingsScreenTest`가 번호 이름의 테스트로 확인한다. 프로토타입에는 화면 전환 때 다시 읽는 일이 없다(체크박스가 늘 비활성).
+
+| 번호 | 입력과 경계 | 넣은 값 | 프로토타입 결과 | 본 구현 |
+|---|---|---|---|---|
+| E-SET-15 | 등록 상태를 읽는 때 | 앱 창이 "홈"을 고른 채 변경 알림, "설정"을 엶, 체크박스 누르기, "홈"으로 가서 변경 알림 | 없음 | 홈일 때 알림에는 `registered()`를 부르지 않고 체크도 그대로다. 설정을 열면 한 번 읽어 체크된다. 누른 뒤 한 번 읽는다. 홈으로 간 뒤의 알림에는 읽지 않는다 |
+
+### 3. 검사하지 못한 것
+
+- 실제 `reg` 프로세스와 레지스트리는 검사하지 않는다(S10a 3절). 검사는 명령을 적기만 하는 대역으로 돈다. 이 Mac에서는 실제 레지스트리와 컴퓨터 켤 때 실행을 건드리지 않았다.
+- `reg query` 한 번에 걸리는 시간은 재지 않았다. 이 컴퓨터에 Windows가 없어서다. 설정 화면을 열 때와 체크박스를 누른 뒤에는 EDT에서 `reg`를 돌려 끝날 때까지 기다리므로, 그 시간만큼 화면이 멈춘다. 설치 파일(R 단위)에서 Windows로 잰다. 길면 EDT 밖에서 읽는 길(SwingWorker)이 남아 있다.
+- `reg`의 출력을 `native.encoding`으로 읽은 글이 한국어 Windows에서 깨지지 않는지는 손으로 본다.
+- 작업 관리자의 시작 프로그램이나 Windows 설정의 시작 앱에서 끄면 Windows는 Run 키의 값을 지우지 않고 다른 키(`StartupApproved\Run`)에 꺼짐을 적는 것으로 안다. 그러면 `reg query`가 0이라 앱은 켜지지 않는데 체크는 켜진 채로 보인다. 이 Mac에서는 확인하지 못했다. 코드는 Run 키의 값만 본다. 설치 파일(R 단위)에서 Windows로 확인하고 맞으면 문제(porting.md 3절)로 고친다. macOS의 로그인 항목에서 끈 경우(S10a 1절 2단계)도 같이 본다.

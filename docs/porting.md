@@ -103,7 +103,7 @@
 | S9 | 통계 화면 | `StatsScreen`, 통계 화면일 때 창 바탕의 자는 고양이([icons.md](porting/icons.md)) | 29번 | `docs/porting/stats-screen.md` |
 | S10a | 컴퓨터 켤 때 실행과 설정 controller | `Autostart`, `OsAutostart`의 macOS 등록(설치된 앱인지는 `jpackage.app-path`), `SettingsController`의 `setCalendarFixed`, `setWeekStart`, `setAutostart`(#523). `setListClickTime`은 C3 | 25번의 컴퓨터 켤 때 실행(T-WIN-4~6의 등록 몫, 프로토타입 기준 없음), 데이터 절 `calendarFixed`, `weekStart` | [docs/porting/settings.md](porting/settings.md) |
 | S10b | 설정 화면과 앱 창 잇기 | `SettingsScreen`, `OsAutostart.here()`, `Main.open`이 설정을 앱 창에 붙이고 다시 그리기를 거는 일(#525). `Autostart`, `OsAutostart`의 macOS 등록, `SettingsController`는 S10a, "목록 누르기" 줄은 C3, "예시 지우기"의 세기와 지우기는 C5 | 25번의 컴퓨터 켤 때 실행(T-WIN-4~6의 화면 몫) | [docs/porting/settings.md](porting/settings.md) |
-| S10c | 컴퓨터 켤 때 실행의 Windows 등록 | `OsAutostart`의 Windows 등록(`reg` 명령, #532) | 25번의 Windows 등록(프로토타입 기준 없음) | [docs/porting/settings.md](porting/settings.md) |
+| S10c | 컴퓨터 켤 때 실행의 Windows 등록 | `OsAutostart`의 Windows 등록(`reg` 명령, 명령 실행 `Runner`와 `Result`), 설정 화면을 고른 채일 때만 등록 상태를 읽는 `SettingsScreen.shown`(#532) | 25번의 Windows 등록(T-WIN-4~6의 Windows 몫, 프로토타입 기준 없음) | [docs/porting/settings.md](porting/settings.md) |
 | S11 | 트레이, 알림, 하나만 실행 | `AppController.dueReminders`, `onClose`, `quit`, `CloseAction`, `SingleInstance`(#522). `Tray`의 아이콘, 메뉴, 알림과 창 닫기 잇기는 #524 | 17번, 24번, 25번(프로토타입 기준 없음) | [docs/porting/tray.md](porting/tray.md) |
 | C1 | 칸에 쳐 넣기 | `Typed` | 32번 | `docs/porting/typed.md` |
 | C2 | 끌어 놓기와 되돌리기 | `TaskBook.placeAt`, `dropRange`, `dropStart`, `TaskController.placeAt`, `undoPlace` | 4번의 끌어 놓기 | `docs/porting/drag.md` |
