@@ -648,6 +648,19 @@ class TaskFormTest {
     }
 
     @Test
+    void eForm11EditLocksKindAndRepeat() {
+        TaskForm f = edit(Tasks.task("보고서", d(18)).period(d(16), d(22)));
+        String end = text(f.repeatEnd);
+        Ui.setDate(f.date, d(17));
+        assertEquals(List.of(false, false, false, false, false, false, end), List.of(f.task.isEnabled(), f.fixed.isEnabled(),
+                f.repeat.isEnabled(), f.days[0].isEnabled(), f.repeatEnd.isEnabled(), f.minutesHint.isVisible(), text(f.repeatEnd)));
+        assertTrue(form(d(18)).minutesHint.isVisible());
+        TaskForm copy = edit(Tasks.task("영어", d(18)).series("S", Repeat.DAILY));
+        assertEquals(List.of(false, false, false), List.of(copy.period.isSelected(), copy.period.isEnabled(), copy.periodHint.isVisible()));
+        assertTrue(edit(Tasks.task("빨래", d(18))).period.isEnabled());
+    }
+
+    @Test
     void eForm13OffStepStoredValues() {
         assertThrows(IllegalArgumentException.class, () -> edit(Tasks.task("운동", d(20)).at("09:03")));
         assertThrows(IllegalArgumentException.class, () -> edit(Tasks.task("운동", d(20)).at("10:00").minutes(27)));

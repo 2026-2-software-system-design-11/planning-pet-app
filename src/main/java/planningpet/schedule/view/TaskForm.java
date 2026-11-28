@@ -253,6 +253,7 @@ final class TaskForm {
     }
 
     /**
+     * 수정 창이면 종류와 반복 칸이 비활성이고 반복 끝이 날짜를 따라가지 않으며 30분 안내가 없다. 반복 사본은 기간이 꺼진 채 비활성이다.
      * 고정 일정이면 시작 시각이 켜진 채 비활성이고 기간은 꺼진 채 비활성이다(D-16, D-65). 반복과 기간은 함께 고를 수 없다(D-65). 기간을
      * 켜면 시작 시각이 꺼진 채 비활성이다(D-68). 시작 시각을 정하면 끝 시각 글과 다음 날 값의 실제 날과 시각을 적고(D-73, D-77),
      * 걸리는 시간이 30이면 30분 안내를 보인다(D-43). 고정 일정, 기간, 반복 때문에 앱이 바꾼 칸은 맥락이 돌아오면 되돌린다(D-101).
@@ -266,9 +267,11 @@ final class TaskForm {
         }
         syncing = true;
         boolean dueShown = due.isVisible();
+        task.setEnabled(!editing);
+        fixed.setEnabled(!editing);
         boolean isFixed = fixed.isSelected();
         // D-101: 고정 일정이라서 앱이 바꾼 칸은 할 일로 돌아오면 사용자가 둔 값으로 되돌린다.
-        if (isFixed && timedBefore == null) {
+        if (isFixed && !editing && timedBefore == null) {
             timedBefore = timedBeforePeriod != null ? timedBeforePeriod : timed.isSelected();
             periodBefore = period.isSelected();
             dueBefore = Ui.dateOf(due);
@@ -279,8 +282,8 @@ final class TaskForm {
             timedBefore = null;
         }
         boolean repeating = repeat.getSelectedIndex() != 0;
-        boolean periodAllowed = !isFixed && !repeating;
-        if (!isFixed && repeating && period.isSelected()) {
+        boolean periodAllowed = !isFixed && !copy && !repeating;
+        if (!isFixed && !copy && repeating && period.isSelected()) {
             dueBeforeRepeat = Ui.dateOf(due);
         } else if (periodAllowed && dueBeforeRepeat != null) {
             period.setSelected(true);
@@ -309,15 +312,15 @@ final class TaskForm {
         start.setEnabled(timed.isSelected());
         period.setEnabled(periodAllowed);
         period.setToolTipText(isFixed ? "기간은 할 일만 정할 수 있어요" : null);
-        periodHint.setVisible(repeating && !isFixed);
+        periodHint.setVisible(repeating && !isFixed && !copy);
         dateLabel.setText(period.isSelected() ? "시작일" : "날짜");
         dueLabel.setVisible(period.isSelected());
         due.setVisible(period.isSelected());
-        repeat.setEnabled(!period.isSelected());
+        repeat.setEnabled(!editing && !period.isSelected());
         for (JToggleButton d : days) {
-            d.setEnabled(repeat.getSelectedIndex() == 2);
+            d.setEnabled(!editing && repeat.getSelectedIndex() == 2);
         }
-        repeatEnd.setEnabled(repeating);
+        repeatEnd.setEnabled(repeating && !editing);
         repeatHint.setVisible(period.isSelected());
         LocalDate day = Ui.dateOf(date);
         boolean opened = start.isEnabled() && !startOpen;
@@ -338,13 +341,13 @@ final class TaskForm {
             }
         }
         // D-79: 끝 날짜를 손대지 않았으면 반복을 고른 뒤에도 시작 날짜를 따라간다.
-        if (!endTouched) {
+        if (!editing && !endTouched) {
             Ui.setDate(repeatEnd, DefaultDates.repeatEndFor(isFixed ? Kind.FIXED : Kind.TASK, day));
         }
         if (!dueTouched) {
             Ui.setDate(due, DefaultDates.dueFor(day, weekStart));
         }
-        minutesHint.setVisible((int) minutes.getValue() == 30);
+        minutesHint.setVisible(!editing && (int) minutes.getValue() == 30);
         Integer s = startTime();
         endLabel.setText(s == null ? "" : Times.endHint(s, (int) minutes.getValue()));
         realTime.setText(s == null ? "" : Times.real(day, s));
