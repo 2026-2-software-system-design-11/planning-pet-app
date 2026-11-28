@@ -163,8 +163,12 @@ abstract class PetPaintWear extends PetPaintBase {
         g.clip(body);
         Rectangle r = new Area(body).getBounds();
         double low = Math.max(top, bottom);
+        // 프로토타입처럼 경로에 담아 칠한다. 네모를 바로 칠하면 크기 7에서 앤티에일리어싱 픽셀이 달라진다(E-CLO-4).
+        Path2D v = new Path2D.Double();
+        v.append(new Rectangle2D.Double(r.x - 10, Math.min(top, bottom) - 10, r.width + 20, Math.abs(bottom - top) + 10),
+                false);
         g.setColor(MINT);
-        g.fill(new Rectangle2D.Double(r.x - 10, Math.min(top, bottom) - 10, r.width + 20, Math.abs(bottom - top) + 10));
+        g.fill(v);
         g.setColor(MINT_SHADE);
         g.fill(new Rectangle2D.Double(r.x - 10, low - 8, r.width + 20, 8));
         stroke(new Line2D.Double(r.x - 10, low, r.x + r.width + 10, low), line * 0.7f, ink);

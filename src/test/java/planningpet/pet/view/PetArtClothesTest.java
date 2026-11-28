@@ -3,6 +3,7 @@ package planningpet.pet.view;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.util.EnumSet;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import planningpet.common.view.Snap;
@@ -12,6 +13,7 @@ import planningpet.pet.model.WearId;
 /** 펫이 입은 옷. 번호는 docs/porting/pet-art.md 7절. 기준 그림은 proto/pet-clo-*.png. */
 class PetArtClothesTest {
     private static final PetKind[] KINDS = {PetKind.CAT, PetKind.DOG};
+    private static final Set<WearId> ALL3 = EnumSet.range(WearId.SCARF, WearId.CAPE);
 
     /** 1배 앉은 펫을 상자 좌표 그대로 선 굵기 6, 움직임 시각 0으로 그린다. 망토 아랫단이 바닥 아래로 내려와 높이를 340으로 둔다. */
     private static BufferedImage oneX(PetKind kind, WearId wear) {
@@ -42,5 +44,14 @@ class PetArtClothesTest {
     @Test
     void eClo1Cape() throws IOException {
         assertOneX("cape", WearId.CAPE);
+    }
+
+    @Test
+    void eClo4Sizes() throws IOException {
+        for (PetKind kind : KINDS) {
+            String n = kind.name().toLowerCase();
+            Snap.assertLooksLikePrototype("pet-clo-sizes-" + n, PetArtSitTest.sizes(kind, ALL3, 0, 1, 7, 48, 140, 320));
+            Snap.assertLooksLikePrototype("pet-clo-neg140-" + n, PetArtWearTest.one(kind, ALL3, 80, 10, -140));
+        }
     }
 }
