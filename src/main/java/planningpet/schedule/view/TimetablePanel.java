@@ -1,5 +1,6 @@
 package planningpet.schedule.view;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -21,6 +22,8 @@ public final class TimetablePanel extends JComponent {
     public static final int GUTTER = 52;
     /** 그리는 시간 수(D-77): 0시부터 다음 날 4시까지. */
     public static final int HOURS = Task.DAY_END / 60;
+    /** 자정 아래 "다음 날" 칸의 바탕(D-77). */
+    private static final Color NIGHT = new Color(0x1B, 0x22, 0x38, 14);
     private final AppData data;
     /** 보이는 주의 첫날(D-91). 일정관리 화면(S5c)이 주를 옮길 때 정한다. */
     LocalDate monday;
@@ -28,6 +31,11 @@ public final class TimetablePanel extends JComponent {
     public TimetablePanel(AppData data) {
         this.data = data;
         setPreferredSize(new Dimension(300, HOUR * HOURS));
+    }
+
+    /** h번째 시각 줄의 글. 자정 아래는 00:00부터 다시 적는다(D-77). */
+    static String hourText(int h) {
+        return String.format("%02d:00", h % 24);
     }
 
     @Override
@@ -42,6 +50,22 @@ public final class TimetablePanel extends JComponent {
             g.setColor(Theme.DAY);
             g.fillRect(GUTTER + today * day, 0, day, getHeight());
         }
+        // D-77: 자정 아래 네 시간은 그날 밤에 이어진 "다음 날" 칸이다. 옅게 칠하고 시각을 00:00부터 다시 적는다.
+        g.setColor(NIGHT);
+        g.fillRect(GUTTER, 24 * HOUR, getWidth() - GUTTER, (HOURS - 24) * HOUR);
+        for (int h = 0; h < HOURS; h++) {
+            g.setColor(Theme.CARD_LINE);
+            g.drawLine(GUTTER, h * HOUR, getWidth(), h * HOUR);
+            g.setColor(Theme.INK_DIM);
+            g.drawString(hourText(h), 6, h * HOUR + 14);
+        }
+        Graphics2D mid = (Graphics2D) g.create();
+        mid.setColor(Theme.INK_SUB);
+        mid.drawLine(GUTTER, 24 * HOUR, getWidth(), 24 * HOUR);
+        mid.setFont(Theme.font(11));
+        mid.drawString("자정", 6, 24 * HOUR - 4);
+        mid.drawString("다음 날", 6, 24 * HOUR + 28);
+        mid.dispose();
         g.dispose();
     }
 }
