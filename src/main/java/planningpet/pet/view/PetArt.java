@@ -32,6 +32,14 @@ public final class PetArt {
         g.dispose();
     }
 
+    /**
+     * 앉은 펫의 그림 높이를 상자 size에 대한 비율로 준다(바닥에서 귀나 머리 끝까지). 고른 카드의 강조선 자리를 잰다.
+     * 프로토타입이 2026-11-24 기본 목걸이를 입혀 그려 잰 값이다. 목걸이는 칠하는 칸을 바꾸지 않는다(docs/porting/pet-art.md E-WEAR-8).
+     */
+    public static double heightRatio(PetKind kind) {
+        return kind == PetKind.CAT ? 0.88 : 0.77;
+    }
+
     /** 펫 칩과 작은 자리에 쓰는 얼굴(머리만). (cx, cy)는 얼굴 가운데, size는 얼굴 폭이다. 작게 그릴수록 선을 굵게 둔다. */
     public static void drawFace(Graphics2D g0, PetKind kind, Set<WearId> wear, double cx, double cy, double size) {
         Graphics2D g = (Graphics2D) g0.create();
