@@ -7,9 +7,11 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.awt.Component;
+import java.awt.DefaultKeyboardFocusManager;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.HeadlessException;
+import java.awt.KeyboardFocusManager;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
@@ -110,5 +112,23 @@ class ComboUITest {
         press(c, 20, 12, MouseEvent.BUTTON1);
         press(c.getComponent(0), 5, 5, MouseEvent.BUTTON1);
         assertFalse(c.isPopupVisible());
+    }
+
+    @Test
+    void eCombo3KeyboardFocus() throws IOException {
+        class Focus extends DefaultKeyboardFocusManager {
+            void own(Component c) {
+                setGlobalFocusOwner(c);
+            }
+        }
+        Focus focus = new Focus();
+        KeyboardFocusManager.setCurrentKeyboardFocusManager(focus);
+        try {
+            JComboBox<String> c = combo("");
+            focus.own(c);
+            looks("combo-focus", c, 120, 24);
+        } finally {
+            KeyboardFocusManager.setCurrentKeyboardFocusManager(null);
+        }
     }
 }

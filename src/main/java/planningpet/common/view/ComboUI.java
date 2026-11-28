@@ -1,5 +1,10 @@
 package planningpet.common.view;
 
+import java.awt.BasicStroke;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Rectangle;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -38,5 +43,27 @@ public final class ComboUI extends BasicComboBoxUI {
         b.setFocusable(false);
         b.setName("ComboBox.arrowButton");
         return b;
+    }
+
+    /** 테두리 안을 흰 바탕으로 칠하고, 키보드 초점이면 그 안쪽에 MINT 선 1을 긋는다. */
+    @Override
+    public void paint(Graphics g, JComponent c) {
+        g.setColor(Theme.CARD_TOP);
+        Insets in = c.getInsets();
+        g.fillRect(in.left, in.top, c.getWidth() - in.left - in.right, c.getHeight() - in.top - in.bottom);
+        super.paint(g, c);
+        if (comboBox.hasFocus()) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setColor(Theme.MINT);
+            g2.setStroke(new BasicStroke(1f));
+            g2.drawRect(in.left, in.top, c.getWidth() - in.left - in.right - 1, c.getHeight() - in.top - in.bottom - 1);
+            g2.dispose();
+        }
+    }
+
+    /** 고른 값에 선택 바탕을 칠하지 않는다. 초점은 paint의 민트 선으로 보인다. */
+    @Override
+    public void paintCurrentValue(Graphics g, Rectangle bounds, boolean hasFocus) {
+        super.paintCurrentValue(g, bounds, false);
     }
 }
