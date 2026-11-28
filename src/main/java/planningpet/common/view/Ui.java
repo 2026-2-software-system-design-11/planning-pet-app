@@ -5,8 +5,13 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextLayout;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.function.ToIntFunction;
 import javax.swing.JComponent;
+import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
@@ -14,6 +19,8 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
+import javax.swing.text.DateFormatter;
+import javax.swing.text.DefaultFormatterFactory;
 import javax.swing.text.Document;
 import javax.swing.text.DocumentFilter;
 import javax.swing.text.JTextComponent;
@@ -110,5 +117,27 @@ public final class Ui {
                 super.setValue(v);
             }
         });
+    }
+
+    /**
+     * 날짜 칸(D-43). 화살표가 커서 자리(처음에는 연도) 대신 늘 하루씩 바꾸도록 DateEditor가 아닌 기본 편집기에 날짜 형식을 붙인다.
+     * SpinnerDateModel의 기본 단위가 하루다. 형식에 맞지 않는 글은 칸을 벗어날 때 이전 값으로 돌아간다(05 일정 입력 창 3번).
+     */
+    public static void dayEditor(JSpinner s, String pattern) {
+        JSpinner.DefaultEditor editor = new JSpinner.DefaultEditor(s);
+        JFormattedTextField field = editor.getTextField();
+        field.setEditable(true);
+        field.setFormatterFactory(new DefaultFormatterFactory(new DateFormatter(new SimpleDateFormat(pattern))));
+        s.setEditor(editor);
+    }
+
+    /** 날짜 칸의 날. 칸 값은 운영체제 시간대의 그날 00:00이다. */
+    public static LocalDate dateOf(JSpinner s) {
+        return ((Date) s.getValue()).toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+    }
+
+    /** 날짜 칸에 날을 넣는다. */
+    public static void setDate(JSpinner s, LocalDate d) {
+        s.setValue(Date.from(d.atStartOfDay(ZoneId.systemDefault()).toInstant()));
     }
 }

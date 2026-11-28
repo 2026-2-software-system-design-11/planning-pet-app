@@ -12,14 +12,18 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
 import java.text.ParseException;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Locale;
 import javax.swing.JButton;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
+import javax.swing.SpinnerDateModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.text.BadLocationException;
 import org.junit.jupiter.api.Test;
@@ -195,8 +199,24 @@ class UiTest {
         assertThrows(NullPointerException.class, () -> Ui.esc(null));
     }
 
+    private static final LocalDate NOV16 = LocalDate.of(2026, 11, 16);
+    private static final String WEEKDAY = "yyyy-MM-dd (E)";
+
+    /** pattern 형식의 날짜 칸에 d를 넣는다. 요일 글은 만들 때의 기본 로캘을 따른다. */
+    private static JSpinner day(String pattern, LocalDate d) {
+        JSpinner s = new JSpinner(new SpinnerDateModel());
+        Ui.dayEditor(s, pattern);
+        Ui.setDate(s, d);
+        return s;
+    }
+
     private static JFormattedTextField editor(JSpinner s) {
         return ((JSpinner.DefaultEditor) s.getEditor()).getTextField();
+    }
+
+    /** 칸의 화살표 동작(increment, decrement). */
+    private static void arrow(JSpinner s, String name) {
+        s.getActionMap().get(name).actionPerformed(new ActionEvent(s, ActionEvent.ACTION_PERFORMED, name));
     }
 
     /** 칸 글을 typed로 바꾸고 넣어 본다. 형식 오류면 값이 그대로다. */
@@ -206,6 +226,17 @@ class UiTest {
             editor(s).commitEdit();
         } catch (ParseException e) {
             // 칸을 벗어날 때 이전 값으로 돌아간다(05 일정 입력 창 3번).
+        }
+    }
+
+    /** 기본 로캘을 locale로 두고 run을 부른 뒤 되돌린다. */
+    private static void inLocale(Locale locale, Runnable run) {
+        Locale before = Locale.getDefault();
+        Locale.setDefault(locale);
+        try {
+            run.run();
+        } finally {
+            Locale.setDefault(before);
         }
     }
 
@@ -248,5 +279,29 @@ class UiTest {
         }
         assertThrows(IllegalArgumentException.class, () -> Ui.minutes(5));
         assertEquals(27, Ui.minutes(27).getValue());
+    }
+
+    @Test
+    void eUi3DayEditor() {
+        inLocale(Locale.US, () -> assertEquals("2026-11-16 (Mon)", editor(day(WEEKDAY, NOV16)).getText()));
+        inLocale(Locale.KOREA, () -> {
+            JSpinner s = day(WEEKDAY, NOV16);
+            assertEquals("2026-11-16 (월)", editor(s).getText());
+            assertEquals(JSpinner.DefaultEditor.class, s.getEditor().getClass());
+            assertTrue(editor(s).isEditable());
+            editor(s).setCaretPosition(0); // 연도 자리
+            arrow(s, "increment");
+            assertEquals(List.of(LocalDate.of(2026, 11, 17), "2026-11-17 (화)"), List.of(Ui.dateOf(s), editor(s).getText()));
+            arrow(s, "decrement");
+            arrow(s, "decrement");
+            assertEquals(LocalDate.of(2026, 11, 15), Ui.dateOf(s));
+            for (String typed : List.of("abc", "2026-11-20", "2026-11-20 (Fri)")) {
+                Ui.setDate(s, NOV16);
+                type(s, typed);
+                assertEquals(NOV16, Ui.dateOf(s), typed);
+            }
+            type(s, "2026-11-20 (월)"); // 친 요일은 읽지 않는다
+            assertEquals(List.of(LocalDate.of(2026, 11, 20), "2026-11-20 (금)"), List.of(Ui.dateOf(s), editor(s).getText()));
+        });
     }
 }
