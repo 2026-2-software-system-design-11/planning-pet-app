@@ -407,4 +407,49 @@ class TaskRowTest {
         }
         assertEquals(List.of(), heard);
     }
+
+    @Test
+    void eDbl1DoubleClick() {
+        JPanel p = row(task(Kind.TASK, "보고서", LocalTime.of(10, 0), 60, false), "10:00~11:00", TODAY, 480);
+        press(p, MouseEvent.MOUSE_CLICKED, 1, 2, false);
+        press(p.getComponent(1), MouseEvent.MOUSE_CLICKED, 1, 2, false);
+        assertEquals(List.of("수정 보고서", "수정 보고서"), heard);
+    }
+
+    @Test
+    void eDbl2CountsAndButtons() {
+        JPanel p = row(task(Kind.TASK, "보고서", LocalTime.of(10, 0), 60, false), "10:00~11:00", TODAY, 480);
+        for (int count : new int[] {0, 1, 3, 4}) {
+            press(p, MouseEvent.MOUSE_CLICKED, 1, count, false);
+        }
+        press(p, MouseEvent.MOUSE_PRESSED, 1, 2, false);
+        press(p, MouseEvent.MOUSE_RELEASED, 1, 2, false);
+        assertEquals(List.of(), heard);
+        press(p, MouseEvent.MOUSE_CLICKED, 3, 2, false);
+        press(p, MouseEvent.MOUSE_CLICKED, 2, 2, false);
+        assertEquals(List.of("수정 보고서", "수정 보고서"), heard);
+    }
+
+    @Test
+    void eDbl3Inner() {
+        JPanel p = row(task(Kind.TASK, "보고서", LocalTime.of(10, 0), 60, false), "10:00~11:00", TODAY, 480);
+        for (Component c : inner(p)) {
+            press(c, MouseEvent.MOUSE_CLICKED, 1, 2, false);
+        }
+        assertEquals(List.of(), heard);
+    }
+
+    @Test
+    void eDbl4Rows() {
+        press(row(task(Kind.TASK, "빨래", LocalTime.of(10, 0), 60, true), "10:00~11:00", TODAY, 480), MouseEvent.MOUSE_CLICKED, 1, 2,
+                false);
+        press(row(period(false), "", TODAY.minusDays(1), 480).getComponent(1), MouseEvent.MOUSE_CLICKED, 1, 2, false);
+        press(row(period(false), "", TODAY.plusDays(2), 480), MouseEvent.MOUSE_CLICKED, 1, 2, false);
+        press(row(task(Kind.FIXED, "수업", LocalTime.of(9, 0), 75, false), "09:00~10:15", TODAY, 480), MouseEvent.MOUSE_CLICKED, 1, 2,
+                false);
+        JPanel off = row(task(Kind.TASK, "보고서", LocalTime.of(10, 0), 60, false), "10:00~11:00", TODAY, 480);
+        off.setEnabled(false);
+        press(off, MouseEvent.MOUSE_CLICKED, 1, 2, false);
+        assertEquals(List.of("수정 빨래", "수정 지원서", "수정 지원서", "수정 수업", "수정 보고서"), heard);
+    }
 }

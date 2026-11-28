@@ -398,7 +398,7 @@ public final class TaskRows extends JPanel implements Scrollable {
         }
         row.setMaximumSize(new Dimension(Integer.MAX_VALUE, marks == null ? 44 : 62));
         // 줄과 제목 칸을 오른쪽 버튼으로 누르면 수정, 삭제 메뉴다(05 홈 "할 일 고치기와 지우기", docs/porting/task-rows.md S3y).
-        // 운영체제마다 누를 때나 뗄 때 팝업 깃발이 서서 둘 다 본다.
+        // 운영체제마다 누를 때나 뗄 때 팝업 깃발이 서서 둘 다 본다. 빨리 두 번 누르면 수정이다.
         MouseAdapter mouse = new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
@@ -410,6 +410,14 @@ public final class TaskRows extends JPanel implements Scrollable {
             @Override
             public void mouseReleased(MouseEvent e) {
                 mousePressed(e);
+            }
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                // D-102: 한 번 누르면 아무 일도 없고 두 번 누르면 수정이다. 설정 "목록 누르기"(C3) 전에는 꺼진 것으로 둔다.
+                if (e.getClickCount() == 2) {
+                    onEdit.accept(t);
+                }
             }
         };
         label.addMouseListener(mouse);
