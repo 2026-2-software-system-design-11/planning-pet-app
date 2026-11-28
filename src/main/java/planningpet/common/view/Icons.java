@@ -18,7 +18,7 @@ import javax.swing.Icon;
  */
 public final class Icons {
     /** 아이콘의 종류. */
-    public enum Kind { HOME, ROOM, CALENDAR, CHART, GEAR, PAW, COIN, CHECK, SPARK, FLAME, LEFT, RIGHT, PENCIL }
+    public enum Kind { HOME, ROOM, CALENDAR, CHART, GEAR, PAW, COIN, CHECK, HEART, SPARK, FLAME, LEFT, RIGHT, PENCIL }
 
     private Icons() {
     }
@@ -116,6 +116,18 @@ public final class Icons {
                 g.setColor(Color.WHITE);
                 g.setStroke(new BasicStroke(2.6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
                 g.draw(path(7, 12.4, 10.6, 16, 17.2, 8.6));
+            }
+            case HEART -> {
+                Path2D h = new Path2D.Double();
+                h.moveTo(12, 21);
+                h.curveTo(4, 15.5, 1.5, 11, 3.2, 7);
+                h.curveTo(4.8, 3.4, 9.8, 2.8, 12, 7.2);
+                h.curveTo(14.2, 2.8, 19.2, 3.4, 20.8, 7);
+                h.curveTo(22.5, 11, 20, 15.5, 12, 21);
+                h.closePath();
+                g.fill(h);
+                g.setColor(new Color(255, 255, 255, 150));
+                g.fill(new Ellipse2D.Double(5.6, 7, 3.4, 2.6));
             }
             case SPARK -> {
                 g.setStroke(new BasicStroke(2.8f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
