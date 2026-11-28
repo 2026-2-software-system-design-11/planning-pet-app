@@ -2,7 +2,11 @@ package planningpet.app.controller;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import planningpet.app.model.AppData;
@@ -11,6 +15,9 @@ import planningpet.app.model.Visits;
 import planningpet.pet.model.Bubble;
 import planningpet.pet.model.PetTalk;
 import planningpet.pet.model.Situation;
+import planningpet.schedule.model.Reminder;
+import planningpet.schedule.model.ReminderKey;
+import planningpet.schedule.model.Reminders;
 
 /** 앱 하나의 controller. 도메인 controller의 변경을 저장과 함께 감싼다(06 22번, 07). */
 public final class AppController {
@@ -23,8 +30,12 @@ public final class AppController {
     /** 메인 달력에서 고른 날(D-106). S3의 달력이 잇는다. */
     private Supplier<LocalDate> homeDay;
     private boolean changing;
-    /** 창이 보이는 중인지. onWindowShown이 true로 둔다. 숨기는 길(onClose)은 S11이다(docs/porting/app-window.md). */
+    /** 창이 보이는 중인지. onWindowShown이 true로, onClose가 false로 둔다. */
     private boolean windowVisible;
+    /** quit가 부르는 끝내기. Main이 넣는다(docs/porting/tray.md). */
+    private Runnable quit = () -> { };
+    /** 이번 실행에서 보낸 일정 시작 알림. 저장하지 않는다(06 17번). */
+    private final Set<ReminderKey> sent = new HashSet<>();
 
     public AppController(AppData data, DataStore store, Consumer<String> errors) {
         this.data = data;
@@ -37,6 +48,7 @@ public final class AppController {
     public Bubble getBubble() { return bubble; }
     public boolean isWindowVisible() { return windowVisible; }
     public void setHomeDay(Supplier<LocalDate> homeDay) { this.homeDay = homeDay; }
+    public void setQuit(Runnable quit) { this.quit = quit; }
 
     /**
      * 06 22번. 복사본을 떠 두고 edit를 적용한 뒤 save를 한 번 부른다. 저장에 실패하면 복사본으로 되돌리고 errors에 창 내용을 넘긴다.
@@ -127,5 +139,31 @@ public final class AppController {
             speak.run();
             data.changed();
         }
+    }
+
+    /**
+     * 06 25번 창 닫기. 트레이가 없으면 끝낸다(D-29). 있으면 창을 숨기고, 처음이면 그 기록을 저장한다. 저장에 실패해도 안내는 띄우고
+     * 다음 닫기에서 다시 안내한다(02 UC-19 1c).
+     */
+    public CloseAction onClose(boolean traySupported) {
+        if (!traySupported) {
+            return CloseAction.QUIT;
+        }
+        windowVisible = false;
+        if (data.isTrayNoticeShown()) {
+            return CloseAction.HIDE;
+        }
+        change("처음 창 닫기 안내", () -> data.setTrayNoticeShown(true));
+        return CloseAction.HIDE_WITH_NOTICE;
+    }
+
+    /** 트레이 메뉴의 끝내기와 macOS Cmd+Q(06 25번). 변경마다 이미 저장했으므로 끝내기만 한다. */
+    public void quit() {
+        quit.run();
+    }
+
+    /** 06 17번. 지금 보낼 일정 시작 알림을 고르고 보낸 것으로 적는다. Tray의 30초 타이머가 부른다(07). */
+    public List<Reminder> dueReminders(LocalDateTime now) {
+        return Reminders.due(data.getBook(), now, sent);
     }
 }
