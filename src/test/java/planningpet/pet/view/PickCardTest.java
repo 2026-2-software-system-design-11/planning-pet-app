@@ -1,0 +1,49 @@
+package planningpet.pet.view;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import org.junit.jupiter.api.Test;
+import planningpet.common.view.Theme;
+import planningpet.pet.model.PetKind;
+
+/**
+ * 반려동물 고르기 창의 동물 카드. 번호는 docs/porting/pick.md 2절. 기준 그림은 종류 이름과 설명이 빈 글인 카드만
+ * 두고(proto/pickcard-*.png), 글이 든 그림은 운영체제마다 픽셀이 달라 테스트에 두지 않는다.
+ */
+class PickCardTest {
+    private static final String CAT_ABOUT = "조용하고 편안한 성격으로\n언제나 곁에서 응원해요!";
+    private static final String DOG_ABOUT = "활발하고 다정한 성격으로\n항상 힘이 되어줘요!";
+
+    private static String described(String about) {
+        return new PickCard("x", PetKind.CAT, false, about).getAccessibleContext().getAccessibleDescription();
+    }
+
+    @Test
+    void eCard1Values() {
+        PickCard cat = new PickCard("고양이", PetKind.CAT, true, CAT_ABOUT);
+        PickCard dog = new PickCard("강아지", PetKind.DOG, false, DOG_ABOUT);
+        assertTrue(cat.isSelected());
+        assertFalse(dog.isSelected());
+        for (PickCard c : new PickCard[] {cat, dog}) {
+            assertFalse(c.isOpaque() || c.isContentAreaFilled() || c.isBorderPainted() || c.isFocusPainted());
+            assertTrue(c.isRolloverEnabled() && c.isFocusable());
+            assertEquals(Theme.heavy(22), c.getFont());
+        }
+        assertEquals("강아지", dog.getAccessibleContext().getAccessibleName());
+        assertEquals("조용하고 편안한 성격으로 언제나 곁에서 응원해요!", cat.getAccessibleContext().getAccessibleDescription());
+        assertEquals("활발하고 다정한 성격으로 항상 힘이 되어줘요!", dog.getAccessibleContext().getAccessibleDescription());
+    }
+
+    @Test
+    void eCard2AboutAndName() {
+        assertEquals("한 줄", described("한 줄"));
+        assertEquals("", described(""));
+        assertEquals("가 나 다", described("가\n나\n다"));
+        assertEquals("가  나 ", described("가\n\n나\n"));
+        assertThrows(NullPointerException.class, () -> new PickCard("x", PetKind.CAT, false, null));
+        assertEquals("", new PickCard(null, PetKind.CAT, false, "").getText());
+    }
+}
