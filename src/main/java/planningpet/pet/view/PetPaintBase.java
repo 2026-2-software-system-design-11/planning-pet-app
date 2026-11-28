@@ -38,6 +38,7 @@ abstract class PetPaintBase {
     static final Color BLUE = new Color(0x6C8EE0);
     static final Color GOLD_SHADE = new Color(0xD99A1E);
     static final Color RED = new Color(0xE8483C);
+    static final Color RED_SHADE = new Color(0xC4332B);
     static final Color STRAW = new Color(0xF4D58A);
     static final Color STRAW_SHADE = new Color(0xD9B160);
     static final Color BERET = new Color(0xE8737A);

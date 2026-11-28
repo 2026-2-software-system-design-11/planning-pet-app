@@ -12,7 +12,7 @@ import java.util.Set;
 import planningpet.pet.model.PetKind;
 import planningpet.pet.model.WearId;
 
-/** PetArt 펫 그림의 장신구(D-51): 목걸이와 그 장식, 머리 장신구(docs/porting/pet-art.md 5절, 6절). 머리와 몸이 이것을 물려받아 입힌다. */
+/** PetArt 펫 그림의 장신구(D-51): 목걸이와 그 장식, 머리 장신구, 옷(docs/porting/pet-art.md 5절, 6절, 7절). 머리와 몸이 이것을 물려받아 입힌다. */
 abstract class PetPaintWear extends PetPaintBase {
     PetPaintWear(Graphics2D g, PetKind kind, Set<WearId> wear, double t) {
         super(g, kind, wear, t);
@@ -30,12 +30,31 @@ abstract class PetPaintWear extends PetPaintBase {
     }
 
     /**
-     * 목 둘레를 목 가운데 (x, y), 목 반폭 w로 그린다. 목걸이는 띠가 아래로 둥글게 걸치고 그 가운데 아래에 장식이 달린다. 기본은 청록
-     * 띠에 금색 방울, 리본은 분홍 띠에 연분홍 리본, 별은 파랑 띠에 금색 별, 왕관은 금색 띠에 금색 왕관이다.
+     * 목 둘레를 목 가운데 (x, y), 목 반폭 w로 그린다. 스카프는 목에 두른 빨간 천이 가슴 가운데로 뾰족하게 내려오고 오른쪽에 매듭과
+     * 끝자락이 있다. 목걸이는 스카프 위에 띠가 아래로 둥글게 걸치고 그 가운데 아래에 장식이 달린다. 기본은 청록 띠에 금색 방울, 리본은
+     * 분홍 띠에 연분홍 리본, 별은 파랑 띠에 금색 별, 왕관은 금색 띠에 금색 왕관이다.
      */
     void neckWear(double x, double y, double w) {
         AffineTransform old = g.getTransform();
         push(x, y, 0);
+        if (has(WearId.SCARF)) {
+            Path2D s = new Path2D.Double();
+            s.moveTo(-w * 0.95, -6);
+            s.quadTo(0, 6, w * 0.95, -6);
+            s.lineTo(w * 0.2, 44);
+            s.quadTo(0, 52, -w * 0.2, 44);
+            s.closePath();
+            filled(s, RED);
+            shadeIn(s, ell(0, -6, w, 8), RED_SHADE);
+            redraw(s);
+            filled(ell(w * 0.85, -6, 11, 9), RED);
+            Path2D end = new Path2D.Double();
+            end.moveTo(w * 0.9, 0);
+            end.lineTo(w * 1.15, 18);
+            end.lineTo(w * 0.7, 10);
+            end.closePath();
+            filled(end, RED);
+        }
         WearId collar = collar();
         if (collar != null) {
             Path2D b = new Path2D.Double();
