@@ -14,11 +14,11 @@ import javax.swing.Icon;
 
 /**
  * 디자인 시스템 9절의 선 아이콘 한 벌. 24 칸 격자에 그리고 크기만큼 늘린다. 선 굵기는 격자 2(크기의 1/12), 끝은 둥글다.
- * 창 틀이 쓰는 것만 옮겼고, 다른 종은 그것을 쓰는 화면의 단위가 더한다(docs/porting/icons.md).
+ * 창 틀과 고르기 창이 쓰는 것만 옮겼고, 다른 종은 그것을 쓰는 화면의 단위가 더한다(docs/porting/icons.md, pick.md).
  */
 public final class Icons {
     /** 아이콘의 종류. */
-    public enum Kind { HOME, ROOM, CALENDAR, CHART, GEAR, PAW, COIN, FLAME }
+    public enum Kind { HOME, ROOM, CALENDAR, CHART, GEAR, PAW, COIN, CHECK, SPARK, FLAME, PENCIL }
 
     private Icons() {
     }
@@ -43,7 +43,7 @@ public final class Icons {
         };
     }
 
-    /** (x, y)에서 size 크기로 그린다. 채우는 아이콘(동전, 발자국)은 color를 바탕색으로 쓴다. */
+    /** (x, y)에서 size 크기로 그린다. 채우는 아이콘(동전, 체크, 발자국)은 color를 바탕색으로 쓴다. */
     public static void draw(Graphics2D graphics, Kind kind, int x, int y, int size, Color color) {
         Graphics2D g = (Graphics2D) graphics.create();
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -94,6 +94,10 @@ public final class Icons {
                 g.draw(new Ellipse2D.Double(9, 9, 6, 6));
             }
             case PAW -> paw(g, 12, 13.5, 1.6);
+            case PENCIL -> {
+                g.draw(path(4, 20, 5, 15.5, 15.5, 5, 19, 8.5, 8.5, 19, 4, 20));
+                g.draw(path(13, 7.5, 16.5, 11));
+            }
             case COIN -> {
                 g.setColor(Theme.COIN_RIM);
                 g.fill(new Ellipse2D.Double(1, 1, 22, 22));
@@ -104,6 +108,18 @@ public final class Icons {
                 g.draw(new Arc2D.Double(5, 4.5, 14, 14, 100, 80, Arc2D.OPEN));
                 g.setColor(Theme.COIN_RIM);
                 paw(g, 12, 12.6, 0.82);
+            }
+            case CHECK -> {
+                g.fill(new Ellipse2D.Double(1, 1, 22, 22));
+                g.setColor(Color.WHITE);
+                g.setStroke(new BasicStroke(2.6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                g.draw(path(7, 12.4, 10.6, 16, 17.2, 8.6));
+            }
+            case SPARK -> {
+                g.setStroke(new BasicStroke(2.8f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                g.draw(path(4, 14, 9, 16));
+                g.draw(path(7.5, 6.5, 11, 10.5));
+                g.draw(path(15, 3.5, 15.5, 8.5));
             }
             case FLAME -> {
                 Path2D f = new Path2D.Double();
