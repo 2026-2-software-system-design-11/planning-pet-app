@@ -206,4 +206,21 @@ class PillTest {
         }
         assertEquals(List.of(18, 8, 55, 45), List.of(x0, y0, x1, y1));
     }
+
+    /** 좁은 칸에서 첫 줄 줄이기. 프로토타입과 일부러 다름(docs/porting/character.md S8e E-PILL-8). */
+    @Test
+    void ePill8ShortenWhenNarrow() {
+        String name = "가나다라마바사아자차";
+        Pill p = new Pill(name, null, 16).small("강아지").picture(new BufferedImage(10, 10, BufferedImage.TYPE_INT_ARGB))
+                .second("Lv. 3");
+        Dimension d = p.getPreferredSize();
+        p.setSize(d);
+        assertEquals(name, p.shown());
+        p.setSize(200, 58);
+        String cut = p.shown();
+        assertTrue(cut.endsWith("…") && name.startsWith(cut.substring(0, cut.length() - 1)), cut);
+        assertTrue(width(16, cut) + 5 + p.getFontMetrics(Theme.font(13)).stringWidth("강아지") <= 200 - 84, cut);
+        p.setSize(148, 58);
+        assertEquals("가…", p.shown());
+    }
 }

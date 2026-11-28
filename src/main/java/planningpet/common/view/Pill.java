@@ -67,19 +67,41 @@ public class Pill extends JToggleButton {
         return small;
     }
 
+    /** 넣은 둘째 줄 글(없으면 null). */
+    public String second() {
+        return second;
+    }
+
     private Font smallFont() {
         return Theme.font(Math.max(10, size - 3));
     }
 
     /** 첫 줄(글자와 작은 글)의 폭. */
     private int firstLine(FontMetrics fm) {
-        int w = fm.stringWidth(getText());
+        return firstLine(fm, getText());
+    }
+
+    private int firstLine(FontMetrics fm, String text) {
+        int w = fm.stringWidth(text);
         return small == null ? w : w + 5 + getFontMetrics(smallFont()).stringWidth(small);
     }
 
     /** 글자 앞 표시(그림이나 아이콘)의 폭. 그림이 아이콘보다 앞선다. */
     private int mark() {
         return picture != null ? size * 2 + 6 : kind != null && showIcon ? size + 4 : 0;
+    }
+
+    /**
+     * 그릴 첫 줄 글자. 알맞은 폭보다 좁아 첫 줄이 들어가지 않으면 글자 끝을 "…"로 줄이고 작은 글은 그대로 둔다(Ui.fit). 프로토타입과
+     * 일부러 다름(칸 밖으로 넘쳐 잘렸다, docs/porting.md 4절 S8e, 05, 06이 정하지 않음, 페르소나 투표 전 잠정).
+     */
+    String shown() {
+        FontMetrics fm = getFontMetrics(getFont());
+        int room = getWidth() - (mark() + (mark() > 0 ? 8 : 0) + size * 2 + 6);
+        if (firstLine(fm) <= room) {
+            return getText();
+        }
+        return Ui.fit(getText(), fm, room - (small == null ? 0 : 5 + getFontMetrics(smallFont()).stringWidth(small)));
     }
 
     public void showIcon(boolean on) {
@@ -126,7 +148,8 @@ public class Pill extends JToggleButton {
             ink = Theme.INK_DIM;
         }
         FontMetrics fm = g.getFontMetrics(getFont());
-        int textW = firstLine(fm);
+        String text = shown();
+        int textW = firstLine(fm, text);
         if (second != null) {
             textW = Math.max(textW, g.getFontMetrics(Theme.bold(size - 1)).stringWidth(second));
         }
@@ -143,11 +166,11 @@ public class Pill extends JToggleButton {
         g.setColor(ink);
         g.setFont(getFont());
         int base = second == null ? (h + fm.getAscent() - fm.getDescent()) / 2 : h / 2 - 2;
-        g.drawString(getText(), tx, base);
+        g.drawString(text, tx, base);
         if (small != null) {
             g.setFont(smallFont());
             g.setColor(!isEnabled() ? Theme.INK_DIM : on ? new Color(255, 255, 255, 215) : Theme.INK_SUB);
-            g.drawString(small, tx + fm.stringWidth(getText()) + 5, base);
+            g.drawString(small, tx + fm.stringWidth(text) + 5, base);
             g.setColor(ink);
         }
         if (second != null) {
