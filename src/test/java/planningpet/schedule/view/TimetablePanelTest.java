@@ -2,6 +2,7 @@ package planningpet.schedule.view;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static planningpet.schedule.model.Tasks.d;
 import static planningpet.schedule.model.Tasks.task;
@@ -10,6 +11,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -190,5 +192,55 @@ class TimetablePanelTest {
         show(192, at("A", "09:00", 60).task(), at("B", "09:30", 60).task());
         assertEquals(List.of(new Rectangle(97, 400, 4, 12), new Rectangle(107, 422, 4, 12)),
                 List.copyOf(panel.boxAreas().keySet()));
+    }
+
+    private static final String DIV = "<html><div style='width:280px'>";
+    private static final String END = "</div></html>";
+
+    /** 시간표 자리 (x, y)에 마우스를 올렸을 때의 툴팁. */
+    private String tipAt(int x, int y) {
+        return panel.getToolTipText(new MouseEvent(panel, MouseEvent.MOUSE_MOVED, 0, 0, x, y, 0, false));
+    }
+
+    @Test
+    void eTbl8Narrow() {
+        Task t = at("운동", "18:00", 60).task();
+        int fit = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB).createGraphics().getFontMetrics().stringWidth("운동") + 24;
+        show(52 + 7 * fit, t);
+        assertNull(panel.tip(t));
+        show(52 + 7 * (fit - 1), t);
+        assertEquals(DIV + "<b>운동</b> 18:00~19:00" + END, panel.tip(t));
+        Task a = at("A", "09:00", 60).task();
+        show(a, at("B", "09:30", 60).task());
+        assertEquals(DIV + "<b>A</b> 09:00~10:00" + END, panel.tip(a));
+    }
+
+    @Test
+    void tTt7Tips() {
+        Task a = at("자소서 초안", "14:00", 60).task();
+        Task b = at("면접 준비", "14:30", 60).memo("질문 목록").task();
+        Task c = at("운동", "18:00", 60).task();
+        show(a, b, c);
+        assertEquals(List.of(DIV + "<b>자소서 초안</b> 14:00~15:00" + END, DIV + "<b>면접 준비</b> 14:30~15:30<br>질문 목록" + END),
+                List.of(tipAt(260, 620), tipAt(330, 670)));
+        assertNull(tipAt(300, 800));
+    }
+
+    @Test
+    void eTbl9Tips() {
+        Task memo = at("A", "09:00", 60).memo("메모").task();
+        show(memo, task("B", d(19)).at("09:00").task());
+        assertEquals(TaskRows.memoTip(memo), tipAt(300, 420));
+        assertNull(tipAt(400, 420));
+        assertNull(tipAt(30, 420));
+        assertNull(tipAt(300, 500));
+        String e = "\uD83D\uDE00";
+        String[][] memos = {{"<a>\n줄", "&lt;a&gt;<br>줄"}, {"가".repeat(201), "가".repeat(200) + "…"},
+            {"가".repeat(199) + e + "나", "가".repeat(199) + e.charAt(0) + "…"}};
+        for (String[] m : memos) {
+            Task t = at("C", "09:00", 60).memo(m[0]).task();
+            show(t, at("D", "09:30", 60).task());
+            assertEquals(DIV + "<b>C</b> 09:00~10:00<br>" + m[1] + END, tipAt(260, 420));
+        }
     }
 }

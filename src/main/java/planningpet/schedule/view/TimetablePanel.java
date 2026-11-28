@@ -6,14 +6,18 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
+import java.awt.event.MouseEvent;
 import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.swing.JComponent;
 import planningpet.app.model.AppData;
 import planningpet.common.view.Theme;
+import planningpet.common.view.Ui;
 import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Slot;
 import planningpet.schedule.model.Task;
@@ -38,10 +42,13 @@ public final class TimetablePanel extends JComponent {
     /** 마지막으로 그린 블록과 체크 칸의 자리. 누르기와 툴팁이 쓴다. */
     private final Map<Rectangle, Task> blocks = new LinkedHashMap<>();
     private final Map<Rectangle, Task> boxes = new LinkedHashMap<>();
+    /** 열을 나눴거나 제목이 잘린 블록(D-87). 마지막으로 그린 모양이다. */
+    private final Set<Task> narrow = new HashSet<>();
 
     public TimetablePanel(AppData data) {
         this.data = data;
         setPreferredSize(new Dimension(300, HOUR * HOURS));
+        setToolTipText("");
     }
 
     /** h번째 시각 줄의 글. 자정 아래는 00:00부터 다시 적는다(D-77). */
@@ -57,6 +64,36 @@ public final class TimetablePanel extends JComponent {
     /** 마지막으로 그린 체크 칸의 자리와 일정. 그린 차례다. */
     Map<Rectangle, Task> boxAreas() {
         return boxes;
+    }
+
+    /** 자리 e의 블록. 겹치면 나중에 그린(위에 있는) 것이다. 없으면 null. */
+    private Task at(MouseEvent e) {
+        Task hit = null;
+        for (Map.Entry<Rectangle, Task> b : blocks.entrySet()) {
+            if (b.getKey().contains(e.getPoint())) {
+                hit = b.getValue();
+            }
+        }
+        return hit;
+    }
+
+    /** 메모가 있는 블록에 마우스를 올리면 메모를 보인다(D-33). 좁은 블록은 전체 제목과 시각을 먼저 보인다(D-87). */
+    @Override
+    public String getToolTipText(MouseEvent e) {
+        Task t = at(e);
+        return t == null ? null : tip(t);
+    }
+
+    /** 블록의 툴팁. 마지막으로 그린 모양을 따른다. 좁지 않으면 목록 줄과 같은 메모 툴팁이다. */
+    String tip(Task t) {
+        String memo = TaskRows.memoTip(t);
+        if (!narrow.contains(t)) {
+            return memo;
+        }
+        String head = "<b>" + Ui.esc(t.getTitle()) + "</b> " + data.getBook().timeText(t);
+        String m = t.getMemo();
+        String body = m.isBlank() ? "" : "<br>" + Ui.esc(m.length() > 200 ? m.substring(0, 200) + "…" : m).replace("\n", "<br>");
+        return "<html><div style='width:280px'>" + head + body + "</div></html>";
     }
 
     /** 07 seq-uc10: 그날 시간표에 놓이는 일정(끝낸 일 포함). 일정 목록의 차례라 뒤의 일이 위에 그려진다. */
@@ -102,6 +139,7 @@ public final class TimetablePanel extends JComponent {
         mid.dispose();
         blocks.clear();
         boxes.clear();
+        narrow.clear();
         for (int i = 0; i < 7; i++) {
             List<Task> tasks = timedOn(monday.plusDays(i));
             Map<Task, Slot> slots = new HashMap<>();
@@ -109,14 +147,14 @@ public final class TimetablePanel extends JComponent {
             for (Task t : tasks) {
                 Rectangle r = blockRect(GUTTER + i * day, t, slots.get(t), day);
                 blocks.put(r, t);
-                block(g, r, t);
+                block(g, r, t, slots.get(t));
             }
         }
         g.dispose();
     }
 
-    /** 블록 하나: 바탕과 테두리(D-44), 체크 칸(D-35), 제목과 끝낸 일의 취소선. */
-    private void block(Graphics2D g, Rectangle r, Task t) {
+    /** 블록 하나: 바탕과 테두리(D-44), 체크 칸(D-35), 제목과 끝낸 일의 취소선. 좁은 블록을 적는다(D-87). */
+    private void block(Graphics2D g, Rectangle r, Task t, Slot s) {
         boolean plain = t.isDone() || t.getKind() == Kind.FIXED;
         g.setColor(t.isDone() ? Theme.DAY : plain ? Theme.TRACK : Theme.MINT_SOFT);
         g.fillRoundRect(r.x, r.y, r.width, r.height, 10, 10);
@@ -137,6 +175,9 @@ public final class TimetablePanel extends JComponent {
         }
         text.setColor(t.isDone() ? Theme.INK_DIM : Theme.INK);
         int tx = r.x + 20;
+        if (s.columns() > 1 || text.getFontMetrics().stringWidth(t.getTitle()) > r.x + r.width - tx - 2) {
+            narrow.add(t);
+        }
         text.drawString(t.getTitle(), tx, r.y + 14);
         if (t.isDone()) {
             text.drawLine(tx, r.y + 10, tx + text.getFontMetrics().stringWidth(t.getTitle()), r.y + 10);
