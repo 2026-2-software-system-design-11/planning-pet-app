@@ -320,4 +320,70 @@ class CalendarPanelTest {
         assertFalse(c.today.isEnabled());
         assertEquals("오늘을 보고 있어요", c.today.getToolTipText());
     }
+
+    private static LocalDate d(int month, int day) {
+        return LocalDate.of(2026, month, day);
+    }
+
+    private static void press(Component c) {
+        for (MouseListener l : c.getMouseListeners()) {
+            l.mouseClicked(new MouseEvent(c, MouseEvent.MOUSE_CLICKED, 0, 0, 5, 5, 1, false));
+        }
+    }
+
+    /** S3h 2절의 일정(16일 "오늘", 18일 "가", "나")으로 패널을 만들고 18일 칸을 누른다. 다시 그리기는 알림 대신 refresh다. */
+    private CalendarPanel picked18() {
+        task(Kind.TASK, "오늘", 16, null, 0, 0, 0);
+        task(Kind.TASK, "가", 18, null, 0, 0, 0);
+        task(Kind.TASK, "나", 18, null, 0, 0, 0);
+        CalendarPanel c = panel("2026-11-16T10:00", DayOfWeek.MONDAY);
+        press(cell(c, 18));
+        c.refresh();
+        return c;
+    }
+
+    @Test
+    void eSel1PressPicksTheDay() {
+        CalendarPanel c = picked18();
+        assertEquals(d(11, 18), c.selected());
+        assertEquals("<html><center><b>18</b><br><font size='2' color='#28977F'>2개</font></center></html>", cell(c, 18).getText());
+        assertEquals("<html><center>16<br><font size='2' color='#28977F'>1개</font></center></html>", cell(c, 16).getText());
+        assertTrue(c.today.isEnabled());
+        assertNull(c.today.getToolTipText());
+        press(cell(c, 18));
+        assertEquals(List.of(d(11, 18), d(11, 18)), picks);
+    }
+
+    @Test
+    void eSel2PressToday() {
+        CalendarPanel c = picked18();
+        press(cell(c, 16));
+        c.refresh();
+        assertEquals(d(11, 16), c.selected());
+        assertFalse(c.today.isEnabled());
+        assertEquals("오늘을 보고 있어요", c.today.getToolTipText());
+        assertEquals(List.of(d(11, 18), d(11, 16)), picks);
+    }
+
+    @Test
+    void eSel3PressInOtherMonth() {
+        CalendarPanel c = picked18();
+        c.next.doClick();
+        assertEquals(List.of(d(11, 18)), picks);
+        press(cell(c, 5));
+        c.refresh();
+        assertEquals("2026년 12월 2026-12-05", c.title.getText() + " " + c.selected());
+        assertEquals("<html><center><b>5</b></center></html>", cell(c, 5).getText());
+        assertEquals(List.of(d(11, 18), d(12, 5)), picks);
+    }
+
+    @Test
+    void eSel5EmptySlotDoesNothing() {
+        CalendarPanel c = panel("2026-11-16T10:00", DayOfWeek.MONDAY);
+        Component empty = c.grid.getComponent(0);
+        press(empty);
+        assertEquals(0, empty.getMouseListeners().length);
+        assertEquals(d(11, 16), c.selected());
+        assertEquals(List.of(), picks);
+    }
 }
