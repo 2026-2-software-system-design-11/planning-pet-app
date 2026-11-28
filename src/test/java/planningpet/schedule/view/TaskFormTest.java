@@ -2,6 +2,7 @@ package planningpet.schedule.view;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static planningpet.schedule.model.Tasks.d;
 
@@ -24,13 +25,14 @@ import javax.swing.JToggleButton;
 import javax.swing.text.JTextComponent;
 import org.junit.jupiter.api.Test;
 import planningpet.common.view.Theme;
+import planningpet.common.view.Ui;
 import planningpet.schedule.model.Category;
 import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Repeat;
 import planningpet.schedule.model.TaskDraft;
 import planningpet.schedule.model.Tasks;
 
-/** 일정 입력 창의 칸과 추가 창의 처음 값. 번호는 docs/porting/task-dialog.md S4f 2절. */
+/** 일정 입력 창의 칸, 추가 창의 처음 값, 칸끼리 켜고 끄기. 번호는 docs/porting/task-dialog.md S4f, S4g 2절. */
 class TaskFormTest {
     private static final LocalDateTime NOW = LocalDateTime.of(2026, 11, 18, 10, 7);
     private static final String SMILE = new String(Character.toChars(0x1F600));
@@ -71,10 +73,10 @@ class TaskFormTest {
     void eForm1LinesInPrototypeOrder() {
         TaskForm f = form(d(20));
         assertEquals(List.of("종류 = 할 일 고정 일정", "제목 = JTextField", " = ''!", "유형 = JComboBox", "날짜 = JSpinner",
-                "기간 = 기간 안에 하기 '반복 일정은 기간을 정할 수 없어요' '마감일' JSpinner", " = ''!",
+                "기간 = 기간 안에 하기 '반복 일정은 기간을 정할 수 없어요'! '마감일'! JSpinner!", " = ''!",
                 "시작 시각 = 정하기 JSpinner ''", " = ''!", "걸리는 시간 (분) = JSpinner ''", " = ''!", " = '안 바꾸면 30분으로 들어가요'",
                 "반복 = JComboBox 월 화 수 목 금 토 일", " = '반복 끝나는 날' JSpinner", " = ''!",
-                " = '기간 안에 하는 할 일은 반복할 수 없어요'", "메모 = JScrollPane", " = ''!"), lines(f));
+                " = '기간 안에 하는 할 일은 반복할 수 없어요'!", "메모 = JScrollPane", " = ''!"), lines(f));
         assertEquals(List.of("제목", "마감", "시작 시각", "걸리는 시간", "메모", "반복"), List.copyOf(f.errors.keySet()));
         assertEquals(Theme.SUNDAY, f.errors.get("메모").getForeground());
         assertEquals("날짜", f.dateLabel.getText());
@@ -198,5 +200,107 @@ class TaskFormTest {
                 List.of(q.draft().repeat(), q.draft().startTime() + " " + q.draft().nextDay()));
         q.timed.setSelected(true);
         assertEquals(List.of(LocalTime.MIDNIGHT, true), List.of(q.draft().startTime(), q.draft().nextDay()));
+    }
+
+    @Test
+    void eForm4SundayStartDaysPickTheirDay() {
+        TaskForm f = new TaskForm(d(16), NOW, DayOfWeek.SUNDAY);
+        f.repeat.setSelectedIndex(2);
+        Container line = f.days[0].getParent();
+        assertEquals("JComboBox 일 월 화 수 목 금 토", name(line));
+        for (int k = 1; k < line.getComponentCount(); k++) {
+            JToggleButton b = (JToggleButton) line.getComponent(k);
+            assertTrue(b.isEnabled());
+            if (b.isSelected() != (b.getText().equals("화") || b.getText().equals("일"))) {
+                b.doClick();
+            }
+        }
+        assertEquals(Repeat.weekly(DayOfWeek.TUESDAY, DayOfWeek.SUNDAY), f.draft().repeat());
+    }
+
+    @Test
+    void eForm6FixedKeepsTimeOnAndPeriodOff() {
+        TaskForm f = form(d(20));
+        assertTrue(f.task.isEnabled() && f.fixed.isEnabled());
+        f.period.doClick();
+        f.fixed.doClick();
+        assertEquals(List.of(true, false, true, false, false, "기간은 할 일만 정할 수 있어요", "날짜", false),
+                List.of(f.timed.isSelected(), f.timed.isEnabled(), f.start.isEnabled(), f.period.isSelected(),
+                        f.period.isEnabled(), f.period.getToolTipText(), f.dateLabel.getText(), f.due.isVisible()));
+        f.repeat.setSelectedIndex(1);
+        assertEquals(List.of(false, "기간은 할 일만 정할 수 있어요"), List.of(f.periodHint.isVisible(), f.period.getToolTipText()));
+        f.repeat.setSelectedIndex(0);
+        f.task.doClick();
+        assertEquals(List.of(true, true, true, true), List.of(f.task.isEnabled(), f.fixed.isEnabled(), f.timed.isEnabled(),
+                f.period.isEnabled()));
+        assertNull(f.period.getToolTipText());
+    }
+
+    @Test
+    void eForm7RepeatTurnsPeriodOff() {
+        TaskForm f = form(d(20));
+        assertEquals(List.of(false, false, true), List.of(f.repeatEnd.isEnabled(), f.days[0].isEnabled(), f.period.isEnabled()));
+        f.repeat.setSelectedIndex(1);
+        assertEquals(List.of(true, false, false, false, true), List.of(f.repeatEnd.isEnabled(), f.days[0].isEnabled(),
+                f.period.isSelected(), f.period.isEnabled(), f.periodHint.isVisible()));
+        f.repeat.setSelectedIndex(2);
+        assertTrue(List.of(f.days).stream().allMatch(JToggleButton::isEnabled));
+        f.repeat.setSelectedIndex(0);
+        assertEquals(List.of(false, false, true, false), List.of(f.repeatEnd.isEnabled(), f.days[6].isEnabled(),
+                f.period.isEnabled(), f.periodHint.isVisible()));
+        f.period.doClick();
+        assertEquals(List.of(false, true), List.of(f.repeat.isEnabled(), f.repeatHint.isVisible()));
+        f.period.doClick();
+        assertEquals(List.of(true, false), List.of(f.repeat.isEnabled(), f.repeatHint.isVisible()));
+    }
+
+    @Test
+    void tAdd8PeriodTurnsTimeOff() {
+        TaskForm f = form(d(18));
+        f.timed.doClick();
+        f.start.setValue("10:00");
+        f.period.doClick();
+        Ui.setDate(f.due, d(22));
+        assertEquals(List.of(false, false, false, "기간 할 일의 시각은 목록에서 정해요"), List.of(f.timed.isSelected(),
+                f.timed.isEnabled(), f.start.isEnabled(), f.timed.getToolTipText()));
+        TaskDraft x = f.draft();
+        assertNull(x.startTime());
+        assertEquals(d(22), x.dueDate());
+    }
+
+    @Test
+    void eForm8ThirtyMinuteHintOnlyAtThirty() {
+        TaskForm f = form(d(20));
+        assertEquals(List.of(true, ""), List.of(f.minutesHint.isVisible(), f.endLabel.getText()));
+        f.minutes.setValue(45);
+        assertFalse(f.minutesHint.isVisible());
+        f.minutes.setValue(30);
+        assertTrue(f.minutesHint.isVisible());
+    }
+
+    @Test
+    void tDef13NamesFollowPeriodAndRepeat() {
+        TaskForm f = form(d(16));
+        f.period.doClick();
+        assertEquals(List.of("시작일", "마감일", true), List.of(f.dateLabel.getText(), f.dueLabel.getText(), f.due.isVisible()));
+        f.period.doClick();
+        f.repeat.setSelectedIndex(1);
+        f.timed.doClick();
+        f.start.setValue("10:00");
+        f.minutes.setValue(45);
+        JLabel endName = (JLabel) f.repeatEnd.getParent().getComponent(0);
+        assertEquals(List.of("날짜", true, "반복 끝나는 날", "10:45에 끝나요", ""), List.of(f.dateLabel.getText(),
+                f.periodHint.isVisible(), endName.getText(), f.endLabel.getText(), f.realTime.getText()));
+    }
+
+    @Test
+    void tDef14NightStartShowsRealDay() {
+        TaskForm f = new TaskForm(d(20), LocalDateTime.of(2026, 11, 21, 1, 28), DayOfWeek.MONDAY);
+        f.timed.doClick();
+        assertEquals(List.of("2026-11-20 (금)", "01:30(다음 날)", "(토 01:30)", "02:00(다음 날)에 끝나요"),
+                List.of(text(f.date), f.start.getValue(), f.realTime.getText(), f.endLabel.getText()));
+        f.start.setValue("02:00(다음 날)");
+        Ui.setDate(f.date, d(21));
+        assertEquals(List.of("(일 02:00)", "02:30(다음 날)에 끝나요"), List.of(f.realTime.getText(), f.endLabel.getText()));
     }
 }
