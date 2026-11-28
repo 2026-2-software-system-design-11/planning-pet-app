@@ -14,6 +14,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,17 +28,29 @@ import planningpet.common.view.Theme;
 import planningpet.pet.model.PetKind;
 import planningpet.pet.model.Pose;
 import planningpet.pet.model.PetState;
+import planningpet.schedule.model.Category;
+import planningpet.schedule.model.Kind;
+import planningpet.schedule.model.Task;
 
-/** 홈 펫 카드. 번호는 docs/porting/home.md S3m, S3n 2절. 기준 그림은 proto/petcard-*.png이고 글 띠를 덮었다. */
+/** 홈 펫 카드. 번호는 docs/porting/home.md S3m, S3n, S3o 2절. 기준 그림은 proto/petcard-*.png이고 글 띠를 덮었다. */
 class PetCardTest {
     /** 2026-11-20 10:00의 앱 데이터에 기본 목걸이를 입은 펫 하나(고양이 나비, 강아지 바둑이)를 두고 고른다. */
-    static AppData data(PetKind kind, int exp) {
-        AppData data = new AppData(Clock.fixed(Instant.parse("2026-11-20T01:00:00Z"), ZoneId.of("Asia/Seoul")));
+    static AppData data(PetKind kind, int exp, Task... tasks) {
+        AppData data = new AppData(Clock.fixed(Instant.parse("2026-11-20T01:00:00Z"), ZoneId.of("Asia/Seoul")), List.of(tasks),
+                List.of());
         PetState p = new PetState(kind, kind == PetKind.CAT ? "나비" : "바둑이");
         p.setExp(exp);
         data.addPet(p);
         data.setActiveKind(kind);
         return data;
+    }
+
+    /** 시각 없는 할 일. due가 0보다 크면 11월 day부터 due까지의 기간 할 일이다. 끝냈으면 11/20에 끝냈다. */
+    static Task task(String title, int day, int due, boolean done) {
+        LocalDate d = LocalDate.of(2026, 11, day);
+        LocalDate end = due > 0 ? LocalDate.of(2026, 11, due) : null;
+        return new Task(title, 1, Kind.TASK, title, d, null, 30, "", false, Category.OTHER, null, null, end, end == null ? null : d,
+                done, done ? LocalDate.of(2026, 11, 20) : null, 0, 0, null, null);
     }
 
     /** w x h 카드를 그리고 이름 줄과 경험치 줄의 글 띠를 자홍색으로 덮어 기준 그림과 견준다(S3n). */
@@ -53,6 +66,7 @@ class PetCardTest {
         g.setColor(new Color(0xFF00FF));
         g.fillRect(x + 19, r0 - 4, iw - 17, 37);
         g.fillRect(x - 1, r0 + 30, iw + 3, 37);
+        g.fillRect(x + 6, r0 + 77, iw - 12, 24);
         g.dispose();
         Snap.assertLooksLikePrototype("petcard-" + name, img);
     }
@@ -141,7 +155,7 @@ class PetCardTest {
         } finally {
             RepaintManager.setCurrentManager(before);
         }
-        assertEquals(List.of(c.expBar, c), asked);
+        assertEquals(List.of(c.expBar, c.doneBar, c), asked);
         assertCovered("size-360x240", c, 360, 240);
     }
 
@@ -214,6 +228,40 @@ class PetCardTest {
         PetCard c = new PetCard(data(PetKind.CAT, 0));
         for (int[] s : new int[][] {{360, 280}, {360, 340}, {360, 600}, {1600, 300}, {300, 100}, {120, 60}, {0, 0}}) {
             assertCovered("col-tall-" + s[0] + "x" + s[1], c, s[0], s[1]);
+        }
+    }
+
+    /** 칸 막대는 작은 카드 + 34에 열 폭 - 24다. 자리는 글꼴에 달리지 않아 덮지 않는다(S3o E-PTODAY-1). */
+    @Test
+    void ePtoday1MiniCard() {
+        PetCard c = new PetCard(data(PetKind.CAT, 0));
+        assertEquals("오늘 끝낸 일 0 / 0", c.doneText());
+        int[][] cases = {{360, 240, 164, 121, 168}, {300, 210, 140, 121, 132}, {800, 500, 282, 201, 490}, {120, 60, 140, 121, 20}};
+        for (int[] k : cases) {
+            Snap.layOut(c, k[0], k[1]);
+            assertEquals(new Rectangle(k[2], k[3], k[4], 8), c.doneBar.getBounds());
+        }
+        assertEquals(List.of(0.0, 0), List.of(c.doneBar.ratio(), c.doneBar.segments()));
+    }
+
+    @Test
+    void ePtoday2DoneCounts() throws IOException {
+        int[][] counts = {{1, 4}, {0, 1}, {4, 4}, {3, 10}, {3, 11}, {12, 12}};
+        int[] segments = {4, 1, 4, 10, 0, 0};
+        for (int i = 0; i < counts.length; i++) {
+            Task[] tasks = new Task[counts[i][1]];
+            for (int j = 0; j < tasks.length; j++) {
+                tasks[j] = task("일" + j, 20, 0, j < counts[i][0]);
+            }
+            PetCard c = new PetCard(data(PetKind.CAT, 0, tasks));
+            assertEquals("오늘 끝낸 일 " + counts[i][0] + " / " + counts[i][1], c.doneText());
+            assertEquals(counts[i][0] / (double) counts[i][1], c.doneBar.ratio(), 1e-9);
+            assertEquals(segments[i], c.doneBar.segments());
+            for (String size : new String[] {"360x240", "300x210"}) {
+                String[] wh = size.split("x");
+                assertCovered("today-" + counts[i][0] + "of" + counts[i][1] + "-" + size, c, Integer.parseInt(wh[0]),
+                        Integer.parseInt(wh[1]));
+            }
         }
     }
 }
