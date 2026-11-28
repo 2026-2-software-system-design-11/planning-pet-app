@@ -43,7 +43,7 @@ class PetArtSitTest {
             BufferedImage paw = new BufferedImage(80, 60, BufferedImage.TYPE_INT_ARGB);
             p = part(paw, kind);
             p.g.translate(40, 40);
-            p.paw(0, 0);
+            p.paw(0, 0, 0);
             p.g.dispose();
             Snap.assertLooksLikePrototype("pet-sit-paw-" + name(kind), paw);
             BufferedImage whole = new BufferedImage(320, 320, BufferedImage.TYPE_INT_ARGB);
