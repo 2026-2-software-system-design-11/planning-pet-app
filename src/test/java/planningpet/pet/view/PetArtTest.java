@@ -12,15 +12,16 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import org.junit.jupiter.api.Test;
 import planningpet.common.view.Snap;
+import planningpet.pet.model.PetKind;
 
-/** 펫 얼굴과 로고. 번호는 docs/porting/pet-art.md 2절. 기준 그림은 proto/pet-*.png. */
+/** 펫 얼굴과 로고. 번호는 docs/porting/pet-art.md 2절과 3.2절. 기준 그림은 proto/pet-*.png. */
 class PetArtTest {
     /** 부품은 240x200 그림의 (120, 110)에 1배로, 선 굵기 line으로 그린다. 기준 그림과 같은 배치다. */
-    private static PetPaintHead part(BufferedImage img, float line) {
+    private static PetPaintHead part(BufferedImage img, PetKind kind, float line) {
         Graphics2D g = img.createGraphics();
         PetPaintBase.hints(g);
         g.translate(120, 110);
-        PetPaintHead p = new PetPaintHead(g);
+        PetPaintHead p = new PetPaintHead(g, kind);
         p.line = line;
         return p;
     }
@@ -124,7 +125,7 @@ class PetArtTest {
     @Test
     void eFace6Ears() throws IOException {
         BufferedImage img = new BufferedImage(240, 200, BufferedImage.TYPE_INT_ARGB);
-        PetPaintHead p = part(img, 6f);
+        PetPaintHead p = part(img, PetKind.CAT, 6f);
         p.ear(-1);
         p.ear(1);
         p.g.dispose();
@@ -135,7 +136,7 @@ class PetArtTest {
     void eFace6FaceParts() throws IOException {
         for (float line : new float[] {6f, 9f}) {
             BufferedImage img = new BufferedImage(240, 200, BufferedImage.TYPE_INT_ARGB);
-            PetPaintHead p = part(img, line);
+            PetPaintHead p = part(img, PetKind.CAT, line);
             p.faceParts();
             p.g.dispose();
             Snap.assertLooksLikePrototype("pet-face-parts-" + (int) line, img);
@@ -148,8 +149,18 @@ class PetArtTest {
         Graphics2D g = img.createGraphics();
         PetPaintBase.hints(g);
         g.translate(130, 120);
-        new PetPaintHead(g).head();
+        new PetPaintHead(g, PetKind.CAT).head();
         g.dispose();
         Snap.assertLooksLikePrototype("pet-head", img);
+    }
+
+    @Test
+    void eDog4Ears() throws IOException {
+        BufferedImage img = new BufferedImage(240, 240, BufferedImage.TYPE_INT_ARGB);
+        PetPaintHead p = part(img, PetKind.DOG, 6f);
+        p.dogEar(-1);
+        p.dogEar(1);
+        p.g.dispose();
+        Snap.assertLooksLikePrototype("pet-dog-ears", img);
     }
 }

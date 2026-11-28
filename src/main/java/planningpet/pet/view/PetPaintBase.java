@@ -6,6 +6,7 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
+import planningpet.pet.model.PetKind;
 
 /** PetArt 펫 그림의 바탕: 색, 한 번 그리는 데 필요한 값, 그리기 도구. 머리는 PetPaintHead가 더한다(docs/porting/pet-art.md). */
 abstract class PetPaintBase {
@@ -15,17 +16,27 @@ abstract class PetPaintBase {
     static final Color CAT_WHITE = new Color(0xFFFEFC);
     static final Color CAT_WHITE_SHADE = new Color(0xE8E3E3);
     static final Color CAT_EAR = new Color(0xF6B8B4);
+    static final Color DOG_INK = new Color(0x5A3424);
+    static final Color DOG_FUR = new Color(0xFEF1CF);
+    static final Color DOG_FUR_SHADE = new Color(0xF6D7A2);
+    static final Color DOG_EAR = new Color(0xF8C67E);
+    static final Color DOG_EAR_SHADE = new Color(0xEBA66A);
     static final Color BLUSH = new Color(247, 160, 165, 150);
     static final Color NOSE = new Color(0x4A2E28);
     /** 큰 그림의 선 굵기. 작게 그릴 때는 부르는 쪽이 line을 굵게 바꾼다. */
     static final float LINE = 6f;
 
     final Graphics2D g;
-    final Color ink = CAT_INK;
+    final boolean cat;
+    final Color ink;
+    final Color fur;
     float line = LINE;
 
-    PetPaintBase(Graphics2D g) {
+    PetPaintBase(Graphics2D g, PetKind kind) {
         this.g = g;
+        this.cat = kind == PetKind.CAT;
+        this.ink = cat ? CAT_INK : DOG_INK;
+        this.fur = cat ? CAT_WHITE : DOG_FUR;
     }
 
     static void hints(Graphics2D g) {
@@ -54,6 +65,12 @@ abstract class PetPaintBase {
         g.setColor(c);
         g.setStroke(stroke(w));
         g.draw(s);
+    }
+
+    /** (x, y)로 옮기고 rot도 돌린다. */
+    void push(double x, double y, double rot) {
+        g.translate(x, y);
+        g.rotate(Math.toRadians(rot));
     }
 
     /** s 안쪽에만 shade를 칠한다(그림자 한 단). */

@@ -1,6 +1,7 @@
 package planningpet.pet.view;
 
 import java.awt.Graphics2D;
+import planningpet.pet.model.PetKind;
 
 /**
  * 펫 그림(D-48, D-50). 그림 파일이 아니라 도형 부품으로 그려 크게 그려도 흐려지지 않는다. 생김새는 나의 방 예시(2026-11-23)의
@@ -18,7 +19,7 @@ public final class PetArt {
         g.translate(cx, cy);
         double k = size / 230.0;
         g.scale(k, k);
-        PetPaintHead p = new PetPaintHead(g);
+        PetPaintHead p = new PetPaintHead(g, PetKind.CAT);
         p.line = size < 48 ? 9f : size < 90 ? 7.5f : PetPaintBase.LINE;
         p.head();
         g.dispose();

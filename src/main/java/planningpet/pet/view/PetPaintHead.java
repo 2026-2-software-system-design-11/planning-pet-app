@@ -8,11 +8,12 @@ import java.awt.geom.Area;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.QuadCurve2D;
+import planningpet.pet.model.PetKind;
 
 /** PetArt 펫 그림의 머리: 고양이 머리 모양, 귀, 웃는 얼굴(docs/porting/pet-art.md). 좌표는 머리 가운데가 (0, 0)이고 얼굴 폭이 230이다. */
 class PetPaintHead extends PetPaintBase {
-    PetPaintHead(Graphics2D g) {
-        super(g);
+    PetPaintHead(Graphics2D g, PetKind kind) {
+        super(g, kind);
     }
 
     static Shape headShape() {
@@ -72,6 +73,26 @@ class PetPaintHead extends PetPaintBase {
         in.closePath();
         g.setColor(CAT_EAR);
         g.fill(in);
+        g.setTransform(old);
+    }
+
+    /**
+     * 강아지의 늘어진 귀 하나. side는 왼쪽 -1, 오른쪽 1이다. 노란 귀 끝이 짙다. 기울기는 프로토타입에서 움직임 시각이 0일 때의 값
+     * (왼쪽 -3도, 오른쪽 9도)이다(docs/porting/pet-art.md).
+     */
+    void dogEar(int side) {
+        AffineTransform old = g.getTransform();
+        push(side * 74, -50, side * (6 + 3 * side));
+        Path2D p = new Path2D.Double();
+        p.moveTo(side * -18, 2);
+        p.curveTo(side * 20, -14, side * 46, 26, side * 42, 76);
+        p.curveTo(side * 40, 104, side * 12, 112, side * -2, 96);
+        p.curveTo(side * -10, 86, side * -6, 70, side * -12, 56);
+        p.curveTo(side * -20, 38, side * -26, 18, side * -18, 2);
+        p.closePath();
+        filled(p, DOG_EAR);
+        shadeIn(p, ell(side * 4, 92, 26, 18), DOG_EAR_SHADE);
+        redraw(p);
         g.setTransform(old);
     }
 
