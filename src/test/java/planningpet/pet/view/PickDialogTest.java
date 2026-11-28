@@ -202,6 +202,9 @@ class PickDialogTest {
         Dimension wide = new Dimension(1000, 5);
         d.panel.add(new Box.Filler(wide, wide, wide));
         assertEquals(new Dimension(1000, 421), d.panel.getPreferredSize());
+        PickDialog narrow = new PickDialog();
+        narrow.panel.remove(1);
+        assertEquals(800, narrow.panel.getPreferredSize().width);
     }
 
     private static List<Object> state(Graphics2D g) {
