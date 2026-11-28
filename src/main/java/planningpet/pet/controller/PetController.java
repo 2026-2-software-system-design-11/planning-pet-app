@@ -56,4 +56,18 @@ public final class PetController {
         });
         return data.pet(kind) != null;
     }
+
+    /**
+     * UC-21(D-48). 그 종류의 펫이 있고 지금 고른 펫이 아니면 고르고, 새 펫이 SELECTED를 말한다(D-62). 그 말은 오늘 목록을 따라 다시
+     * 세면 USUAL이 된다(06 16번 다시 세기). 없거나 이미 고른 펫이면 아무것도 하지 않는다.
+     */
+    public void select(PetKind kind) {
+        if (data.pet(kind) == null || data.activePet().getKind() == kind) {
+            return;
+        }
+        app.change("고른 펫 바꾸기", () -> {
+            data.setActiveKind(kind);
+            app.say(talk.say(Situation.SELECTED), data.today());
+        });
+    }
 }

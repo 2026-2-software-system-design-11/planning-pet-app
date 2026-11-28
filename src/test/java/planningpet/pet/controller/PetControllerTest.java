@@ -22,6 +22,10 @@ import planningpet.pet.model.PetState;
 import planningpet.pet.model.Pose;
 import planningpet.pet.model.Slot;
 import planningpet.pet.model.WearId;
+import planningpet.schedule.model.Category;
+import planningpet.schedule.model.DeleteScope;
+import planningpet.schedule.model.Kind;
+import planningpet.schedule.model.TaskDraft;
 
 /** 06 30번 choose, adopt, select의 검사 줄과 docs/porting/pet-controller.md 2절의 경계. 지금은 11-16 10:00이다. */
 class PetControllerTest {
@@ -174,5 +178,68 @@ class PetControllerTest {
         assertEquals("", app.getBubble().getLine());
         assertNull(app.getBubble().getRoomLine());
         assertEquals(List.of("펫 데려오기 저장에 실패해서 바꾸기 전으로 돌렸어요."), errors);
+    }
+
+    /** 고양이 나비와 강아지 바둑이, 고른 펫 강아지, 오늘 할 일 셋(T-PET-6의 처음 상태). */
+    private void twoPetsThreeTasks() {
+        data.addPet(new PetState(PetKind.CAT, "나비"));
+        data.addPet(new PetState(PetKind.DOG, "바둑이"));
+        data.setActiveKind(PetKind.DOG);
+        for (String title : List.of("가", "나", "다")) {
+            data.getBook().add(new TaskDraft(Kind.TASK, title, Category.OTHER, data.today(), null, null, 30, "", null, null,
+                    false, null, null, false));
+        }
+    }
+
+    @Test
+    void T_PET_5_missingPetNotSelected() {
+        data.addPet(new PetState(PetKind.CAT, "나비"));
+        data.setActiveKind(PetKind.CAT);
+        pets.select(PetKind.DOG);
+        assertEquals(PetKind.CAT, data.getActiveKind());
+        assertEquals("", app.getBubble().getLine());
+        assertEquals(0, saves);
+        assertEquals(0, heard);
+    }
+
+    @Test
+    void E_PET_16_alreadySelected() {
+        data.addPet(new PetState(PetKind.CAT, "나비"));
+        data.setActiveKind(PetKind.CAT);
+        pets.select(PetKind.CAT);
+        assertEquals("", app.getBubble().getLine());
+        assertEquals(0, saves);
+        assertEquals(0, heard);
+    }
+
+    @Test
+    void T_PET_6_selectedTalks() {
+        twoPetsThreeTasks();
+        pets.select(PetKind.CAT);
+        assertEquals(PetKind.CAT, data.getActiveKind());
+        assertEquals("이제 경험치는 내가 받을게! 오늘 할 일 3개 남았어.", app.getBubble().getLine());
+        assertNull(app.getBubble().getRoomLine());
+        assertEquals(1, saves);
+        assertEquals(1, heard);
+    }
+
+    @Test
+    void E_PET_17_recountAfterSelect() {
+        twoPetsThreeTasks();
+        pets.select(PetKind.CAT);
+        int said = app.getBubble().getNewLines();
+        app.change("일정 삭제", () -> data.getBook().delete(data.getBook().getTasks().get(0), DeleteScope.ONLY_THIS));
+        assertEquals("오늘 할 일 2개 남았어.", app.getBubble().getLine());
+        assertEquals(said, app.getBubble().getNewLines());
+    }
+
+    @Test
+    void E_PET_18_selectSaveFails() {
+        twoPetsThreeTasks();
+        failing = true;
+        pets.select(PetKind.CAT);
+        assertEquals(PetKind.DOG, data.getActiveKind());
+        assertEquals("", app.getBubble().getLine());
+        assertEquals(List.of("고른 펫 바꾸기 저장에 실패해서 바꾸기 전으로 돌렸어요."), errors);
     }
 }
