@@ -132,8 +132,8 @@ public final class TaskRows extends JPanel implements Scrollable {
         groups.put("untimed", new ArrayList<>(plan.untimed().stream().filter(down.negate()).toList()));
         groups.put("period", new ArrayList<>(plan.period()));
         stay(groups, plan.date());
-        groups.get("due").forEach(t -> add(row(t, "", plan.date())));
-        groups.get("timed").forEach(t -> add(row(t, data.getBook().timeText(t), plan.date())));
+        groups.get("due").forEach(t -> add(row(t, "", null, plan.date())));
+        groups.get("timed").forEach(t -> add(row(t, data.getBook().timeText(t), null, plan.date())));
         group("시각 없는 할 일", groups.get("untimed"), plan.date());
         group("기간 안에 할 일", groups.get("period"), plan.date());
         List<Task> done = new ArrayList<>(plan.timed().stream().filter(down).toList());
@@ -145,7 +145,7 @@ public final class TaskRows extends JPanel implements Scrollable {
             doneHead.getAccessibleContext().setAccessibleName("끝낸 일 " + done.size() + "개 " + (doneFolded ? "펼치기" : "접기"));
             add(doneHead);
             if (!doneFolded) {
-                done.forEach(t -> add(row(t, t.onTimetable(data.today()) ? data.getBook().timeText(t) : "", plan.date())));
+                done.forEach(t -> add(row(t, t.onTimetable(data.today()) ? data.getBook().timeText(t) : "", null, plan.date())));
             }
         }
         revalidate();
@@ -218,7 +218,7 @@ public final class TaskRows extends JPanel implements Scrollable {
         head.setForeground(Theme.INK_SUB);
         head.setBorder(BorderFactory.createEmptyBorder(14, 6, 4, 0));
         add(head);
-        tasks.forEach(t -> add(row(t, "", day)));
+        tasks.forEach(t -> add(row(t, "", null, day)));
     }
 
     /**
@@ -339,8 +339,13 @@ public final class TaskRows extends JPanel implements Scrollable {
         return tag;
     }
 
-    /** 홈 목록의 할 일 한 줄. time이 ""이면 "시각 정하기", listDay는 이 줄이 보이는 목록의 날이다(D-65). 순서는 D-59, 아래에 가는 선, 끝낸 줄은 민트빛 바탕. */
-    JPanel row(Task t, String time, LocalDate listDay) {
+    /**
+     * 할 일 한 줄. time이 ""이면 "시각 정하기", listDay는 이 줄이 보이는 목록의 날이다(D-65). 순서는 D-59, 아래에 가는 선, 끝낸 줄은
+     * 민트빛 바탕. rowDay가 있으면 일정관리 목록 줄이라 줄 앞에 그 날짜를 붙이고 시각 단추는
+     * 작은 시계 단추다(time은 쓰지 않는다, D-102, docs/porting/schedule.md S5a2). 홈 목록은 null이다.
+     */
+    JPanel row(Task t, String time, LocalDate rowDay, LocalDate listDay) {
+        boolean withDate = rowDay != null;
         // 마우스를 올린 줄은 DAY 바탕이다(디자인 시스템 10절 홈, docs/porting/task-rows.md S3z).
         boolean[] over = {false};
         JPanel row = new JPanel(new BorderLayout(6, 0)) {
@@ -389,11 +394,14 @@ public final class TaskRows extends JPanel implements Scrollable {
         // D-94: 끝낸 줄과 지난 날 목록의 기간 할 일은 시각을 정하지 않는다.
         LocalDate today = data.today();
         boolean pastPeriod = !t.isDone() && t.period() && listDay.isBefore(today);
-        TimePill when = new TimePill(time, t.isDone(), t.isDone() || pastPeriod, pastPeriod ? "지난 날에는 시각을 정할 수 없어요" : null);
+        String why = pastPeriod ? "지난 날에는 시각을 정할 수 없어요" : null;
+        TimePill when = withDate ? TimePill.icon(t.isDone(), t.isDone() || pastPeriod, why)
+                : new TimePill(time, t.isDone(), t.isDone() || pastPeriod, why);
         when.addActionListener(e -> onTime.open(t, listDay, when));
         // D-35: 고정 일정도 체크한다. 체크 옆에 "고정" 꼬리표를 둔다.
         row.add(t.getKind() == Kind.FIXED ? middle(box, fixedTag()) : middle(box), BorderLayout.WEST);
-        TitleLabel label = new TitleLabel(t, "", false);
+        String date = withDate ? rowDay.getMonthValue() + "/" + rowDay.getDayOfMonth() + " " : "";
+        TitleLabel label = new TitleLabel(t, date, false);
         // D-33: 메모가 있으면 제목이나 줄 빈 곳에 마우스를 올렸을 때 보인다.
         String tip = memoTip(t);
         label.setToolTipText(tip);
