@@ -21,7 +21,7 @@ import planningpet.schedule.model.CalendarCell;
 /**
  * 홈 달력(05 홈 "달력", UC-09). 한 주는 설정의 한 주 시작(처음은 월요일)부터 7일이다(D-91). 제목 줄 왼쪽에 달 제목, 오른쪽에
  * "오늘" 버튼과 이전 달, 다음 달 꺾쇠가 있다(D-60). 날짜 칸은 그날 일의 수와 마감 점을 보인다(D-86, 06 26번).
- * 달 옮기기는 S3g, 누른 날 고르기와 다시 그리기 알림은 S3h가 더한다(docs/porting/home.md S3f, S3g).
+ * 누른 날 고르기와 다시 그리기 알림은 S3h가 더한다(docs/porting/home.md S3f, S3g).
  */
 public final class CalendarPanel extends JPanel {
     private static final String DAYS = "일월화수목금토";
@@ -37,7 +37,7 @@ public final class CalendarPanel extends JPanel {
     /** D-60: 오늘이 든 달에서 오늘을 고르고 있으면 흐리다. 누르는 일은 S3h가 더한다. */
     final JButton today = new JButton("오늘");
     private DayOfWeek shownStart;
-    private final YearMonth month;
+    private YearMonth month;
     private final LocalDate selected;
 
     /** onPick은 날짜 칸을 누르면 그날을 받는다. */
@@ -47,6 +47,8 @@ public final class CalendarPanel extends JPanel {
         this.onPick = onPick;
         this.selected = data.today();
         this.month = YearMonth.from(selected);
+        prev.addActionListener(e -> move(-1));
+        next.addActionListener(e -> move(1));
         today.setFont(Theme.bold(12));
         today.setBorder(BorderFactory.createEmptyBorder(5, 12, 7, 12));
         title.setIcon(Icons.icon(Icons.Kind.CALENDAR, 24, Theme.ICON));
@@ -72,6 +74,12 @@ public final class CalendarPanel extends JPanel {
     /** 고른 날. 처음은 오늘이다. */
     public LocalDate selected() {
         return selected;
+    }
+
+    /** 보이는 달을 months만큼 옮긴다. 고른 날은 그대로다(05 입력 항목 2). */
+    private void move(int months) {
+        month = month.plusMonths(months);
+        refresh();
     }
 
     /** 요일 줄을 한 주 시작부터 놓는다(D-91). */

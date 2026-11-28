@@ -2,6 +2,8 @@ package planningpet.home.view;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -30,6 +32,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import planningpet.app.model.AppData;
+import planningpet.common.view.CircleButton;
 import planningpet.common.view.Snap;
 import planningpet.common.view.Theme;
 import planningpet.schedule.model.Category;
@@ -286,5 +289,35 @@ class CalendarPanelTest {
                 + c.today.getAccessibleContext().getAccessibleName());
         assertEquals(Cursor.HAND_CURSOR, c.prev.getCursor().getType());
         assertEquals(0, c.today.getActionListeners().length);
+    }
+
+    /** 꺾쇠를 차례로 누를 때마다 달 제목과 칸 수를 모으고 끝에 고른 날을 붙인다. */
+    private static String moves(CalendarPanel c, CircleButton... presses) {
+        StringBuilder b = new StringBuilder();
+        for (CircleButton p : presses) {
+            p.doClick();
+            b.append(c.title.getText()).append(' ').append(c.grid.getComponentCount()).append(", ");
+        }
+        return b + "고른 날 " + c.selected();
+    }
+
+    @Test
+    void eHead3MoveAcrossYears() throws IOException {
+        CalendarPanel c = panel("2026-11-16T10:00", DayOfWeek.MONDAY);
+        assertEquals("2026년 12월 35, 2026년 11월 42, 2026년 10월 35, 고른 날 2026-11-16", moves(c, c.next, c.prev, c.prev));
+        c = panel("2026-12-20T10:00", DayOfWeek.MONDAY);
+        assertEquals("2027년 1월 35, 2027년 2월 28, 고른 날 2026-12-20", moves(c, c.next, c.next));
+        c = panel("2026-01-10T10:00", DayOfWeek.MONDAY);
+        assertEquals("2025년 12월 35, 고른 날 2026-01-10", moves(c, c.prev));
+        c = panel("2026-11-16T10:00", DayOfWeek.MONDAY);
+        c.next.doClick();
+        assertTrue(c.today.isEnabled());
+        assertNull(c.today.getToolTipText());
+        for (int[] s : new int[][] {{328, 300}, {560, 420}, {200, 200}, {0, 0}}) {
+            looksPanel("next-2026-12", c, s[0], s[1]);
+        }
+        c.prev.doClick();
+        assertFalse(c.today.isEnabled());
+        assertEquals("오늘을 보고 있어요", c.today.getToolTipText());
     }
 }
