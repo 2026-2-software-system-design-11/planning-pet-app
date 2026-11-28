@@ -5,13 +5,21 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Insets;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.List;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -105,10 +113,65 @@ class PickDialogTest {
         assertEquals(List.of(true, false), List.of(d.cat.isSelected(), d.dog.isSelected()));
     }
 
+    /** w x h로 배치한 패널의 줄(빈 곳 빼고)과 그 안 부품의 자리를 위에서 아래로 센다. */
+    private static List<Rectangle> places(int w, int h) {
+        PickDialog d = new PickDialog();
+        Snap.layOut(d.panel, w, h);
+        List<Rectangle> all = new ArrayList<>();
+        for (Component c : d.panel.getComponents()) {
+            if (!(c instanceof Box.Filler)) {
+                all.add(c.getBounds());
+                for (Component p : c instanceof JPanel k ? k.getComponents() : new Component[0]) {
+                    all.add(p.getBounds());
+                }
+            }
+        }
+        return all;
+    }
+
+    /** x, y, 폭, 높이를 넷씩 묶은 자리들. */
+    private static List<Rectangle> rects(int... v) {
+        List<Rectangle> all = new ArrayList<>();
+        for (int i = 0; i < v.length; i += 4) {
+            all.add(new Rectangle(v[i], v[i + 1], v[i + 2], v[i + 3]));
+        }
+        return all;
+    }
+
     @Test
     void eDlg3DefaultSize() throws IOException {
-        assertEquals(new Dimension(800, 416), new PickDialog().panel.getPreferredSize());
+        PickDialog d = new PickDialog();
+        assertEquals(List.of(new Dimension(800, 416), new Dimension(556, 374)),
+                List.of(d.panel.getPreferredSize(), d.panel.getMinimumSize()));
+        assertEquals(rects(0, 16, 800, 60, 0, 80, 800, 40, 285, 0, 230, 40, 0, 132, 800, 262, 142, 0, 248, 262,
+                410, 0, 248, 262), places(800, 416));
         looksLikePrototype("800x416", 800, 416);
+    }
+
+    @Test
+    void eDlg4BigWindow() throws IOException {
+        assertEquals(rects(0, 258, 1200, 60, 0, 322, 1200, 40, 485, 0, 230, 40, 0, 374, 1200, 262, 342, 0, 248, 262,
+                610, 0, 248, 262), places(1200, 900));
+        looksLikePrototype("1200x900", 1200, 900);
+    }
+
+    @Test
+    void eDlg5SmallWindows() throws IOException {
+        assertEquals(rects(0, 16, 800, 18, 0, 38, 800, 40, 285, 0, 230, 40, 0, 90, 800, 262, 142, 0, 248, 262,
+                410, 0, 248, 262), places(800, 300));
+        assertEquals(rects(42, 0, 248, 262, 310, 0, 248, 262), places(600, 416).subList(4, 6));
+        assertEquals(rects(-124, 0, 248, 262, -124, 262, 248, 262), places(0, 416).subList(4, 6));
+        looksLikePrototype("800x300", 800, 300);
+        looksLikePrototype("600x416", 600, 416);
+        looksLikePrototype("0x416", 0, 416);
+        looksLikePrototype("1x1", 1, 1);
+    }
+
+    @Test
+    void eDlg6BlankPreferredSize() {
+        PickDialog d = new PickDialog();
+        Snap.blank(d.panel);
+        assertEquals(new Dimension(800, 376), d.panel.getPreferredSize());
     }
 
     @Test
@@ -139,5 +202,30 @@ class PickDialogTest {
         Dimension wide = new Dimension(1000, 5);
         d.panel.add(new Box.Filler(wide, wide, wide));
         assertEquals(new Dimension(1000, 421), d.panel.getPreferredSize());
+    }
+
+    private static List<Object> state(Graphics2D g) {
+        return List.of(g.getColor(), g.getStroke(), g.getTransform(), g.getClipBounds(), g.getFont(),
+                g.getRenderingHint(RenderingHints.KEY_ANTIALIASING));
+    }
+
+    @Test
+    void eDlg11CallerGraphicsState() throws ReflectiveOperationException {
+        PickDialog d = new PickDialog();
+        for (Component c : List.of(d.panel, d.panel.getComponent(1))) {
+            c.setSize(800, 416);
+            Graphics2D g = new BufferedImage(810, 430, BufferedImage.TYPE_INT_ARGB).createGraphics();
+            g.setColor(Color.RED);
+            g.setStroke(new BasicStroke(5));
+            g.translate(3, 4);
+            g.clipRect(10, 10, 100, 100);
+            g.setFont(Theme.font(9));
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+            List<Object> before = state(g);
+            Method paint = c.getClass().getDeclaredMethod("paintComponent", Graphics.class);
+            paint.setAccessible(true);
+            paint.invoke(c, g);
+            assertEquals(before, state(g));
+        }
     }
 }
