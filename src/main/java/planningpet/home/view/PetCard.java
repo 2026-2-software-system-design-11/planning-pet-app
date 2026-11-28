@@ -17,17 +17,19 @@ import planningpet.common.view.Card;
 import planningpet.common.view.Icons;
 import planningpet.common.view.Theme;
 import planningpet.common.view.Ui;
+import planningpet.pet.model.Bubble;
 import planningpet.reward.model.DailyProgress;
 import planningpet.reward.model.Level;
 
 /**
  * 홈의 펫 카드(05 홈 "펫 카드", D-59). 하늘과 풀밭 장면 왼쪽에 고른 펫(D-48)을 그린다. 값은 디자인 시스템 10절 "홈"에 있다.
- * 오른쪽 열에 이름과 레벨, 경험치 막대(S3n), 흰 작은 카드의 "오늘 끝낸 일"(S3o)을 그린다. 누르기는 #467이 더한다(docs/porting/home.md).
+ * 오른쪽 열에 이름과 레벨, 경험치 막대(S3n), 흰 작은 카드의 "오늘 끝낸 일", 그 아래 펫 말풍선(S3o)을 그린다. 누르기는 #467이 더한다(docs/porting/home.md).
  */
 public final class PetCard extends JComponent {
     /** 오른쪽 열의 위와 오른쪽 여백. */
     private static final int PAD = 14;
     private final AppData data;
+    private final Bubble bubble;
     /** 경험치 막대(06 10번). 하늘 위에서도 보이게 바탕이 TRACK_DEEP이다. */
     final Bar expBar = new Bar(0, 8).track(Theme.TRACK_DEEP);
     /** 흰 작은 카드의 "오늘 끝낸 일" 칸 막대(06 13번). */
@@ -38,9 +40,17 @@ public final class PetCard extends JComponent {
     long start;
     double t;
 
-    /** 고른 펫을 그리고 데이터 변경 알림마다 다시 그린다. 메인 창은 펫을 고른 뒤 열려 고른 펫이 늘 있다(S3m). */
-    public PetCard(AppData data) {
+    /** 마지막으로 그린 말풍선 자리(말이 없으면 null)와 줄였는지. #467의 툴팁이 전체 글을 보일지 정한다. */
+    Rectangle bubbleBox;
+    boolean bubbleCut;
+
+    /**
+     * 고른 펫과 bubble의 펫 말(앱에서는 AppController.getBubble())을 그리고 데이터 변경 알림마다 다시 그린다. 메인 창은 펫을 고른 뒤
+     * 열려 고른 펫이 늘 있다(S3m).
+     */
+    public PetCard(AppData data, Bubble bubble) {
         this.data = data;
+        this.bubble = bubble;
         setLayout(null);
         add(expBar);
         add(doneBar);
@@ -109,10 +119,11 @@ public final class PetCard extends JComponent {
         return f.x + f.width - PAD - infoX(f);
     }
 
-    /** 이름 줄, 경험치 줄, 흰 작은 카드의 위. 카드가 높으면(넓은 창) 오른쪽 열을 조금 내려 위로 몰리지 않게 한다. */
-    private static int[] rows(Rectangle f) {
+    /** 이름 줄, 경험치 줄, 흰 작은 카드, 말풍선의 위. 카드가 높으면(넓은 창) 오른쪽 열을 조금 내려 위로 몰리지 않게 한다. */
+    private int[] rows(Rectangle f) {
         int name = f.y + PAD + Math.max(0, (f.height - 250) / 3);
-        return new int[] {name, name + 30 + 6, name + 36 + 8 + 4 + 16 + PetCardArt.GAP};
+        int mini = name + 36 + 8 + 4 + 16 + PetCardArt.GAP;
+        return new int[] {name, name + 30 + 6, mini, mini + miniHeight() + PetCardArt.GAP};
     }
 
     @Override
@@ -164,6 +175,11 @@ public final class PetCard extends JComponent {
         return data.getBook().periodNote(data.today());
     }
 
+    /** 펫 말. 없으면 빈 글이다. */
+    String bubbleText() {
+        return bubble.getLine() == null ? "" : bubble.getLine();
+    }
+
     /** 흰 작은 카드의 높이. 기간 할 일 글이 있으면 한 줄 늘린다. */
     private int miniHeight() {
         return periodText() == null ? 52 : 70;
@@ -184,6 +200,9 @@ public final class PetCard extends JComponent {
         PetCardArt.pet(s, data.activePet(), f, t);
         s.dispose();
         info(g, f);
+        boolean[] cut = {false};
+        bubbleBox = PetCardArt.bubble(g, bubbleText(), infoX(f), rows(f)[3], infoW(f), f.y + f.height - 12, cut);
+        bubbleCut = cut[0];
         g.setColor(Theme.CARD_EDGE);
         g.setStroke(new BasicStroke(1.2f));
         g.draw(new RoundRectangle2D.Double(f.x + 0.5, f.y + 0.5, f.width - 1, f.height - 1, r, r));
