@@ -90,6 +90,7 @@
 | S3 | 홈 목록 | `MainScreen`, `PetCard`, `CalendarPanel`, `TaskRows`(홈 목록이 쓰므로 S5에서 당겨 온다). `RewardController.complete`, `uncomplete`는 S3a, `HomeController`는 S3b | 6번, 13번, 16번, 26번 | [docs/porting/home.md](porting/home.md) |
 | S4a | 일정 입력 창 물음 창 셋 | `TaskDialog`의 물음 창 셋(겹침, 반복 사본 저장 범위, 삭제 확인)의 내용과 띄워 답을 받는 함수(#504). 나머지 S4 몫은 #505~#516([task-dialog.md](porting/task-dialog.md)) | 3번 T-OVL-1의 물음 글과 단추(05 그 밖의 창과 알림, D-41, D-42, D-87) | [docs/porting/task-dialog.md](porting/task-dialog.md) |
 | S4b | 입력 창 도우미 | `common.view`의 `Ui`(`flow`, `minutes`, `dayEditor`, `dateOf`, `setDate`), `schedule.view`의 패키지 안 `Times`(#505) | 14번 T-DEF-13, T-DEF-14의 글 꼴(05 일정 입력 창 3, 5, 6번, D-38, D-43, D-77) | [docs/porting/task-dialog.md](porting/task-dialog.md) |
+| S4c | 고르는 칸 | `Icons`의 `DOWN`, `common.view`의 `ComboUI`, `Theme.install`의 고르는 칸 줄(#506) | 없음(05 일정 입력 창, 디자인 시스템 5절, D-97) | [docs/porting/task-dialog.md](porting/task-dialog.md) |
 | S4 | 일정 입력 창 | `TaskDialog`, `TaskController.add`, `update`, `delete`, 고르는 칸 `ComboUI`와 그것을 거는 `Theme.install`의 줄([theme.md](porting/theme.md)) | 2~5번, 14번 | [docs/porting/task-dialog.md](porting/task-dialog.md) |
 | S5 | 일정관리 | `ScheduleScreen`, `TimetablePanel`, `TimeEditor`, `TaskController.clearTime` | 4번의 시각 고치기 창, 7번, 19번 | `docs/porting/schedule.md` |
 | S6 | 자동 배치 결과 창 | `AutoPlaceDialog`, `TaskController.applyPlacement` | 18번 | `docs/porting/auto-place-dialog.md` |
