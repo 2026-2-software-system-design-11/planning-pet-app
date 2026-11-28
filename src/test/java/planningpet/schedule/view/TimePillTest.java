@@ -6,10 +6,13 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Cursor;
+import java.awt.DefaultKeyboardFocusManager;
 import java.awt.Dimension;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
+import java.awt.KeyboardFocusManager;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import org.junit.jupiter.api.Test;
@@ -121,6 +124,27 @@ class TimePillTest {
         looks("down", down(pill(T), true));
         looks("down-empty", down(pill(""), true));
         looks("time", down(pill(T), false));
+    }
+
+    @Test
+    void eTpill8KeyboardFocus() throws IOException {
+        class Focus extends DefaultKeyboardFocusManager {
+            void own(Component c) {
+                setGlobalFocusOwner(c);
+            }
+        }
+        Focus focus = new Focus();
+        KeyboardFocusManager.setCurrentKeyboardFocusManager(focus);
+        try {
+            String[] names = {"focus", "focus-empty", "focus-locked"};
+            TimePill[] pills = {pill(T), pill(""), new TimePill("", false, true, WHY)};
+            for (int i = 0; i < pills.length; i++) {
+                focus.own(pills[i]);
+                looks(names[i], pills[i]);
+            }
+        } finally {
+            KeyboardFocusManager.setCurrentKeyboardFocusManager(null);
+        }
     }
 
     @Test

@@ -73,6 +73,10 @@ final class TimePill extends JButton {
         g.setColor(line);
         g.setStroke(new BasicStroke(1f));
         g.drawRoundRect(0, 0, w, h, h, h);
+        if (isFocusOwner()) {
+            g.setColor(new Color(0x1F, 0xB9, 0x9C, 110));
+            g.drawRoundRect(2, 2, w - 4, h - 4, h - 4, h - 4);
+        }
         FontMetrics fm = g.getFontMetrics(getFont());
         int icon = 14;
         int x = (w - (icon + 5 + fm.stringWidth(getText()))) / 2;
