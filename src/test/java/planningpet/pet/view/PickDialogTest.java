@@ -263,6 +263,24 @@ class PickDialogTest {
         Snap.assertLaidOutLooksLikePrototype("pickdlg-name-516x83", bar, 516, 83);
     }
 
+    @Test
+    void eDlg13NameLimit() {
+        RoundField name = new PickDialog().name;
+        for (int i = 0; i < 11; i++) {
+            name.replaceSelection("가");
+        }
+        assertEquals(List.of("가".repeat(10), "10 / 10"), List.of(name.getText(), name.countText()));
+        name.setText("");
+        name.replaceSelection("가나다라마바사아자차카타파");
+        assertEquals("가나다라마바사아자차", name.getText());
+        name.setText("123456789012");
+        assertEquals("1234567890", name.getText());
+        // 06 읽는 법대로 코드 포인트로 센다(프로토타입은 UTF-16 단위라 이모지 5개, E-LIMIT-6).
+        name.setText("");
+        name.replaceSelection("\uD83D\uDE00".repeat(11));
+        assertEquals(List.of("\uD83D\uDE00".repeat(10), "10 / 10"), List.of(name.getText(), name.countText()));
+    }
+
     private static List<Object> state(Graphics2D g) {
         return List.of(g.getColor(), g.getStroke(), g.getTransform(), g.getClipBounds(), g.getFont(),
                 g.getRenderingHint(RenderingHints.KEY_ANTIALIASING));

@@ -44,6 +44,7 @@ public final class PickDialog {
     public final JPanel panel = new Backdrop();
 
     public PickDialog() {
+        Ui.limit(name, 10);
         ButtonGroup group = new ButtonGroup();
         group.add(cat);
         group.add(dog);
