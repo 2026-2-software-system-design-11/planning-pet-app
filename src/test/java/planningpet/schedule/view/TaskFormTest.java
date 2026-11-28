@@ -33,7 +33,7 @@ import planningpet.schedule.model.Repeat;
 import planningpet.schedule.model.TaskDraft;
 import planningpet.schedule.model.Tasks;
 
-/** 일정 입력 창의 칸, 추가 창의 처음 값, 칸끼리 켜고 끄기. 번호는 docs/porting/task-dialog.md S4f, S4g 2절. */
+/** 일정 입력 창의 칸, 추가 창의 처음 값, 칸끼리 켜고 끄기, 손댄 값 지키기와 날짜 따라가기. 번호는 docs/porting/task-dialog.md S4f, S4g, S4h 2절. */
 class TaskFormTest {
     private static final LocalDateTime NOW = LocalDateTime.of(2026, 11, 18, 10, 7);
     private static final String SMILE = new String(Character.toChars(0x1F600));
@@ -435,5 +435,59 @@ class TaskFormTest {
         g.days[2].doClick();
         Ui.setDate(g.date, d(19));
         assertEquals("수", picked(g));
+    }
+
+    /** 저장하면 칸 아래에 보일 그 칸의 오류 글. 없으면 빈 글. */
+    private static String saveError(TaskForm f, String field) {
+        return f.draft().validate().stream().filter(e -> e.field().equals(field)).map(FieldError::message).findFirst().orElse("");
+    }
+
+    @Test
+    void tDef12RepeatEndFollowsUntilTouched() {
+        TaskForm f = form(d(16));
+        f.repeat.setSelectedIndex(1);
+        Ui.setDate(f.date, d(12, 1));
+        assertEquals("2026-12-29", text(f.repeatEnd));
+        Ui.setDate(f.repeatEnd, d(12, 10));
+        Ui.setDate(f.date, d(12, 20));
+        assertEquals(List.of("2026-12-10", "반복 끝나는 날이 날짜보다 전이에요"), List.of(text(f.repeatEnd), saveError(f, "반복")));
+    }
+
+    @Test
+    void eForm14RepeatEndFollowsKind() {
+        TaskForm f = form(d(16));
+        f.repeat.setSelectedIndex(1);
+        f.fixed.doClick();
+        assertEquals("2027-03-01", text(f.repeatEnd));
+        f.task.doClick();
+        assertEquals("2026-12-14", text(f.repeatEnd));
+    }
+
+    @Test
+    void tDef16PickedDueStays() {
+        TaskForm f = form(d(16));
+        f.period.doClick();
+        Ui.setDate(f.due, d(12, 10));
+        f.fixed.doClick();
+        f.task.doClick();
+        assertEquals(List.of(true, "2026-12-10"), List.of(f.period.isSelected(), text(f.due)));
+        Ui.setDate(f.date, d(12, 12));
+        assertEquals(List.of("2026-12-10", "마감일이 시작일보다 전이에요"), List.of(text(f.due), saveError(f, "마감")));
+        TaskForm g = form(d(16));
+        g.period.doClick();
+        g.fixed.doClick();
+        g.task.doClick();
+        assertEquals("2026-11-22", text(g.due));
+    }
+
+    @Test
+    void tDef18UnpickedDueFollowsWeek() {
+        TaskForm f = form(d(16));
+        f.title.setText("보고서");
+        f.period.doClick();
+        Ui.setDate(f.date, d(23));
+        assertEquals(List.of("2026-11-29", List.of()), List.of(text(f.due), f.draft().validate()));
+        Ui.setDate(f.date, d(25));
+        assertEquals(List.of("2026-11-29", List.of()), List.of(text(f.due), f.draft().validate()));
     }
 }

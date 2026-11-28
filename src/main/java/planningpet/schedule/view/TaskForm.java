@@ -39,9 +39,9 @@ import planningpet.schedule.model.Task;
 import planningpet.schedule.model.TaskDraft;
 
 /**
- * 일정 입력 창의 칸(05 일정 입력 창 1~11번). 창 없이 만들 수 있다. 지금은 추가 창의 칸과 처음 값, 칸끼리 켜고 끄기 sync(), 칸에 쓴 값
- * draft()가 있고, 손댄 값 지키기와 따라가기, 오류 글, 수정 창은 뒤 몫이 더한다(docs/porting/task-dialog.md S4f, S4g). 쳐 넣은 글
- * 읽기(C1)의 칸 아래 글 줄은 두지 않는다.
+ * 일정 입력 창의 칸(05 일정 입력 창 1~11번). 창 없이 만들 수 있다. 지금은 추가 창의 칸과 처음 값, 칸끼리 켜고 끄기 sync(), 손댄 값
+ * 지키기와 날짜 따라가기, 칸에 쓴 값 draft()가 있고, 오류 글, 수정 창은 뒤 몫이 더한다(docs/porting/task-dialog.md S4f, S4g, S4h).
+ * 쳐 넣은 글 읽기(C1)의 칸 아래 글 줄은 두지 않는다.
  */
 final class TaskForm {
     final JPanel panel = new JPanel(new GridBagLayout());
@@ -94,12 +94,19 @@ final class TaskForm {
     private boolean daysShown;
     /** D-101: 앱이 골라 준 요일. 사용자가 요일 단추를 누르면 null이 되고 날짜를 따라가지 않는다. */
     private DayOfWeek autoDay;
+    /** 반복 끝 날짜를 사용자가 고쳤는가. 고치기 전에는 시작 날짜를 따라간다(D-79). */
+    private boolean endTouched;
+    /** 마감을 사용자가 골랐는가. 고른 뒤에는 날짜나 종류를 바꾸고 기간을 껐다 켜도 다시 채우지 않는다(D-96). */
+    private boolean dueTouched;
+    /** 마감 기본값이 쓰는 한 주의 시작 요일(D-91). */
+    private final DayOfWeek weekStart;
     /** sync 안에서 칸 값을 바꿀 때 다시 sync하지 않는다. */
     private boolean syncing;
     private int row;
 
     /** 추가 창의 칸. date는 06 14번 forAdd가 고른 날, weekStart는 마감 기본값과 요일 단추 차례의 한 주 시작(D-91, D-94). */
     TaskForm(LocalDate date, LocalDateTime now, DayOfWeek weekStart) {
+        this.weekStart = weekStart;
         clock = () -> now;
         Ui.limit(title, 100);
         Ui.limit(memo, 1000);
@@ -170,6 +177,18 @@ final class TaskForm {
             }
             sync();
         });
+        due.addChangeListener(e -> {
+            if (!syncing) {
+                dueTouched = true;
+            }
+            sync();
+        });
+        repeatEnd.addChangeListener(e -> {
+            if (!syncing) {
+                endTouched = true;
+            }
+            sync();
+        });
         for (JSpinner s : new JSpinner[] {this.date, minutes}) {
             s.addChangeListener(e -> sync());
         }
@@ -180,7 +199,8 @@ final class TaskForm {
      * 고정 일정이면 시작 시각이 켜진 채 비활성이고 기간은 꺼진 채 비활성이다(D-16, D-65). 반복과 기간은 함께 고를 수 없다(D-65). 기간을
      * 켜면 시작 시각이 꺼진 채 비활성이다(D-68). 시작 시각을 정하면 끝 시각 글과 다음 날 값의 실제 날과 시각을 적고(D-73, D-77),
      * 걸리는 시간이 30이면 30분 안내를 보인다(D-43). 고정 일정, 기간, 반복 때문에 앱이 바꾼 칸은 맥락이 돌아오면 되돌린다(D-101).
-     * 손대지 않은 시작 시각은 날짜를 바꾸거나 시작 칸이 열리는 그 순간의 시계로 다시 잰다(D-101).
+     * 손대지 않은 시작 시각은 날짜를 바꾸거나 시작 칸이 열리는 그 순간의 시계로 다시 잰다(D-101). 앱이 골라 준 요일, 손대지 않은 반복
+     * 끝(D-79), 고르지 않은 마감(D-96)도 날짜를 따라간다.
      */
     void sync() {
         if (syncing) {
@@ -257,6 +277,13 @@ final class TaskForm {
             if (untouched) {
                 pick(autoDay);
             }
+        }
+        // D-79: 끝 날짜를 손대지 않았으면 반복을 고른 뒤에도 시작 날짜를 따라간다.
+        if (!endTouched) {
+            Ui.setDate(repeatEnd, DefaultDates.repeatEndFor(isFixed ? Kind.FIXED : Kind.TASK, day));
+        }
+        if (!dueTouched) {
+            Ui.setDate(due, DefaultDates.dueFor(day, weekStart));
         }
         minutesHint.setVisible((int) minutes.getValue() == 30);
         Integer s = startTime();
