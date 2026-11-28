@@ -6,7 +6,9 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
+import java.util.Set;
 import planningpet.pet.model.PetKind;
+import planningpet.pet.model.WearId;
 
 /**
  * PetArt 펫 그림의 바탕: 색, 시간 함수, 한 번 그리는 데 필요한 값, 그리기 도구. 머리는 PetPaintHead, 몸은 PetPaintBody가 더한다
@@ -29,25 +31,37 @@ abstract class PetPaintBase {
     static final Color NOSE = new Color(0x4A2E28);
     static final Color MOUTH = new Color(0x8A3B3B);
     static final Color TONGUE = new Color(0xF27E86);
+    static final Color TEAL = new Color(0x2BA39A);
+    static final Color GOLD = new Color(0xF5C542);
+    static final Color PINK = new Color(0xF48FA0);
+    static final Color PINK_LIGHT = new Color(0xF9B8C6);
+    static final Color BLUE = new Color(0x6C8EE0);
     /** 큰 그림의 선 굵기. 작게 그릴 때는 부르는 쪽이 line을 굵게 바꾼다. */
     static final float LINE = 6f;
 
     final Graphics2D g;
     /** 움직임 시각(초). 귀 까딱임과 흔들림, 숨쉬기, 머리 기울기, 꼬리가 쓴다. */
     final double t;
+    /** 입은 장신구(D-51). */
+    final Set<WearId> wear;
     final boolean cat;
     final Color ink;
     final Color fur;
     final Color furShade;
     float line = LINE;
 
-    PetPaintBase(Graphics2D g, PetKind kind, double t) {
+    PetPaintBase(Graphics2D g, PetKind kind, Set<WearId> wear, double t) {
         this.g = g;
+        this.wear = wear == null ? Set.of() : wear;
         this.t = t;
         this.cat = kind == PetKind.CAT;
         this.ink = cat ? CAT_INK : DOG_INK;
         this.fur = cat ? CAT_WHITE : DOG_FUR;
         this.furShade = cat ? CAT_WHITE_SHADE : DOG_FUR_SHADE;
+    }
+
+    boolean has(WearId w) {
+        return wear.contains(w);
     }
 
     static void hints(Graphics2D g) {

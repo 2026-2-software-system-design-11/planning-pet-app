@@ -8,15 +8,17 @@ import java.awt.geom.Area;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.QuadCurve2D;
+import java.util.Set;
 import planningpet.pet.model.PetKind;
+import planningpet.pet.model.WearId;
 
 /**
  * PetArt 펫 그림의 머리: 고양이와 강아지의 머리 모양, 귀, 웃는 얼굴(docs/porting/pet-art.md). 좌표는 머리 가운데가 (0, 0)이고
  * 얼굴 폭이 230이다.
  */
-class PetPaintHead extends PetPaintBase {
-    PetPaintHead(Graphics2D g, PetKind kind, double t) {
-        super(g, kind, t);
+class PetPaintHead extends PetPaintWear {
+    PetPaintHead(Graphics2D g, PetKind kind, Set<WearId> wear, double t) {
+        super(g, kind, wear, t);
     }
 
     Shape headShape() {
