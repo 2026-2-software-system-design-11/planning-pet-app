@@ -26,6 +26,7 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.SwingUtilities;
 import org.junit.jupiter.api.Test;
 import planningpet.pet.model.PetKind;
 import planningpet.pet.model.PetState;
@@ -442,5 +443,29 @@ class ScheduleScreenTest {
         assertEquals(List.of("11/20 M 17일에 하려던 일 (오늘 마감)"), rows());
         open("2026-11-22T10:00", m);
         assertEquals(List.of("11/20 M ~11/20까지 (지난 날)"), rows());
+    }
+
+    /** 목록 스크롤의 "세로 막대가 보이는지, 보기 폭, 목록 폭, 줄 폭들, 둘째 줄 폭들". */
+    private String listBar() {
+        JScrollPane side = (JScrollPane) SwingUtilities.getAncestorOfClass(JScrollPane.class, screen.untimed);
+        List<JPanel> rows = Arrays.stream(screen.untimed.getComponents()).map(c -> (JPanel) c).toList();
+        return side.getVerticalScrollBar().isVisible() + " " + side.getViewport().getWidth() + " " + screen.untimed.getWidth() + " "
+                + rows.stream().map(r -> r.getWidth()).distinct().toList() + " "
+                + rows.stream().map(r -> r.getComponent(3).getWidth()).distinct().toList();
+    }
+
+    /** E-SCH-15(S5a 3절): 폭 240 카드의 목록은 줄이 넘칠 때만 세로 막대가 생기고 줄은 보기 폭을 따른다. 막대가 있어도 둘째 줄은 170보다 넓다. */
+    @Test
+    void eSch15ListScrollBar() {
+        open(task("M", d(17)).at("10:00").period(d(16), d(20)).seq(1).task(), task("과제", d(19)).seq(2).task());
+        assertEquals(List.of("11/18 M ~11/20까지 17일에 하려던 일", "11/19 과제", "11/20 M 17일에 하려던 일 (마감)"), rows());
+        assertEquals("false 208 208 [208] [198]", listBar());
+        List<Task> tasks = new ArrayList<>();
+        for (int day = 16; day <= 22; day++) {
+            tasks.add(task("운동", d(day)).id("r" + day).seq(day).series("s", Repeat.DAILY).task());
+        }
+        open(tasks.toArray(Task[]::new));
+        assertEquals("true 191 191 [191] [181]", listBar());
+        assertTrue(((JPanel) screen.untimed.getComponent(0)).getComponent(3).getWidth() > SecondLine.WIDTH);
     }
 }
