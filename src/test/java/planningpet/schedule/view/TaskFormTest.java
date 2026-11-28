@@ -828,4 +828,19 @@ class TaskFormTest {
         assertEquals(List.of("끝2", d(16)), List.of(end.getTitle(), end.getDueDate()));
         assertNull(edit(Tasks.task("Q", d(10)).period(d(10), d(16))).draft().today());
     }
+
+    @Test
+    void tDef23EditStartFollowsDate() {
+        LocalDateTime at1412 = LocalDateTime.of(2026, 11, 17, 14, 12);
+        TaskForm timed = new TaskForm(Tasks.task("운동", d(18)).at("10:00").task(), at1412, DayOfWeek.MONDAY);
+        Ui.setDate(timed.date, d(17));
+        TaskForm untimed = new TaskForm(Tasks.task("빨래", d(18)).task(), at1412, DayOfWeek.MONDAY);
+        List<Object> got = new ArrayList<>(List.of(timed.start.getValue(), untimed.start.getValue()));
+        Ui.setDate(untimed.date, d(17));
+        got.add(untimed.start.getValue());
+        Ui.setDate(at1441(untimed).date, d(18));
+        Ui.setDate(untimed.date, d(17));
+        got.add(untimed.start.getValue());
+        assertEquals(List.of("10:00", "09:00", "14:15", "14:45"), got);
+    }
 }
