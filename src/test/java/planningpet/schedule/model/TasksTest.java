@@ -3,11 +3,13 @@ package planningpet.schedule.model;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static planningpet.schedule.model.Tasks.d;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import planningpet.pet.model.PetKind;
 
 /** 공용 일정 만들기 Tasks(#518)의 처음 값과 고친 값. */
 class TasksTest {
@@ -38,5 +40,29 @@ class TasksTest {
         assertEquals(Arrays.asList("a", 7L, Kind.FIXED, "알바", d(18), LocalTime.of(23, 30), 90, "초안", true,
                 Category.STUDY, null, null, null, null, true, d(19), 0, 0, null, null), all(t));
         assertEquals(LocalTime.of(9, 5), Tasks.task("x", d(18)).at(LocalTime.of(9, 5)).task().getStartTime());
+    }
+
+    @Test
+    void periodSeriesAndReward() {
+        Repeat weekly = Repeat.weekly(DayOfWeek.WEDNESDAY);
+        Task t = Tasks.task("지원서", d(18)).series("s", weekly).period(d(16), d(22)).reward(10, 5, d(19), PetKind.DOG)
+                .task();
+        assertEquals(Arrays.asList("s", weekly, d(22), d(16), 10, 5, d(19), PetKind.DOG), Arrays.asList(t.getSeriesId(),
+                t.getRepeat(), t.getDueDate(), t.getStartDay(), t.getRewardPoints(), t.getRewardExp(), t.getRewardDay(),
+                t.getRewardPet()));
+    }
+
+    @Test
+    void periodWithoutDueHasNoFirstDay() {
+        Task t = Tasks.task("x", d(18)).period(d(16), null).task();
+        assertEquals(Arrays.asList(null, null), Arrays.asList(t.getDueDate(), t.getStartDay()));
+    }
+
+    @Test
+    void draft() {
+        TaskDraft got = Tasks.task("알바", d(21)).kind(Kind.FIXED).at("09:00").minutes(60).period(d(20), d(25))
+                .today(d(18)).draft();
+        assertEquals(new TaskDraft(Kind.FIXED, "알바", Category.OTHER, d(21), d(25), LocalTime.of(9, 0), 60, "",
+                null, null, false, null, d(18), false), got);
     }
 }
