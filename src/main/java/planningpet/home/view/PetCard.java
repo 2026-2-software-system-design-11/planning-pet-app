@@ -48,10 +48,12 @@ public final class PetCard extends JComponent {
     long start;
     double t;
 
-    /** 마지막으로 그린 말풍선 자리(말이 없으면 null)와 줄였는지. #467의 툴팁이 전체 글을 보일지 정한다. */
+    /** 마지막으로 그린 말풍선 자리(말이 없으면 null)와 줄였는지. #472의 툴팁이 전체 글을 보일지 정한다. */
     Rectangle bubbleBox;
     boolean bubbleCut;
-    /** 카드 위에서 마우스 단추를 눌러 아직 떼지 않았는지. 카드 밖으로 나가면 풀린다. */
+    /** 마우스가 카드 위에 있는지(올림 테두리). */
+    private boolean over;
+    /** 카드 위에서 마우스 단추를 눌러 아직 떼지 않았는지(누름 테두리). 카드 밖으로 나가면 풀린다. */
     private boolean down;
 
     /**
@@ -69,7 +71,14 @@ public final class PetCard extends JComponent {
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         addMouseListener(new MouseAdapter() {
             @Override
+            public void mouseEntered(MouseEvent e) {
+                over = true;
+                repaint();
+            }
+
+            @Override
             public void mouseExited(MouseEvent e) {
+                over = false;
                 down = false;
                 repaint();
             }
@@ -248,8 +257,8 @@ public final class PetCard extends JComponent {
         boolean[] cut = {false};
         bubbleBox = PetCardArt.bubble(g, bubbleText(), infoX(f), rows(f)[3], infoW(f), f.y + f.height - 12, cut);
         bubbleCut = cut[0];
-        g.setColor(Theme.CARD_EDGE);
-        g.setStroke(new BasicStroke(1.2f));
+        g.setColor(down ? Theme.MINT : over ? Theme.MINT_LINE : Theme.CARD_EDGE);
+        g.setStroke(new BasicStroke(down ? 2f : 1.2f));
         g.draw(new RoundRectangle2D.Double(f.x + 0.5, f.y + 0.5, f.width - 1, f.height - 1, r, r));
         g.dispose();
     }

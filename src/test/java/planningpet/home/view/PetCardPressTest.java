@@ -10,20 +10,26 @@ import java.awt.KeyboardFocusManager;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.KeyStroke;
+import javax.swing.RepaintManager;
 import org.junit.jupiter.api.Test;
 import planningpet.pet.model.Bubble;
 import planningpet.pet.model.PetKind;
 
-/** 홈 펫 카드 누르기와 상태 테두리. 번호는 docs/porting/home.md S3p 2절. */
+/** 홈 펫 카드 누르기와 상태 테두리. 번호는 docs/porting/home.md S3p 2절. 기준 그림은 proto/petcard-press-*.png이고 글 띠를 덮었다. */
 class PetCardPressTest {
     private static final int STANDARD = KeyEvent.KEY_LOCATION_STANDARD;
     private static final int PRESS = MouseEvent.MOUSE_PRESSED;
     private static final int RELEASE = MouseEvent.MOUSE_RELEASED;
+    private static final int ENTER = MouseEvent.MOUSE_ENTERED;
+    private static final int EXIT = MouseEvent.MOUSE_EXITED;
     private int presses;
 
     private PetCard card() {
@@ -126,5 +132,51 @@ class PetCardPressTest {
         assertEquals(0, mouse(new int[] {PRESS, 1, 180, 120}, exit, new int[] {RELEASE, 1, 180, 120}));
         assertEquals(0, mouse(new int[] {PRESS, 1, 180, 120}, exit, new int[] {MouseEvent.MOUSE_ENTERED, 0, 180, 120},
                 new int[] {RELEASE, 1, 180, 120}));
+    }
+
+    /** 카드의 (5, 5)에 사건들을 차례로 보낸다. 누름과 뗌은 왼쪽 단추다. */
+    private static PetCard at(PetCard c, int... ids) {
+        for (int id : ids) {
+            c.dispatchEvent(event(c, id, id == PRESS || id == RELEASE ? 1 : 0, 5, 5));
+        }
+        return c;
+    }
+
+    @Test
+    void ePpress6Borders() throws IOException {
+        for (int[] s : new int[][] {{360, 240}, {300, 210}, {800, 500}}) {
+            String n = s[0] + "x" + s[1];
+            PetCard c = card();
+            PetCardTest.assertCovered("size-" + n, c, s[0], s[1]);
+            PetCardTest.assertCovered("press-over-" + n, at(c, ENTER), s[0], s[1]);
+            PetCardTest.assertCovered("press-down-" + n, at(c, PRESS), s[0], s[1]);
+        }
+        PetCardTest.assertCovered("press-down-360x240", at(card(), PRESS), 360, 240);
+        PetCard right = at(card(), ENTER);
+        right.dispatchEvent(event(right, PRESS, 3, 5, 5));
+        PetCardTest.assertCovered("press-down-360x240", right, 360, 240);
+        PetCard back = at(card(), ENTER, PRESS, RELEASE);
+        PetCardTest.assertCovered("press-over-360x240", back, 360, 240);
+        PetCardTest.assertCovered("size-360x240", at(back, EXIT), 360, 240);
+    }
+
+    @Test
+    void ePpress6Repaint() {
+        PetCard c = card();
+        c.setSize(360, 240);
+        List<String> asked = new ArrayList<>();
+        RepaintManager before = RepaintManager.currentManager(c);
+        RepaintManager.setCurrentManager(new RepaintManager() {
+            @Override
+            public void addDirtyRegion(JComponent x, int a, int b, int w, int h) {
+                asked.add((x == c) + " " + a + "," + b + "," + w + "," + h);
+            }
+        });
+        try {
+            at(c, ENTER, PRESS, RELEASE, EXIT);
+        } finally {
+            RepaintManager.setCurrentManager(before);
+        }
+        assertEquals(Collections.nCopies(4, "true 0,0,360,240"), asked);
     }
 }
