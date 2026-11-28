@@ -20,6 +20,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.AbstractButton;
@@ -35,6 +36,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import planningpet.app.controller.AppController;
 import planningpet.app.model.AppData;
+import planningpet.app.model.DataStore;
+import planningpet.app.model.LoadResult;
 import planningpet.common.view.Snap;
 import planningpet.common.view.Theme;
 import planningpet.home.controller.HomeController;
@@ -80,13 +83,16 @@ class MainScreenTest {
         task("가", 11, 18, null, 30, false);
     }
 
-    /** 오늘 11-14 15:23, 고른 고양이 나비의 홈 화면. Main처럼 데이터 변경 알림에 refresh와 Theme.clear를 건다. */
+    /** 오늘 11-14 15:23, 고른 고양이 나비의 홈 화면. Main처럼 데이터 변경 알림에 refresh와 Theme.clear를 건다. 저장은 늘 된다. */
     private MainScreen screen() {
         data = new AppData(Clock.fixed(LocalDateTime.of(2026, 11, 14, 15, 23).atZone(ZONE).toInstant(), ZONE), tasks, List.of());
         data.setNextSeq(tasks.size() + 1);
         data.addPet(new PetState(PetKind.CAT, "나비"));
         data.setActiveKind(PetKind.CAT);
-        AppController app = new AppController(data, null, e -> { });
+        AppController app = new AppController(data, new DataStore() {
+            public LoadResult load() { return LoadResult.firstRun(); }
+            public void save(AppData d) { }
+        }, e -> { });
         MainScreen m = new MainScreen(data, app, new HomeController(data, app), new RewardController(data, app));
         data.onChange(m::refresh);
         data.onChange(() -> Theme.clear(m));
@@ -257,12 +263,58 @@ class MainScreenTest {
         assertEquals("<html><center><b>14</b><br><font size='2' color='#28977F'>4개</font></center></html>", cell.getText());
     }
 
+    /** 목록 안에서 불투명한 부품 수. */
+    private static int opaque(Component root) {
+        int n = 0;
+        ArrayDeque<Component> left = new ArrayDeque<>(List.of(root));
+        while (!left.isEmpty()) {
+            Component c = left.pop();
+            n += c instanceof JComponent j && j.isOpaque() ? 1 : 0;
+            if (c instanceof Container k) {
+                left.addAll(List.of(k.getComponents()));
+            }
+        }
+        return n;
+    }
+
     private static BufferedImage paint(MainScreen m) {
         BufferedImage img = new BufferedImage(808, 558, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = img.createGraphics();
         m.paint(g);
         g.dispose();
         return img;
+    }
+
+    @Test
+    void eScreen9Resort() {
+        base();
+        task("새 일", 11, 14, null, 30, false);
+        task("C", 11, 14, null, 30, false);
+        MainScreen m = screen();
+        data.changed();
+        JCheckBox c = (JCheckBox) ((JPanel) ((JPanel) m.rows.getComponent(4)).getComponent(0)).getComponent(0);
+        c.doClick();
+        m.rows.settle();
+        assertEquals("11월 14일 (토) 할 일 [ ] 보고서 / 시각 없는 할 일 / [ ] 토익 공부 / [ ] 새 일 / 끝낸 일 2개 / [x] 빨래 / [x] C",
+                m.listTitle.getText() + " " + rows(m.rows));
+        assertEquals(10, opaque(m.rows));
+        Snap.layOut(m, 804, 554);
+        BufferedImage settled = paint(m);
+        Theme.clear(m);
+        BufferedImage cleared = paint(m);
+        int differ = 0;
+        Rectangle box = null;
+        for (int y = 0; y < settled.getHeight(); y++) {
+            for (int x = 0; x < settled.getWidth(); x++) {
+                if (settled.getRGB(x, y) != cleared.getRGB(x, y)) {
+                    differ++;
+                    box = box == null ? new Rectangle(x, y, 1, 1) : box.union(new Rectangle(x, y, 1, 1));
+                }
+            }
+        }
+        assertEquals("16931 411,72 373x250", differ + " " + at(box));
+        m.rows.doneHead.doClick();
+        assertEquals("[ ] 보고서 / 시각 없는 할 일 / [ ] 토익 공부 / [ ] 새 일 / 끝낸 일 2개", rows(m.rows));
     }
 
     /** 글을 비우고 줄 제목 칸을 감추고 달력 칸 글을 빼고 그린 뒤 펫 카드 오른쪽 열과 빠른 추가 칸 글 자리를 덮어 기준 그림과 견준다. */

@@ -47,6 +47,7 @@ public final class MainScreen extends JPanel {
         this.data = data;
         calendar = new CalendarPanel(data, home, app);
         rows = new TaskRows(data, reward, t -> { }, t -> { }, (t, day, at) -> { });
+        rows.resort = this::refresh;
         pet = new PetCard(data, app.getBubble(), () -> { });
 
         Card list = new Card(new BorderLayout(0, 8));
@@ -121,7 +122,7 @@ public final class MainScreen extends JPanel {
         return panel;
     }
 
-    /** 고른 날의 목록 제목과 목록, 예시 띠, 달력, 펫 카드를 다시 그린다. */
+    /** 고른 날의 목록 제목과 목록, 예시 띠, 달력, 펫 카드를 다시 그린다. 목록이 다시 놓일 때(resort)도 부른다. */
     public void refresh() {
         LocalDate date = calendar.selected();
         listTitle.setText(date.getMonthValue() + "월 " + date.getDayOfMonth() + "일 ("
