@@ -11,7 +11,7 @@
 07 안에서 정한 것과 그 까닭:
 
 - **`PetController`는 생성자로 `AppData`와 `AppController`를 받고 `PetTalk`를 만든다.** `RewardController`와 같은 꼴이다(07 `PetController --> AppData`, `--> AppController`, `..> PetTalk`).
-- **이름 규칙(D-27)은 `PetController`의 private 도우미다.** 앞뒤 공백을 지우고(`strip`) 10자까지 자른 뒤, 비었으면 고양이는 "나비", 강아지는 "바둑이"다. 06 30번이 이 규칙을 `PetController`의 하는 일로 적었고 07은 이 규칙을 맡을 model 메서드를 그리지 않았다. S8의 `rename`도 이 도우미를 쓴다.
+- **이름 규칙(D-27)은 `PetController`의 static 도우미 `nameOf`다.** 앞뒤 공백을 지우고(`strip`) 10자까지 자른 뒤, 비었으면 고양이는 "나비", 강아지는 "바둑이"다. 06 30번이 이 규칙을 `PetController`의 하는 일로 적었고 07은 이 규칙을 맡을 model 메서드를 그리지 않았다. `choose`, `adopt`와 S8의 `rename`이 같이 쓴다. 07의 공개 메서드를 늘리지 않으려고 패키지 안에서만 보이게 두고, 이름의 경계(E-PET-7~11)는 테스트가 이 도우미를 불러 확인한다.
 - **저장 실패 창의 이름은 02 유스케이스 이름이다.** `choose`는 "반려동물 고르기"(UC-17), `adopt`는 "펫 데려오기"(UC-20), `select`는 "고른 펫 바꾸기"(UC-21)다. 06 22번은 창 내용에 한 일의 이름을 쓰고(예 "할 일 완료"), S1도 "연속 접속", "출석"으로 같게 했다([app-window.md](app-window.md)).
 - **`choose`는 펫 목록을 새 펫 하나로 바꾸고 그 펫을 고르며, 말하지 않는다.** 프로토타입과 같다. 첫 실행의 앱 데이터에는 펫이 없어([app-data.md](app-data.md) E-APP-4) 화면의 길에서는 펫 하나를 넣는 것과 같다. 목록을 비우려고 `AppData.clearPets()`를 더했다. 07의 `AppData`는 `pets` 필드만 그렸고, 값을 넣는 메서드(`addPet`, `setActiveKind`)는 M7부터 같은 꼴로 있다. 첫 말은 창이 보일 때 15번의 `FIRST_RUN`이다(06 30번).
 - **`adopt`는 그 종류가 있으면 `change`를 부르지 않고 false다.** 저장도 알림도 없다(프로토타입과 같다). 없으면 `change` 안에서 펫을 넣고 고른 뒤 `ADOPTED`를 `say(line, null)`(수가 없는 말)과 `sayInRoom(line)`으로 말한다(07 seq-uc20, D-56, D-62). 돌려주는 값은 `change` 뒤 그 종류의 펫이 있는지다. 06 30번 출력이 "데려왔으면 true"이고, 저장에 실패하면 되돌려 데려오지 않았으므로 false다. 프로토타입은 저장이 없어 늘 true다.
