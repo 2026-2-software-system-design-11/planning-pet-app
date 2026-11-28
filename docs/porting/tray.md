@@ -6,10 +6,10 @@ PR 하나의 크기 한도(1절) 때문에 둘로 나눠 옮긴다.
 
 | 몫 | 이슈 | 옮기는 것 |
 |---|---|---|
-| S11a | #522 | 이 기록 파일, `CloseAction`, `AppController.onClose`, `quit`, `dueReminders`와 그 `sent`, `SingleInstance`와 `Main`이 데이터를 읽기 전에 부르는 일 |
-| S11b | #524 | `Tray`의 트레이 아이콘과 메뉴(열기, 끝내기), 30초마다 `dueReminders`와 운영체제 알림, 알림을 누르면 홈에서 그 날짜 고르기, 창 닫기를 `onClose`로 잇기, `--autostart`, macOS Cmd+Q |
+| S11a | #522 | 이 기록 파일, `CloseAction`, `AppController.onClose`, `quit`, `dueReminders`와 그 `sent`, `SingleInstance` |
+| S11b | #524 | `Tray`의 트레이 아이콘과 메뉴(열기, 끝내기), 30초마다 `dueReminders`와 운영체제 알림, 알림을 누르면 홈에서 그 날짜 고르기, 창 닫기를 `onClose`로 잇기, `--autostart`, macOS Cmd+Q, `Main`이 데이터를 읽기 전에 `SingleInstance`를 부르고 신호에 창을 앞으로 가져오는 일(E-MAIN-20, E-ONE-5) |
 
-S11a가 끝나도 창 닫기는 앱을 끝내고(S11b까지 [frame.md](frame.md)대로) 알림은 뜨지 않는다. 두 번째 실행은 첫 앱의 창을 앞으로 가져오고 15번을 부른다.
+S11a가 끝나도 앱은 S11a의 클래스를 부르지 않는다. 창 닫기는 앱을 끝내고(S11b까지 [frame.md](frame.md)대로), 알림은 뜨지 않고, `SingleInstance`는 #524까지 앱이 부르지 않아 두 번째 실행도 앱 하나가 더 뜬다. 이 몫의 클래스는 테스트만 부른다.
 
 07 안에서 정한 것과 그 까닭:
 
@@ -20,12 +20,12 @@ S11a가 끝나도 창 닫기는 앱을 끝내고(S11b까지 [frame.md](frame.md)
 - **`dueReminders(now)`는 `Reminders.due(book, now, sent)`를 부른다.** `sent`는 `AppController`의 필드이고 저장하지 않는다(04 UC-13, 06 17번). 그래서 앱을 다시 켜면 아직 시작 전인 일정을 다시 알린다(E-NTF-9, D-24 "실행 중에만 기억").
 - **`SingleInstance(folder, onSignal)`는 데이터 폴더의 `planningpet.lock`을 잠근다(07 실행 모드).** 폴더가 없으면 만든다. 잡으면 `127.0.0.1`의 빈 포트에서 기다리는 데몬 스레드를 두고 그 포트를 파일에 적고 true다. 연결이 하나 올 때마다 `onSignal`을 부른다. 못 잡으면 파일의 포트로 연결 하나를 보내고 false다. 연결 자체가 신호라 주고받는 글은 없다.
 - **잠금은 파일 끝 너머 한 바이트에 건다.** Windows는 잠근 영역을 다른 프로세스가 읽지 못해서, 파일 전체를 잠그면 두 번째 앱이 포트를 읽지 못한다. 포트는 파일 앞쪽에 적고 잠금은 `Long.MAX_VALUE - 1`의 한 바이트에 건다. 같은 JVM 안의 두 번째 잠금은 `OverlappingFileLockException`이라 이것도 못 잡은 것으로 본다(T-ONE-2 검사가 이 길을 쓴다).
-- **`Main`의 신호는 그때 떠 있는 창을 앞으로 가져온다.** `Main`이 데이터를 읽기 전에 `acquire`를 부르고 false면 종료 코드 0으로 끝낸다. 신호는 Swing 스레드에서 지금 창(첫 실행의 반려동물 고르기 창이나 메인 창)을 보이고 앞으로 가져온다. 메인 창이면 이어서 15번 `onWindowShown`을 부른다(02 UC-01 1a, seq-uc01). 고르기 창이면 아직 펫이 없어 15번을 부르지 않는다.
+- **`Main`의 신호는 그때 떠 있는 창을 앞으로 가져온다(S11b #524).** `Main`이 데이터를 읽기 전에 `acquire`를 부르고 false면 종료 코드 0으로 끝낸다. 신호는 Swing 스레드에서 지금 창(첫 실행의 반려동물 고르기 창이나 메인 창)을 보이고 앞으로 가져온다. 메인 창이면 이어서 15번 `onWindowShown`을 부른다(02 UC-01 1a, seq-uc01). 고르기 창이면 아직 펫이 없어 15번을 부르지 않는다.
 - **T-ONE-3은 실행 JAR 대신 테스트 클래스 경로의 작은 자식 JVM을 쓴다.** 07 실행 모드는 다른 프로세스 검사가 실행 JAR를 쓴다고 적었지만, 실행 JAR는 창을 띄운다. 자식 JVM은 `SingleInstance`만 잡고 기다리며 창을 띄우지 않는다. 검사는 자식을 `destroyForcibly`(Linux와 macOS에서 `kill -9`와 같은 SIGKILL)로 끝내고, 검사가 실패해도 `finally`에서 자식을 끝낸다. 잠금 파일은 `@TempDir` 폴더에 있어 검사가 끝나면 지워진다.
 
 ## 1. 화면에서 따라 할 단계
 
-`java -jar build/libs/planning-pet-app.jar --data-dir 폴더`로 연다([build.md](build.md)). 트레이 아이콘, 메뉴, 운영체제 알림이 화면에 드러나는 단계는 S11b(#524)가 이 절에 더한다.
+`java -jar build/libs/planning-pet-app.jar --data-dir 폴더`로 연다([build.md](build.md)). 트레이 아이콘, 메뉴, 운영체제 알림이 화면에 드러나는 단계는 S11b(#524)가 이 절에 더한다. 아래 단계도 `Main`이 `SingleInstance`를 부르는 S11b(#524)부터 이렇게 된다.
 
 1. 앱을 열어 둔 채 같은 폴더로 한 번 더 연다. 두 번째 앱은 창 없이 끝나고 첫 앱의 메인 창이 앞으로 온다. 펫이 "오늘 할 일 2개 남았어."처럼 그날의 보통 말을 한다(UC-01 1a, T-ONE-2, 06 15번 `USUAL`). 폴더에 `planningpet.lock`이 생긴다.
 2. 빈 폴더로 열어 반려동물 고르기 창이 뜬 채 같은 폴더로 한 번 더 열면 두 번째 앱은 끝나고 고르기 창이 앞으로 온다(E-ONE-5).
@@ -33,7 +33,7 @@ S11a가 끝나도 창 닫기는 앱을 끝내고(S11b까지 [frame.md](frame.md)
 
 ## 2. 입력의 경계와 결과
 
-프로토타입 결과는 모두 "없음"이다. 06에 검사 줄이 없는 경계는 `E-CLOSE`(T-WIN은 06, frame.md의 E-WIN과 겹치지 않게), `E-NTF`(reminders.md의 E-NTF-7에 이어), `E-ONE` 번호다. 따로 적지 않으면 지금은 11-16(월) 14:50이고 할 일은 11-16 15:00 "통계 과제"다. "본 구현" 칸의 결과는 `AppControllerCloseTest`, `SingleInstanceTest`, `MainStartTest`가 번호 이름의 테스트로 확인한다.
+프로토타입 결과는 모두 "없음"이다. 06에 검사 줄이 없는 경계는 `E-CLOSE`(T-WIN은 06, frame.md의 E-WIN과 겹치지 않게), `E-NTF`(reminders.md의 E-NTF-7에 이어), `E-ONE` 번호다. 따로 적지 않으면 지금은 11-16(월) 14:50이고 할 일은 11-16 15:00 "통계 과제"다. "본 구현" 칸의 결과는 `AppControllerCloseTest`, `AppControllerReminderTest`, `SingleInstanceTest`가 번호 이름의 테스트로 확인한다. E-MAIN-20과 E-ONE-5는 S11b(#524)의 `MainStartTest`가 확인한다.
 
 | 번호 | 입력과 경계 | 넣은 값 | 프로토타입 결과 | 본 구현 |
 |---|---|---|---|---|
@@ -52,5 +52,5 @@ S11a가 끝나도 창 닫기는 앱을 끝내고(S11b까지 [frame.md](frame.md)
 | E-ONE-2 | 두 번 신호 | A가 잡은 뒤 B와 C가 차례로 `acquire` | 없음 | B와 C 모두 false, A의 `onSignal` 2번 |
 | E-ONE-3 | 포트를 읽을 수 없음 | A가 잡은 잠금 파일의 포트를 "abc"로 바꾼 뒤 B가 `acquire` | 없음 | B는 예외 없이 false, A의 `onSignal` 없음. A가 잠그고 포트를 적기 전의 짧은 틈과 같은 결과다 |
 | E-ONE-4 | 잠금 파일을 만들 수 없음 | 데이터 폴더 자리에 같은 이름의 파일 | 없음 | true(실행을 잇고 이어지는 읽기와 저장의 창이 알린다). 06 24번이 정하지 않음, 페르소나 투표 전 잠정. 안내 창을 띄우고 끝내는 길과 함께 투표에 올렸다 |
-| E-ONE-5 | 고르기 창 중 두 번째 실행 | 첫 실행 고르기 창이 떠 있을 때 신호 | 없음 | 고르기 창을 앞으로 가져오고 15번은 부르지 않는다 |
-| E-MAIN-20 | 메인 창 뒤 신호 | E-MAIN-11의 데이터로 메인 창을 연 뒤 신호 | 없음 | 부른 차례 끝에 창 앞으로, 15번 `USUAL`(오늘 이미 열었다) |
+| E-ONE-5 | 고르기 창 중 두 번째 실행 | 첫 실행 고르기 창이 떠 있을 때 신호 | 없음 | S11b(#524). 고르기 창을 앞으로 가져오고 15번은 부르지 않는다 |
+| E-MAIN-20 | 메인 창 뒤 신호 | E-MAIN-11의 데이터로 메인 창을 연 뒤 신호 | 없음 | S11b(#524). 창을 앞으로 가져오고 15번 `USUAL`(오늘 이미 열었다). 저장 없이 알림 1번, 연속 6일 그대로 |
