@@ -13,6 +13,7 @@ import planningpet.app.model.DataStore;
 import planningpet.app.model.LoadResult;
 import planningpet.app.view.AppWindow;
 import planningpet.app.view.Tray;
+import planningpet.common.view.Theme;
 
 /** 진입점. 실행 인자로 데이터 폴더를 정하고 클래스를 만들어 잇는다(07 실행 모드). */
 public final class Main {
@@ -57,6 +58,8 @@ public final class Main {
     private static void open(AppData data, AppController app, Clock clock, Shell shell) {
         AppWindow window = new AppWindow(data, app);
         DayWatcher watcher = new DayWatcher(data, app);
+        window.watch(() -> Theme.clear(window.root()));
+        Theme.clear(window.root());
         shell.main(window.root());
         app.onWindowShown();
         shell.timer(new Tray(watcher, clock));

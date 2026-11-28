@@ -15,7 +15,7 @@ public final class Tray {
         timer = new Timer(PERIOD_MS, e -> watcher.tick(LocalDateTime.now(clock)));
     }
 
-    /** 타이머를 켠다. 창과 함께 켜는 일은 S2의 Main 잇기가 한다. */
+    /** 타이머를 켠다. Main이 메인 창을 띄우고 15번을 부른 뒤 켠다(docs/porting/main.md). */
     public void start() {
         timer.start();
     }
