@@ -25,6 +25,8 @@ public final class AppController {
     private boolean changing;
     /** 창이 보이는 중인지. onWindowShown이 true로, onClose가 false로 둔다. */
     private boolean windowVisible;
+    /** quit가 부르는 끝내기. Main이 넣는다(docs/porting/tray.md). */
+    private Runnable quit = () -> { };
 
     public AppController(AppData data, DataStore store, Consumer<String> errors) {
         this.data = data;
@@ -37,6 +39,7 @@ public final class AppController {
     public Bubble getBubble() { return bubble; }
     public boolean isWindowVisible() { return windowVisible; }
     public void setHomeDay(Supplier<LocalDate> homeDay) { this.homeDay = homeDay; }
+    public void setQuit(Runnable quit) { this.quit = quit; }
 
     /**
      * 06 22번. 복사본을 떠 두고 edit를 적용한 뒤 save를 한 번 부른다. 저장에 실패하면 복사본으로 되돌리고 errors에 창 내용을 넘긴다.
@@ -143,5 +146,10 @@ public final class AppController {
         }
         change("처음 창 닫기 안내", () -> data.setTrayNoticeShown(true));
         return CloseAction.HIDE_WITH_NOTICE;
+    }
+
+    /** 트레이 메뉴의 끝내기와 macOS Cmd+Q(06 25번). 변경마다 이미 저장했으므로 끝내기만 한다. */
+    public void quit() {
+        quit.run();
     }
 }

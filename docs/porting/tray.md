@@ -41,7 +41,7 @@ S11a가 끝나도 창 닫기는 앱을 끝내고(S11b까지 [frame.md](frame.md)
 | T-WIN-2 | 두 번째 닫기 | `trayNoticeShown` true, 트레이 지원 | 없음 | `HIDE`, 창이 보이지 않음, 저장 없음 |
 | T-WIN-3 | 트레이 미지원 | `trayNoticeShown` false, 트레이 미지원 | 없음 | `QUIT`, `trayNoticeShown` false 그대로, 저장 없음. 앱을 끝내는 일은 view가 `quit`로 한다 |
 | E-CLOSE-1 | 처음 닫기 저장 실패(UC-19 1c) | T-WIN-1에 늘 실패하는 저장소, 두 번 닫기 | 없음 | 두 번 다 `HIDE_WITH_NOTICE`, `trayNoticeShown` false, 저장 실패 창 "처음 창 닫기 안내 저장에 실패해서 바꾸기 전으로 돌렸어요." 두 번 |
-| E-CLOSE-2 | 닫은 뒤 날이 바뀜 | 창을 보인 뒤 닫고(T-WIN-2) 11-17 04:00:10에 23번 확인 | 없음 | 말 없음, `lastOpenDay` 그대로, 알림 1번(T-DAYW-3을 실제 숨기기로). 그 뒤 15번이면 `BRIEFING` |
+| E-CLOSE-2 | 닫은 뒤 날이 바뀜 | 창을 보인 뒤 닫고(T-WIN-2) 11-17 04:00:10에 23번 확인 | 없음 | 말 없음, `lastOpenDay` 그대로, 알림 1번(T-DAYW-3을 실제 숨기기로) |
 | E-CLOSE-3 | 끝내기 | `setQuit`로 넣은 함수, `quit` | 없음 | 넣은 함수가 1번 불린다. 넣지 않았으면 아무 일도 없다 |
 | E-NTF-8 | 실행 중 보낸 알림 | 14:50에 `dueReminders`, 이어서 14:50:30 | 없음 | "통계 과제 10분 뒤 시작", 그다음 없음(T-NTF-6이 controller의 `sent`로) |
 | E-NTF-9 | 다시 켠 앱 | E-NTF-8 뒤 같은 데이터로 새 `AppController`, 14:55 | 없음 | "통계 과제 5분 뒤 시작"(`sent`는 저장하지 않는다) |
