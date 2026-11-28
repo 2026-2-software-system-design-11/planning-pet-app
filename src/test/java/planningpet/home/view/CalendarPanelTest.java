@@ -1,8 +1,18 @@
 package planningpet.home.view;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.GridLayout;
+import java.awt.Insets;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.IOException;
@@ -15,8 +25,14 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+import javax.swing.UIManager;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import planningpet.app.model.AppData;
+import planningpet.common.view.CircleButton;
 import planningpet.common.view.Snap;
 import planningpet.common.view.Theme;
 import planningpet.schedule.model.Category;
@@ -29,6 +45,19 @@ class CalendarPanelTest {
     private final List<Task> tasks = new ArrayList<>();
     private final List<LocalDate> picks = new ArrayList<>();
     private AppData data;
+
+    @BeforeEach
+    void install() {
+        Theme.install();
+    }
+
+    @AfterEach
+    void undoInstall() {
+        for (Object key : List.copyOf(UIManager.getLookAndFeelDefaults().keySet())) {
+            UIManager.put(key, null);
+        }
+        UIManager.put("swing.boldMetal", null);
+    }
 
     private CalendarPanel panel(String now, DayOfWeek start, boolean fixed) {
         data = new AppData(Clock.fixed(LocalDateTime.parse(now).atZone(ZONE).toInstant(), ZONE), tasks, List.of());
@@ -81,12 +110,14 @@ class CalendarPanelTest {
     void eMon1MondayStart() {
         CalendarPanel c = panel("2026-11-16T10:00", DayOfWeek.MONDAY);
         assertEquals("42 empty [0, 1, 2, 3, 4, 5, 36, 37, 38, 39, 40, 41]", layout(c));
+        assertEquals("월화수목금토일", c.weekText());
     }
 
     @Test
     void eMon2SundayStart() {
         CalendarPanel c = panel("2026-11-16T10:00", DayOfWeek.SUNDAY);
         assertEquals("35 empty [30, 31, 32, 33, 34]", layout(c));
+        assertEquals("일월화수목금토", c.weekText());
     }
 
     @Test
@@ -113,6 +144,37 @@ class CalendarPanelTest {
             l.mouseClicked(new MouseEvent(c, MouseEvent.MOUSE_CLICKED, 0, 0, 5, 5, 1, false));
         }
         assertEquals(List.of(LocalDate.of(2026, 11, 18)), picks);
+    }
+
+    @Test
+    void eMon4WeekStartChanged() {
+        CalendarPanel c = panel("2026-11-16T10:00", DayOfWeek.MONDAY);
+        data.setWeekStart(DayOfWeek.SUNDAY);
+        assertEquals("월화수목금토일", c.weekText());
+        assertEquals(42, c.grid.getComponentCount());
+        c.refresh();
+        assertEquals("일월화수목금토", c.weekText());
+        assertEquals("35 empty [30, 31, 32, 33, 34]", layout(c));
+    }
+
+    @Test
+    void eMon5WeekRowAndLayout() {
+        CalendarPanel c = panel("2026-11-16T10:00", DayOfWeek.MONDAY);
+        Component[] days = c.week.getComponents();
+        for (int i = 0; i < 7; i++) {
+            JLabel l = (JLabel) days[i];
+            assertEquals(i == 5 ? Theme.SATURDAY : i == 6 ? Theme.SUNDAY : Theme.INK_SUB, l.getForeground());
+            assertEquals(Theme.bold(13), l.getFont());
+            assertEquals(new Insets(6, 0, 2, 0), l.getInsets());
+            assertEquals(SwingConstants.CENTER, l.getHorizontalAlignment());
+        }
+        assertEquals(25, c.week.getPreferredSize().height);
+        GridLayout week = (GridLayout) c.week.getLayout();
+        assertEquals("1 7 2 0", week.getRows() + " " + week.getColumns() + " " + week.getHgap() + " " + week.getVgap());
+        GridLayout grid = (GridLayout) c.grid.getLayout();
+        assertEquals("0 7 2 2", grid.getRows() + " " + grid.getColumns() + " " + grid.getHgap() + " " + grid.getVgap());
+        assertEquals(4, ((BorderLayout) c.getLayout()).getVgap());
+        assertFalse(c.isOpaque() || c.grid.isOpaque() || c.week.isOpaque());
     }
 
     @Test
@@ -163,5 +225,99 @@ class CalendarPanelTest {
             assertEquals("<html><center>22 <font size='2' color='#C0392B'>마감</font></center></html>", cell(c, 22).getText());
             assertEquals("E사 지원서 마감, F사 서류 마감", cell(c, 20).getToolTipText());
         }
+    }
+
+    /** 패널 전체를 글 없이 기준 그림과 맞춘다. */
+    private static void looksPanel(String name, CalendarPanel c, int w, int h) throws IOException {
+        Snap.blank(c);
+        for (Component k : c.grid.getComponents()) {
+            if (k instanceof DayCell d) {
+                d.blankText();
+            }
+        }
+        Snap.assertLaidOutLooksLikePrototype("month-" + name + "-panel-" + w + "x" + h, c, w, h);
+    }
+
+    @Test
+    void eHead1TitleRow() {
+        CalendarPanel c = panel("2026-11-16T10:00", DayOfWeek.MONDAY);
+        assertEquals("2026년 11월", c.title.getText());
+        assertEquals(Theme.heavy(21), c.title.getFont());
+        assertEquals("24 8", c.title.getIcon().getIconWidth() + " " + c.title.getIconTextGap());
+        JPanel head = (JPanel) c.title.getParent();
+        assertEquals(new Insets(0, 0, 9, 0), head.getInsets());
+        JPanel arrows = (JPanel) head.getComponent(1);
+        assertEquals(List.of(c.today, c.prev, c.next), List.of(arrows.getComponents()));
+        FlowLayout flow = (FlowLayout) arrows.getLayout();
+        assertEquals(FlowLayout.RIGHT + " 4 0", flow.getAlignment() + " " + flow.getHgap() + " " + flow.getVgap());
+        assertEquals(Theme.bold(12), c.today.getFont());
+        assertEquals(new Insets(5, 12, 7, 12), c.today.getInsets());
+        assertEquals(new Dimension(44, 27), c.today.getPreferredSize());
+        assertEquals(new Dimension(32, 32), c.prev.getPreferredSize());
+        Snap.layOut(c, 328, 300);
+        assertEquals(new Rectangle(0, 0, 328, 41), head.getBounds());
+        assertEquals(new Rectangle(0, 41, 328, 25), c.week.getBounds());
+        assertEquals(new Rectangle(0, 70, 328, 230), c.grid.getBounds());
+        assertEquals("4,2 52,0 88,0", c.today.getX() + "," + c.today.getY() + " " + c.prev.getX() + "," + c.prev.getY() + " "
+                + c.next.getX() + "," + c.next.getY());
+    }
+
+    @Test
+    void eHead2Pictures() throws IOException {
+        for (DayOfWeek start : new DayOfWeek[] {DayOfWeek.MONDAY, DayOfWeek.SUNDAY}) {
+            for (int[] s : new int[][] {{328, 300}, {560, 420}, {200, 200}, {0, 0}}) {
+                looksPanel(start.name().substring(0, 3).toLowerCase() + "-2026-11", panel("2026-11-16T10:00", start), s[0], s[1]);
+            }
+        }
+    }
+
+    @Test
+    void eHead4TodayButtonDim() {
+        for (String now : new String[] {"2026-11-16T10:00", "2026-11-17T01:00"}) {
+            CalendarPanel c = panel(now, DayOfWeek.MONDAY);
+            assertFalse(c.today.isEnabled());
+            assertEquals("오늘을 보고 있어요", c.today.getToolTipText());
+            assertEquals("2026년 11월", c.title.getText());
+        }
+    }
+
+    @Test
+    void eHead5Names() {
+        CalendarPanel c = panel("2026-11-16T10:00", DayOfWeek.MONDAY);
+        assertEquals("이전 달 이전 달 다음 달 다음 달 오늘", c.prev.getToolTipText() + " " + c.prev.getAccessibleContext().getAccessibleName()
+                + " " + c.next.getToolTipText() + " " + c.next.getAccessibleContext().getAccessibleName() + " "
+                + c.today.getAccessibleContext().getAccessibleName());
+        assertEquals(Cursor.HAND_CURSOR, c.prev.getCursor().getType());
+        assertEquals(0, c.today.getActionListeners().length);
+    }
+
+    /** 꺾쇠를 차례로 누를 때마다 달 제목과 칸 수를 모으고 끝에 고른 날을 붙인다. */
+    private static String moves(CalendarPanel c, CircleButton... presses) {
+        StringBuilder b = new StringBuilder();
+        for (CircleButton p : presses) {
+            p.doClick();
+            b.append(c.title.getText()).append(' ').append(c.grid.getComponentCount()).append(", ");
+        }
+        return b + "고른 날 " + c.selected();
+    }
+
+    @Test
+    void eHead3MoveAcrossYears() throws IOException {
+        CalendarPanel c = panel("2026-11-16T10:00", DayOfWeek.MONDAY);
+        assertEquals("2026년 12월 35, 2026년 11월 42, 2026년 10월 35, 고른 날 2026-11-16", moves(c, c.next, c.prev, c.prev));
+        c = panel("2026-12-20T10:00", DayOfWeek.MONDAY);
+        assertEquals("2027년 1월 35, 2027년 2월 28, 고른 날 2026-12-20", moves(c, c.next, c.next));
+        c = panel("2026-01-10T10:00", DayOfWeek.MONDAY);
+        assertEquals("2025년 12월 35, 고른 날 2026-01-10", moves(c, c.prev));
+        c = panel("2026-11-16T10:00", DayOfWeek.MONDAY);
+        c.next.doClick();
+        assertTrue(c.today.isEnabled());
+        assertNull(c.today.getToolTipText());
+        for (int[] s : new int[][] {{328, 300}, {560, 420}, {200, 200}, {0, 0}}) {
+            looksPanel("next-2026-12", c, s[0], s[1]);
+        }
+        c.prev.doClick();
+        assertFalse(c.today.isEnabled());
+        assertEquals("오늘을 보고 있어요", c.today.getToolTipText());
     }
 }
