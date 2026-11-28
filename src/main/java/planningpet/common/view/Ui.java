@@ -23,6 +23,9 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingUtilities;
+import javax.swing.event.AncestorEvent;
+import javax.swing.event.AncestorListener;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
@@ -33,11 +36,29 @@ import javax.swing.text.DocumentFilter;
 import javax.swing.text.JTextComponent;
 
 /**
- * 화면 여러 곳이 같이 쓰는 작은 부품. 입력칸과 칸 글이 쓰는 것, 툴팁의 HTML 글자 바꾸기, 일정 입력 창의 칸 도우미와 오류 글 줄 바꾸기만 옮겼고, 나머지는 그것을
- * 쓰는 화면의 단위가 더한다(docs/porting/pick.md, home.md, task-dialog.md).
+ * 화면 여러 곳이 같이 쓰는 작은 부품. 입력칸과 칸 글이 쓰는 것, 툴팁의 HTML 글자 바꾸기, 일정 입력 창의 칸 도우미와 오류 글 줄 바꾸기, 창이 뜰 때
+ * 초점 주기만 옮겼고, 나머지는 그것을 쓰는 화면의 단위가 더한다(docs/porting/pick.md, home.md, task-dialog.md, character.md).
  */
 public final class Ui {
     private Ui() {
+    }
+
+    /** 창이 뜨면 이 칸에 초점을 준다. JOptionPane은 처음 값 단추에 초점을 주어 이름 칸에 바로 쓸 수 없었다. */
+    public static void focusWhenShown(JComponent c) {
+        c.addAncestorListener(new AncestorListener() {
+            @Override
+            public void ancestorAdded(AncestorEvent e) {
+                SwingUtilities.invokeLater(c::requestFocusInWindow);
+            }
+
+            @Override
+            public void ancestorRemoved(AncestorEvent e) {
+            }
+
+            @Override
+            public void ancestorMoved(AncestorEvent e) {
+            }
+        });
     }
 
     /** 칸 아래에 두는 흐린 작은 안내 글. */

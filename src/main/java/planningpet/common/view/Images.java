@@ -8,12 +8,13 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 import javax.imageio.ImageIO;
+import planningpet.pet.model.WearId;
 import planningpet.shop.model.ItemId;
 
 /**
  * 디자인 시스템 6절의 그림. 모두 나의 방 예시(2026-11-23)의 카툰 셀 채색 한 벌이다. 만든 방법은 prototype/assets/PROMPTS.md에 있다.
- * 없으면 null을 돌려주고 부르는 쪽이 그리지 않는다. 창 바탕과 캐릭터 창의 큰 펫 무대가 쓰는 것만 옮겼고, 다른 그림은 그것을 쓰는 화면의
- * 단위가 더한다(docs/porting/character.md S8c2).
+ * 없으면 null을 돌려주고 부르는 쪽이 그리지 않는다. 창 바탕과 캐릭터 창의 큰 펫 무대와 장신구 카드가 쓰는 것만 옮겼고, 다른 그림은 그것을
+ * 쓰는 화면의 단위가 더한다(docs/porting/character.md S8c2, S8d2).
  */
 public final class Images {
     /** 가구와 펫이 없는 방. 캐릭터 창 큰 펫 무대의 바탕이다. */
@@ -24,6 +25,13 @@ public final class Images {
     public static final BufferedImage CLOUD = load("cloud.png");
     /** 아이템(D-28)과 파일 이름. 캐릭터 창 무대의 러그와 털실 공만 있고 나머지 열하나는 나의 방(S7)이 더한다. */
     private static final Map<ItemId, String> ITEM_FILES = new EnumMap<>(Map.of(ItemId.RUG, "rug", ItemId.YARN_BALL, "yarn"));
+    /** 장신구(D-51)와 wear 안 파일 이름. 05 Q-28대로 펫 그림과 같은 도형 코드로 그려 저장한 것이다. */
+    private static final Map<WearId, String> WEAR_FILES = new EnumMap<>(Map.ofEntries(
+            Map.entry(WearId.BASIC_NECKLACE, "collar-basic"), Map.entry(WearId.RIBBON_NECKLACE, "collar-ribbon"),
+            Map.entry(WearId.STAR_NECKLACE, "collar-star"), Map.entry(WearId.CROWN_NECKLACE, "collar-crown"),
+            Map.entry(WearId.FLOWER_PIN, "pin-flower"), Map.entry(WearId.RIBBON_PIN, "pin-ribbon"), Map.entry(WearId.GLASSES, "glasses"),
+            Map.entry(WearId.STRAW_HAT, "hat-straw"), Map.entry(WearId.BERET, "hat-beret"), Map.entry(WearId.CROWN, "hat-crown"),
+            Map.entry(WearId.SCARF, "scarf"), Map.entry(WearId.VEST, "vest"), Map.entry(WearId.CAPE, "cape")));
     /** 가장자리를 잘라 둔 그림. 열쇠는 assets 안 파일 이름이다. */
     private static final Map<String, BufferedImage> CACHE = new HashMap<>();
 
@@ -43,6 +51,12 @@ public final class Images {
     public static BufferedImage item(ItemId item) {
         String file = ITEM_FILES.get(item);
         return file == null ? null : trimmed("items/" + file + ".png");
+    }
+
+    /** 장신구 그림(캐릭터 창 장신구 카드). 투명한 가장자리는 잘라 두고 같은 그림을 돌려준다. null이면 null이다. */
+    public static BufferedImage wear(WearId wear) {
+        String file = WEAR_FILES.get(wear);
+        return file == null ? null : trimmed("wear/" + file + ".png");
     }
 
     private static BufferedImage trimmed(String file) {

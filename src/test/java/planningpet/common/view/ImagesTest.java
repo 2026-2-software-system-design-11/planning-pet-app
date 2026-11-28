@@ -3,14 +3,16 @@ package planningpet.common.view;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.util.function.Consumer;
 import org.junit.jupiter.api.Test;
+import planningpet.pet.model.WearId;
 import planningpet.shop.model.ItemId;
 
-/** 방 그림과 아이템 그림, 상자에 맞춰 그리기. 번호는 docs/porting/character.md S8c2. */
+/** 방 그림과 아이템 그림, 장신구 그림, 상자에 맞춰 그리기. 번호는 docs/porting/character.md S8c2, S8d2. */
 class ImagesTest {
     private static String size(BufferedImage im) {
         return im.getWidth() + "x" + im.getHeight();
@@ -90,5 +92,27 @@ class ImagesTest {
         assertEquals("0 15 29 29", painted(g -> Images.fitBottom(g, solid(20, 10), 0, 0, 30, 30)));
         assertEquals("7 0 21 29", painted(g -> Images.fit(g, solid(10, 20), 0, 0, 30, 30)));
         assertEquals("5 24 29 35", painted(g -> Images.fitBottom(g, solid(20, 10), 5, 4, 25, 32)));
+    }
+
+    /** 그림의 x번째 열(column이 참)이나 y번째 줄에 알파 24를 넘는 픽셀이 있다. */
+    private static boolean edge(BufferedImage im, int at, boolean column) {
+        int n = column ? im.getHeight() : im.getWidth();
+        for (int i = 0; i < n; i++) {
+            if ((im.getRGB(column ? at : i, column ? i : at) >>> 24) > 24) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Test
+    void eImg5Wear() {
+        for (WearId w : WearId.values()) {
+            BufferedImage im = Images.wear(w);
+            assertSame(im, Images.wear(w), w.label());
+            assertTrue(edge(im, 0, true) && edge(im, im.getWidth() - 1, true), w.label() + " 왼쪽과 오른쪽 끝");
+            assertTrue(edge(im, 0, false) && edge(im, im.getHeight() - 1, false), w.label() + " 위와 아래 끝");
+        }
+        assertNull(Images.wear(null));
     }
 }
