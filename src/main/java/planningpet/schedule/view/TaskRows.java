@@ -13,6 +13,7 @@ import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import javax.swing.BorderFactory;
@@ -212,7 +213,8 @@ public final class TaskRows extends JPanel {
         when.addActionListener(e -> onTime.open(t, listDay, when));
         // D-35: 고정 일정도 체크한다. 체크 옆에 "고정" 꼬리표를 둔다.
         row.add(t.getKind() == Kind.FIXED ? middle(box, fixedTag()) : middle(box), BorderLayout.WEST);
-        row.add(new TitleLabel(t), BorderLayout.CENTER);
+        TitleLabel label = new TitleLabel(t);
+        row.add(label, BorderLayout.CENTER);
         row.add(middle(when, minutes, pencil, trash), BorderLayout.EAST);
         // D-94: 마감 글, 하려던 일, "오늘 마감"과 "마감"은 제목 아래 둘째 줄 왼쪽이다. 제목이 줄의 폭을 먼저 받는다.
         JLabel marks = marks(data.getBook().dueText(t), missedNote(t, today), dueTag(t, listDay, today));
@@ -234,7 +236,8 @@ public final class TaskRows extends JPanel {
                 row.repaint();
             }
         };
-        row.addMouseListener(hover);
+        // 줄과 줄 안 버튼 위에 있는 동안이다. 듣는이가 없는 걸리는 시간, 둘째 줄, "고정" 위의 마우스는 줄이 받는다.
+        List.of(row, label, box, pencil, trash, when).forEach(c -> c.addMouseListener(hover));
         return row;
     }
 

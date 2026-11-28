@@ -297,4 +297,32 @@ class TaskRowTest {
     void eHover3Marks() throws IOException {
         overAndBack("period", period(false), "");
     }
+
+    /** 글 그대로 그린 줄의 왼쪽 끝 가운데(3, 높이의 반) 픽셀. 바탕이 없으면 0이다. */
+    private static int edge(JPanel p) {
+        BufferedImage img = new BufferedImage(p.getWidth() + 4, p.getHeight() + 4, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = img.createGraphics();
+        p.paint(g);
+        g.dispose();
+        return img.getRGB(3, p.getHeight() / 2);
+    }
+
+    @Test
+    void eHover4Children() {
+        JPanel p = row(task(Kind.TASK, "토익 공부", null, 30, false), "", TODAY, 480);
+        JPanel left = (JPanel) p.getComponent(0);
+        JPanel east = (JPanel) p.getComponent(2);
+        Component[] kids = {p.getComponent(1), left.getComponent(0), east.getComponent(0), east.getComponent(2), east.getComponent(3),
+            east.getComponent(1), left, east};
+        for (int i = 0; i < kids.length; i++) {
+            mouse(kids[i], MouseEvent.MOUSE_ENTERED);
+            assertEquals(i < 5 ? Theme.DAY.getRGB() : 0, edge(p), "부품 " + i);
+            mouse(kids[i], MouseEvent.MOUSE_EXITED);
+            assertEquals(0, edge(p));
+        }
+        mouse(p, MouseEvent.MOUSE_ENTERED);
+        mouse(p, MouseEvent.MOUSE_EXITED);
+        mouse(kids[0], MouseEvent.MOUSE_ENTERED);
+        assertEquals(Theme.DAY.getRGB(), edge(p));
+    }
 }
