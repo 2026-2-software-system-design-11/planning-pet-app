@@ -7,8 +7,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.DefaultKeyboardFocusManager;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
+import java.awt.KeyboardFocusManager;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.event.MouseEvent;
@@ -40,6 +43,13 @@ class PickCardTest {
         @Override
         public void addDirtyRegion(JComponent c, int x, int y, int w, int h) {
             all.add(new Rectangle(x, y, w, h));
+        }
+    }
+
+    /** 창 없이 초점을 주려고 setGlobalFocusOwner를 연다(RoundFieldTest와 같다). 검사 동안만 건다. */
+    private static final class Focus extends DefaultKeyboardFocusManager {
+        void own(Component c) {
+            setGlobalFocusOwner(c);
         }
     }
 
@@ -166,6 +176,30 @@ class PickCardTest {
             off.getModel().setRollover(true);
             assertFalse(off.getModel().isRollover());
             looks(selected ? "cat-on" : "cat", off, 248, 262);
+        }
+    }
+
+    @Test
+    void eCard7KeyboardFocus() throws IOException {
+        Focus focus = new Focus();
+        KeyboardFocusManager.setCurrentKeyboardFocusManager(focus);
+        try {
+            for (PetKind kind : PetKind.values()) {
+                for (boolean selected : new boolean[] {false, true}) {
+                    PickCard c = blank(kind, selected);
+                    focus.own(c);
+                    assertTrue(c.isFocusOwner());
+                    looks((kind == PetKind.CAT ? "cat" : "dog") + (selected ? "-on" : "") + "-focus", c, 248, 262);
+                }
+            }
+            PickCard over = blank(PetKind.CAT, false);
+            focus.own(over);
+            mouse(over, MouseEvent.MOUSE_ENTERED);
+            looks("cat-focus-over", over, 248, 262);
+            focus.own(blank(PetKind.DOG, false));
+            looks("cat-over", over, 248, 262);
+        } finally {
+            KeyboardFocusManager.setCurrentKeyboardFocusManager(null);
         }
     }
 

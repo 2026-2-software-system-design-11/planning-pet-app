@@ -139,6 +139,12 @@ public final class PickCard extends JRadioButton {
             g.setStroke(new BasicStroke(over ? 2f : 1.5f));
         }
         g.draw(new RoundRectangle2D.Double(x + ring, y + ring, w - ring * 2, h - ring * 2, RADIUS - 8, RADIUS - 8));
+        // 키보드 초점: 테두리 안쪽 4에 민트 점선 고리를 다른 모양 위에 더한다.
+        if (isFocusOwner()) {
+            g.setColor(PickScene.alpha(Theme.MINT_DEEP, 150));
+            g.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1f, new float[] {4f, 4f}, 0f));
+            g.draw(new RoundRectangle2D.Double(x + ring + 4, y + ring + 4, w - ring * 2 - 8, h - ring * 2 - 8, RADIUS - 14, RADIUS - 14));
+        }
         // 체크 배지: 색이 아니라 모양으로도 고름을 보인다(ICON 바탕은 카드 바탕과 5.7:1).
         if (on) {
             int b = 26;
