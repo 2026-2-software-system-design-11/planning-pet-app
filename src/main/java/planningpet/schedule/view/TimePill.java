@@ -57,10 +57,12 @@ final class TimePill extends JButton {
         Graphics2D g = (Graphics2D) graphics.create();
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        boolean over = getModel().isRollover();
+        boolean down = getModel().isPressed() && getModel().isArmed();
         int w = getWidth() - 1;
         int h = getHeight() - 1;
-        Color fill = empty ? Theme.MINT_PALE : Theme.DAY;
-        Color line = empty ? Theme.MINT_LINE : Theme.CARD_LINE;
+        Color fill = down ? Theme.MINT_SOFT : over ? Theme.MINT_PALE : empty ? Theme.MINT_PALE : Theme.DAY;
+        Color line = over || down ? Theme.MINT : empty ? Theme.MINT_LINE : Theme.CARD_LINE;
         if (done) {
             // 흐린 알약은 바탕과 테두리도 끝낸 줄처럼 옅다(민트를 쓰지 않는다).
             fill = Theme.CARD_TOP;

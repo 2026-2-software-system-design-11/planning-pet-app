@@ -96,6 +96,33 @@ class TimePillTest {
         assertEquals(new Dimension(155, 28), pill("23:30~01:00(다음 날)").getMaximumSize());
     }
 
+    private static TimePill over(TimePill p) {
+        p.getModel().setRollover(true);
+        return p;
+    }
+
+    @Test
+    void eTpill6Over() throws IOException {
+        looks("over", over(pill(T)));
+        looks("over-empty", over(pill("")));
+        TimePill done = over(new TimePill(T, true, true, null));
+        assertFalse(done.getModel().isRollover());
+        looks("done", done);
+    }
+
+    private static TimePill down(TimePill p, boolean armed) {
+        p.getModel().setArmed(armed);
+        p.getModel().setPressed(true);
+        return p;
+    }
+
+    @Test
+    void eTpill7Down() throws IOException {
+        looks("down", down(pill(T), true));
+        looks("down-empty", down(pill(""), true));
+        looks("time", down(pill(T), false));
+    }
+
     @Test
     void eTpill9OtherSizes() throws IOException {
         for (int[] s : new int[][] {{200, 40}, {60, 20}, {10, 10}, {0, 0}}) {
