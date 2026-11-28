@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static planningpet.schedule.model.Tasks.d;
+import static planningpet.schedule.model.Tasks.task;
 
 import java.awt.Component;
 import java.awt.Container;
@@ -34,6 +36,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import planningpet.app.model.AppData;
+import planningpet.app.model.Apps;
 import planningpet.app.model.DataStore;
 import planningpet.app.model.LoadResult;
 import planningpet.app.model.LoadResult.Reason;
@@ -50,6 +53,7 @@ import planningpet.schedule.model.Category;
 import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Task;
 import planningpet.schedule.model.TaskDraft;
+import planningpet.schedule.view.ScheduleScreen;
 import planningpet.schedule.view.TaskRows;
 import planningpet.settings.view.SettingsScreen;
 
@@ -342,7 +346,7 @@ class MainStartTest {
         data.changed();
         Snap.layOut(root, 1000, 680);
         MainScreen home = parts(root, MainScreen.class).get(0);
-        assertEquals("[홈, 설정] 174,92 804x564 [오늘도 계획을 세우고, 조금씩 성장해요!] 0",
+        assertEquals("[홈, 일정관리, 설정] 174,92 804x564 [오늘도 계획을 세우고, 조금씩 성장해요!] 0",
                 parts(root, JToggleButton.class).stream().filter(b -> b.getClass() == JToggleButton.class).map(AbstractButton::getText).toList() + " "
                         + at(SwingUtilities.convertRectangle(home.getParent(), home.getBounds(), root)) + " "
                         + parts(root, JLabel.class).stream().map(JLabel::getText).filter(t -> t != null && t.startsWith("오늘도")).toList() + " "
@@ -385,5 +389,52 @@ class MainStartTest {
         }
         assertEquals(List.of("16,67 383x402", "졸업 작품 기획서 ~11/19까지 오늘 마감 6,33 373x15", "E사 지원서 ~11/22까지 18일에 하려던 일 6,33 373x15"),
                 got);
+    }
+
+    /** 창의 메뉴 단추 이름과 단추. */
+    private List<JToggleButton> menu() {
+        return parts(root, JToggleButton.class).stream().filter(b -> b.getClass() == JToggleButton.class).toList();
+    }
+
+    /**
+     * 일정관리가 메뉴 "홈"과 "설정" 사이에 붙고, 고르면 말풍선이 힌트다. 주를 옮기면 앱 창의 다시 그리기로 Theme.clear까지 돌아 목록 안에
+     * 불투명 판이 없다(docs/porting/schedule.md S5d E-SCH-14).
+     */
+    @Test
+    void eSch14ScheduleAttached() {
+        AppData data = Apps.data("2026-11-16T10:00", task("과제", d(18)).task());
+        Main.start(store(LoadResult.loaded(data), false), folder, CLOCK, shell, false);
+        ScheduleScreen schedule = parts(root, ScheduleScreen.class).get(0);
+        TaskRows rows = parts(schedule, TaskRows.class).get(0);
+        menu().get(1).doClick();
+        schedule.move(schedule.weekStart());
+        assertEquals("[홈, 일정관리, 설정] [내 일정을 한눈에 확인하고, 체계적으로 관리해요!] 1 "
+                + "[<html><div style='width:150px'>이번 주 남은 날의 시각 없는 할 일이 1개 있어. 자동 배치를 눌러 볼래?</div></html>] 0",
+                menu().stream().map(AbstractButton::getText).toList() + " "
+                        + parts(root, JLabel.class).stream().map(JLabel::getText).filter(t -> t != null && t.startsWith("내 일정")).toList() + " "
+                        + rows.getComponentCount() + " "
+                        + parts(schedule, JLabel.class).stream().map(JLabel::getText).filter(t -> t != null && t.contains("150px")).toList() + " "
+                        + panels(rows, new ArrayList<>()).stream().filter(JPanel::isOpaque).count());
+    }
+
+    /** 06 T-WEEK-6(D-102)을 창 1000x680의 일정관리 목록으로 본다. 네 줄 모두 두 줄 56이고 시계 단추가 연필과 같은 크기다. */
+    @Test
+    void tWeek6TwoLineRowsInWindow() {
+        AppData data = Apps.data("2026-11-18T10:00", task("지원서", d(12)).period(d(12), d(20)).task(),
+                task("발표", d(18)).period(d(18), d(18)).task(), task("토익", d(19)).period(d(19), LocalDate.of(2027, 10, 20)).task());
+        Main.start(store(LoadResult.loaded(data), false), folder, Apps.clock("2026-11-18T10:00"), shell, false);
+        Snap.layOut(root, 1000, 680);
+        menu().get(1).doClick();
+        Snap.layOut(root, 1000, 680);
+        List<String> got = new ArrayList<>();
+        for (Component c : parts(parts(root, ScheduleScreen.class).get(0), TaskRows.class).get(0).getComponents()) {
+            JPanel line = (JPanel) ((JPanel) c).getComponent(3);
+            Component[] b = ((JPanel) line.getComponent(line.getComponentCount() - 1)).getComponents();
+            got.add(((JLabel) ((JPanel) c).getComponent(1)).getText().replaceAll("<[^>]+>", "") + " "
+                    + ((JLabel) line.getComponent(0)).getText().replaceAll("<[^>]+>", "") + " " + c.getHeight() + " "
+                    + b[0].getSize().equals(b[1].getSize()));
+        }
+        assertEquals(List.of("11/18 지원서 ~11/20까지 56 true", "11/18 발표 오늘 마감 56 true", "11/19 토익 ~10/20까지 56 true",
+                "11/20 지원서 마감 56 true"), got);
     }
 }

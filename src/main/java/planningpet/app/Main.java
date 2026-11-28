@@ -27,6 +27,7 @@ import planningpet.home.view.MainScreen;
 import planningpet.pet.controller.PetController;
 import planningpet.pet.view.PickDialog;
 import planningpet.reward.controller.RewardController;
+import planningpet.schedule.view.ScheduleScreen;
 import planningpet.settings.controller.SettingsController;
 import planningpet.settings.store.OsAutostart;
 import planningpet.settings.view.SettingsScreen;
@@ -171,9 +172,16 @@ public final class Main {
      */
     private static void open(AppData data, AppController app, Path folder, Clock clock, Shell shell, boolean autostart) {
         AppWindow window = new AppWindow(data, app);
-        MainScreen home = new MainScreen(data, app, new HomeController(data, app), new RewardController(data, app));
+        RewardController reward = new RewardController(data, app);
+        MainScreen home = new MainScreen(data, app, new HomeController(data, app), reward);
         window.watch(home::refresh);
         window.addScreen("홈", "오늘도 계획을 세우고, 조금씩 성장해요!", home);
+        // 일정관리의 창 여는 함수(onEdit, onDelete, onTime, openAdd, openAutoPlace)는 S5f와 S6이 넣는다.
+        ScheduleScreen schedule = new ScheduleScreen(data, app, reward, clock);
+        schedule.shown = () -> window.current().equals("일정관리");
+        schedule.redraw = window::redraw;
+        window.watch(schedule::refresh);
+        window.addScreen("일정관리", "내 일정을 한눈에 확인하고, 체계적으로 관리해요!", schedule);
         DayWatcher watcher = new DayWatcher(data, app);
         OsAutostart os = OsAutostart.here();
         SettingsScreen settings = new SettingsScreen(data, new SettingsController(data, app, os), os, folder);
