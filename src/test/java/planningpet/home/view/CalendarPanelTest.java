@@ -288,7 +288,7 @@ class CalendarPanelTest {
                 + " " + c.next.getToolTipText() + " " + c.next.getAccessibleContext().getAccessibleName() + " "
                 + c.today.getAccessibleContext().getAccessibleName());
         assertEquals(Cursor.HAND_CURSOR, c.prev.getCursor().getType());
-        assertEquals(0, c.today.getActionListeners().length);
+        assertEquals(1, c.today.getActionListeners().length);
     }
 
     /** 꺾쇠를 차례로 누를 때마다 달 제목과 칸 수를 모으고 끝에 고른 날을 붙인다. */
@@ -385,5 +385,28 @@ class CalendarPanelTest {
         assertEquals(0, empty.getMouseListeners().length);
         assertEquals(d(11, 16), c.selected());
         assertEquals(List.of(), picks);
+    }
+
+    @Test
+    void eSel4TodayButton() {
+        CalendarPanel c = picked18();
+        c.next.doClick();
+        press(cell(c, 5));
+        c.today.doClick();
+        c.refresh();
+        assertEquals("2026년 11월 42 2026-11-16", c.title.getText() + " " + c.grid.getComponentCount() + " " + c.selected());
+        assertEquals("<html><center><b>16</b><br><font size='2' color='#28977F'>1개</font></center></html>", cell(c, 16).getText());
+        assertEquals("<html><center>5</center></html>", cell(c, 5).getText());
+        assertFalse(c.today.isEnabled());
+        assertEquals("오늘을 보고 있어요", c.today.getToolTipText());
+        c.today.doClick();
+        assertEquals(List.of(d(11, 18), d(12, 5), d(11, 16)), picks);
+        press(cell(c, 20));
+        c.refresh();
+        c.today.doClick();
+        c.refresh();
+        assertEquals(d(11, 16), c.selected());
+        assertFalse(c.today.isEnabled());
+        assertEquals(List.of(d(11, 18), d(12, 5), d(11, 16), d(11, 20), d(11, 16)), picks);
     }
 }

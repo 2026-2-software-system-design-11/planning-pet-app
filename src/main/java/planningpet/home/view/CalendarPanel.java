@@ -34,7 +34,7 @@ public final class CalendarPanel extends JPanel {
     final JLabel title = new JLabel();
     final CircleButton prev = new CircleButton(Icons.Kind.LEFT, 32, "이전 달", false);
     final CircleButton next = new CircleButton(Icons.Kind.RIGHT, 32, "다음 달", false);
-    /** D-60: 오늘이 든 달에서 오늘을 고르고 있으면 흐리다. 누르는 일은 S3h가 더한다. */
+    /** D-60: 오늘이 든 달로 옮기고 오늘을 고른다. 이미 그렇다면 흐리다. */
     final JButton today = new JButton("오늘");
     private DayOfWeek shownStart;
     private YearMonth month;
@@ -51,6 +51,11 @@ public final class CalendarPanel extends JPanel {
         next.addActionListener(e -> move(1));
         today.setFont(Theme.bold(12));
         today.setBorder(BorderFactory.createEmptyBorder(5, 12, 7, 12));
+        today.addActionListener(e -> {
+            selected = data.today();
+            month = YearMonth.from(selected);
+            onPick.accept(selected);
+        });
         title.setIcon(Icons.icon(Icons.Kind.CALENDAR, 24, Theme.ICON));
         title.setIconTextGap(8);
         title.setFont(Theme.heavy(21));
