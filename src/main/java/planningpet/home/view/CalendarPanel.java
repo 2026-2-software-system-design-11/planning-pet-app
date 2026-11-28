@@ -34,7 +34,7 @@ public final class CalendarPanel extends JPanel {
     final JLabel title = new JLabel();
     final CircleButton prev = new CircleButton(Icons.Kind.LEFT, 32, "이전 달", false);
     final CircleButton next = new CircleButton(Icons.Kind.RIGHT, 32, "다음 달", false);
-    /** D-60. 누르는 일은 S3h가 더한다. */
+    /** D-60: 오늘이 든 달에서 오늘을 고르고 있으면 흐리다. 누르는 일은 S3h가 더한다. */
     final JButton today = new JButton("오늘");
     private DayOfWeek shownStart;
     private final YearMonth month;
@@ -106,6 +106,9 @@ public final class CalendarPanel extends JPanel {
         weekRow();
         title.setText(month.getYear() + "년 " + month.getMonthValue() + "월");
         LocalDate today = data.today();
+        boolean atToday = month.equals(YearMonth.from(today)) && today.equals(selected);
+        this.today.setEnabled(!atToday);
+        this.today.setToolTipText(atToday ? "오늘을 보고 있어요" : null);
         grid.removeAll();
         int offset = Math.floorMod(month.atDay(1).getDayOfWeek().getValue() - data.getWeekStart().getValue(), 7);
         int cells = (offset + month.lengthOfMonth() + 6) / 7 * 7;

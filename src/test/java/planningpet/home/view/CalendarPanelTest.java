@@ -224,6 +224,17 @@ class CalendarPanelTest {
         }
     }
 
+    /** 패널 전체를 글 없이 기준 그림과 맞춘다. */
+    private static void looksPanel(String name, CalendarPanel c, int w, int h) throws IOException {
+        Snap.blank(c);
+        for (Component k : c.grid.getComponents()) {
+            if (k instanceof DayCell d) {
+                d.blankText();
+            }
+        }
+        Snap.assertLaidOutLooksLikePrototype("month-" + name + "-panel-" + w + "x" + h, c, w, h);
+    }
+
     @Test
     void eHead1TitleRow() {
         CalendarPanel c = panel("2026-11-16T10:00", DayOfWeek.MONDAY);
@@ -246,6 +257,25 @@ class CalendarPanelTest {
         assertEquals(new Rectangle(0, 70, 328, 230), c.grid.getBounds());
         assertEquals("4,2 52,0 88,0", c.today.getX() + "," + c.today.getY() + " " + c.prev.getX() + "," + c.prev.getY() + " "
                 + c.next.getX() + "," + c.next.getY());
+    }
+
+    @Test
+    void eHead2Pictures() throws IOException {
+        for (DayOfWeek start : new DayOfWeek[] {DayOfWeek.MONDAY, DayOfWeek.SUNDAY}) {
+            for (int[] s : new int[][] {{328, 300}, {560, 420}, {200, 200}, {0, 0}}) {
+                looksPanel(start.name().substring(0, 3).toLowerCase() + "-2026-11", panel("2026-11-16T10:00", start), s[0], s[1]);
+            }
+        }
+    }
+
+    @Test
+    void eHead4TodayButtonDim() {
+        for (String now : new String[] {"2026-11-16T10:00", "2026-11-17T01:00"}) {
+            CalendarPanel c = panel(now, DayOfWeek.MONDAY);
+            assertFalse(c.today.isEnabled());
+            assertEquals("오늘을 보고 있어요", c.today.getToolTipText());
+            assertEquals("2026년 11월", c.title.getText());
+        }
     }
 
     @Test
