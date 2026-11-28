@@ -33,6 +33,7 @@ import planningpet.common.view.Theme;
 import planningpet.common.view.Ui;
 import planningpet.schedule.model.Category;
 import planningpet.schedule.model.DefaultDates;
+import planningpet.schedule.model.FieldError;
 import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Repeat;
 import planningpet.schedule.model.Task;
@@ -40,7 +41,7 @@ import planningpet.schedule.model.TaskDraft;
 
 /**
  * 일정 입력 창의 칸(05 일정 입력 창 1~11번). 창 없이 만들 수 있다. 지금은 추가 창의 칸과 처음 값, 칸끼리 켜고 끄기 sync(), 손댄 값
- * 지키기와 날짜 따라가기, 칸에 쓴 값 draft()가 있고, 오류 글, 수정 창은 뒤 몫이 더한다(docs/porting/task-dialog.md S4f, S4g, S4h).
+ * 지키기와 날짜 따라가기, 칸에 쓴 값 draft(), 칸 아래 오류 글이 있고, 수정 창은 뒤 몫이 더한다(docs/porting/task-dialog.md S4f~S4i).
  * 쳐 넣은 글 읽기(C1)의 칸 아래 글 줄은 두지 않는다.
  */
 final class TaskForm {
@@ -74,6 +75,8 @@ final class TaskForm {
     final JTextArea memo = new JTextArea(3, 22);
     /** 칸 아래 빨간 오류 글(05). 칸 차례다. */
     final Map<String, JLabel> errors = new LinkedHashMap<>();
+    /** 오류 글이 늘거나 줄면 창 크기를 다시 맞춘다. 창 없이 만들 때는 아무것도 하지 않는다. */
+    Runnable relayout = () -> { };
     /** 날짜를 바꾼 그 순간의 시계(D-101). 처음은 창을 연 때다. */
     Supplier<LocalDateTime> clock;
     /** D-101: 고정 일정으로 가기 앞의 시작 시각 정하기, 기간 안에 하기, 마감. 할 일로 돌아오면 되돌리고 null이 된다. */
@@ -317,6 +320,35 @@ final class TaskForm {
                 Category.values()[category.getSelectedIndex()], Ui.dateOf(date), period.isSelected() ? Ui.dateOf(due) : null,
                 s == null ? null : LocalTime.of(s % Task.DAY / 60, s % 60), (int) minutes.getValue(), memo.getText(), how,
                 how == null ? null : Ui.dateOf(repeatEnd), s != null && s >= Task.DAY, null, AppDay.of(clock.get()), false);
+    }
+
+    /** 검사 결과를 칸 아래에 보인다. 고친 칸의 오류는 지운다. */
+    void showErrors(List<FieldError> problems) {
+        errors.values().forEach(l -> fill(l, ""));
+        for (FieldError p : problems) {
+            fill(errors.get(p.field()), p.message());
+        }
+        relayout.run();
+    }
+
+    /** 오류 줄 하나를 채운다. 빈 글이면 숨긴다. 원래 문장은 plain 속성에 둔다(errorText, error가 읽는다). */
+    private void fill(JLabel l, String text) {
+        // 보이는 제목 칸 폭이다. 창에 놓이기 전(창 없는 검사)에는 선호 폭을 쓴다.
+        int room = title.getWidth() > 0 ? title.getWidth() : title.getPreferredSize().width;
+        l.setText(text.isEmpty() ? "" : Ui.wrap(text, l, room));
+        l.putClientProperty("plain", text);
+        l.setVisible(!text.isEmpty());
+    }
+
+    /** 보이는 오류 글을 칸 차례대로 " / "로 잇는다. */
+    String errorText() {
+        return String.join(" / ", errors.keySet().stream().filter(k -> errors.get(k).isVisible()).map(this::error).toList());
+    }
+
+    /** 칸 아래 오류 글. 줄을 바꿔 그린 글도 원래 문장으로 돌려준다. 없으면 빈 글. */
+    String error(String field) {
+        Object plain = errors.get(field).getClientProperty("plain");
+        return plain == null ? "" : (String) plain;
     }
 
     /** 시작 칸의 앱 하루의 분(D-77). 시각을 정하지 않았으면 null. */
