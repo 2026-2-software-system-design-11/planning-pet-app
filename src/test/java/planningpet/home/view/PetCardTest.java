@@ -185,4 +185,35 @@ class PetCardTest {
         assertEquals("Lv. 3", c.levelText());
         assertCovered("col-change-210", c, 360, 240);
     }
+
+    private static PetCard named(PetKind kind, String name) {
+        AppData d = data(kind, 0);
+        d.clearPets();
+        d.addPet(new PetState(kind, name));
+        return new PetCard(d);
+    }
+
+    /** 이름은 이름 자리(열 폭 - 22 - 레벨 폭 - 10 - 종류 폭 - 5)에 맞춰 Ui.fit으로 준다. 글은 덮은 띠 안이다(S3n E-PCOL-2~4). */
+    @Test
+    void ePcol2To4Names() throws IOException {
+        assertEquals("강아지", named(PetKind.DOG, "바둑이").kindText());
+        assertCovered("col-dog-360x240", named(PetKind.DOG, "바둑이"), 360, 240);
+        assertCovered("col-dog-300x210", named(PetKind.DOG, "바둑이"), 300, 210);
+        assertCovered("col-blank-360x240", named(PetKind.CAT, ""), 360, 240);
+        String[][] names = {{"long", "가나다라마바사아자차"}, {"emoji", "😀".repeat(10)}, {"one", "가"}};
+        for (String[] n : names) {
+            for (int[] s : new int[][] {{360, 240}, {300, 210}, {800, 500}}) {
+                assertCovered("col-" + n[0] + "-" + s[0] + "x" + s[1], named(PetKind.CAT, n[1]), s[0], s[1]);
+            }
+        }
+    }
+
+    /** 카드가 250보다 높으면 오른쪽 열이 넘는 몫의 1/3만큼 내려온다. 아주 작은 카드도 예외 없이 그린다(S3n E-PCOL-6). */
+    @Test
+    void ePcol6TallAndTiny() throws IOException {
+        PetCard c = new PetCard(data(PetKind.CAT, 0));
+        for (int[] s : new int[][] {{360, 280}, {360, 340}, {360, 600}, {1600, 300}, {300, 100}, {120, 60}, {0, 0}}) {
+            assertCovered("col-tall-" + s[0] + "x" + s[1], c, s[0], s[1]);
+        }
+    }
 }
