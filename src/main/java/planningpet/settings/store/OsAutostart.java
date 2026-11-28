@@ -19,6 +19,12 @@ public final class OsAutostart implements Autostart {
         this.app = app;
     }
 
+    /** 이 컴퓨터의 값. 검사하지 않는다(docs/porting/settings.md S10b 3절). */
+    public static OsAutostart here() {
+        return new OsAutostart(System.getProperty("os.name"), Path.of(System.getProperty("user.home")),
+                System.getProperty("jpackage.app-path"));
+    }
+
     @Override
     public boolean available() {
         return app != null && !app.isBlank() && mac();
