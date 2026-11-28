@@ -1,5 +1,9 @@
 package planningpet.app.view;
 
+import java.awt.Component;
+import java.nio.file.Path;
+import javax.swing.JOptionPane;
+import javax.swing.JTextArea;
 import planningpet.app.model.LoadResult.Reason;
 
 /**
@@ -7,7 +11,26 @@ import planningpet.app.model.LoadResult.Reason;
  * 원인 글과 다음에 할 일은 05의 원인 표 그대로다(docs/porting/unreadable.md).
  */
 public final class UnreadableDialog {
+    static final String TITLE = "데이터를 읽지 못했어요";
+    static final String KEPT = "파일은 지우지 않고 그대로 두었어요";
+    static final String CLOSING = "확인을 누르면 앱을 끝내요";
+    static final String WHERE = "파일 위치";
+    static final String OK = "확인";
+
     private UnreadableDialog() {
+    }
+
+    /** 창을 띄우고 확인이나 닫기를 누를 때까지 기다린다. 앱을 끝내는 일은 부른 쪽(Main)이 한다. */
+    public static void show(Component parent, Reason reason, Path file) {
+        pane(reason, file).createDialog(parent, TITLE).setVisible(true);
+    }
+
+    /** 창 내용. 위에서 아래로 05의 글줄, 파일 위치, 파일 자리 칸이고 버튼은 확인 하나다. */
+    public static JOptionPane pane(Reason reason, Path file) {
+        JTextArea where = new JTextArea(file.toString());
+        where.setEditable(false);
+        Object[] lines = {KEPT, cause(reason), next(reason), CLOSING, WHERE, where};
+        return new JOptionPane(lines, JOptionPane.ERROR_MESSAGE, JOptionPane.DEFAULT_OPTION, null, new Object[] {OK}, OK);
     }
 
     /** 원인 글. */
