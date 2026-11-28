@@ -15,6 +15,7 @@ import planningpet.pet.model.WearId;
 class PetArtHeadWearTest {
     private static final PetKind[] KINDS = {PetKind.CAT, PetKind.DOG};
     private static final WearId[] ACCESSORIES = {WearId.FLOWER_PIN, WearId.RIBBON_PIN, WearId.GLASSES};
+    private static final WearId[] HATS = {WearId.STRAW_HAT, WearId.BERET, WearId.CROWN};
 
     /** 칸 260x240마다 장신구 하나를 입은 머리를 (130, 140)에 선 굵기 6, 1배, 움직임 시각 0으로 그린다. */
     private static BufferedImage heads(PetKind kind, WearId... wears) {
@@ -61,6 +62,21 @@ class PetArtHeadWearTest {
         for (PetKind kind : KINDS) {
             BufferedImage img = faces(kind, Arrays.stream(ACCESSORIES).map(Set::of).toList(), 30, 76, 230);
             Snap.assertLooksLikePrototype("pet-hat-faces-acc-" + kind.name().toLowerCase(), img);
+        }
+    }
+
+    @Test
+    void eHat1HatHeads() throws IOException {
+        for (PetKind kind : KINDS) {
+            Snap.assertLooksLikePrototype("pet-hat-heads-hat-" + kind.name().toLowerCase(), heads(kind, HATS));
+        }
+    }
+
+    @Test
+    void eHat2HatFaceSizes() throws IOException {
+        for (PetKind kind : KINDS) {
+            BufferedImage img = faces(kind, Arrays.stream(HATS).map(Set::of).toList(), 30, 76, 230);
+            Snap.assertLooksLikePrototype("pet-hat-faces-hat-" + kind.name().toLowerCase(), img);
         }
     }
 }
