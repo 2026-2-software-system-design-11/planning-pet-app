@@ -98,17 +98,21 @@ public final class Main {
             frame.setVisible(true);
         }
 
-        /** 신호를 받으면 Swing 스레드에서 부른다. 내려 둔 창도 펴서 앞으로 가져온다(02 UC-01 1a). */
+        /** 신호를 받으면 Swing 스레드에서 부른다(02 UC-01 1a). */
         void signalled() {
-            if (front == null) {
-                return;
+            if (front != null) {
+                front();
+                shown.run();
             }
+        }
+
+        /** 내려 둔 창도 펴서 보이고 앞으로 가져온다. */
+        void front() {
             if (front instanceof Frame f) {
                 f.setExtendedState(f.getExtendedState() & ~Frame.ICONIFIED);
             }
             front.setVisible(true);
             front.toFront();
-            shown.run();
         }
         public void timer(Tray tray) { tray.start(); }
         public void saveFailed(String text) { AppWindow.saveFailed(text); }
