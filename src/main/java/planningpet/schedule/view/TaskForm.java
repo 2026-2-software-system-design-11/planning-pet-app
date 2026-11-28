@@ -116,8 +116,12 @@ final class TaskForm {
     private final boolean editing;
     /** 반복 사본을 고치는 중(기간 칸은 꺼진 채 비활성, D-65). */
     private final boolean copy;
+    /** 수정하는 기간 할 일에 시각을 정해 둔 날. 마감은 이 날보다 전일 수 없다(D-99). 아니면 null. */
+    private final LocalDate placed;
     /** 마감이 지나도 끝내지 못한 기간 할 일을 고치는 중. 받지 않는 일이라 날짜와 마감을 바꾸지 않는다(D-99). */
     private final boolean pastDue;
+    /** 끝낸 일을 고치는 중. 마감을 오늘 전으로 두어도 막지 않는다(D-99). */
+    private final boolean doneTask;
     /** sync 안에서 칸 값을 바꿀 때 다시 sync하지 않는다. */
     private boolean syncing;
     private int row;
@@ -137,7 +141,9 @@ final class TaskForm {
         this.weekStart = weekStart;
         editing = t != null;
         copy = t != null && t.getSeriesId() != null;
+        placed = t != null && t.period() && t.timed() ? t.getDate() : null;
         pastDue = t != null && t.pastDue(AppDay.of(now));
+        doneTask = t != null && t.isDone();
         // 프로토타입과 일부러 다름(E-FORM-13): setValue는 5분 단위가 아닌 값을 막으므로 칸을 저장해 둔 값으로 만든다(범위 밖도, E-UI-7).
         minutes = Ui.minutes(t == null ? 30 : t.getDurationMinutes());
         clock = () -> now;
@@ -396,8 +402,8 @@ final class TaskForm {
     }
 
     /**
-     * 칸에 쓴 값. 반복이 안 함이면 반복 방식과 끝은 null, 기간 안에 하기가 꺼져 있으면 마감은 null이다. 오늘은 today()이고 editing은
-     * 수정 창이면 참이다.
+     * 칸에 쓴 값. 반복이 안 함이면 반복 방식과 끝은 null, 기간 안에 하기가 꺼져 있으면 마감은 null이다. placed는 시각을 정해 둔 기간
+     * 할 일의 정해 둔 날, 오늘은 today(), editing은 수정 창이면 참이다.
      */
     TaskDraft draft() {
         Repeat how = null;
@@ -416,12 +422,12 @@ final class TaskForm {
         return new TaskDraft(fixed.isSelected() ? Kind.FIXED : Kind.TASK, title.getText(),
                 Category.values()[category.getSelectedIndex()], Ui.dateOf(date), period.isSelected() ? Ui.dateOf(due) : null,
                 s == null ? null : LocalTime.of(s % Task.DAY / 60, s % 60), (int) minutes.getValue(), memo.getText(), how,
-                how == null ? null : Ui.dateOf(repeatEnd), s != null && s >= Task.DAY, null, today(), editing);
+                how == null ? null : Ui.dateOf(repeatEnd), s != null && s >= Task.DAY, placed, today(), editing);
     }
 
-    /** 마감이 넘지 말아야 할 앱의 오늘(D-99). 마감이 지난 일을 고칠 때는 null이다. */
+    /** 마감이 넘지 말아야 할 앱의 오늘(D-99). 끝낸 일과 마감이 지난 일을 고칠 때는 null이다. */
     private LocalDate today() {
-        return pastDue ? null : AppDay.of(clock.get());
+        return doneTask || pastDue ? null : AppDay.of(clock.get());
     }
 
     /** D-42: 반복 사본을 고칠 때 반복 칸을 그 반복의 방식인 채(비활성) 그 반복의 마지막 날짜 end와 함께 보인다. */

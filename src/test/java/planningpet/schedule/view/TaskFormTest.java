@@ -779,4 +779,53 @@ class TaskFormTest {
         TaskForm p = edit(Tasks.task("P", d(16)).period(d(16), d(20)));
         assertEquals(Arrays.asList(true, true, true, false, null, null, null, null), lock(p));
     }
+
+    /** 오늘 11-18. 기간 할 일 "계획" 11-17부터 마감 last, 11-19 10:00에 정해 둠의 수정 창. */
+    private static TaskForm plan(LocalDate last) {
+        return edit(Tasks.task("계획", d(19)).at("10:00").period(d(17), last));
+    }
+
+    @Test
+    void tVal22DueBeforePlacedDay() {
+        TaskForm f = plan(d(20));
+        assertEquals(d(19), f.draft().placed());
+        Ui.setDate(f.due, d(18));
+        assertEquals("마감일이 시각을 정해 둔 11/19(목)보다 전이에요", f.errorText());
+        Ui.setDate(f.due, d(19));
+        assertEquals("", f.errorText());
+        Ui.setDate(f.due, d(16));
+        assertEquals("마감일이 시작일보다 전이에요", f.errorText());
+        assertNull(edit(Tasks.task("보고서", d(18)).period(d(16), d(22))).draft().placed());
+    }
+
+    @Test
+    void tVal24StartAfterPlacedDay() {
+        TaskForm f = plan(d(22));
+        Ui.setDate(f.date, d(20));
+        assertEquals("시작일이 시각을 정해 둔 11/19(목)보다 후예요", f.errorText());
+        Ui.setDate(f.due, d(18));
+        assertEquals("마감일이 시작일보다 전이에요", f.errorText());
+        Ui.setDate(f.due, d(22));
+        Ui.setDate(f.date, d(19));
+        assertEquals("", f.errorText());
+    }
+
+    @Test
+    void tVal23DueBeforeTodayInEditWindow() {
+        TaskForm p = edit(Tasks.task("P", d(16)).period(d(16), d(20)));
+        Ui.setDate(p.due, d(17));
+        assertEquals(List.of(d(18), "마감일이 오늘보다 전이에요"), List.of(p.draft().today(), p.errorText()));
+        TaskForm plain = edit(Tasks.task("일", d(15)));
+        plain.period.doClick();
+        Ui.setDate(plain.due, d(16));
+        assertEquals("마감일이 오늘보다 전이에요", plain.errorText());
+        Task end = Tasks.task("끝", d(10)).period(d(10), d(16)).done(d(15)).task();
+        TaskForm f = new TaskForm(end, NOW, DayOfWeek.MONDAY);
+        f.title.setText("끝2");
+        assertEquals(Arrays.asList(null, true, ""), Arrays.asList(f.draft().today(), f.due.isEnabled(), f.errorText()));
+        assertTrue(f.draft().validate().isEmpty());
+        book(end, d(18)).update(end, f.draft(), EditScope.ONLY_THIS);
+        assertEquals(List.of("끝2", d(16)), List.of(end.getTitle(), end.getDueDate()));
+        assertNull(edit(Tasks.task("Q", d(10)).period(d(10), d(16))).draft().today());
+    }
 }
