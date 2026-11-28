@@ -91,7 +91,7 @@ class PickDialogTest {
         assertTrue(d.panel.isOpaque());
         assertEquals(BoxLayout.Y_AXIS, ((BoxLayout) d.panel.getLayout()).getAxis());
         assertEquals(new Insets(16, 0, 22, 0), d.panel.getInsets());
-        assertEquals(7, d.panel.getComponentCount());
+        assertEquals(9, d.panel.getComponentCount());
         JPanel row = (JPanel) d.cat.getParent();
         FlowLayout flow = (FlowLayout) row.getLayout();
         assertEquals(List.of(FlowLayout.CENTER, 20, 0), List.of(flow.getAlignment(), flow.getHgap(), flow.getVgap()));
@@ -141,29 +141,29 @@ class PickDialogTest {
     @Test
     void eDlg3DefaultSize() throws IOException {
         PickDialog d = new PickDialog();
-        assertEquals(List.of(new Dimension(800, 416), new Dimension(556, 374)),
+        assertEquals(List.of(new Dimension(800, 480), new Dimension(556, 402)),
                 List.of(d.panel.getPreferredSize(), d.panel.getMinimumSize()));
-        assertEquals(rects(0, 16, 800, 60, 0, 80, 800, 40, 285, 0, 230, 40, 0, 132, 800, 262, 142, 0, 248, 262,
-                410, 0, 248, 262), places(800, 416));
-        looksLikePrototype("800x416", 800, 416);
+        assertEquals(rects(0, 16, 800, 60, 0, 80, 800, 62, 0, 144, 800, 40, 285, 0, 230, 40, 0, 196, 800, 262, 142, 0, 248, 262,
+                410, 0, 248, 262), places(800, 480));
+        looksLikePrototype("800x480", 800, 480);
     }
 
     @Test
     void eDlg4BigWindow() throws IOException {
-        assertEquals(rects(0, 258, 1200, 60, 0, 322, 1200, 40, 485, 0, 230, 40, 0, 374, 1200, 262, 342, 0, 248, 262,
+        assertEquals(rects(0, 226, 1200, 60, 0, 290, 1200, 62, 0, 354, 1200, 40, 485, 0, 230, 40, 0, 406, 1200, 262, 342, 0, 248, 262,
                 610, 0, 248, 262), places(1200, 900));
         looksLikePrototype("1200x900", 1200, 900);
     }
 
     @Test
     void eDlg5SmallWindows() throws IOException {
-        assertEquals(rects(0, 16, 800, 18, 0, 38, 800, 40, 285, 0, 230, 40, 0, 90, 800, 262, 142, 0, 248, 262,
+        assertEquals(rects(0, 16, 800, 18, 0, 38, 800, 26, 0, 66, 800, 40, 285, 0, 230, 40, 0, 118, 800, 262, 142, 0, 248, 262,
                 410, 0, 248, 262), places(800, 300));
-        assertEquals(rects(42, 0, 248, 262, 310, 0, 248, 262), places(600, 416).subList(4, 6));
-        assertEquals(rects(-124, 0, 248, 262, -124, 262, 248, 262), places(0, 416).subList(4, 6));
+        assertEquals(rects(42, 0, 248, 262, 310, 0, 248, 262), places(600, 480).subList(5, 7));
+        assertEquals(rects(-124, 0, 248, 262, -124, 262, 248, 262), places(0, 480).subList(5, 7));
         looksLikePrototype("800x300", 800, 300);
-        looksLikePrototype("600x416", 600, 416);
-        looksLikePrototype("0x416", 0, 416);
+        looksLikePrototype("600x480", 600, 480);
+        looksLikePrototype("0x480", 0, 480);
         looksLikePrototype("1x1", 1, 1);
     }
 
@@ -171,7 +171,7 @@ class PickDialogTest {
     void eDlg6BlankPreferredSize() {
         PickDialog d = new PickDialog();
         Snap.blank(d.panel);
-        assertEquals(new Dimension(800, 376), d.panel.getPreferredSize());
+        assertEquals(new Dimension(800, 440), d.panel.getPreferredSize());
     }
 
     @Test
@@ -185,8 +185,26 @@ class PickDialogTest {
     }
 
     @Test
+    void eDlg8Ribbon() throws IOException {
+        JLabel ribbon = (JLabel) new PickDialog().panel.getComponent(3);
+        assertEquals(List.of("함께할 반려동물을 골라 주세요", Theme.heavy(21), Color.WHITE, SwingConstants.CENTER, new Dimension(800, 62),
+                62, 0.5f, false), List.of(ribbon.getText(), ribbon.getFont(), ribbon.getForeground(), ribbon.getHorizontalAlignment(),
+                ribbon.getPreferredSize(), ribbon.getMaximumSize().height, ribbon.getAlignmentX(), ribbon.isOpaque()));
+        ribbon.setText("");
+        Snap.assertLaidOutLooksLikePrototype("pickdlg-ribbon-800x62", ribbon, 800, 62);
+        Snap.assertLaidOutLooksLikePrototype("pickdlg-ribbon-300x62", ribbon, 300, 62);
+        Snap.assertLaidOutLooksLikePrototype("pickdlg-ribbon-0x0", ribbon, 0, 0);
+        // 공백은 칠하는 픽셀 없이 폭만 있다. 52칸(폭 260)까지 띠는 380이고 53칸(265)부터 넓어진다.
+        ribbon.setText(" ".repeat(52));
+        assertEquals(260, ribbon.getFontMetrics(ribbon.getFont()).stringWidth(ribbon.getText()));
+        Snap.assertLaidOutLooksLikePrototype("pickdlg-ribbon-800x62", ribbon, 800, 62);
+        ribbon.setText(" ".repeat(53));
+        Snap.assertLaidOutLooksLikePrototype("pickdlg-ribbon-spaces53", ribbon, 800, 62);
+    }
+
+    @Test
     void eDlg9Subtitle() {
-        JPanel line = (JPanel) new PickDialog().panel.getComponent(3);
+        JPanel line = (JPanel) new PickDialog().panel.getComponent(5);
         JLabel sub = (JLabel) line.getComponent(0);
         assertEquals(List.of("<html><div style='text-align:center'>선택한 친구와 함께 일정을 관리하고,<br>계획을 실천하며 성장할 수 있어요!"
                 + "</div></html>", Theme.font(16), Theme.INK_SUB, SwingConstants.CENTER, new Dimension(230, 40)),
@@ -201,7 +219,7 @@ class PickDialogTest {
         PickDialog d = new PickDialog();
         Dimension wide = new Dimension(1000, 5);
         d.panel.add(new Box.Filler(wide, wide, wide));
-        assertEquals(new Dimension(1000, 421), d.panel.getPreferredSize());
+        assertEquals(new Dimension(1000, 485), d.panel.getPreferredSize());
         PickDialog narrow = new PickDialog();
         narrow.panel.remove(1);
         assertEquals(800, narrow.panel.getPreferredSize().width);
@@ -215,7 +233,7 @@ class PickDialogTest {
     @Test
     void eDlg11CallerGraphicsState() throws ReflectiveOperationException {
         PickDialog d = new PickDialog();
-        for (Component c : List.of(d.panel, d.panel.getComponent(1))) {
+        for (Component c : List.of(d.panel, d.panel.getComponent(1), d.panel.getComponent(3))) {
             c.setSize(800, 416);
             Graphics2D g = new BufferedImage(810, 430, BufferedImage.TYPE_INT_ARGB).createGraphics();
             g.setColor(Color.RED);

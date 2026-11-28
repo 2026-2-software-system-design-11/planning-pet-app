@@ -1,5 +1,6 @@
 package planningpet.pet.view;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.FontMetrics;
@@ -41,6 +42,8 @@ public final class PickDialog {
         panel.add(Box.createVerticalGlue());
         panel.add(new Logo("플래닝펫", "Planning Pet"));
         panel.add(Box.createVerticalStrut(4));
+        panel.add(new Ribbon("함께할 반려동물을 골라 주세요"));
+        panel.add(Box.createVerticalStrut(2));
         JLabel sub = new JLabel("<html><div style='text-align:center'>" + SUBTITLE.replace("\n", "<br>") + "</div></html>",
                 SwingConstants.CENTER);
         sub.setFont(Theme.font(16));
@@ -134,6 +137,41 @@ public final class PickDialog {
             Icons.draw(left, Icons.Kind.SPARK, 0, y + 2, s, Theme.SPARK);
             left.dispose();
             Icons.draw(g, Icons.Kind.SPARK, tx + wordW + 12, y + 2, s, Theme.SPARK);
+            g.dispose();
+        }
+    }
+
+    /** 리본 제목. 글은 라벨 글이라 화면 읽기와 QA가 그대로 읽는다. 하늘 발자국 둘이 양옆에 붙는다. */
+    private static final class Ribbon extends JLabel {
+        Ribbon(String text) {
+            super(text, SwingConstants.CENTER);
+            setFont(Theme.heavy(21));
+            setForeground(Color.WHITE);
+            setAlignmentX(0.5f);
+            setPreferredSize(new Dimension(800, 62));
+            setMaximumSize(new Dimension(Integer.MAX_VALUE, 62));
+        }
+
+        @Override
+        protected void paintComponent(Graphics graphics) {
+            Graphics2D g = (Graphics2D) graphics.create();
+            PickScene.hints(g);
+            FontMetrics fm = g.getFontMetrics(getFont());
+            int bandW = Math.max(380, fm.stringWidth(getText()) + 120);
+            int bandH = 40;
+            double bx = (getWidth() - bandW) / 2.0;
+            double by = 8;
+            PickScene.ribbon(g, bx, by, bandW, bandH);
+            PickScene.skyPaw(g, bx - 78, by + 32, 28, -0.25);
+            PickScene.skyPaw(g, bx + bandW + 78, by + 32, 28, 0.25);
+            g.setFont(getFont());
+            int tw = fm.stringWidth(getText());
+            int tx = (getWidth() - tw) / 2;
+            int ty = (int) (by + bandH / 2.0 + (fm.getAscent() - fm.getDescent()) / 2.0);
+            g.setColor(PickScene.alpha(Theme.RIBBON_DEEP.darker(), 120));
+            g.drawString(getText(), tx, ty + 1);
+            g.setColor(getForeground());
+            g.drawString(getText(), tx, ty);
             g.dispose();
         }
     }
