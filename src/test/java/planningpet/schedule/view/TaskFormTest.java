@@ -3,7 +3,6 @@ package planningpet.schedule.view;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static planningpet.schedule.model.Tasks.d;
 
@@ -731,10 +730,26 @@ class TaskFormTest {
     }
 
     @Test
-    void eForm13OffStepStoredValues() {
-        assertThrows(IllegalArgumentException.class, () -> edit(Tasks.task("운동", d(20)).at("09:03")));
-        assertThrows(IllegalArgumentException.class, () -> edit(Tasks.task("운동", d(20)).at("10:00").minutes(27)));
-        assertEquals(List.of(5, 725), List.of(edit(Tasks.task("짧게", d(20)).minutes(5)).minutes.getValue(),
-                edit(Tasks.task("길게", d(20)).minutes(725)).minutes.getValue()));
+    void eForm13OffStepStoredValuesOpenAsStored() {
+        TaskForm f = edit(Tasks.task("운동", d(20)).at("09:03").minutes(27));
+        assertEquals(List.of("09:03", 27, "09:05", "09:00"), List.of(f.start.getValue(), f.minutes.getValue(),
+                f.start.getNextValue(), f.start.getPreviousValue()));
+        f.title.setText("달리기");
+        Ui.setDate(f.date, d(21));
+        assertEquals(List.of(LocalTime.of(9, 3), 27), List.of(f.draft().startTime(), f.draft().durationMinutes()));
+        assertEquals(List.of("5분 단위로 정해 주세요", "10분부터 720분까지, 5분 단위예요"),
+                List.of(saveError(f, "시작 시각"), saveError(f, "걸리는 시간")));
+        f.start.setValue("09:05");
+        f.minutes.setValue(30);
+        assertTrue(f.draft().validate().isEmpty());
+        assertEquals("01:03(다음 날)", edit(Tasks.task("야식", d(20)).at("01:03").nextDay()).start.getValue());
+        List<Object> got = new ArrayList<>();
+        for (int v : new int[] {7, 723, 725}) {
+            TaskForm g = edit(Tasks.task("일", d(20)).minutes(v));
+            got.add(List.of(g.minutes.getValue(), saveError(g, "걸리는 시간")));
+        }
+        String range = "10분부터 720분까지, 5분 단위예요";
+        assertEquals(List.of(List.of(7, range), List.of(723, range), List.of(725, range)), got);
+        assertEquals(30, form(d(20)).minutes.getValue());
     }
 }

@@ -66,7 +66,8 @@ final class TaskForm {
     final JSpinner start = new JSpinner(new SpinnerListModel(Times.values()));
     /** 다음 날 새벽 값이면 시작 칸 옆에 적는 실제 날과 시각 "(토 01:30)"(D-77). */
     final JLabel realTime = new JLabel();
-    final JSpinner minutes = Ui.minutes(30);
+    /** 걸리는 시간 칸. 수정 창은 저장해 둔 값으로 만든다(5분 단위가 아니어도 연다, E-FORM-13). */
+    final JSpinner minutes;
     final JLabel endLabel = new JLabel();
     /** D-43: 추가 창에서 걸리는 시간이 30일 때만 보인다. */
     final JLabel minutesHint = Ui.hint("안 바꾸면 30분으로 들어가요");
@@ -131,6 +132,8 @@ final class TaskForm {
         this.weekStart = weekStart;
         editing = t != null;
         copy = t != null && t.getSeriesId() != null;
+        // 프로토타입과 일부러 다름(E-FORM-13): setValue는 5분 단위가 아닌 값을 막으므로 칸을 저장해 둔 값으로 만든다(범위 밖도, E-UI-7).
+        minutes = Ui.minutes(t == null ? 30 : t.getDurationMinutes());
         clock = () -> now;
         Ui.limit(title, 100);
         Ui.limit(memo, 1000);
@@ -194,9 +197,15 @@ final class TaskForm {
             // D-101: 저장해 둔 시각은 사용자 값이다. 시각 없는 일정의 시작 칸은 앱이 채운 값이라 날짜를 따라간다.
             startTouched = t.timed();
             if (t.timed()) {
-                start.setValue(Times.value(t.startMinute()));
+                // 프로토타입과 일부러 다름(E-FORM-13): 5분 단위가 아닌 저장 값도 목록의 제자리에 끼워 그 값으로 연다.
+                String stored = Times.value(t.startMinute());
+                List<String> values = new ArrayList<>(Times.values());
+                if (!values.contains(stored)) {
+                    values.add(Math.min(t.startMinute() / 5 + 1, values.size()), stored);
+                    ((SpinnerListModel) start.getModel()).setList(values);
+                }
+                start.setValue(stored);
             }
-            minutes.setValue(t.getDurationMinutes());
             memo.setText(t.getMemo());
         }
         Ui.setDate(repeatEnd, DefaultDates.repeatEndFor(fixed.isSelected() ? Kind.FIXED : Kind.TASK, first));
