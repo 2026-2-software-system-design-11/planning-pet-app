@@ -11,6 +11,7 @@ import java.awt.Dimension;
 import java.awt.GradientPaint;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 /** 알약 탭. 번호는 docs/porting/character.md S8d 2절. 그림을 프로토타입과 견주지 않고 크기와 칠한 색을 본다. */
@@ -117,6 +118,19 @@ class PillTest {
     }
 
     @Test
+    void ePill2TwoLinesAndPictureSize() {
+        BufferedImage face = new BufferedImage(96, 96, BufferedImage.TYPE_INT_ARGB);
+        Pill tab = new Pill("나비", null, 16).second("Lv. 3");
+        int text = Math.max(width(16, "나비"), width(15, "Lv. 3"));
+        assertEquals(new Dimension(text + 38, 58), tab.getPreferredSize());
+        assertEquals(new Dimension(text + 84, 58), tab.picture(face).getPreferredSize());
+        assertEquals(width(15, "Lv. 10") + 38, new Pill("가", null, 16).second("Lv. 10").getPreferredSize().width);
+        Pill chip = new Pill("나비", null, 13).picture(face);
+        assertEquals(new Dimension(width(13, "나비") + 72, 40), chip.getPreferredSize());
+        assertEquals(chip.getPreferredSize(), new Pill("나비", Icons.Kind.PAW, 13).picture(face).getPreferredSize());
+    }
+
+    @Test
     void ePill3SelectedFillAndWhiteText() {
         assertEquals(mint(28, 3), fill(pill("상태", null, true, true)));
         assertTrue(textIs(pill("상태", null, true, true), Color.WHITE));
@@ -162,5 +176,32 @@ class PillTest {
         assertEquals(Theme.bold(14), p.getFont());
         assertNull(p.small());
         assertEquals("고양이", p.small("고양이").small());
+    }
+
+    @Test
+    void ePill7PicturePlace() {
+        BufferedImage red = new BufferedImage(10, 10, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = red.createGraphics();
+        g.setColor(Color.RED);
+        g.fillRect(0, 0, 10, 10);
+        g.dispose();
+        Pill tab = new Pill("나비", null, 16).second("Lv. 3").picture(red);
+        Dimension d = tab.getPreferredSize();
+        BufferedImage img = Snap.paint(tab, d.width, d.height);
+        int x0 = img.getWidth();
+        int y0 = img.getHeight();
+        int x1 = -1;
+        int y1 = -1;
+        for (int y = 0; y < img.getHeight(); y++) {
+            for (int x = 0; x < img.getWidth(); x++) {
+                if (img.getRGB(x, y) == Color.RED.getRGB()) {
+                    x0 = Math.min(x0, x);
+                    y0 = Math.min(y0, y);
+                    x1 = Math.max(x1, x);
+                    y1 = Math.max(y1, y);
+                }
+            }
+        }
+        assertEquals(List.of(18, 8, 55, 45), List.of(x0, y0, x1, y1));
     }
 }

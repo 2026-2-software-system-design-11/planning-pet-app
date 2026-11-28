@@ -9,6 +9,7 @@ import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
 import javax.swing.JToggleButton;
 
 /**
@@ -17,6 +18,8 @@ import javax.swing.JToggleButton;
  */
 public class Pill extends JToggleButton {
     private final Icons.Kind kind;
+    private BufferedImage picture;
+    private String second;
     /** 첫 줄 글자 옆의 작은 글("고양이"). null이면 없다(D-81). */
     private String small;
     private final int size;
@@ -34,6 +37,22 @@ public class Pill extends JToggleButton {
         setFocusPainted(false);
         setRolloverEnabled(true);
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    }
+
+    /** 글자 앞 그림(펫 얼굴). */
+    public Pill picture(BufferedImage im) {
+        this.picture = im;
+        revalidate();
+        repaint();
+        return this;
+    }
+
+    /** 둘째 줄 글자("Lv. 5"). null이면 한 줄이다. */
+    public Pill second(String text) {
+        this.second = text;
+        revalidate();
+        repaint();
+        return this;
     }
 
     /** 첫 줄 글자 옆 작은 글("고양이", D-81). null이면 없다. */
@@ -58,9 +77,9 @@ public class Pill extends JToggleButton {
         return small == null ? w : w + 5 + getFontMetrics(smallFont()).stringWidth(small);
     }
 
-    /** 글자 앞 표시(아이콘)의 폭. */
+    /** 글자 앞 표시(그림이나 아이콘)의 폭. 그림이 아이콘보다 앞선다. */
     private int mark() {
-        return kind != null && showIcon ? size + 4 : 0;
+        return picture != null ? size * 2 + 6 : kind != null && showIcon ? size + 4 : 0;
     }
 
     public void showIcon(boolean on) {
@@ -74,9 +93,12 @@ public class Pill extends JToggleButton {
     public Dimension getPreferredSize() {
         FontMetrics fm = getFontMetrics(getFont());
         int text = firstLine(fm);
-        int h = size + 18;
+        if (second != null) {
+            text = Math.max(text, getFontMetrics(Theme.bold(size - 1)).stringWidth(second));
+        }
+        int h = second != null ? size * 3 + 10 : size + 18;
         int gap = mark() > 0 ? 8 : 0;
-        return new Dimension(text + mark() + gap + size * 2 + 6, h);
+        return new Dimension(text + mark() + gap + size * 2 + 6, Math.max(h, picture != null ? size * 2 + 14 : 0));
     }
 
     @Override
@@ -88,7 +110,7 @@ public class Pill extends JToggleButton {
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
         int w = getWidth() - 1;
         int h = getHeight() - 4;
-        int r = h;
+        int r = second != null || picture != null ? 22 : h;
         boolean on = isSelected();
         Card.shadow(g, 0, 0, w, h, r);
         if (on) {
@@ -105,21 +127,30 @@ public class Pill extends JToggleButton {
         }
         FontMetrics fm = g.getFontMetrics(getFont());
         int textW = firstLine(fm);
+        if (second != null) {
+            textW = Math.max(textW, g.getFontMetrics(Theme.bold(size - 1)).stringWidth(second));
+        }
         int gap = mark() > 0 ? 8 : 0;
         int x = (w - (mark() + gap + textW)) / 2;
-        if (kind != null && showIcon) {
+        if (picture != null) {
+            Images.fit(g, picture, x, 4, mark(), h - 8);
+        } else if (kind != null && showIcon) {
             Icons.draw(g, kind, x, (h - size - 2) / 2, size + 2, on ? Color.WHITE : Theme.ICON);
         }
         int tx = x + mark() + gap;
         g.setColor(ink);
         g.setFont(getFont());
-        int base = (h + fm.getAscent() - fm.getDescent()) / 2;
+        int base = second == null ? (h + fm.getAscent() - fm.getDescent()) / 2 : h / 2 - 2;
         g.drawString(getText(), tx, base);
         if (small != null) {
             g.setFont(smallFont());
             g.setColor(!isEnabled() ? Theme.INK_DIM : on ? new Color(255, 255, 255, 215) : Theme.INK_SUB);
             g.drawString(small, tx + fm.stringWidth(getText()) + 5, base);
             g.setColor(ink);
+        }
+        if (second != null) {
+            g.setFont(Theme.bold(size - 1));
+            g.drawString(second, tx, h / 2 + size + 1);
         }
         g.dispose();
     }
