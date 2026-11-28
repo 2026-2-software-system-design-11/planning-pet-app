@@ -19,11 +19,13 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
+import planningpet.app.controller.AppController;
 import planningpet.app.model.AppData;
 import planningpet.common.model.Rules;
 import planningpet.common.view.Card;
 import planningpet.common.view.Theme;
 import planningpet.common.view.Ui;
+import planningpet.pet.model.Bubble;
 import planningpet.pet.model.PetTalk;
 import planningpet.pet.model.Situation;
 import planningpet.reward.controller.RewardController;
@@ -41,6 +43,8 @@ public final class ScheduleScreen extends JPanel {
     private static final String WEEK = "월화수목금토일";
     private final AppData data;
     private final Clock clock;
+    /** 펫 말(AppController.getBubble()). 보이는 중에 새 말이 생겼는지 본다. */
+    private final Bubble talk;
     private final PetTalk words;
     final TimetablePanel table;
     final JPanel header = new JPanel(new GridLayout(1, 7));
@@ -55,6 +59,8 @@ public final class ScheduleScreen extends JPanel {
     final JScrollPane scroll;
     /** 오른쪽 카드 아래 펫 말풍선(D-39, 06 16번 SCHEDULE_HINT). */
     final JLabel bubble = Ui.bubble();
+    /** 마지막 refresh에서 본 새 말 수. */
+    private int lastTalk;
     /** 주를 옮겨 다음 말을 SCHEDULE_HINT로 해야 한다. */
     private boolean showHint = true;
     /** 보이는 주의 첫날(06 데이터 절의 한 주, D-91). */
@@ -75,11 +81,15 @@ public final class ScheduleScreen extends JPanel {
     /** 앱 창이 이 화면을 고른 채인지(settings.md S10c와 같은 꼴). Main이 넣는다. */
     public BooleanSupplier shown = () -> true;
 
-    /** clock은 처음 보이는 자리와 자동 배치의 지금이다. 데이터 변경 알림에 refresh를 거는 일은 화면을 넣는 쪽(Main)이 한다. */
-    public ScheduleScreen(AppData data, RewardController reward, Clock clock) {
+    /**
+     * app은 말풍선이 읽는 펫 말, clock은 처음 보이는 자리와 자동 배치의 지금이다. 데이터 변경 알림에 refresh를 거는 일은 화면을 넣는
+     * 쪽(Main)이 한다.
+     */
+    public ScheduleScreen(AppData data, AppController app, RewardController reward, Clock clock) {
         super(new BorderLayout(8, 8));
         this.data = data;
         this.clock = clock;
+        this.talk = app.getBubble();
         this.words = new PetTalk(data);
         setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 12));
         start = thisWeekStart();
@@ -201,9 +211,13 @@ public final class ScheduleScreen extends JPanel {
         int targets = AutoPlacer.place(data.getBook(), start, now).count();
         autoPlace.setEnabled(targets > 0);
         boolean visible = shown.getAsBoolean();
-        // D-39: 화면을 열거나 주를 옮기면 SCHEDULE_HINT다. 숨은 동안은 글을 둔다.
+        // D-39: 화면을 열거나 주를 옮기면 SCHEDULE_HINT, 보이는 중에 바뀌면 새 펫 말이 있을 때 그 말, 없으면 SCHEDULE_HINT다. 다시 쓴
+        // 말은 새 말이 아니다(D-106). 숨은 동안은 글을 두되 본 말 수는 따라간다. 새 말은 일정 밖의 말(출석, 브리핑)도 보인다(열린 선택
+        // O3, 05, 06이 정하지 않음, 페르소나 투표 전 잠정, docs/pages/schedule.md).
+        boolean newTalk = talk.getNewLines() != lastTalk;
+        lastTalk = talk.getNewLines();
         if (visible) {
-            String text = words.say(Situation.SCHEDULE_HINT, targets);
+            String text = !wasShown || showHint || !newTalk ? words.say(Situation.SCHEDULE_HINT, targets) : talk.getLine();
             bubble.setText("<html><div style='width:150px'>" + Ui.esc(text) + "</div></html>");
             showHint = false;
         }

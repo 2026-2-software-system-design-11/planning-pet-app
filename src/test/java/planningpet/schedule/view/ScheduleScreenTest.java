@@ -36,6 +36,8 @@ import planningpet.schedule.model.Task;
 class ScheduleScreenTest {
     private AppData data;
     private ScheduleScreen screen;
+    private AppController app;
+    private RewardController reward;
     /** 함수 필드가 받은 것. */
     private final List<String> heard = new ArrayList<>();
     /** 화면 높이. */
@@ -44,8 +46,9 @@ class ScheduleScreenTest {
     /** now의 앱 데이터에 tasks를 둔 화면을 1000 x height로 배치하고 데이터 변경에 refresh를 건다. */
     private ScheduleScreen open(String now, Task... tasks) {
         data = Apps.data(now, tasks);
-        RewardController reward = new RewardController(data, new AppController(data, new MemoryStore(), e -> { }));
-        screen = new ScheduleScreen(data, reward, Apps.clock(now));
+        app = new AppController(data, new MemoryStore(), e -> { });
+        reward = new RewardController(data, app);
+        screen = new ScheduleScreen(data, app, reward, Apps.clock(now));
         screen.onEdit = t -> heard.add("수정 " + t.getTitle());
         screen.onDelete = t -> heard.add("삭제 " + t.getTitle());
         screen.onTime = (t, day, at) -> heard.add("시각 " + t.getTitle() + " " + day);
@@ -252,5 +255,46 @@ class ScheduleScreenTest {
         Card side = (Card) ((BorderLayout) screen.getLayout()).getLayoutComponent(BorderLayout.EAST);
         JPanel corner = (JPanel) ((BorderLayout) side.getLayout()).getLayoutComponent(BorderLayout.SOUTH);
         assertEquals(screen.bubble, ((BorderLayout) corner.getLayout()).getLayoutComponent(BorderLayout.NORTH));
+    }
+
+    /** 보이는 중에 새 말이 생기면 그 말, 새 말 없이 바뀌면 힌트다. 다시 쓴 말은 새 말이 아니다(D-39, D-106). */
+    @Test
+    void eSch10NewLineWhileShown() {
+        Task homework = task("과제", d(18)).task();
+        open(homework, task("빨래", d(19)).task());
+        assertEquals(hint(2), screen.bubble.getText());
+        reward.complete(homework);
+        assertFalse(app.getBubble().getLine().isBlank());
+        assertEquals(said(app.getBubble().getLine()), screen.bubble.getText());
+        app.getBubble().retell("오늘 할 일 1개 남았어.");
+        data.changed();
+        assertEquals(hint(1), screen.bubble.getText());
+    }
+
+    /** 숨은 동안은 글을 바꾸지 않고, 다시 보이거나 주를 옮기면 새 말이 있어도 힌트다. */
+    @Test
+    void eSch11HiddenAndReopen() {
+        Task homework = task("과제", d(18)).task();
+        open(homework);
+        boolean[] on = {false};
+        screen.shown = () -> on[0];
+        reward.complete(homework);
+        assertEquals(hint(1), screen.bubble.getText());
+        on[0] = true;
+        screen.refresh();
+        assertEquals(hint(0), screen.bubble.getText());
+        app.say("새 말", null);
+        assertEquals(said("새 말"), screen.bubble.getText());
+        app.say("또 새 말", null);
+        screen.next.doClick();
+        assertEquals(hint(0), screen.bubble.getText());
+    }
+
+    /** 말풍선 글의 꺾쇠와 &를 글자로 보인다. */
+    @Test
+    void eSch12BubbleText() {
+        open();
+        app.say("<b>안녕</b> & 잘 가", null);
+        assertEquals("<html><div style='width:150px'>&lt;b&gt;안녕&lt;/b&gt; &amp; 잘 가</div></html>", screen.bubble.getText());
     }
 }
