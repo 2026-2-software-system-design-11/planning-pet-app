@@ -9,19 +9,25 @@ import static planningpet.schedule.model.Tasks.task;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.IntStream;
 import javax.swing.AbstractButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import org.junit.jupiter.api.Test;
+import planningpet.pet.model.PetKind;
+import planningpet.pet.model.PetState;
+import planningpet.pet.model.Pose;
 import planningpet.app.controller.AppController;
 import planningpet.app.model.AppData;
 import planningpet.app.model.Apps;
@@ -296,5 +302,36 @@ class ScheduleScreenTest {
         open();
         app.say("<b>안녕</b> & 잘 가", null);
         assertEquals("<html><div style='width:150px'>&lt;b&gt;안녕&lt;/b&gt; &amp; 잘 가</div></html>", screen.bubble.getText());
+    }
+
+    /** 펫 칸 80x60을 그린 그림에 색 rgb의 픽셀이 있는가. */
+    private boolean petHas(int rgb) {
+        return Arrays.stream(Snap.pixels(Snap.paint(screen.pet, 80, 60))).anyMatch(p -> p == rgb);
+    }
+
+    /** 펫 칸 80x60을 그린 그림에서 칠한 줄의 수(펫 그림의 높이). */
+    private int petHeight() {
+        BufferedImage img = Snap.paint(screen.pet, 80, 60);
+        return (int) IntStream.range(0, 60).filter(y -> IntStream.range(0, 80).anyMatch(x -> img.getRGB(x, y) >>> 24 > 0)).count();
+    }
+
+    /** 말풍선 아래 펫 칸은 고른 펫(고양이, 강아지)을 저장된 자세와 모습 단계 크기로 그린다(D-50). 1단계는 3단계의 0.72배다. */
+    @Test
+    void eSch13PetSpot() {
+        open();
+        assertEquals(new Dimension(80, 60), screen.pet.getPreferredSize());
+        assertEquals(screen.pet, ((JComponent) screen.bubble.getParent()).getComponent(1));
+        int dogFur = 0xFFFEF1CF;
+        assertFalse(petHas(dogFur));
+        int small = petHeight();
+        data.activePet().setExp(990);
+        assertEquals(small / 0.72, petHeight(), 2);
+        data.addPet(new PetState(PetKind.DOG, "바둑이"));
+        data.setActiveKind(PetKind.DOG);
+        assertTrue(petHas(dogFur));
+        int bowl = 0xFF9ED9C0;
+        assertFalse(petHas(bowl));
+        data.activePet().setPose(Pose.EAT);
+        assertTrue(petHas(bowl));
     }
 }

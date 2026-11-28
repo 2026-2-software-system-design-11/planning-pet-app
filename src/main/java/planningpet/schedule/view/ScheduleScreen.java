@@ -5,16 +5,20 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.Point;
+import java.awt.RenderingHints;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -26,9 +30,12 @@ import planningpet.common.view.Card;
 import planningpet.common.view.Theme;
 import planningpet.common.view.Ui;
 import planningpet.pet.model.Bubble;
+import planningpet.pet.model.PetState;
 import planningpet.pet.model.PetTalk;
 import planningpet.pet.model.Situation;
+import planningpet.pet.view.PetArt;
 import planningpet.reward.controller.RewardController;
+import planningpet.reward.model.Level;
 import planningpet.schedule.model.AutoPlacer;
 import planningpet.schedule.model.DefaultDates;
 import planningpet.schedule.model.Screen;
@@ -59,6 +66,7 @@ public final class ScheduleScreen extends JPanel {
     final JScrollPane scroll;
     /** 오른쪽 카드 아래 펫 말풍선(D-39, 06 16번 SCHEDULE_HINT). */
     final JLabel bubble = Ui.bubble();
+    final PetSpot pet;
     /** 마지막 refresh에서 본 새 말 수. */
     private int lastTalk;
     /** 주를 옮겨 다음 말을 SCHEDULE_HINT로 해야 한다. */
@@ -124,6 +132,8 @@ public final class ScheduleScreen extends JPanel {
         side.add(sideScroll, BorderLayout.CENTER);
         JPanel petCorner = new JPanel(new BorderLayout());
         petCorner.add(bubble, BorderLayout.NORTH);
+        pet = new PetSpot(data);
+        petCorner.add(pet, BorderLayout.CENTER);
         side.add(petCorner, BorderLayout.SOUTH);
         add(side, BorderLayout.EAST);
     }
@@ -228,6 +238,28 @@ public final class ScheduleScreen extends JPanel {
         }
         wasShown = visible;
         table.repaint();
+        pet.repaint();
         header.revalidate();
+    }
+
+    /** 말풍선 아래 펫(프로토타입 PetView): 고른 펫을 저장된 자세와 장신구, 모습 단계 크기(D-50)로 80x60 칸 가운데에 앉힌다. */
+    static final class PetSpot extends JComponent {
+        private final AppData data;
+
+        PetSpot(AppData data) {
+            this.data = data;
+            setPreferredSize(new Dimension(80, 60));
+        }
+
+        @Override
+        protected void paintComponent(Graphics graphics) {
+            Graphics2D g = (Graphics2D) graphics.create();
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            PetState p = data.activePet();
+            double box = (Math.min(getWidth(), getHeight()) - 8) * PetArt.stageScale(Level.of(p.getExp()).getStage());
+            PetArt.drawAt(g, p.getKind(), p.getPose(), new HashSet<>(p.getWear().values()), 0, 99, getWidth() / 2,
+                    getHeight() - 4, box);
+            g.dispose();
+        }
     }
 }
