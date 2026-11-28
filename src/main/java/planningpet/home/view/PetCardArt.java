@@ -91,7 +91,8 @@ final class PetCardArt {
         List<String> lines = new ArrayList<>();
         StringBuilder line = new StringBuilder();
         for (String word : text.split(" ")) {
-            while (fm.stringWidth(word) > max) {
+            // 한 글자는 폭을 넘어도 자르지 않는다. 자를 자리가 없어 끝나지 않던 것을 막는다(home.md S3k E-WRAP-6).
+            while (word.codePointCount(0, word.length()) > 1 && fm.stringWidth(word) > max) {
                 int cut = word.codePointCount(0, word.length()) - 1;
                 while (cut > 1 && fm.stringWidth(word.substring(0, word.offsetByCodePoints(0, cut))) > max) {
                     cut--;

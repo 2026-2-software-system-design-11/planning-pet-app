@@ -215,19 +215,20 @@ class PetCardArtTest {
         };
     }
 
-    /** 끝나지 않으면 재기만 되풀이하다 counting의 예외가 난다. */
-    private static void endless(String text, int max) {
-        assertThrows(IllegalStateException.class,
-                () -> assertTimeoutPreemptively(Duration.ofSeconds(5), () -> PetCardArt.wrap(text, counting(), max)));
+    /** 끝나지 않으면 재기만 되풀이하다 counting의 예외가 나서 테스트가 실패한다. */
+    private static List<String> bounded(String text, int max) {
+        return assertTimeoutPreemptively(Duration.ofSeconds(5), () -> PetCardArt.wrap(text, counting(), max));
     }
 
+    /** 프로토타입과 일부러 다름(끝나지 않음): 한 글자는 폭을 넘어도 한 줄에 둔다. */
     @Test
     void eWrap6NarrowerThanOneLetter() {
-        endless("가", 5);
-        endless("가", 0);
-        endless("가", -5);
-        endless("가나", 9);
-        endless("가 나", 5);
-        assertThrows(IndexOutOfBoundsException.class, () -> wrap(" 가", -5));
+        assertEquals(List.of("가"), bounded("가", 5));
+        assertEquals(List.of("가"), bounded("가", 0));
+        assertEquals(List.of("가"), bounded("가", -5));
+        assertEquals(List.of("가", "나"), bounded("가나", 9));
+        assertEquals(List.of("가", "나"), bounded("가 나", 5));
+        assertEquals(List.of("가"), bounded(" 가", -5));
+        assertEquals(List.of(SMILE), bounded(SMILE, 10));
     }
 }
