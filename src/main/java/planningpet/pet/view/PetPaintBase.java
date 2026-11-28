@@ -62,6 +62,14 @@ abstract class PetPaintBase {
         return a + (b - a) * (0.5 - 0.5 * Math.cos(x));
     }
 
+    /** 0에서 1로 가며 끝에서 조금 넘쳤다 돌아오는 값(고를 때 튀기). x는 0과 1 사이로 자른다. */
+    static double easeOutBack(double x) {
+        x = Math.max(0, Math.min(1, x));
+        double c1 = 1.70158;
+        double c3 = c1 + 1;
+        return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
+    }
+
     static Ellipse2D ell(double cx, double cy, double rx, double ry) {
         return new Ellipse2D.Double(cx - rx, cy - ry, rx * 2, ry * 2);
     }
