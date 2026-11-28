@@ -29,6 +29,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
+import javax.swing.Timer;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import planningpet.app.controller.AppController;
@@ -314,6 +315,23 @@ class TaskPlanTest {
 
     private static final String ABC = "A 09:00~09:30 0,0 480x39, [시각 없는 할 일] 0,39 75x33, B 시각 정하기 0,72 480x39, "
             + "C 시각 정하기 0,111 480x39";
+
+    @Test
+    void eDone4Timer() {
+        TaskRows rows = abc(false);
+        Timer timer = rows.settleTimer;
+        assertEquals("1500 1500 false 1", timer.getDelay() + " " + timer.getInitialDelay() + " " + timer.isRepeats() + " "
+                + timer.getActionListeners().length);
+        box(rows, "B").doClick();
+        // 창 없는 목록은 보이지 않아 타이머가 돌지 않는다. 화면에서 1.5초 뒤 부르는 리스너를 부른다.
+        assertEquals("false true", timer.isRunning() + " " + rows.settling());
+        timer.getActionListeners()[0].actionPerformed(null);
+        assertFalse(rows.settling());
+        assertEquals("<끝낸 일 1개> 0,111, B 시각 정하기 0,144 480x39", kids(rows).substring(kids(rows).indexOf("<")));
+        timer.start();
+        rows.settle();
+        assertFalse(timer.isRunning());
+    }
 
     @Test
     void eDone5CheckAgain() {

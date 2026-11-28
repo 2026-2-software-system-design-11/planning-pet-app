@@ -32,6 +32,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.Scrollable;
 import javax.swing.SwingConstants;
+import javax.swing.Timer;
 import planningpet.app.model.AppData;
 import planningpet.common.view.CircleButton;
 import planningpet.common.view.Icons;
@@ -59,6 +60,8 @@ public final class TaskRows extends JPanel implements Scrollable {
     public final JButton doneHead = new JButton();
     /** D-88: 방금 체크해 아직 제자리에 머무는 일. 1.5초 뒤 "끝낸 일" 묶음으로 내려간다. */
     private final Set<Task> lingering = new HashSet<>();
+    /** D-88: 마지막 체크에서 1.5초 뒤 머물던 일을 모두 내려보낸다. 이어서 체크하면 다시 센다. 검사가 값과 리스너를 본다. */
+    final Timer settleTimer = new Timer(1500, e -> settle());
     /** "끝낸 일" 묶음을 접었는가. 앱을 끌 때까지 남고 저장하지 않는다. */
     private boolean doneFolded;
     /** 접기를 누르거나 머물던 줄을 내려보낸 뒤 목록을 다시 만든다. 홈 화면(MainScreen)이 넣는다. */
@@ -75,6 +78,7 @@ public final class TaskRows extends JPanel implements Scrollable {
         this.onDelete = onDelete;
         this.onTime = onTime;
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+        settleTimer.setRepeats(false);
         doneHead.putClientProperty(RoundButtonUI.NAV, Boolean.TRUE);
         doneHead.setFont(Theme.bold(12));
         doneHead.setForeground(Theme.INK_SUB);
@@ -90,6 +94,7 @@ public final class TaskRows extends JPanel implements Scrollable {
 
     /** D-88: 머물던 끝낸 줄을 "끝낸 일" 묶음으로 내려보낸다(1.5초가 지난 것과 같다). */
     public void settle() {
+        settleTimer.stop();
         lingering.clear();
         resort.run();
     }
@@ -318,6 +323,9 @@ public final class TaskRows extends JPanel implements Scrollable {
                 reward.uncomplete(t);
             } else {
                 lingering.add(t);
+                if (isShowing()) {
+                    settleTimer.restart();
+                }
                 reward.complete(t);
             }
         });
