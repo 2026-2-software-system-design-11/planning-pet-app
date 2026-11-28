@@ -7,15 +7,21 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.Dimension;
+import java.awt.Rectangle;
 import java.io.IOException;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.List;
+import javax.swing.JComponent;
+import javax.swing.RepaintManager;
 import javax.swing.Timer;
 import org.junit.jupiter.api.Test;
 import planningpet.app.model.AppData;
 import planningpet.common.view.Snap;
 import planningpet.pet.model.PetKind;
+import planningpet.pet.model.Pose;
 import planningpet.pet.model.PetState;
 
 /** 홈 펫 카드 몸. 번호는 docs/porting/home.md S3m 2절. 기준 그림은 proto/petcard-*.png다. */
@@ -63,5 +69,56 @@ class PetCardTest {
         } finally {
             c.removeNotify();
         }
+    }
+
+    @Test
+    void ePcard5OddSizes() throws IOException {
+        AppData d = data(PetKind.CAT, 0);
+        PetCard c = new PetCard(d);
+        int[][] sizes = {{0, 0}, {4, 8}, {20, 20}, {120, 60}, {300, 100}, {1600, 300}, {360, 600}};
+        double[] fill = {0, 1.6429, 6.5, 0.5, 0.6795, 0.8045, 0.3692};
+        for (int i = 0; i < sizes.length; i++) {
+            int w = sizes[i][0];
+            int h = sizes[i][1];
+            Snap.assertLaidOutLooksLikePrototype("petcard-odd-" + w + "x" + h, c, w, h);
+            if (w > 0) {
+                assertEquals(fill[i], PetCardArt.petFill(d.activePet(), new Rectangle(2, 1, w - 4, h - 8)), 0.00005);
+            }
+        }
+    }
+
+    /** 본 구현 PetArt는 앉기만 그려 다른 자세도 앉기다. 프로토타입은 누운 그림이다(S3m E-PCARD-6). */
+    @Test
+    void ePcard6PoseDrawsSitting() throws IOException {
+        AppData d = data(PetKind.CAT, 0);
+        d.activePet().setPose(Pose.SLEEP);
+        Snap.assertLaidOutLooksLikePrototype("petcard-size-360x240", new PetCard(d), 360, 240);
+    }
+
+    @Test
+    void ePcard7ActivePetAndChange() throws IOException {
+        AppData d = data(PetKind.CAT, 0);
+        PetState dog = new PetState(PetKind.DOG, "바둑이");
+        dog.setExp(240);
+        d.addPet(dog);
+        d.setActiveKind(PetKind.DOG);
+        PetCard c = new PetCard(d);
+        Snap.assertLaidOutLooksLikePrototype("petcard-two-dog", c, 360, 240);
+        List<JComponent> asked = new ArrayList<>();
+        RepaintManager before = RepaintManager.currentManager(c);
+        RepaintManager.setCurrentManager(new RepaintManager() {
+            @Override
+            public void addDirtyRegion(JComponent x, int a, int b, int w, int h) {
+                asked.add(x);
+            }
+        });
+        try {
+            d.setActiveKind(PetKind.CAT);
+            d.changed();
+        } finally {
+            RepaintManager.setCurrentManager(before);
+        }
+        assertEquals(List.of(c), asked);
+        Snap.assertLaidOutLooksLikePrototype("petcard-size-360x240", c, 360, 240);
     }
 }
