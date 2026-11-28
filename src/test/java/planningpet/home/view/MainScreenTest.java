@@ -1,6 +1,7 @@
 package planningpet.home.view;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
 import java.awt.Component;
@@ -21,9 +22,16 @@ import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import planningpet.app.controller.AppController;
 import planningpet.app.model.AppData;
+import planningpet.common.view.Snap;
+import planningpet.common.view.Theme;
 import planningpet.home.controller.HomeController;
 import planningpet.pet.model.PetKind;
 import planningpet.pet.model.PetState;
@@ -39,6 +47,19 @@ class MainScreenTest {
     private static final ZoneId ZONE = ZoneId.systemDefault();
     private final List<Task> tasks = new ArrayList<>();
     private AppData data;
+
+    @BeforeEach
+    void install() {
+        Theme.install();
+    }
+
+    @AfterEach
+    void undoInstall() {
+        for (Object key : List.copyOf(UIManager.getLookAndFeelDefaults().keySet())) {
+            UIManager.put(key, null);
+        }
+        UIManager.put("swing.boldMetal", null);
+    }
 
     private void task(String title, int month, int day, String start, int minutes, boolean done) {
         LocalDate d = LocalDate.of(2026, month, day);
@@ -78,6 +99,11 @@ class MainScreenTest {
 
     private static String at(Rectangle r) {
         return r.x + "," + r.y + " " + r.width + "x" + r.height;
+    }
+
+    /** c의 자리를 할 일 카드 좌표로. */
+    private static String inList(MainScreen m, Component c) {
+        return at(SwingUtilities.convertRectangle(c.getParent(), c.getBounds(), m.getComponent(2)));
     }
 
     /** 목록의 줄마다 체크와 제목, 라벨과 단추는 글. */
@@ -139,6 +165,38 @@ class MainScreenTest {
         MainScreen m = screen();
         assertEquals("0,0 360x236 | 0,248 360x-48 | 372,0 -72x200", parts(m, 300, 200));
         assertEquals("0,0 360x236 | 0,248 360x-248 | 372,0 -372x0", parts(m, 0, 0));
+    }
+
+    @Test
+    void eScreen4ListCard() {
+        base();
+        MainScreen m = screen();
+        data.changed();
+        Snap.layOut(m, 804, 554);
+        assertEquals("16,14 383x45", inList(m, m.listTitle.getParent()));
+        assertEquals(new Insets(0, 0, 9, 0), ((JComponent) m.listTitle.getParent()).getInsets());
+        assertEquals("16,14 286x36 " + Theme.heavy(21) + " 24 8", inList(m, m.listTitle) + " " + m.listTitle.getFont() + " "
+                + m.listTitle.getIcon().getIconWidth() + " " + m.listTitle.getIconTextGap());
+        assertEquals("302,14 97x36 16 6", inList(m, m.addButton) + " " + m.addButton.getIcon().getIconWidth() + " "
+                + m.addButton.getIconTextGap());
+        JScrollPane scroll = (JScrollPane) m.rows.getParent().getParent();
+        assertEquals("16,67 383x392 20 31 " + new Insets(0, 0, 0, 0), inList(m, scroll) + " " + scroll.getVerticalScrollBarPolicy() + " "
+                + scroll.getHorizontalScrollBarPolicy() + " " + scroll.getInsets());
+        assertEquals("16,475 315x40 / 339,475 60x40 false " + new Insets(9, 18, 11, 18) + " / 16,521 383x15",
+                inList(m, m.quick) + " / " + inList(m, m.quickButton) + " " + m.quickButton.isEnabled() + " "
+                        + m.quickButton.getInsets() + " / " + inList(m, m.quickButton.getParent().getComponent(2)));
+        JLabel hint = (JLabel) m.quickButton.getParent().getComponent(2);
+        assertEquals("제목을 쓰고 Enter나 추가를 누르면 30분짜리 할 일로 들어가요 " + Theme.font(12) + " " + Theme.INK_SUB + " 8",
+                hint.getText() + " " + hint.getFont() + " " + hint.getForeground() + " " + hint.getInsets().left);
+    }
+
+    @Test
+    void eScreen5BeforeNotice() {
+        base();
+        MainScreen m = screen();
+        assertEquals("", m.listTitle.getText());
+        assertEquals(0, m.rows.getComponentCount());
+        assertFalse(m.quickButton.isEnabled());
     }
 
     @Test

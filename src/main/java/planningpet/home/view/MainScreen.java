@@ -12,6 +12,7 @@ import planningpet.app.controller.AppController;
 import planningpet.app.model.AppData;
 import planningpet.common.view.Card;
 import planningpet.common.view.Icons;
+import planningpet.common.view.RoundField;
 import planningpet.common.view.Theme;
 import planningpet.home.controller.HomeController;
 import planningpet.reward.controller.RewardController;
@@ -28,7 +29,9 @@ public final class MainScreen extends JPanel {
     final TaskRows rows;
     final PetCard pet;
     final JLabel listTitle = new JLabel();
-    /** "일정 추가"는 목록 제목 줄 오른쪽이다(D-40). */
+    final RoundField quick = new RoundField(Icons.Kind.PENCIL, "할 일을 쓰고 Enter");
+    /** D-40: 칸 옆 "추가"는 Enter와 같다(넣는 일은 C4). "일정 추가"는 목록 제목 줄 오른쪽이다. */
+    final JButton quickButton = new JButton("추가");
     final JButton addButton = new JButton("일정 추가");
 
     /** 펫 카드, 달력 카드, 할 일 카드를 이 차례로 갖는다. 데이터 변경 알림에 refresh를 거는 일은 화면을 넣는 쪽(Main)이 한다. */
@@ -56,6 +59,7 @@ public final class MainScreen extends JPanel {
         JScrollPane scroll = new JScrollPane(rows, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scroll.setBorder(BorderFactory.createEmptyBorder());
         list.add(scroll, BorderLayout.CENTER);
+        list.add(quickAdd(), BorderLayout.SOUTH);
 
         Card calendarCard = new Card(new BorderLayout());
         calendarCard.setBorder(BorderFactory.createEmptyBorder(14, 16, 14, 16));
@@ -83,6 +87,22 @@ public final class MainScreen extends JPanel {
         for (Component c : parts) {
             c.doLayout();
         }
+    }
+
+    /** 빠른 추가 줄(05 입력 항목 5, D-40): 둥근 칸, 옆 "추가"(처음은 흐림), 아래 안내. */
+    private JPanel quickAdd() {
+        JPanel panel = new JPanel(new BorderLayout(8, 6));
+        panel.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
+        quickButton.setEnabled(false);
+        JLabel hint = new JLabel("제목을 쓰고 Enter나 추가를 누르면 30분짜리 할 일로 들어가요");
+        hint.setForeground(Theme.INK_SUB);
+        hint.setFont(Theme.font(12));
+        hint.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 0));
+        quickButton.setBorder(BorderFactory.createEmptyBorder(9, 18, 11, 18));
+        panel.add(quick, BorderLayout.CENTER);
+        panel.add(quickButton, BorderLayout.EAST);
+        panel.add(hint, BorderLayout.SOUTH);
+        return panel;
     }
 
     /** 고른 날의 목록 제목과 목록, 달력, 펫 카드를 다시 그린다. */
