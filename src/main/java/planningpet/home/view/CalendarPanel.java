@@ -12,10 +12,12 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
+import planningpet.app.controller.AppController;
 import planningpet.app.model.AppData;
 import planningpet.common.view.CircleButton;
 import planningpet.common.view.Icons;
 import planningpet.common.view.Theme;
+import planningpet.home.controller.HomeController;
 import planningpet.schedule.model.CalendarCell;
 
 /**
@@ -40,7 +42,17 @@ public final class CalendarPanel extends JPanel {
     private YearMonth month;
     private LocalDate selected;
 
-    /** onPick은 날짜 칸을 누르면 그날을 받는다. */
+    /**
+     * 홈 화면의 달력. 누른 날을 home.pick에 넘기고(07 seq-uc09), 고른 날을 app.setHomeDay로 잇고(D-106), 데이터 변경 알림마다
+     * 다시 그린다(docs/porting/home.md S3h).
+     */
+    public CalendarPanel(AppData data, HomeController home, AppController app) {
+        this(data, home::pick);
+        app.setHomeDay(this::selected);
+        data.onChange(this::refresh);
+    }
+
+    /** onPick은 날짜 칸이나 "오늘" 버튼을 누르면 고른 날을 받는다. 검사가 쓴다. */
     public CalendarPanel(AppData data, Consumer<LocalDate> onPick) {
         super(new BorderLayout(0, 4));
         this.data = data;

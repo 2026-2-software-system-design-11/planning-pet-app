@@ -31,13 +31,22 @@ import javax.swing.UIManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import planningpet.app.controller.AppController;
 import planningpet.app.model.AppData;
+import planningpet.app.model.DataStore;
+import planningpet.app.model.LoadResult;
 import planningpet.common.view.CircleButton;
 import planningpet.common.view.Snap;
 import planningpet.common.view.Theme;
+import planningpet.home.controller.HomeController;
+import planningpet.pet.model.PetKind;
+import planningpet.pet.model.PetState;
+import planningpet.reward.controller.RewardController;
 import planningpet.schedule.model.Category;
+import planningpet.schedule.model.DeleteScope;
 import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Task;
+import planningpet.schedule.model.TaskDraft;
 
 /** 홈 달력의 몸. 번호는 docs/porting/home.md S3f 2절. 기준 그림 proto/month-*.png는 칸의 숫자와 수를 비운 날짜 칸 줄이다. */
 class CalendarPanelTest {
@@ -408,5 +417,71 @@ class CalendarPanelTest {
         assertEquals(d(11, 16), c.selected());
         assertFalse(c.today.isEnabled());
         assertEquals(List.of(d(11, 18), d(12, 5), d(11, 16), d(11, 20), d(11, 16)), picks);
+    }
+
+    private AppController app;
+    private int heard;
+
+    /** 잇는 생성자로 만든 패널(S3h). 고른 고양이 나비가 있고 저장은 늘 된다. */
+    private CalendarPanel wired(String now) {
+        data = new AppData(Clock.fixed(LocalDateTime.parse(now).atZone(ZONE).toInstant(), ZONE), tasks, List.of());
+        data.addPet(new PetState(PetKind.CAT, "나비"));
+        data.setActiveKind(PetKind.CAT);
+        app = new AppController(data, new DataStore() {
+            public LoadResult load() { return LoadResult.firstRun(); }
+            public void save(AppData d) { }
+        }, e -> { });
+        CalendarPanel c = new CalendarPanel(data, new HomeController(data, app), app);
+        data.onChange(() -> heard++);
+        c.refresh();
+        return c;
+    }
+
+    private String said() {
+        return app.getBubble().getLine() + " 세는 날 " + app.getBubble().getRecountDay() + " 알림 " + heard;
+    }
+
+    @Test
+    void eSel1to4TalkAndRedraw() {
+        task(Kind.TASK, "오늘", 16, null, 0, 0, 0);
+        task(Kind.TASK, "가", 18, null, 0, 0, 0);
+        task(Kind.TASK, "나", 18, null, 0, 0, 0);
+        CalendarPanel c = wired("2026-11-16T10:00");
+        press(cell(c, 18));
+        assertEquals("11월 18일 할 일은 2개야. 세는 날 2026-11-18 알림 1", said());
+        assertEquals("<html><center><b>18</b><br><font size='2' color='#28977F'>2개</font></center></html>", cell(c, 18).getText());
+        press(cell(c, 18));
+        assertEquals("11월 18일 할 일은 2개야. 세는 날 2026-11-18 알림 2", said());
+        press(cell(c, 16));
+        assertEquals("오늘 할 일 1개 남았어. 세는 날 2026-11-16 알림 3", said());
+        assertFalse(c.today.isEnabled());
+        c.next.doClick();
+        press(cell(c, 5));
+        assertEquals("12월 5일은 할 일이 없어. 세는 날 2026-12-05 알림 4", said());
+        c.today.doClick();
+        c.today.doClick();
+        assertEquals("오늘 할 일 1개 남았어. 세는 날 2026-11-16 알림 5 2026년 11월", said() + " " + c.title.getText());
+    }
+
+    @Test
+    void eSel6RedrawOnNotice() {
+        CalendarPanel c = wired("2026-11-16T10:00");
+        app.change("일정 추가", () -> data.getBook().add(new TaskDraft(Kind.TASK, "다", Category.OTHER, d(11, 19), null, null, 30, "",
+                null, null, false, null, null, false)));
+        assertEquals("<html><center>19<br><font size='2' color='#28977F'>1개</font></center></html>", cell(c, 19).getText());
+        assertEquals(1, heard);
+    }
+
+    @Test
+    void eSel7PickedDayGoesToApp() {
+        task(Kind.TASK, "오늘", 16, null, 0, 0, 0);
+        task(Kind.TASK, "가", 18, null, 0, 0, 0);
+        task(Kind.TASK, "나", 18, null, 0, 0, 0);
+        CalendarPanel c = wired("2026-11-16T10:00");
+        press(cell(c, 18));
+        new RewardController(data, app).complete(data.getBook().getTasks().get(0));
+        assertEquals("오늘 할 일을 다 끝냈어! 푹 쉬어. 세는 날 null 알림 2", said());
+        app.change("일정 삭제", () -> data.getBook().delete(data.getBook().getTasks().get(2), DeleteScope.ONLY_THIS));
+        assertEquals("11월 18일 할 일은 1개야. 세는 날 2026-11-18 알림 3", said());
     }
 }
