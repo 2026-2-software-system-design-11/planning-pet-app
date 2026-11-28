@@ -16,9 +16,12 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.Icon;
@@ -54,6 +57,8 @@ public final class TaskRows extends JPanel implements Scrollable {
     private final TimeOpener onTime;
     /** "끝낸 일 {수}개" 묶음 제목. 묶음이 없으면 목록에 없다. */
     public final JButton doneHead = new JButton();
+    /** D-88: 방금 체크해 아직 제자리에 머무는 일. 1.5초 뒤 "끝낸 일" 묶음으로 내려간다. */
+    private final Set<Task> lingering = new HashSet<>();
     /** "끝낸 일" 묶음을 접었는가. 앱을 끌 때까지 남고 저장하지 않는다. */
     private boolean doneFolded;
     /** 접기를 누르거나 머물던 줄을 내려보낸 뒤 목록을 다시 만든다. 홈 화면(MainScreen)이 넣는다. */
@@ -83,6 +88,17 @@ public final class TaskRows extends JPanel implements Scrollable {
         });
     }
 
+    /** D-88: 머물던 끝낸 줄을 "끝낸 일" 묶음으로 내려보낸다(1.5초가 지난 것과 같다). */
+    public void settle() {
+        lingering.clear();
+        resort.run();
+    }
+
+    /** 체크한 뒤 아직 제자리에 머무는 일이 있는가(D-88). */
+    public boolean settling() {
+        return !lingering.isEmpty();
+    }
+
     /**
      * 홈 그날 목록(06 6번, D-31): 맨 위 "오늘 마감"인 기간 할 일, 시각 있는 일정을 시각과 함께, 그 아래 "시각 없는 할 일"(D-41), 맨
      * 아래 "기간 안에 할 일"(D-70), 맨 아래 "끝낸 일"(D-88). 일정이 하나도 없는 날은 흐린 안내다(D-33, docs/porting/task-rows.md S3w, S3x).
@@ -96,13 +112,14 @@ public final class TaskRows extends JPanel implements Scrollable {
             none.setBorder(BorderFactory.createEmptyBorder(16, 6, 0, 0));
             add(none);
         }
+        // D-88: 끝낸 일은 체크한 자리에 잠깐 머문 뒤 맨 아래 "끝낸 일" 묶음으로 내려간다.
+        Predicate<Task> down = t -> t.isDone() && !lingering.contains(t);
         plan.dueToday().forEach(t -> add(row(t, "", plan.date())));
-        plan.timed().stream().filter(t -> !t.isDone()).forEach(t -> add(row(t, data.getBook().timeText(t), plan.date())));
-        group("시각 없는 할 일", plan.untimed().stream().filter(t -> !t.isDone()).toList(), plan.date());
+        plan.timed().stream().filter(down.negate()).forEach(t -> add(row(t, data.getBook().timeText(t), plan.date())));
+        group("시각 없는 할 일", plan.untimed().stream().filter(down.negate()).toList(), plan.date());
         group("기간 안에 할 일", plan.period(), plan.date());
-        // D-88: 끝낸 일은 맨 아래 "끝낸 일" 묶음에 timed, untimed 순으로 모인다.
-        List<Task> done = new ArrayList<>(plan.timed().stream().filter(Task::isDone).toList());
-        done.addAll(plan.untimed().stream().filter(Task::isDone).toList());
+        List<Task> done = new ArrayList<>(plan.timed().stream().filter(down).toList());
+        done.addAll(plan.untimed().stream().filter(down).toList());
         if (!done.isEmpty()) {
             doneHead.setText("끝낸 일 " + done.size() + "개");
             doneHead.setIcon(fold(doneFolded));
@@ -294,10 +311,13 @@ public final class TaskRows extends JPanel implements Scrollable {
         box.putClientProperty(Task.class, t);
         box.getAccessibleContext().setAccessibleName((t.isDone() ? "끝냄 취소: " : "끝냄: ") + t.getTitle());
         // UC-07, UC-08: 끝내지 않은 일은 끝내고 끝낸 일은 체크를 푼다(프로토타입 TaskController.check의 갈래).
+        // D-88: 체크하면 제자리에 머물고 마지막 체크에서 1.5초 뒤 묶음으로 내려간다. 풀면 바로 제자리다.
         box.addActionListener(e -> {
             if (t.isDone()) {
+                lingering.remove(t);
                 reward.uncomplete(t);
             } else {
+                lingering.add(t);
                 reward.complete(t);
             }
         });

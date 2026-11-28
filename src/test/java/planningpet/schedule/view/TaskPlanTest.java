@@ -23,6 +23,7 @@ import javax.swing.BorderFactory;
 import javax.swing.AbstractButton;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -30,10 +31,16 @@ import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import planningpet.app.controller.AppController;
 import planningpet.app.model.AppData;
+import planningpet.app.model.DataStore;
+import planningpet.app.model.LoadResult;
 import planningpet.common.view.RoundButtonUI;
 import planningpet.common.view.Snap;
 import planningpet.common.view.Theme;
+import planningpet.pet.model.PetKind;
+import planningpet.pet.model.PetState;
+import planningpet.reward.controller.RewardController;
 import planningpet.schedule.model.Category;
 import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Task;
@@ -67,12 +74,19 @@ class TaskPlanTest {
 
     /**
      * 시계 now의 앱 데이터에 tasks를 두고 새 목록에 list 날의 dayPlan을 넘겨, 앱처럼 Theme.clear 뒤 폭 480으로 배치한다. 홈 화면
-     * 대신 resort가 같은 날을 다시 그린다. 체크를 누르지 않아 보상 controller는 없다.
+     * 대신 데이터 변경 알림과 resort가 같은 날을 다시 그린다(docs/porting/task-rows.md S3x). 체크는 보상 controller를 부른다.
      */
     private static TaskRows plan(LocalDateTime now, LocalDate list, Task... tasks) {
         AppData data = new AppData(Clock.fixed(now.atZone(ZoneId.systemDefault()).toInstant(), ZoneId.systemDefault()),
                 List.of(tasks), List.of());
-        TaskRows rows = new TaskRows(data, null, t -> { }, t -> { }, (t, d, at) -> { });
+        data.addPet(new PetState(PetKind.CAT, "나비"));
+        data.setActiveKind(PetKind.CAT);
+        AppController app = new AppController(data, new DataStore() {
+            public LoadResult load() { return LoadResult.firstRun(); }
+            public void save(AppData d) { }
+        }, e -> { });
+        TaskRows rows = new TaskRows(data, new RewardController(data, app), t -> { }, t -> { }, (t, d, at) -> { });
+        data.onChange(() -> rows.resort.run());
         rows.resort = () -> {
             rows.showPlan(data.getBook().dayPlan(list));
             Theme.clear(rows);
@@ -130,6 +144,17 @@ class TaskPlanTest {
         head.paint(g);
         g.dispose();
         Snap.assertLooksLikePrototype("plan-" + name, img);
+    }
+
+    /** 목록에서 제목이 title인 줄의 둥근 체크. 목록은 체크마다 다시 만들어지므로 그때마다 찾는다. */
+    private static JCheckBox box(TaskRows rows, String title) {
+        for (Component c : rows.getComponents()) {
+            if (c instanceof JPanel row && row.getComponent(0) instanceof JPanel left && left.getComponent(0) instanceof JCheckBox b
+                    && ((Task) b.getClientProperty(Task.class)).getTitle().equals(title)) {
+                return b;
+            }
+        }
+        throw new AssertionError(title);
     }
 
     /** E-DONE-3과 T-LIST-8의 11-16: 09:00 A, 시각 없는 B, C(넣은 순). */
@@ -285,5 +310,42 @@ class TaskPlanTest {
         assertEquals(2, rows.getComponentCount());
         head.doClick();
         assertEquals("A 09:00~09:30 0,0 480x39, <끝낸 일 2개> 0,39, B 시각 정하기 0,72 480x39, C 시각 정하기 0,111 480x39", kids(rows));
+    }
+
+    private static final String ABC = "A 09:00~09:30 0,0 480x39, [시각 없는 할 일] 0,39 75x33, B 시각 정하기 0,72 480x39, "
+            + "C 시각 정하기 0,111 480x39";
+
+    @Test
+    void eDone5CheckAgain() {
+        TaskRows rows = abc(false);
+        box(rows, "B").doClick();
+        box(rows, "C").doClick();
+        assertEquals(ABC + " true true true", kids(rows) + " " + box(rows, "B").isSelected() + " " + box(rows, "C").isSelected()
+                + " " + rows.settling());
+        rows.settle();
+        assertEquals("A 09:00~09:30 0,0 480x39, <끝낸 일 2개> 0,39, B 시각 정하기 0,72 480x39, C 시각 정하기 0,111 480x39", kids(rows));
+    }
+
+    @Test
+    void eDone6UncheckWhileStaying() {
+        TaskRows rows = abc(false);
+        box(rows, "B").doClick();
+        box(rows, "B").doClick();
+        assertEquals(ABC + " false false", kids(rows) + " " + box(rows, "B").isSelected() + " " + rows.settling());
+    }
+
+    @Test
+    void tList8StayThenGroup() {
+        TaskRows rows = abc(false);
+        box(rows, "B").doClick();
+        assertEquals(ABC + " true true", kids(rows) + " " + box(rows, "B").isSelected() + " " + rows.settling());
+        rows.settle();
+        String settled = "A 09:00~09:30 0,0 480x39, [시각 없는 할 일] 0,39 75x33, C 시각 정하기 0,72 480x39, <끝낸 일 1개> 0,111";
+        assertEquals(settled + ", B 시각 정하기 0,144 480x39", kids(rows));
+        rows.doneHead.doClick();
+        assertEquals(settled, kids(rows));
+        rows.doneHead.doClick();
+        box(rows, "B").doClick();
+        assertEquals(ABC + " false false", kids(rows) + " " + box(rows, "B").isSelected() + " " + rows.settling());
     }
 }
