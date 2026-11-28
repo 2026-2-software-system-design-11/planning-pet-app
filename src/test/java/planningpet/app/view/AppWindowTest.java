@@ -17,7 +17,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
-import javax.swing.AbstractButton;
 import javax.swing.Icon;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
@@ -90,22 +89,8 @@ class AppWindowTest {
         Theme.clear(w.root());
         w.streak.set("", "");
         w.points.set("", "");
-        blank(w.root());
+        Snap.blank(w.root());
         Snap.assertLaidOutLooksLikePrototype(name, w.root(), width, height);
-    }
-
-    private static void blank(Component c) {
-        if (c instanceof JLabel l) {
-            l.setText("");
-        }
-        if (c instanceof AbstractButton b) {
-            b.setText("");
-        }
-        if (c instanceof Container k) {
-            for (Component child : k.getComponents()) {
-                blank(child);
-            }
-        }
     }
     @Test
     void eWin4BeforeFirstNotice() {
