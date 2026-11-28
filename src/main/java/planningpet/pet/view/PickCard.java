@@ -69,6 +69,7 @@ public final class PickCard extends JRadioButton {
     protected void paintComponent(Graphics graphics) {
         Graphics2D g = (Graphics2D) graphics.create();
         PickScene.hints(g);
+        boolean on = isSelected();
         boolean cat = kind == PetKind.CAT;
         int x = 4;
         int y = 2;
@@ -76,6 +77,9 @@ public final class PickCard extends JRadioButton {
         int h = getHeight() - 9;
         // 바깥: 그림자와 흰 테.
         Card.shadow(g, x, y + 2, w, h, RADIUS + 4);
+        if (on) {
+            Card.shadow(g, x, y + 4, w, h, RADIUS + 4);
+        }
         g.setColor(Theme.CARD_TOP);
         g.fill(new RoundRectangle2D.Double(x, y, w, h, RADIUS, RADIUS));
         // 안: 종류별 바탕과 언덕, 펫.
@@ -101,6 +105,10 @@ public final class PickCard extends JRadioButton {
         double size = 140;
         // 움직임 시각 0, 고른 뒤 시간 99는 시계가 돌기 전의 값이다(시계는 #424).
         PetArt.drawAt(in, kind, wear, 0, 99, cx, ground, size);
+        if (on) {
+            double petTop = ground - size * PetArt.heightRatio(kind);
+            Icons.draw(in, Icons.Kind.SPARK, (int) (cx - size * 0.48), (int) (petTop + 2), 26, Theme.SPARK);
+        }
         // 이름 줄: 발자국과 종류 이름.
         in.setFont(getFont());
         FontMetrics fm = in.getFontMetrics();
@@ -121,10 +129,24 @@ public final class PickCard extends JRadioButton {
             in.drawString(lines[i], (int) (cx - small.stringWidth(lines[i]) / 2.0), base + 25 + i * 20);
         }
         in.dispose();
-        // 안쪽 테두리: 종류 색 1.5.
-        g.setColor(cat ? Theme.COOL_LINE : Theme.WARM_LINE);
-        g.setStroke(new BasicStroke(1.5f));
+        // 안쪽 테두리: 고름은 민트 3, 나머지는 종류 색 1.5.
+        if (on) {
+            g.setPaint(new GradientPaint(0, y, Theme.MINT_TOP, 0, y + h, Theme.MINT_DEEP));
+            g.setStroke(new BasicStroke(3f));
+        } else {
+            g.setColor(cat ? Theme.COOL_LINE : Theme.WARM_LINE);
+            g.setStroke(new BasicStroke(1.5f));
+        }
         g.draw(new RoundRectangle2D.Double(x + ring, y + ring, w - ring * 2, h - ring * 2, RADIUS - 8, RADIUS - 8));
+        // 체크 배지: 색이 아니라 모양으로도 고름을 보인다(ICON 바탕은 카드 바탕과 5.7:1).
+        if (on) {
+            int b = 26;
+            int bx = x + w - b - 10;
+            int by = y + 10;
+            g.setColor(Theme.CARD_TOP);
+            g.fill(new Ellipse2D.Double(bx - 2.5, by - 2.5, b + 5, b + 5));
+            Icons.draw(g, Icons.Kind.CHECK, bx, by, b, Theme.ICON);
+        }
         g.dispose();
     }
 }

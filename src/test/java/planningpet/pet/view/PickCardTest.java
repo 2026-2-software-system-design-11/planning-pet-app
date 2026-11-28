@@ -5,8 +5,14 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.awt.BasicStroke;
+import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.geom.AffineTransform;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
@@ -38,6 +44,10 @@ class PickCardTest {
 
     private static PickCard blank(PetKind kind, boolean selected) {
         return new PickCard("", kind, selected, "");
+    }
+
+    private static void looks(String name, PickCard c, int w, int h) throws IOException {
+        Snap.assertLaidOutLooksLikePrototype("pickcard-" + name, c, w, h);
     }
 
     private static String described(String about) {
@@ -119,7 +129,44 @@ class PickCardTest {
 
     @Test
     void eCard4Plain() throws IOException {
-        Snap.assertLaidOutLooksLikePrototype("pickcard-cat", blank(PetKind.CAT, false), 248, 262);
-        Snap.assertLaidOutLooksLikePrototype("pickcard-dog", blank(PetKind.DOG, false), 248, 262);
+        looks("cat", blank(PetKind.CAT, false), 248, 262);
+        looks("dog", blank(PetKind.DOG, false), 248, 262);
+    }
+
+    @Test
+    void eCard5Picked() throws IOException {
+        looks("cat-on", blank(PetKind.CAT, true), 248, 262);
+        looks("dog-on", blank(PetKind.DOG, true), 248, 262);
+    }
+
+    @Test
+    void eCard8Sizes() throws IOException {
+        int[][] sizes = {{496, 524}, {300, 300}, {100, 100}, {8, 9}, {4, 4}, {0, 0}};
+        for (int[] s : sizes) {
+            looks("cat-on-" + s[0] + "x" + s[1], blank(PetKind.CAT, true), s[0], s[1]);
+        }
+        looks("dog-on-496x524", blank(PetKind.DOG, true), 496, 524);
+    }
+
+    @Test
+    void eCard10CallerStateKept() {
+        PickCard c = blank(PetKind.DOG, true);
+        c.setSize(248, 262);
+        Graphics2D g = new BufferedImage(260, 270, BufferedImage.TYPE_INT_ARGB).createGraphics();
+        BasicStroke stroke = new BasicStroke(5);
+        g.setColor(Color.RED);
+        g.setStroke(stroke);
+        g.translate(3, 4);
+        g.clipRect(10, 10, 100, 100);
+        g.setFont(Theme.font(9));
+        AffineTransform moved = g.getTransform();
+        c.paintComponent(g);
+        assertEquals(Color.RED, g.getColor());
+        assertEquals(stroke, g.getStroke());
+        assertEquals(moved, g.getTransform());
+        assertEquals(new Rectangle(10, 10, 100, 100), g.getClipBounds());
+        assertEquals(Theme.font(9), g.getFont());
+        assertEquals(RenderingHints.VALUE_ANTIALIAS_OFF, g.getRenderingHint(RenderingHints.KEY_ANTIALIASING));
+        g.dispose();
     }
 }
