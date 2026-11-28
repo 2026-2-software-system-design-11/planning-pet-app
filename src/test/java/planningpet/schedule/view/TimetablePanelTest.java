@@ -9,6 +9,7 @@ import static planningpet.schedule.model.Tasks.task;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -16,6 +17,7 @@ import planningpet.app.model.AppData;
 import planningpet.app.model.Apps;
 import planningpet.common.view.Snap;
 import planningpet.common.view.Theme;
+import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.Task;
 import planningpet.schedule.model.Tasks.Spec;
 
@@ -47,6 +49,18 @@ class TimetablePanelTest {
         show(tasks);
         return panel.blockAreas().entrySet().stream().map(e -> e.getValue().getTitle() + " " + e.getKey().x + ","
                 + e.getKey().y + "," + e.getKey().width + "," + e.getKey().height).toList();
+    }
+
+    /** (x0, y0)부터 (x1, y1) 앞까지의 픽셀에서 빨강, 초록, 파랑 합의 가장 작은 값(가장 진한 글). */
+    private static int darkest(BufferedImage img, int x0, int y0, int x1, int y1) {
+        int min = 765;
+        for (int y = y0; y < y1; y++) {
+            for (int x = x0; x < x1; x++) {
+                int p = img.getRGB(x, y);
+                min = Math.min(min, (p >> 16 & 255) + (p >> 8 & 255) + (p & 255));
+            }
+        }
+        return min;
     }
 
     /** bottom 위에 top을 덧칠한 색. */
@@ -125,9 +139,56 @@ class TimetablePanelTest {
                 task("S", d(19)).at("09:00").minutes(10).task()));
     }
 
+    /** 06 19번의 검사 줄을 11-18에 그린 블록 자리. */
+    @Test
+    void tTt1to7Blocks() {
+        assertEquals(List.of("A 253,396,98,44"), blocks(at("A", "09:00", 60).task()));
+        assertEquals(List.of("A 253,396,48,44", "B 303,418,48,44"), blocks(at("A", "09:00", 60).task(), at("B", "09:30", 60).task()));
+        assertEquals(List.of("A 253,396,98,44", "B 253,440,98,44"), blocks(at("A", "09:00", 60).task(), at("B", "10:00", 60).task()));
+        assertEquals(List.of("A 253,396,48,88", "B 303,418,48,22", "C 303,440,48,22"), blocks(at("A", "09:00", 120).task(),
+                at("B", "09:30", 30).task(), at("C", "10:00", 30).task()));
+        assertEquals(List.of("A 303,396,48,44", "B 253,396,48,66"), blocks(at("A", "09:00", 60).task(),
+                at("B", "09:00", 90).seq(2).task()));
+        assertEquals(List.of("A 253,1034,48,66", "B 303,1078,48,22"), blocks(at("A", "23:30", 90).task(),
+                at("B", "00:30", 30).nextDay().task()));
+        assertEquals(List.of("자소서 초안 253,616,48,44", "면접 준비 303,638,48,44", "운동 253,792,98,44"), blocks(
+                at("자소서 초안", "14:00", 60).task(), at("면접 준비", "14:30", 60).memo("질문 목록").task(), at("운동", "18:00", 60).task()));
+    }
+
     @Test
     void eTbl5ThreeColumns() {
         assertEquals(List.of("A 253,396,31,44", "B 286,396,31,44", "C 319,396,31,44"), blocks(at("A", "09:00", 60).task(),
                 at("B", "09:00", 60).seq(2).task(), at("C", "09:00", 60).seq(3).task()));
+    }
+
+    @Test
+    void eTbl6Colors() {
+        Color[][] want = {{Theme.MINT_SOFT, Theme.MINT_LINE}, {Theme.TRACK, Theme.CARD_LINE}, {Theme.DAY, Theme.CARD_LINE},
+            {Theme.DAY, Theme.CARD_LINE}};
+        BufferedImage img = show(task("ABC", d(16)).at("09:00").minutes(60).task(),
+                task("ABC", d(17)).kind(Kind.FIXED).at("09:00").minutes(60).task(), at("ABC", "09:00", 60).done(d(18)).task(),
+                task("ABC", d(19)).kind(Kind.FIXED).at("09:00").minutes(60).done(d(18)).task(),
+                task("    ", d(20)).at("09:00").done(d(18)).task(), task("    ", d(21)).at("09:00").task());
+        for (int i = 0; i < 4; i++) {
+            int x = 53 + 100 * i;
+            assertEquals(List.of(want[i][0].getRGB(), want[i][1].getRGB()), List.of(img.getRGB(x + 49, 436),
+                    img.getRGB(x + 49, 439)), "블록 " + i);
+            int ink = darkest(img, x + 20, 398, x + 98, 406); // 취소선(406) 위의 글
+            assertTrue(i < 2 ? ink < 400 : ink >= 480, "글 " + i + " " + ink);
+        }
+        assertTrue(ink(img, 473, 405, 480, 412, Theme.DAY), "취소선");
+        assertFalse(ink(img, 573, 405, 580, 412, Theme.MINT_SOFT));
+    }
+
+    @Test
+    void eTbl7CheckBox() {
+        BufferedImage img = show(at("A", "09:00", 60).task(), task("B", d(19)).at("09:00").done(d(18)).task());
+        assertEquals(List.of(new Rectangle(257, 400, 12, 12), new Rectangle(357, 400, 12, 12)),
+                List.copyOf(panel.boxAreas().keySet()));
+        assertFalse(ink(img, 259, 402, 268, 411, Theme.CARD_TOP));
+        assertTrue(ink(img, 359, 402, 368, 411, Theme.CARD_TOP));
+        show(192, at("A", "09:00", 60).task(), at("B", "09:30", 60).task());
+        assertEquals(List.of(new Rectangle(97, 400, 4, 12), new Rectangle(107, 422, 4, 12)),
+                List.copyOf(panel.boxAreas().keySet()));
     }
 }

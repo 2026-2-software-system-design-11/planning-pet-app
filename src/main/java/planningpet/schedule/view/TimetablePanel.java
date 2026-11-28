@@ -35,8 +35,9 @@ public final class TimetablePanel extends JComponent {
     private final AppData data;
     /** 보이는 주의 첫날(D-91). 일정관리 화면(S5c)이 주를 옮길 때 정한다. */
     LocalDate monday;
-    /** 마지막으로 그린 블록의 자리. 누르기와 툴팁이 쓴다. */
+    /** 마지막으로 그린 블록과 체크 칸의 자리. 누르기와 툴팁이 쓴다. */
     private final Map<Rectangle, Task> blocks = new LinkedHashMap<>();
+    private final Map<Rectangle, Task> boxes = new LinkedHashMap<>();
 
     public TimetablePanel(AppData data) {
         this.data = data;
@@ -51,6 +52,11 @@ public final class TimetablePanel extends JComponent {
     /** 마지막으로 그린 블록의 자리와 일정. 그린 차례다. */
     Map<Rectangle, Task> blockAreas() {
         return blocks;
+    }
+
+    /** 마지막으로 그린 체크 칸의 자리와 일정. 그린 차례다. */
+    Map<Rectangle, Task> boxAreas() {
+        return boxes;
     }
 
     /** 07 seq-uc10: 그날 시간표에 놓이는 일정(끝낸 일 포함). 일정 목록의 차례라 뒤의 일이 위에 그려진다. */
@@ -95,6 +101,7 @@ public final class TimetablePanel extends JComponent {
         mid.drawString("다음 날", 6, 24 * HOUR + 28);
         mid.dispose();
         blocks.clear();
+        boxes.clear();
         for (int i = 0; i < 7; i++) {
             List<Task> tasks = timedOn(monday.plusDays(i));
             Map<Task, Slot> slots = new HashMap<>();
@@ -108,12 +115,32 @@ public final class TimetablePanel extends JComponent {
         g.dispose();
     }
 
-    /** 블록 하나의 바탕과 테두리(D-44). */
+    /** 블록 하나: 바탕과 테두리(D-44), 체크 칸(D-35), 제목과 끝낸 일의 취소선. */
     private void block(Graphics2D g, Rectangle r, Task t) {
         boolean plain = t.isDone() || t.getKind() == Kind.FIXED;
         g.setColor(t.isDone() ? Theme.DAY : plain ? Theme.TRACK : Theme.MINT_SOFT);
         g.fillRoundRect(r.x, r.y, r.width, r.height, 10, 10);
         g.setColor(plain ? Theme.CARD_LINE : Theme.MINT_LINE);
         g.drawRoundRect(r.x, r.y, r.width - 1, r.height - 1, 10, 10);
+        Graphics2D text = (Graphics2D) g.create();
+        text.clipRect(r.x, r.y, r.width, r.height);
+        // D-35: 고정 일정 블록에도 체크 칸을 둔다. 좁은 블록에서는 블록 안으로 잘린다.
+        Rectangle box = new Rectangle(r.x + 4, r.y + 4, 12, 12).intersection(r);
+        boxes.put(box, t);
+        text.setColor(Theme.CARD_TOP);
+        text.fill(box);
+        text.setColor(Theme.MINT_LINE);
+        text.draw(box);
+        if (t.isDone()) {
+            text.setColor(Theme.MINT);
+            text.drawPolyline(new int[] {box.x + 2, box.x + 5, box.x + 10}, new int[] {box.y + 6, box.y + 9, box.y + 3}, 3);
+        }
+        text.setColor(t.isDone() ? Theme.INK_DIM : Theme.INK);
+        int tx = r.x + 20;
+        text.drawString(t.getTitle(), tx, r.y + 14);
+        if (t.isDone()) {
+            text.drawLine(tx, r.y + 10, tx + text.getFontMetrics().stringWidth(t.getTitle()), r.y + 10);
+        }
+        text.dispose();
     }
 }
