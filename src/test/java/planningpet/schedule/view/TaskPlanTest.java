@@ -28,6 +28,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import planningpet.app.model.AppData;
 import planningpet.common.view.RoundButtonUI;
@@ -39,6 +40,12 @@ import planningpet.schedule.model.Task;
 
 /** 홈 그날 목록 showPlan. 번호는 docs/porting/task-rows.md S3w 2절. */
 class TaskPlanTest {
+    /** "끝낸 일" 단추는 앱처럼 RoundButtonUI로 그린다. 줄과 묶음 제목은 install 앞과 뒤가 같다(task-rows.md S3w, S3x). */
+    @BeforeAll
+    static void theme() {
+        Theme.install();
+    }
+
     private static LocalDate day(int d) {
         return LocalDate.of(2026, 11, d);
     }
@@ -59,16 +66,19 @@ class TaskPlanTest {
     }
 
     /**
-     * 시계 now의 앱 데이터에 tasks를 두고 새 목록에 list 날의 dayPlan을 넘겨, 앱처럼 Theme.clear 뒤 폭 480으로 배치한다. 체크를
-     * 누르지 않아 보상 controller는 없다.
+     * 시계 now의 앱 데이터에 tasks를 두고 새 목록에 list 날의 dayPlan을 넘겨, 앱처럼 Theme.clear 뒤 폭 480으로 배치한다. 홈 화면
+     * 대신 resort가 같은 날을 다시 그린다. 체크를 누르지 않아 보상 controller는 없다.
      */
     private static TaskRows plan(LocalDateTime now, LocalDate list, Task... tasks) {
         AppData data = new AppData(Clock.fixed(now.atZone(ZoneId.systemDefault()).toInstant(), ZoneId.systemDefault()),
                 List.of(tasks), List.of());
         TaskRows rows = new TaskRows(data, null, t -> { }, t -> { }, (t, d, at) -> { });
-        rows.showPlan(data.getBook().dayPlan(list));
-        Theme.clear(rows);
-        Snap.layOut(rows, 480, rows.getPreferredSize().height);
+        rows.resort = () -> {
+            rows.showPlan(data.getBook().dayPlan(list));
+            Theme.clear(rows);
+            Snap.layOut(rows, 480, rows.getPreferredSize().height);
+        };
+        rows.resort.run();
         return rows;
     }
 
@@ -110,6 +120,22 @@ class TaskPlanTest {
         rows.paint(g);
         g.dispose();
         Snap.assertLooksLikePrototype("plan-" + name, img);
+    }
+
+    /** 묶음 단추를 글을 비워 그린 그림을 기준 그림 proto/plan-{name}.png와 견준다. */
+    private static void headLooks(String name, JButton head) throws IOException {
+        head.setText("");
+        BufferedImage img = new BufferedImage(head.getWidth() + 4, head.getHeight() + 4, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = img.createGraphics();
+        head.paint(g);
+        g.dispose();
+        Snap.assertLooksLikePrototype("plan-" + name, img);
+    }
+
+    /** E-DONE-3과 T-LIST-8의 11-16: 09:00 A, 시각 없는 B, C(넣은 순). */
+    private static TaskRows abc(boolean done) {
+        return plan(day(16).atTime(8, 0), day(16), task(1, Kind.TASK, "A", day(16), LocalTime.of(9, 0), 30, null, false),
+                task(2, Kind.TASK, "B", day(16), null, 30, null, done), task(3, Kind.TASK, "C", day(16), null, 30, null, done));
     }
 
     @Test
@@ -239,5 +265,25 @@ class TaskPlanTest {
             assertEquals("<html>" + want[i][1] + "</html>", marks.getText());
             assertEquals(new Rectangle(6, 33, 373, 15), marks.getBounds());
         }
+    }
+
+    /** E-DONE-2 접기와 E-DONE-3 묶음 그림(그림이 글을 비우므로 먼저 크기를 본다). */
+    @Test
+    void eDone2FoldAndPicture() throws IOException {
+        TaskRows rows = abc(true);
+        JButton head = rows.doneHead;
+        assertEquals(new Dimension(73, 33), head.getPreferredSize());
+        looks("done", rows);
+        assertEquals("false RoundButtonUI", head.isOpaque() + " " + head.getUI().getClass().getSimpleName());
+        assertEquals("접기 끝낸 일 2개 접기", head.getToolTipText() + " " + head.getAccessibleContext().getAccessibleName());
+        headLooks("head-open", head);
+        head.doClick();
+        assertEquals("A 09:00~09:30 0,0 480x39, <끝낸 일 2개> 0,39", kids(rows));
+        assertEquals("펼치기 끝낸 일 2개 펼치기", head.getToolTipText() + " " + head.getAccessibleContext().getAccessibleName());
+        headLooks("head-folded", head);
+        rows.resort.run();
+        assertEquals(2, rows.getComponentCount());
+        head.doClick();
+        assertEquals("A 09:00~09:30 0,0 480x39, <끝낸 일 2개> 0,39, B 시각 정하기 0,72 480x39, C 시각 정하기 0,111 480x39", kids(rows));
     }
 }

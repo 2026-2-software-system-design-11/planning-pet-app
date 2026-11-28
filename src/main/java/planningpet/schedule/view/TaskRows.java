@@ -21,6 +21,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
+import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
@@ -53,6 +54,10 @@ public final class TaskRows extends JPanel implements Scrollable {
     private final TimeOpener onTime;
     /** "끝낸 일 {수}개" 묶음 제목. 묶음이 없으면 목록에 없다. */
     public final JButton doneHead = new JButton();
+    /** "끝낸 일" 묶음을 접었는가. 앱을 끌 때까지 남고 저장하지 않는다. */
+    private boolean doneFolded;
+    /** 접기를 누르거나 머물던 줄을 내려보낸 뒤 목록을 다시 만든다. 홈 화면(MainScreen)이 넣는다. */
+    public Runnable resort = () -> { };
 
     /**
      * 둥근 체크는 reward의 complete와 uncomplete를 부르고, 연필, 휴지통, 시각 알약은 누르면 onEdit, onDelete, onTime에 알린다. 그것이
@@ -72,6 +77,10 @@ public final class TaskRows extends JPanel implements Scrollable {
         doneHead.setBorder(BorderFactory.createEmptyBorder(14, 6, 4, 0));
         doneHead.setAlignmentX(LEFT_ALIGNMENT);
         doneHead.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        doneHead.addActionListener(e -> {
+            doneFolded = !doneFolded;
+            resort.run();
+        });
     }
 
     /**
@@ -96,11 +105,44 @@ public final class TaskRows extends JPanel implements Scrollable {
         done.addAll(plan.untimed().stream().filter(Task::isDone).toList());
         if (!done.isEmpty()) {
             doneHead.setText("끝낸 일 " + done.size() + "개");
+            doneHead.setIcon(fold(doneFolded));
+            doneHead.setToolTipText(doneFolded ? "펼치기" : "접기");
+            doneHead.getAccessibleContext().setAccessibleName("끝낸 일 " + done.size() + "개 " + (doneFolded ? "펼치기" : "접기"));
             add(doneHead);
-            done.forEach(t -> add(row(t, t.onTimetable(data.today()) ? data.getBook().timeText(t) : "", plan.date())));
+            if (!doneFolded) {
+                done.forEach(t -> add(row(t, t.onTimetable(data.today()) ? data.getBook().timeText(t) : "", plan.date())));
+            }
         }
         revalidate();
         repaint();
+    }
+
+    /** 묶음 제목 앞의 작은 삼각형. 펼쳤으면 아래, 접었으면 오른쪽을 가리킨다. */
+    private static Icon fold(boolean folded) {
+        return new Icon() {
+            @Override
+            public void paintIcon(Component c, Graphics graphics, int x, int y) {
+                Graphics2D g = (Graphics2D) graphics.create();
+                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g.setColor(Theme.INK_SUB);
+                if (folded) {
+                    g.fillPolygon(new int[] {x + 2, x + 8, x + 2}, new int[] {y + 1, y + 5, y + 9}, 3);
+                } else {
+                    g.fillPolygon(new int[] {x, x + 10, x + 5}, new int[] {y + 2, y + 2, y + 8}, 3);
+                }
+                g.dispose();
+            }
+
+            @Override
+            public int getIconWidth() {
+                return 10;
+            }
+
+            @Override
+            public int getIconHeight() {
+                return 10;
+            }
+        };
     }
 
     /** 제목 아래에 묶음의 줄. 비면 제목도 없다. */
