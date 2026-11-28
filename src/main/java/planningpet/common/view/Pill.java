@@ -135,7 +135,9 @@ public class Pill extends JToggleButton {
         if (picture != null) {
             Images.fit(g, picture, x, 4, mark(), h - 8);
         } else if (kind != null && showIcon) {
-            Icons.draw(g, kind, x, (h - size - 2) / 2, size + 2, on ? Color.WHITE : Theme.ICON);
+            // 비활성 아이콘은 INK_DIM(디자인 시스템 9절). 프로토타입과 일부러 다름(흐리지 않았다, docs/porting.md 4절).
+            Color line = !isEnabled() ? Theme.INK_DIM : on ? Color.WHITE : Theme.ICON;
+            Icons.draw(g, kind, x, (h - size - 2) / 2, size + 2, line);
         }
         int tx = x + mark() + gap;
         g.setColor(ink);

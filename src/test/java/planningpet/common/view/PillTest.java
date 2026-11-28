@@ -150,8 +150,10 @@ class PillTest {
         }
         assertEquals(mint(28, 3), fill(pill("상태", null, true, false)));
         assertEquals(Theme.CARD_TOP.getRGB(), fill(pill("상태", null, false, false)));
-        assertTrue(iconIs(true, false, Color.WHITE));
-        assertTrue(iconIs(false, false, Theme.ICON));
+        assertTrue(iconIs(true, false, Theme.INK_DIM));
+        assertFalse(iconIs(true, false, Color.WHITE));
+        assertTrue(iconIs(false, false, Theme.INK_DIM));
+        assertFalse(iconIs(false, false, Theme.ICON));
     }
 
     @Test
