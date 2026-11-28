@@ -20,8 +20,10 @@ import java.util.List;
 import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JList;
 import javax.swing.UIManager;
 import javax.swing.plaf.basic.BasicButtonUI;
+import javax.swing.plaf.basic.BasicComboPopup;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -127,8 +129,36 @@ class ComboUITest {
             JComboBox<String> c = combo("");
             focus.own(c);
             looks("combo-focus", c, 120, 24);
+            c = combo("");
+            c.setEnabled(false);
+            focus.own(c);
+            looks("combo-focus-disabled", c, 120, 24);
         } finally {
             KeyboardFocusManager.setCurrentKeyboardFocusManager(null);
         }
+    }
+
+    @Test
+    void eCombo2Disabled() throws IOException {
+        JComboBox<String> c = combo("");
+        c.setEnabled(false);
+        looks("combo-disabled", c, 120, 24);
+        c = combo("안 함");
+        c.setEnabled(false);
+        Snap.paint(c, 120, 24);
+        Component value = (Component) c.getRenderer();
+        assertEquals(List.of(Theme.INK_DIM, Theme.CARD_TOP), List.of(value.getForeground(), value.getBackground()));
+    }
+
+    @Test
+    void eCombo6ListChosenRow() {
+        JComboBox<Object> c = new JComboBox<>(new Object[] {"안 함", "매일", "요일"});
+        c.setUI(new ComboUI());
+        JList<Object> list = ((BasicComboPopup) c.getUI().getAccessibleChild(c, 0)).getList();
+        assertEquals(List.of(Theme.MINT_PALE, Theme.INK), List.of(list.getSelectionBackground(), list.getSelectionForeground()));
+        Component chosen = c.getRenderer().getListCellRendererComponent(list, "매일", 1, true, false);
+        assertEquals(List.of(Theme.MINT_PALE, Theme.INK), List.of(chosen.getBackground(), chosen.getForeground()));
+        Component other = c.getRenderer().getListCellRendererComponent(list, "요일", 2, false, false);
+        assertEquals(List.of(Theme.CARD_TOP, Theme.INK), List.of(other.getBackground(), other.getForeground()));
     }
 }

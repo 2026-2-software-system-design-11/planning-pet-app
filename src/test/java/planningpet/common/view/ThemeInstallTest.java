@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JToggleButton;
 import javax.swing.UIManager;
 import org.junit.jupiter.api.AfterEach;
@@ -71,5 +72,16 @@ class ThemeInstallTest {
         Map<String, String> once = installed();
         Theme.install();
         assertEquals(once, installed());
+    }
+
+    @Test
+    void eTheme5ComboBox() {
+        Theme.install();
+        JComboBox<String> combo = new JComboBox<>();
+        assertEquals(ComboUI.class, combo.getUI().getClass());
+        assertEquals(Theme.CARD_TOP, combo.getBackground());
+        List<Color> colors = List.of(Theme.CARD_TOP, Theme.CARD_TOP, Theme.INK_DIM, Theme.MINT_PALE, Theme.INK);
+        assertEquals(colors, List.of("ComboBox.background", "ComboBox.disabledBackground", "ComboBox.disabledForeground",
+                "ComboBox.selectionBackground", "ComboBox.selectionForeground").stream().map(UIManager::getColor).toList());
     }
 }
