@@ -56,7 +56,7 @@ class PetCardTest {
 
     /** 고른 펫과 bubble의 펫 말을 그리는 카드. */
     static PetCard card(AppData data, Bubble bubble) {
-        return new PetCard(data, bubble);
+        return new PetCard(data, bubble, () -> { });
     }
 
     /** w x h 카드를 그리고 이름 줄과 경험치 줄의 글 띠를 자홍색으로 덮어 기준 그림과 견준다(S3n). */

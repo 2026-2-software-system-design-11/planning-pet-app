@@ -8,8 +8,12 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.awt.geom.RoundRectangle2D;
+import javax.swing.AbstractAction;
 import javax.swing.JComponent;
+import javax.swing.KeyStroke;
 import javax.swing.Timer;
 import planningpet.app.model.AppData;
 import planningpet.common.view.Bar;
@@ -23,7 +27,7 @@ import planningpet.reward.model.Level;
 
 /**
  * 홈의 펫 카드(05 홈 "펫 카드", D-59). 하늘과 풀밭 장면 왼쪽에 고른 펫(D-48)을 그린다. 값은 디자인 시스템 10절 "홈"에 있다.
- * 오른쪽 열에 이름과 레벨, 경험치 막대(S3n), 흰 작은 카드의 "오늘 끝낸 일", 그 아래 펫 말풍선(S3o)을 그린다. 누르기는 #467이 더한다(docs/porting/home.md).
+ * 오른쪽 열에 이름과 레벨, 경험치 막대(S3n), 흰 작은 카드의 "오늘 끝낸 일", 그 아래 펫 말풍선(S3o)을 그린다. 누르면 생성자로 받은 함수에 알린다(S3p, docs/porting/home.md).
  */
 public final class PetCard extends JComponent {
     /** 오른쪽 열의 위와 오른쪽 여백. */
@@ -46,14 +50,23 @@ public final class PetCard extends JComponent {
 
     /**
      * 고른 펫과 bubble의 펫 말(앱에서는 AppController.getBubble())을 그리고 데이터 변경 알림마다 다시 그린다. 메인 창은 펫을 고른 뒤
-     * 열려 고른 펫이 늘 있다(S3m).
+     * 열려 고른 펫이 늘 있다(S3m). 초점이 있을 때 Enter나 Space를 누르면 open을 부른다(05 입력 항목 9, S3p). 앱에서는 캐릭터 창(S8)이 open에 잇는다(D-58).
      */
-    public PetCard(AppData data, Bubble bubble) {
+    public PetCard(AppData data, Bubble bubble, Runnable open) {
         this.data = data;
         this.bubble = bubble;
         setLayout(null);
         add(expBar);
         add(doneBar);
+        setFocusable(true);
+        getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "open");
+        getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "open");
+        getActionMap().put("open", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                open.run();
+            }
+        });
         data.onChange(this::refresh);
         refresh();
     }
