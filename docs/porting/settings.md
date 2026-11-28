@@ -2,12 +2,12 @@
 
 [본 구현으로 옮기기](../porting.md) 1절 표의 단위 S10이다. 설정(05 설정, UC-18)과 06 25번의 컴퓨터 켤 때 실행을 옮긴다. 기준은 05 설정과 그 그림 [ui-settings](../diagrams/ui-settings.puml), 06 25번(T-WIN-4~6), 06 데이터 절의 `calendarFixed`와 `weekStart`, 07 [class-home-settings](../diagrams/class-home-settings.puml), D-29, D-86, D-91, D-114, 프로토타입 `settings/view/SettingsScreen`(83줄)과 `settings/controller/SettingsController`(30줄)다. 프로토타입에는 컴퓨터 켤 때 실행 코드가 없고 설정 화면의 체크박스가 늘 비활성이다. 그래서 `Autostart`와 `OsAutostart`는 비교 기준이 없고 06 25번과 아래 경계 줄이 기준이다(porting.md 2절 6번).
 
-S10은 테스트를 더하면 약 740줄이라 PR 한도를 넘어 둘로 나눈다.
+S10은 테스트를 더하면 약 740줄이라 PR 한도를 넘어 둘로 나눈다. S10a를 쓰다 실측이 한도를 넘어 Windows 등록과 `here()`를 S10b로 옮겼다. 아래 Windows 줄과 E-AUTO-9~12는 S10b가 옮긴다.
 
 | 몫 | 이슈 | 옮기는 것 |
 |---|---|---|
-| S10a | #523 | `settings.model.Autostart`, `settings.store.OsAutostart`(macOS와 Windows 등록), `settings.controller.SettingsController`의 `setCalendarFixed`, `setWeekStart`, `setAutostart` |
-| S10b | #525 | `settings.view.SettingsScreen`, `Main.open`이 설정을 앱 창에 붙이고 다시 그리기를 거는 일(#496 꼴), T-WIN-4~6의 화면 몫 |
+| S10a | #523 | `settings.model.Autostart`, `settings.store.OsAutostart`의 macOS 등록, `settings.controller.SettingsController`의 `setCalendarFixed`, `setWeekStart`, `setAutostart` |
+| S10b | #525 | `settings.view.SettingsScreen`, `OsAutostart`의 Windows 등록과 이 컴퓨터의 값을 쓰는 `OsAutostart.here()`, `Main.open`이 설정을 앱 창에 붙이고 다시 그리기를 거는 일(#496 꼴), T-WIN-4~6의 화면 몫 |
 
 이 단위가 옮기지 않는 것: 설정 "목록 누르기"(체크박스 줄과 `SettingsController.setListClickTime`)는 C3다. "예시 지우기"의 남은 예시 세기와 지우기는 C5이고, S10b는 홈(#496)처럼 그 함수를 받는 필드만 둔다. 트레이, 창 닫기, `--autostart`로 창 없이 뜨기는 S11이다.
 
@@ -20,7 +20,7 @@ S10은 테스트를 더하면 약 740줄이라 PR 한도를 넘어 둘로 나눈
 - **Linux는 늘 쓸 수 없다.** 06 25번은 Windows와 macOS의 등록만 적고, 설치 파일도 두 운영체제용이다(D-29, D-114). 운영체제는 시스템 속성 `os.name`이 "Mac"이나 "Windows"로 시작하는지로 본다(06 21번의 데이터 폴더와 같은 꼴).
 - **macOS는 `~/Library/LaunchAgents/com.planningpet.app.plist` 파일이다.** 켜면 `Label` `com.planningpet.app`, `ProgramArguments`(앱 경로, `--autostart`), `RunAtLoad` true를 쓰고, 끄면 파일을 지운다. 등록 상태는 파일이 있는지다. `launchctl`은 부르지 않는다. 이 폴더의 파일은 다음 로그인 때 운영체제가 읽는다. 앱 경로는 XML 글자로 바꿔 넣는다(`&`, `<`, `>`).
 - **Windows는 `reg` 명령으로 `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`의 값 `PlanningPet`을 다룬다.** 켜면 `reg add`로 `"앱 경로" --autostart`를 쓰고, 끄면 등록되어 있을 때만 `reg delete`를 부른다. 등록 상태는 `reg query`의 종료 코드가 0인지다. 따옴표는 `reg`가 글로 받도록 `\"`로 넘긴다. 값 이름은 메인 에이전트와 맞췄다. 외부 의존성을 더하지 않으려고(D-108) 레지스트리 라이브러리 대신 운영체제에 든 `reg`를 쓴다.
-- **명령을 돌리는 일과 홈 폴더는 생성자로 받는다.** 검사는 `@TempDir` 폴더를 홈으로, 부른 명령을 적는 대역을 명령 실행으로 넘긴다. 그래서 검사가 이 컴퓨터의 LaunchAgents나 레지스트리를 건드리지 않는다. 앱은 `OsAutostart.here()`로 이 컴퓨터의 값을 쓴다.
+- **명령을 돌리는 일과 홈 폴더는 생성자로 받는다.** 검사는 `@TempDir` 폴더를 홈으로, 부른 명령을 적는 대역을 명령 실행(S10b)으로 넘긴다. 그래서 검사가 이 컴퓨터의 LaunchAgents나 레지스트리를 건드리지 않는다. 앱은 `OsAutostart.here()`로 이 컴퓨터의 값을 쓴다.
 - **쓸 수 없는데 `set`을 부르면 `IllegalStateException`이고 아무것도 바꾸지 않는다.** 화면의 체크박스는 비활성이라 화면 밖 길이다. 등록 상태 읽기는 쓸 수 없어도 운영체제를 읽는다(설치한 앱이 등록해 둔 것을 실행 JAR에서 열어도 그대로 보인다).
 - **`SettingsController`는 07 이름을 쓴다.** 프로토타입 `showFixedOnCalendar`, `weekStart`는 07의 `setCalendarFixed`, `setWeekStart`다. 두 설정은 저장할 데이터라 22번 `change`로 감싸고, 저장 실패 창의 이름은 05 설정의 칸 이름 "달력에 고정 일정 보이기", "한 주 시작"이다(메인 에이전트와 맞춤). `setAutostart`는 운영체제 등록만 바꾸고 06 데이터 표에 없는 값이라 저장하지 않고 알림도 보내지 않는다. 화면은 `registered()`를 다시 읽어 보인다(06 25번).
 
@@ -35,13 +35,13 @@ S10은 테스트를 더하면 약 740줄이라 PR 한도를 넘어 둘로 나눈
 
 ### 2. 입력의 경계와 결과
 
-프로토타입 결과는 `work/impl/proto-kit`으로 프로토타입(마지막 변경 `2ac06b63`, JDK 21.0.11, macOS)의 `Main.create(MockData.empty())`에 부른 결과다. 컴퓨터 켤 때 실행은 프로토타입에 없어 "없음"이다. 앱 경로는 따로 적지 않으면 `/Applications/PlanningPet.app/Contents/MacOS/PlanningPet`이고 홈은 `@TempDir` 폴더다. "본 구현" 칸의 결과는 `OsAutostartTest`, `OsAutostartWindowsTest`, `SettingsControllerTest`가 번호 이름의 테스트로 확인한다.
+프로토타입 결과는 `work/impl/proto-kit`으로 프로토타입(마지막 변경 `2ac06b63`, JDK 21.0.11, macOS)의 `Main.create(MockData.empty())`에 부른 결과다. 컴퓨터 켤 때 실행은 프로토타입에 없어 "없음"이다. 앱 경로는 따로 적지 않으면 `/Applications/PlanningPet.app/Contents/MacOS/PlanningPet`이고 홈은 `@TempDir` 폴더다. "본 구현" 칸의 결과는 `OsAutostartTest`, `SettingsControllerTest`(E-AUTO-9~12는 S10b)가 번호 이름의 테스트로 확인한다.
 
 | 번호 | 입력과 경계 | 넣은 값 | 프로토타입 결과 | 본 구현 |
 |---|---|---|---|---|
 | T-WIN-4 | macOS, 설치된 앱, 등록 없음 | `set(true)`, 이어서 `registered()` | 없음 | plist가 생기고 `registered()` true. controller의 `setAutostart(true)`도 같고 저장하지 않는다 |
 | T-WIN-5 | T-WIN-4 뒤 운영체제에서 등록을 지움 | plist를 지우고 `registered()` | 없음 | false |
-| T-WIN-6 | 실행 JAR(`jpackage.app-path` 없음) | macOS와 Windows의 `available()` | 없음(체크박스가 늘 비활성) | 둘 다 false |
+| T-WIN-6 | 실행 JAR(`jpackage.app-path` 없음) | macOS의 `available()`(Windows는 S10b) | 없음(체크박스가 늘 비활성) | false |
 | E-AUTO-1 | plist 내용 | `set(true)` | 없음 | `Label` `com.planningpet.app`, `ProgramArguments` 앱 경로와 `--autostart`, `RunAtLoad` true |
 | E-AUTO-2 | LaunchAgents 폴더가 없음 | 빈 홈에서 `set(true)` | 없음 | 폴더를 만들고 plist를 쓴다 |
 | E-AUTO-3 | 이미 등록됨 | `set(true)` 두 번, 둘째는 다른 경로 | 없음 | 파일 하나, 둘째 경로로 덮어쓴다 |
