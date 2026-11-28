@@ -46,6 +46,7 @@
 | S2c | 앉은 펫 | `PetArt.drawAt`(장신구 없는 앉기 자세), `PetPaintBody`의 몸, 앞발, 꼬리, 움직임 시각과 고를 때 튀기(#411) | 없음([디자인 시스템](design-system.md) 10절) | [docs/porting/pet-art.md](porting/pet-art.md) |
 | S2d | 펫 목걸이 | `PetArt.drawAt`, `drawFace`의 장신구 인자(`WearId`), `PetPaintWear`의 목걸이 넷(#409) | 없음(D-51, [디자인 시스템](design-system.md) 10절) | [docs/porting/pet-art.md](porting/pet-art.md) |
 | S2e | 고르기 창 그림 도구 | `PickScene`(하늘 언덕 바탕, 리본, 덤불, 데이지, 별, #416) | 없음([디자인 시스템](design-system.md) 10절) | [docs/porting/pick.md](porting/pick.md) |
+| S2f | 입력 도우미와 아이콘 셋 | `common.view`의 `Ui`(`hint`, `limit`), `Icons`의 `PENCIL`, `CHECK`, `SPARK`(#417) | 06 읽는 법의 글자 수(이름 10자) | [docs/porting/pick.md](porting/pick.md) |
 | S2 | 반려동물 고르기 창 | `PickDialog`, `PetController.adopt`, `select`, `Main` 잇기(읽기, 못 읽음 창, 첫 실행 갈래, 창과 타이머 잇기) | 30번, 21번의 시작할 때 읽기 | [docs/porting/pick.md](porting/pick.md) |
 | S3 | 홈 목록 | `MainScreen`, `PetCard`, `CalendarPanel`, `HomeController`, `RewardController.complete`, `uncomplete` | 6번, 8번, 9번, 13번, 16번, 26번 | `docs/porting/home.md` |
 | S4 | 일정 입력 창 | `TaskDialog`, `TaskController.add`, `update`, `delete`, 고르는 칸 `ComboUI`와 그것을 거는 `Theme.install`의 줄([theme.md](porting/theme.md)) | 2~5번, 14번 | `docs/porting/task-dialog.md` |
@@ -123,3 +124,4 @@
 | M9 보상 | 끝내지 않은 할 일의 체크 풀기를 화면 밖 길로 부른다(화면의 체크박스는 끝내지 않은 일을 누르면 끝내기다) | 아무것도 바뀌지 않고 알리지도 않는다 | 끝내지 않은 할 일이면 `IllegalStateException`. 코드를 고침: `uncomplete`가 예외를 던진다 | 06 9번 "오류", [rewards.md](porting/rewards.md) E-UNDO-2 |
 | M10 펫 말 | 기간 할 일 "E사 지원서"(마감 11/25)의 시각을 내일 10:00으로 정해 두고, 오늘 할 일이 없는 날 그날 처음 앱을 연다 | 브리핑 "오늘은 할 일이 없어. 내일 'E사 지원서'가 있어." | 내일 문장은 내일 날짜의 보통 할 일(`TASK`, 기간 할 일이 아님)만 말한다. 코드를 고침: 시각을 정한 기간 할 일도 빼고 "오늘은 할 일이 없어. 아래 칸에 하나 적어 볼까?" | 06 16번 5번, D-71, [pet-talk.md](porting/pet-talk.md) E-TALK-10 |
 | M15 상점과 방 | 나의 방에서 사지 않은 아이템의 "방에 놓기"를 화면 밖 길로 부른다(미리보기 칸은 가진 아이템에만 "방에 놓기"를 보인다) | 보유 목록에 없는 아이템이 방에 놓이고 만족도와 배치 아이템 수가 는다 | `toggle`에 사지 않은 아이템이면 `IllegalStateException`. 코드를 고침: `Room.toggle`이 예외를 던지고 아무것도 바꾸지 않는다 | 06 20번 "오류", [shop.md](porting/shop.md) E-ROOM-1 |
+| S2f 입력 도우미 | 반려동물 고르기 창 이름 칸(10자)에 한글 9자를 쓰고 이모지 하나를 넣는다. 빈 이름 칸에 이모지 11개를 붙여 넣는다 | 9자 뒤에는 이모지의 앞 반쪽(깨진 글자)만 들어간다. 이모지는 5개만 들어간다. 글자 막기(`Ui.limit`)가 UTF-16 단위로 잰다 | 글자 수는 코드 포인트로 센다. 이름은 10자까지다. 코드를 고침: `Ui.limit`이 코드 포인트로 재어 9자 뒤 이모지는 통째로 들어가고 이모지는 10개까지 들어간다. 같은 `Ui.limit`을 쓰는 제목 칸과 메모 칸(위 M2b 줄)도 S4가 이것을 걸면 코드 포인트로 막힌다. 칸 안 글자 수 "0 / 10"은 #421이 고친다 | 06 읽는 법, 05 입력 항목 2, [pick.md](porting/pick.md) E-LIMIT-6 |
