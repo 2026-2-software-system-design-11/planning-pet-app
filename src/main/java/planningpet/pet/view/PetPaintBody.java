@@ -3,6 +3,7 @@ package planningpet.pet.view;
 import java.awt.Graphics2D;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.QuadCurve2D;
 import java.util.Set;
@@ -96,5 +97,19 @@ final class PetPaintBody extends PetPaintHead {
             filled(ell(30, -48, 14, 13), DOG_FUR);
         }
         g.setTransform(old);
+    }
+
+    /** 노래하는 펫 오른쪽 위의 음표 둘. 2초 주기로 흔들리며 오르고, 반 주기 어긋나 하나가 나타날 때 하나가 사라진다(t). */
+    void notes() {
+        for (int i = 0; i < 2; i++) {
+            double p = (t / 2.0 + i * 0.5) % 1.0;
+            double x = 252 + i * 24 + Math.sin(p * Math.PI * 2) * 6;
+            double y = 86 - p * 56;
+            g.setColor(alpha(NOTE, (int) (255 * Math.min(1, Math.min(p * 4, (1 - p) * 3)))));
+            g.fill(ell(x, y, 9, 7));
+            g.setStroke(stroke(4f));
+            g.draw(new Line2D.Double(x + 8, y, x + 8, y - 30));
+            g.draw(new QuadCurve2D.Double(x + 8, y - 30, x + 22, y - 24, x + 18, y - 12));
+        }
     }
 }

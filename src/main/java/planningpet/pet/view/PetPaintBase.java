@@ -46,6 +46,7 @@ abstract class PetPaintBase {
     static final Color BERET = new Color(0xE8737A);
     static final Color CAPE = new Color(0x7A6FD0);
     static final Color CAPE_INNER = new Color(0xE8483C);
+    static final Color NOTE = new Color(0x2BA39A);
     /** 큰 그림의 선 굵기. 작게 그릴 때는 부르는 쪽이 line을 굵게 바꾼다. */
     static final float LINE = 6f;
 
@@ -92,6 +93,11 @@ abstract class PetPaintBase {
         double c1 = 1.70158;
         double c3 = c1 + 1;
         return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
+    }
+
+    /** c를 알파 a(0~255)로 바꾼 색. 음표가 나타나고 사라질 때 쓴다. */
+    static Color alpha(Color c, int a) {
+        return new Color(c.getRed(), c.getGreen(), c.getBlue(), a);
     }
 
     static Ellipse2D ell(double cx, double cy, double rx, double ry) {

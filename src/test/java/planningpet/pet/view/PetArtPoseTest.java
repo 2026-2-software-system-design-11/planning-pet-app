@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.Color;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
 import java.util.List;
@@ -29,6 +30,30 @@ class PetArtPoseTest {
     @Test
     void ePose2StageScale() {
         assertEquals(List.of(0.72, 0.72, 0.86, 1.0, 1.0), IntStream.range(0, 5).mapToObj(PetArt::stageScale).toList());
+    }
+
+    /** 음표만 320x320 그림에 상자 좌표 그대로 그린다. */
+    private static BufferedImage notes(double t) {
+        BufferedImage img = new BufferedImage(320, 320, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = img.createGraphics();
+        PetPaintBase.hints(g);
+        new PetPaintBody(g, PetKind.CAT, Set.of(), t).notes();
+        g.dispose();
+        return img;
+    }
+
+    /** 2초 주기의 자리 p에서 음표 가운데는 (252 + 24i + 6 sin 2πp, 86 - 56p)이고, 처음 4분의 1에 나타나 마지막 3분의 1에 사라진다. */
+    @Test
+    void ePose4Notes() {
+        BufferedImage at0 = notes(0);
+        assertEquals(0, at0.getRGB(252, 86) >>> 24);
+        assertEquals(PetPaintBase.NOTE.getRGB(), at0.getRGB(276, 58));
+        BufferedImage at1 = notes(1);
+        assertEquals(PetPaintBase.NOTE.getRGB(), at1.getRGB(252, 58));
+        assertEquals(0, at1.getRGB(276, 86) >>> 24);
+        BufferedImage at15 = notes(1.5);
+        assertEquals(191, at15.getRGB(246, 44) >>> 24);
+        assertEquals(PetPaintBase.NOTE.getRGB(), at15.getRGB(282, 72));
     }
 
     private static long count(BufferedImage img, Color c) {
