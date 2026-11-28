@@ -414,4 +414,25 @@ class PetControllerTest {
         assertEquals(Map.of(Slot.NECK, WearId.BASIC_NECKLACE), data.pet(PetKind.CAT).getWear());
         assertEquals(PetKind.CAT, data.getActiveKind());
     }
+
+    @Test
+    void E_PET_25_missingKindDoesNothing() {
+        oneCat(1600);
+        pets.rename(PetKind.DOG, "보리");
+        pets.pose(PetKind.DOG, Pose.SLEEP);
+        pets.applyWear(PetKind.DOG, Map.of(Slot.HAT, WearId.CROWN));
+        assertEquals(1, data.getPets().size());
+        assertEquals("나비", data.activePet().getName());
+        assertEquals("", app.getBubble().getLine());
+        assertEquals(0, saves);
+        assertEquals(0, heard);
+    }
+
+    @Test
+    void E_PET_26_stepWithNoPets() {
+        pets.step(1);
+        assertNull(data.getActiveKind());
+        assertEquals(0, saves);
+        assertEquals(0, heard);
+    }
 }

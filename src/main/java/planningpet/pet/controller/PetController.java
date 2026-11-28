@@ -83,12 +83,18 @@ public final class PetController {
     /** UC-21 화살표(D-80). pets 차례에서 앞(-1)이나 다음(+1) 펫을 고르고 끝에서 처음으로 돈다. 고르기와 말은 select와 같다. */
     public void step(int delta) {
         List<PetState> all = data.getPets();
+        if (all.isEmpty()) { // 프로토타입은 펫이 없으면 ArithmeticException이다(docs/porting/character.md E-PET-26)
+            return;
+        }
         select(all.get(Math.floorMod(all.indexOf(data.activePet()) + delta, all.size())).getKind());
     }
 
     /** UC-23(D-57). D-27 규칙으로 이름을 바꾸고 그 펫이 RENAMED를 메인 말풍선에 말한다(D-62). 종류는 바꾸지 않는다. */
     public void rename(PetKind kind, String name) {
         PetState pet = data.pet(kind);
+        if (pet == null) { // 그 종류의 펫이 없으면 select처럼 아무것도 하지 않는다. 프로토타입은 NullPointerException이다(E-PET-25)
+            return;
+        }
         app.change("펫 이름 바꾸기", () -> {
             pet.setName(nameOf(kind, name));
             app.say(talk.say(Situation.RENAMED, pet), null);
@@ -97,10 +103,10 @@ public final class PetController {
 
     /** UC-22(D-50). 다섯 자세 가운데 하나일 때만 바꾼다. 다섯 밖의 값은 Pose로 넘길 수 없어 null이 그 자리이고 아무것도 하지 않는다. */
     public void pose(PetKind kind, Pose pose) {
-        if (pose == null) {
+        PetState pet = data.pet(kind);
+        if (pose == null || pet == null) {
             return;
         }
-        PetState pet = data.pet(kind);
         app.change("자세 고르기", () -> pet.setPose(pose));
     }
 
@@ -110,6 +116,9 @@ public final class PetController {
      */
     public void applyWear(PetKind kind, Map<Slot, WearId> chosen) {
         PetState pet = data.pet(kind);
+        if (pet == null) {
+            return;
+        }
         int level = Level.of(pet.getExp()).getLevel();
         Map<Slot, WearId> wear = new EnumMap<>(Slot.class);
         chosen.forEach((slot, w) -> {
