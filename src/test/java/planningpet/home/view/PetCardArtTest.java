@@ -331,18 +331,21 @@ class PetCardArtTest {
         assertEquals(new Rectangle(152, 147, 192, 67), card.box());
         assertTrue(card.cut());
         assertFalse(inked(card, 2, 152 + 32 + 154, 360));
+        // 마지막 줄은 남은 줄을 이어 붙여 줄이므로 열 자 낱말(110)보다 길다.
+        assertTrue(inked(card, 2, 152 + 32 + 115, 152 + 32 + 154));
         looks("six-room3", card);
         Drawn tall = bubble(W6, 152, 147, 192, 400, 360, 412);
         assertEquals(new Rectangle(152, 147, 192, 84), tall.box());
         assertTrue(tall.cut());
         assertTrue(inked(tall, 3));
         assertFalse(inked(tall, 3, 152 + 32 + 154, 360));
+        assertTrue(inked(tall, 3, 152 + 32 + 115, 152 + 32 + 154));
         looks("six-tall", tall);
     }
 
     @Test
     void eBub5LittleRoomBelow() throws IOException {
-        Object[][] cases = {{"six-room2", W6, 200, 50}, {"three-room2", W3, 197, 50}, {"six-below-top", W6, 100, 33}};
+        Object[][] cases = {{"six-room2", W6, 200, 50}, {"three-room2", W3, 197, 50}, {"three-room1", W3, 196, 33}, {"six-below-top", W6, 100, 33}};
         for (Object[] c : cases) {
             Drawn d = bubble((String) c[1], 152, 147, 192, (int) c[2], 360, 240);
             assertEquals(new Rectangle(152, 147, 192, (int) c[3]), d.box());
