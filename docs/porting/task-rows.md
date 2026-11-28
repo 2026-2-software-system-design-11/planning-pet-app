@@ -341,7 +341,7 @@
 07 안에서 정한 것과 그 까닭:
 
 - **1.5초는 프로토타입처럼 반복 없는 Swing 타이머이고, 테스트는 `settle()`을 부른다.** 프로토타입 `settle()`은 "1.5초가 지난 것과 같다"는 공개 함수이고 프로토타입 검사도 이것을 부른다. 타이머는 패키지 안 필드로 두어 테스트가 지연 1500, 반복 없음, 그 리스너가 `settle`을 부르는지 본다. 체크하면 목록이 화면에 보일 때만 타이머를 다시 시작한다(프로토타입 그대로). 창 없는 부품은 보이지 않아 그 길은 넣을 수 없고 코드로만 확인했다.
-- **테스트는 `MainScreen` 대신 데이터 변경 알림과 `resort`에 `showPlan` 다시 부르기를 넣는다.** 체크는 `RewardController`가 `AppController.change`로 데이터를 바꾸고 변경 알림을 보낸다. 프로토타입은 그 알림과 `resort`에 `MainScreen.refresh`가 있다.
+- **테스트는 `MainScreen` 대신 데이터 변경 알림과 `resort`에 `showPlan` 다시 부르기를 넣는다.** 체크는 `RewardController`가 `AppController.change`로 데이터를 바꾸고 변경 알림을 보낸다. 프로토타입은 그 알림과 `resort`에 `MainScreen.refresh`가 있다. 테스트의 `resort`는 다시 그린 뒤 `Theme.clear`를 부른다. 프로토타입의 `resort`(`MainScreen.refresh`)는 부르지 않아, `settle()`이나 접기로 다시 만든 줄의 체크 칸과 버튼 칸이 다음 데이터 변경까지 BG(#F0F9FA) 불투명 사각형이다(끝낸 B, C를 내려보낸 직후 목록에서 clear 뒤 그림과 다른 픽셀 10341개). 어느 쪽으로 할지는 `MainScreen`이 정하고 `TaskRows`는 바꾸지 않는다. 기준 그림은 clear 뒤 그림이다.
 - **머무는 일은 같은 할 일 객체로 센다.** 프로토타입처럼 `HashSet`에 넣고, `Task`는 `equals`를 고치지 않아 체크로 끝냄이 바뀌어도 같은 일이다.
 
 ### 1. 화면에서 따라 할 단계
