@@ -1,9 +1,13 @@
 package planningpet.app;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -49,6 +53,21 @@ class SingleInstanceTest {
     }
 
     @Test
+    void T_ONE_3_killedAppLeavesNoLock() throws IOException, InterruptedException {
+        Process child = new ProcessBuilder(Path.of(System.getProperty("java.home"), "bin", "java").toString(), "-cp",
+                System.getProperty("java.class.path"), Holder.class.getName(), folder.toString()).start();
+        try {
+            BufferedReader out = new BufferedReader(new InputStreamReader(child.getInputStream(), StandardCharsets.UTF_8));
+            assertEquals("true", out.readLine());
+            assertFalse(one(folder).acquire());
+            assertTrue(child.destroyForcibly().waitFor(10, TimeUnit.SECONDS));
+            assertTrue(one(folder).acquire());
+        } finally {
+            child.destroyForcibly();
+        }
+    }
+
+    @Test
     void E_ONE_1_missingFolderIsMade() {
         Path dir = folder.resolve("a").resolve("b");
         assertTrue(one(dir).acquire());
@@ -75,5 +94,14 @@ class SingleInstanceTest {
     void E_ONE_4_noLockFileStillRuns() throws IOException {
         Path file = Files.writeString(folder.resolve("data"), "");
         assertTrue(one(file).acquire());
+    }
+
+    /** T-ONE-3의 자식 JVM. 잡은 결과를 적고 표준 입력이 닫히거나 끝날 때까지 잡고 있다. 창을 띄우지 않는다. */
+    static final class Holder {
+        public static void main(String[] args) throws IOException {
+            System.out.println(new SingleInstance(Path.of(args[0]), () -> { }).acquire());
+            System.out.flush();
+            System.in.read();
+        }
     }
 }
