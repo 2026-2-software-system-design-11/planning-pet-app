@@ -392,9 +392,12 @@ public final class TaskRows extends JPanel implements Scrollable {
                 reward.complete(t);
             }
         });
+        LocalDate today = data.today();
+        // D-69: 일정관리 목록의 지난 반복 사본은 흐린 제목과 걸리는 시간이다.
+        boolean dim = withDate && t.pastCopy(today);
         JLabel minutes = new JLabel(t.getDurationMinutes() + "분", JLabel.RIGHT);
         minutes.setFont(Theme.font(13));
-        minutes.setForeground(t.isDone() ? Theme.INK_DIM : Theme.INK_SUB);
+        minutes.setForeground(t.isDone() || dim ? Theme.INK_DIM : Theme.INK_SUB);
         minutes.setPreferredSize(new Dimension(Math.max(34, minutes.getPreferredSize().width), 20));
         int iconButton = withDate ? 26 : 28;
         CircleButton pencil = new CircleButton(Icons.Kind.PENCIL, iconButton, "수정", true);
@@ -403,7 +406,6 @@ public final class TaskRows extends JPanel implements Scrollable {
         trash.addActionListener(e -> onDelete.accept(t));
         // D-94, D-102: 끝낸 줄은 시각을 정하지 않는다. 홈의 지난 날 목록에서 기간 할 일의 시각은 정하지 않는다. 일정관리 목록의 지난 날
         // 줄은 마감이 남았으면 오늘로 정하고(D-99), 마감이 지났으면 정하지 않는다.
-        LocalDate today = data.today();
         boolean pastPeriod = !t.isDone() && t.period() && listDay.isBefore(today) && (!withDate || t.getDueDate().isBefore(today));
         String why = !pastPeriod ? null : withDate ? "마감이 지난 일은 시각을 정할 수 없어요" : "지난 날에는 시각을 정할 수 없어요";
         TimePill when = withDate ? TimePill.icon(t.isDone(), t.isDone() || pastPeriod, why)
@@ -415,14 +417,18 @@ public final class TaskRows extends JPanel implements Scrollable {
         // D-35: 고정 일정도 체크한다. 체크 옆에 "고정" 꼬리표를 둔다.
         row.add(t.getKind() == Kind.FIXED ? middle(box, fixedTag()) : middle(box), BorderLayout.WEST);
         String date = withDate ? rowDay.getMonthValue() + "/" + rowDay.getDayOfMonth() + " " : "";
-        TitleLabel label = new TitleLabel(t, date, false);
-        // D-33: 메모가 있으면 제목이나 줄 빈 곳에 마우스를 올렸을 때 보인다.
-        String tip = memoTip(t);
+        TitleLabel label = new TitleLabel(t, date, dim);
+        // D-33: 메모가 있으면 제목이나 줄 빈 곳에 마우스를 올렸을 때 보인다. 일정관리 목록의 마감이 지난 줄은 까닭이 먼저다(D-99).
+        String tip = withDate && t.pastDue(today) ? lockedTip(t) : memoTip(t);
         label.setToolTipText(tip);
         row.setToolTipText(tip);
         row.add(label, BorderLayout.CENTER);
         // D-94: 마감 글, 하려던 일, "오늘 마감"과 "마감"은 제목 아래 둘째 줄 왼쪽이다. 제목이 줄의 폭을 먼저 받는다.
-        JLabel marks = marks(data.getBook().dueText(t), missedNote(t, today), dueTag(t, listDay, today), false);
+        // D-44, D-69, D-78: 일정관리 목록에서 끝내지 않은 일의 세는 날이 지났으면 "지난 날"이다. 지난 반복 사본과 끝낸 일은 없다.
+        // D-102: 일정관리 목록의 마감 날 줄은 줄 앞 날짜가 마감 날이라 "~11/22까지"를 빼고 "마감", "오늘 마감"만 보인다.
+        boolean past = withDate && !t.isDone() && t.countDay().isBefore(today) && !t.pastCopy(today);
+        String tag = dueTag(t, listDay, today);
+        JLabel marks = marks(withDate && tag != null ? null : data.getBook().dueText(t), missedNote(t, today), tag, past);
         if (withDate) {
             // 일정관리 오른쪽 목록은 좁아서 걸리는 시간만 첫 줄 오른쪽이고 단추는 둘째 줄 오른쪽에 틈 없이 둔다(D-102).
             row.add(middle(minutes), BorderLayout.EAST);

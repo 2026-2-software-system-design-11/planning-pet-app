@@ -2,6 +2,7 @@ package planningpet.schedule.view;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static planningpet.schedule.model.Tasks.d;
 import static planningpet.schedule.model.Tasks.task;
@@ -15,8 +16,10 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import javax.swing.AbstractButton;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import org.junit.jupiter.api.Test;
@@ -29,10 +32,13 @@ import planningpet.common.view.Input;
 import planningpet.common.view.Snap;
 import planningpet.common.view.Theme;
 import planningpet.reward.controller.RewardController;
+import planningpet.schedule.model.Repeat;
 import planningpet.schedule.model.Task;
 
 /** 일정관리 목록의 할 일 한 줄. 번호는 docs/porting/schedule.md S5a2 2절. 줄은 앱처럼 Theme.clear 뒤 폭 200으로 배치한다. */
 class WeekRowTest {
+    private static final String GRAY = "<font color='#8A96A0'>";
+    private static final String RED = "<font color='#C0392B'>";
     /** 수정, 삭제, 시각 함수가 받은 것. */
     private final List<String> heard = new ArrayList<>();
 
@@ -65,6 +71,17 @@ class WeekRowTest {
     private static JPanel buttons(JPanel row) {
         JPanel line = (JPanel) row.getComponent(3);
         return (JPanel) line.getComponent(line.getComponentCount() - 1);
+    }
+
+    /** 둘째 줄 표시의 글. 표시가 없으면 null. */
+    private static String marks(JPanel row) {
+        JPanel line = (JPanel) row.getComponent(3);
+        return line.getComponentCount() == 2 ? ((JLabel) line.getComponent(0)).getText() : null;
+    }
+
+    /** 부품을 그린 그림에서 가장 진한 픽셀의 알파. 흐린 글(INK_DIM)은 그 알파를 넘지 않는다. */
+    private static int darkest(JComponent c) {
+        return Arrays.stream(Snap.pixels(Snap.paint(c))).map(p -> p >>> 24).max().orElse(0);
     }
 
     private static TimePill clock(JPanel row) {
@@ -161,5 +178,57 @@ class WeekRowTest {
         ((AbstractButton) ((JPanel) row(r, t, d(18)).getComponent(0)).getComponent(0)).doClick();
         assertTrue(t.isDone());
         assertFalse(r.settling());
+    }
+
+    @Test
+    void eWrow2PastCopyIsDim() {
+        Task copy = task("운동", d(16)).series("s", Repeat.DAILY).task();
+        JPanel p = row(copy, d(16));
+        assertEquals(Theme.INK_DIM.getAlpha(), darkest((JComponent) p.getComponent(1)));
+        assertEquals(Theme.INK_DIM, ((JPanel) p.getComponent(2)).getComponent(0).getForeground());
+        assertNull(marks(p));
+        ((AbstractButton) ((JPanel) p.getComponent(0)).getComponent(0)).doClick();
+        assertTrue(copy.isDone());
+        JPanel today = row(task("운동", d(18)).series("s", Repeat.DAILY).task(), d(18));
+        assertEquals(255, darkest((JComponent) today.getComponent(1)));
+        assertEquals(Theme.INK_SUB, ((JPanel) today.getComponent(2)).getComponent(0).getForeground());
+    }
+
+    @Test
+    void eWrow3PastDay() {
+        assertEquals("<html>" + RED + "지난 날</font></html>", marks(row(task("과제", d(17)).task(), d(17))));
+        assertNull(marks(row(task("빨래", d(17)).done(d(17)).task(), d(17))));
+        assertNull(marks(row(task("과제", d(18)).task(), d(18))));
+        JPanel q = row(task("Q", d(10)).period(d(10), d(16)).task(), d(16));
+        assertEquals("<html>" + GRAY + "~11/16까지</font> " + RED + "지난 날</font></html>", marks(q));
+        // 표시와 단추가 한 줄에 들지 않아 둘째 줄이 두 줄이고 그 줄만 높다(E-WROW-8).
+        assertEquals(new Dimension(Integer.MAX_VALUE, 71), q.getMaximumSize());
+        assertEquals(new Rectangle(112, 15, 78, 26), buttons(q).getBounds());
+        Task p = task("지원서", d(12)).period(d(12), d(20)).task();
+        assertEquals("<html>" + GRAY + "~11/20까지</font></html>", marks(row(p, d(15))));
+    }
+
+    @Test
+    void eWrow4DueDayRow() {
+        Task p = task("지원서", d(16)).period(d(16), d(22)).task();
+        assertEquals("<html>" + RED + "마감</font></html>", marks(row(p, d(22))));
+        assertEquals("<html>" + GRAY + "~11/22까지</font></html>", marks(row(p, d(18))));
+        Task due = task("기획서", d(16)).period(d(16), d(18)).task();
+        assertEquals("<html>" + RED + "오늘 마감</font></html>", marks(row(due, d(18))));
+        JPanel home = rows("2026-11-18T10:00", p).row(p, "", null, d(22));
+        assertEquals("<html>" + GRAY + "~11/22까지</font> " + RED + "마감</font></html>", ((JLabel) home.getComponent(3)).getText());
+    }
+
+    @Test
+    void eWrow5LockedTip() {
+        String why = "마감이 지난 일은 옮길 수 없어요";
+        JPanel bare = row(task("Q", d(10)).period(d(10), d(16)).task(), d(16));
+        assertEquals(why, bare.getToolTipText());
+        assertEquals(why, ((JComponent) bare.getComponent(1)).getToolTipText());
+        Task memo = task("Q", d(10)).period(d(10), d(16)).memo("자료\n찾기").task();
+        assertEquals(TaskRows.lockedTip(memo), row(memo, d(16)).getToolTipText());
+        Task open = task("지원서", d(16)).period(d(16), d(22)).memo("자료").task();
+        assertEquals(TaskRows.memoTip(open), row(open, d(18)).getToolTipText());
+        assertEquals(TaskRows.memoTip(memo), rows("2026-11-18T10:00", memo).row(memo, "", null, d(16)).getToolTipText());
     }
 }
