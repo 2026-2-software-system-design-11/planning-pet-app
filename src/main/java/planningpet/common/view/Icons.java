@@ -14,11 +14,11 @@ import javax.swing.Icon;
 
 /**
  * 디자인 시스템 9절의 선 아이콘 한 벌. 24 칸 격자에 그리고 크기만큼 늘린다. 선 굵기는 격자 2(크기의 1/12), 끝은 둥글다.
- * 창 틀과 고르기 창이 쓰는 것만 옮겼고, 다른 종은 그것을 쓰는 화면의 단위가 더한다(docs/porting/icons.md, pick.md).
+ * 창 틀, 고르기 창, 홈 달력이 쓰는 것만 옮겼고, 다른 종은 그것을 쓰는 화면의 단위가 더한다(docs/porting/icons.md, pick.md, home.md).
  */
 public final class Icons {
     /** 아이콘의 종류. */
-    public enum Kind { HOME, ROOM, CALENDAR, CHART, GEAR, PAW, COIN, CHECK, SPARK, FLAME, PENCIL }
+    public enum Kind { HOME, ROOM, CALENDAR, CHART, GEAR, PAW, COIN, CHECK, SPARK, FLAME, LEFT, RIGHT, PENCIL }
 
     private Icons() {
     }
@@ -94,6 +94,8 @@ public final class Icons {
                 g.draw(new Ellipse2D.Double(9, 9, 6, 6));
             }
             case PAW -> paw(g, 12, 13.5, 1.6);
+            case LEFT -> g.draw(path(15, 5, 8, 12, 15, 19));
+            case RIGHT -> g.draw(path(9, 5, 16, 12, 9, 19));
             case PENCIL -> {
                 g.draw(path(4, 20, 5, 15.5, 15.5, 5, 19, 8.5, 8.5, 19, 4, 20));
                 g.draw(path(13, 7.5, 16.5, 11));
