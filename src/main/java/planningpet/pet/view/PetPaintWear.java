@@ -2,8 +2,10 @@ package planningpet.pet.view;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Area;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.QuadCurve2D;
@@ -147,6 +149,26 @@ abstract class PetPaintWear extends PetPaintBase {
             filled(ell(0, 6, 7, 7), RED);
             g.setTransform(old);
         }
+    }
+
+    /**
+     * 몸 모양 안쪽에 목 아래 top부터 bottom까지 민트색 띠를 칠한 조끼. 아래 끝에 짙은 단과 선을 긋고 몸 외곽선을 다시 그은 뒤 가운데에
+     * 금색 단추 둘을 단다. 프로토타입은 앉은 자세들에서만 단추를 다는데 앉기만 그리므로 늘 단다(docs/porting/pet-art.md 5절, 7절).
+     */
+    void vest(Shape body, double top, double bottom) {
+        Shape old = g.getClip();
+        g.clip(body);
+        Rectangle r = new Area(body).getBounds();
+        double low = Math.max(top, bottom);
+        g.setColor(MINT);
+        g.fill(new Rectangle2D.Double(r.x - 10, Math.min(top, bottom) - 10, r.width + 20, Math.abs(bottom - top) + 10));
+        g.setColor(MINT_SHADE);
+        g.fill(new Rectangle2D.Double(r.x - 10, low - 8, r.width + 20, 8));
+        stroke(new Line2D.Double(r.x - 10, low, r.x + r.width + 10, low), line * 0.7f, ink);
+        g.setClip(old);
+        redraw(body);
+        filled(ell(160, 232, 5, 5), GOLD);
+        filled(ell(160, 248, 5, 5), GOLD);
     }
 
     /** 가운데가 (x, y)이고 k배인 리본: 양쪽 고리와 가운데 매듭을 c로 칠한다. */
