@@ -4,6 +4,9 @@ import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextLayout;
 import java.text.ParseException;
@@ -17,6 +20,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.function.ToIntFunction;
 import java.util.stream.Stream;
+import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
@@ -148,6 +152,25 @@ public final class Ui {
         int a = c.getAlpha();
         int rgb = (c.getRed() * a / 255 + 255 - a) << 16 | (c.getGreen() * a / 255 + 255 - a) << 8 | (c.getBlue() * a / 255 + 255 - a);
         return String.format("<html><font color='#%06x'>", rgb) + String.join("<br>", lines.stream().map(Ui::esc).toList()) + "</font></html>";
+    }
+
+    /** 펫 말풍선(05 일정관리 "펫"): 흰 바탕과 CARD_LINE 테두리의 둥근 상자(둥글기 BUBBLE_RADIUS), 여백 8, 14, 8, 14다. */
+    public static JLabel bubble() {
+        JLabel l = new JLabel() {
+            @Override
+            protected void paintComponent(Graphics graphics) {
+                Graphics2D g = (Graphics2D) graphics.create();
+                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g.setColor(Theme.CARD_TOP);
+                g.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, Theme.BUBBLE_RADIUS, Theme.BUBBLE_RADIUS);
+                g.setColor(Theme.CARD_LINE);
+                g.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, Theme.BUBBLE_RADIUS, Theme.BUBBLE_RADIUS);
+                g.dispose();
+                super.paintComponent(graphics);
+            }
+        };
+        l.setBorder(BorderFactory.createEmptyBorder(8, 14, 8, 14));
+        return l;
     }
 
     /** 한 줄에 왼쪽부터 사이 4로 놓는 판. 일정 입력 창의 칸 줄과 단추 줄이 쓴다. */
