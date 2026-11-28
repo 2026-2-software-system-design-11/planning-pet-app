@@ -32,7 +32,7 @@ import planningpet.common.view.Theme;
 import planningpet.reward.controller.RewardController;
 import planningpet.schedule.model.Task;
 
-/** 일정관리 화면. 번호는 docs/porting/schedule.md S5c 2절과 S5c2 2절. 따로 적지 않으면 지금은 11-18(수) 10:00이다. */
+/** 일정관리 화면. 번호는 docs/porting/schedule.md S5c 2절, S5c2 2절, S5d 2절. 따로 적지 않으면 지금은 11-18(수) 10:00이다. */
 class ScheduleScreenTest {
     private AppData data;
     private ScheduleScreen screen;
@@ -231,5 +231,26 @@ class ScheduleScreenTest {
         assertEquals(Math.round((1232 - view) * 60.0 / 44), screen.topMinute());
         screen.scrollTo(61);
         assertEquals(List.of(44, 60), List.of(screen.scroll.getViewport().getViewPosition().y, screen.topMinute()));
+    }
+
+    /** 말풍선 글: 폭 150의 줄바꿈 칸에 꺾쇠를 바꾼 글. */
+    private static String said(String line) {
+        return "<html><div style='width:150px'>" + line.replace("<", "&lt;").replace(">", "&gt;") + "</div></html>";
+    }
+
+    private static String hint(int n) {
+        return said(n > 0 ? "이번 주 남은 날의 시각 없는 할 일이 " + n + "개 있어. 자동 배치를 눌러 볼래?" : "지금 자동 배치할 할 일은 없어.");
+    }
+
+    /** 06 16번 SCHEDULE_HINT의 대상 수 3과 0을 오른쪽 카드 아래 말풍선으로 본다(pet-talk.md E-TALK-31의 화면 몫). 주를 옮겨도 힌트다. */
+    @Test
+    void eTalk31HintCounts() {
+        assertEquals(hint(3), open(task("가", d(18)).task(), task("나", d(19)).task(), task("다", d(20)).task()).bubble.getText());
+        screen.next.doClick();
+        assertEquals(hint(0), screen.bubble.getText());
+        assertEquals(hint(0), open().bubble.getText());
+        Card side = (Card) ((BorderLayout) screen.getLayout()).getLayoutComponent(BorderLayout.EAST);
+        JPanel corner = (JPanel) ((BorderLayout) side.getLayout()).getLayoutComponent(BorderLayout.SOUTH);
+        assertEquals(screen.bubble, ((BorderLayout) corner.getLayout()).getLayoutComponent(BorderLayout.NORTH));
     }
 }

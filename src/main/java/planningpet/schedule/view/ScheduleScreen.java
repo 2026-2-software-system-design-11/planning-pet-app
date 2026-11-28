@@ -24,6 +24,8 @@ import planningpet.common.model.Rules;
 import planningpet.common.view.Card;
 import planningpet.common.view.Theme;
 import planningpet.common.view.Ui;
+import planningpet.pet.model.PetTalk;
+import planningpet.pet.model.Situation;
 import planningpet.reward.controller.RewardController;
 import planningpet.schedule.model.AutoPlacer;
 import planningpet.schedule.model.DefaultDates;
@@ -33,13 +35,13 @@ import planningpet.schedule.model.TimetableLayout;
 
 /**
  * 일정관리(05 일정관리, UC-10, UC-11). 위 줄, 가운데 시간표, 오른쪽 "시각 없는 할 일" 카드다. 옮기는 몫은
- * docs/porting/schedule.md S5c와 S5c2(시간표 누르기, 처음 보이는 자리). 말풍선, 펫 자리, 놓인 블록 보이기, 앱 창에 붙이기는
- * S5d가 더한다.
+ * docs/porting/schedule.md S5c, S5c2(시간표 누르기, 처음 보이는 자리), S5d(말풍선, 펫 자리, 놓인 블록 보이기).
  */
 public final class ScheduleScreen extends JPanel {
     private static final String WEEK = "월화수목금토일";
     private final AppData data;
     private final Clock clock;
+    private final PetTalk words;
     final TimetablePanel table;
     final JPanel header = new JPanel(new GridLayout(1, 7));
     final JLabel range = new JLabel("", SwingConstants.CENTER);
@@ -51,6 +53,10 @@ public final class ScheduleScreen extends JPanel {
     final JButton add = new JButton("일정 추가");
     final TaskRows untimed;
     final JScrollPane scroll;
+    /** 오른쪽 카드 아래 펫 말풍선(D-39, 06 16번 SCHEDULE_HINT). */
+    final JLabel bubble = Ui.bubble();
+    /** 주를 옮겨 다음 말을 SCHEDULE_HINT로 해야 한다. */
+    private boolean showHint = true;
     /** 보이는 주의 첫날(06 데이터 절의 한 주, D-91). */
     private LocalDate start;
     private boolean wasShown;
@@ -74,6 +80,7 @@ public final class ScheduleScreen extends JPanel {
         super(new BorderLayout(8, 8));
         this.data = data;
         this.clock = clock;
+        this.words = new PetTalk(data);
         setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 12));
         start = thisWeekStart();
         table = new TimetablePanel(data, reward, t -> onEdit.accept(t), t -> onDelete.accept(t));
@@ -105,7 +112,9 @@ public final class ScheduleScreen extends JPanel {
                 JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         sideScroll.setBorder(BorderFactory.createEmptyBorder());
         side.add(sideScroll, BorderLayout.CENTER);
-        // 말풍선과 펫 자리(side의 SOUTH)는 S5d가 더한다.
+        JPanel petCorner = new JPanel(new BorderLayout());
+        petCorner.add(bubble, BorderLayout.NORTH);
+        side.add(petCorner, BorderLayout.SOUTH);
         add(side, BorderLayout.EAST);
     }
 
@@ -160,6 +169,7 @@ public final class ScheduleScreen extends JPanel {
     /** 보이는 주를 newStart로 옮기고 다시 그린다. 다음 refresh가 처음 보이는 자리로 내린다(D-89). */
     public void move(LocalDate newStart) {
         start = newStart;
+        showHint = true;
         scrollPending = true;
         redraw.run();
     }
@@ -188,9 +198,16 @@ public final class ScheduleScreen extends JPanel {
         }
         untimed.show(data.getBook().untimedOfWeek(start));
         LocalDateTime now = LocalDateTime.now(clock);
-        autoPlace.setEnabled(AutoPlacer.place(data.getBook(), start, now).count() > 0);
-        // D-89: 화면을 열거나 주를 옮기면 처음 보이는 자리로 내린다. 데이터만 바뀌면 그대로다.
+        int targets = AutoPlacer.place(data.getBook(), start, now).count();
+        autoPlace.setEnabled(targets > 0);
         boolean visible = shown.getAsBoolean();
+        // D-39: 화면을 열거나 주를 옮기면 SCHEDULE_HINT다. 숨은 동안은 글을 둔다.
+        if (visible) {
+            String text = words.say(Situation.SCHEDULE_HINT, targets);
+            bubble.setText("<html><div style='width:150px'>" + Ui.esc(text) + "</div></html>");
+            showHint = false;
+        }
+        // D-89: 화면을 열거나 주를 옮기면 처음 보이는 자리로 내린다. 데이터만 바뀌면 그대로다.
         if (visible && (!wasShown || scrollPending)) {
             scrollTo(TimetableLayout.top(start, now));
             scrollPending = false;
