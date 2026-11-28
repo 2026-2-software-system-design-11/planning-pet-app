@@ -97,7 +97,8 @@
 | S7 | 나의 방 | `PetScreen`, `RoomView`, `ShopPanel`, `ShopController` | 20번 | `docs/porting/room.md` |
 | S8 | 캐릭터 창 | `CharacterDialog`, `PetController.step`, `rename`, `pose`, `applyWear` | 27번, 28번, 30번 | `docs/porting/character.md` |
 | S9 | 통계 화면 | `StatsScreen`, 통계 화면일 때 창 바탕의 자는 고양이([icons.md](porting/icons.md)) | 29번 | `docs/porting/stats-screen.md` |
-| S10 | 설정 | `SettingsScreen`, `SettingsController`, `Autostart`, `OsAutostart` | 25번의 컴퓨터 켤 때 실행 | `docs/porting/settings.md` |
+| S10a | 컴퓨터 켤 때 실행과 설정 controller | `Autostart`, `OsAutostart`의 macOS 등록(설치된 앱인지는 `jpackage.app-path`), `SettingsController`의 `setCalendarFixed`, `setWeekStart`, `setAutostart`(#523). `setListClickTime`은 C3 | 25번의 컴퓨터 켤 때 실행(T-WIN-4~6의 등록 몫, 프로토타입 기준 없음), 데이터 절 `calendarFixed`, `weekStart` | [docs/porting/settings.md](porting/settings.md) |
+| S10 | 설정 | `SettingsScreen`, `OsAutostart`의 Windows 등록과 `here()`, `Main.open`이 설정을 앱 창에 붙이고 다시 그리기를 거는 일(#525). `Autostart`, `OsAutostart`의 macOS 등록, `SettingsController`는 S10a, "목록 누르기" 줄은 C3, "예시 지우기"의 세기와 지우기는 C5 | 25번의 컴퓨터 켤 때 실행(T-WIN-4~6의 화면 몫) | [docs/porting/settings.md](porting/settings.md) |
 | S11 | 트레이, 알림, 하나만 실행 | `Tray`, `AppController.dueReminders`, `onClose`, `quit`, `SingleInstance` | 17번, 24번, 25번(프로토타입 기준 없음) | `docs/porting/tray.md` |
 | C1 | 칸에 쳐 넣기 | `Typed` | 32번 | `docs/porting/typed.md` |
 | C2 | 끌어 놓기와 되돌리기 | `TaskBook.placeAt`, `dropRange`, `dropStart`, `TaskController.placeAt`, `undoPlace` | 4번의 끌어 놓기 | `docs/porting/drag.md` |
@@ -178,3 +179,4 @@
 | S3aa 메모 툴팁 | 홈 할 일 목록에서 메모가 있는 줄에 마우스를 올린다. 메모가 한글 199자, 이모지, "나"이거나 이모지 101개다 | 툴팁이 "가" 199자와 이모지의 앞 반쪽(깨진 글자)과 "…"다. 이모지 101개(101자)도 100개와 "…"로 줄인다. 프로토타입 `TaskRows.memoTip`이 UTF-16 단위로 200에서 자른다 | 글자 수는 코드 포인트로 센다. 메모 툴팁은 200자까지다. 코드를 고침: `memoTip`이 코드 포인트로 잘라 이모지는 통째로 남고 이모지 101개는 그대로 보인다 | 06 읽는 법, D-33, [task-rows.md](porting/task-rows.md) E-MEMO-4 |
 | S4b 입력 창 도우미 | 운영체제 로캘이 영어인 컴퓨터에서 일정 입력 창을 연다 | 날짜 칸이 "2026-11-16 (Mon)"처럼 운영체제 로캘의 요일을 보인다 | 05 일정 입력 창 그림이 "2026-11-14 (토)"다. 코드를 고침: 날짜 칸 형식이 로캘과 관계없이 한국어 요일을 쓴다 | 05 일정 입력 창([ui-form](diagrams/ui-form.puml)), [task-dialog.md](porting/task-dialog.md) E-UI-3 |
 | S4b 입력 창 도우미 | 일정 입력 창 날짜 칸에 "2026-11-31 (월)"이나 "2026-13-01 (월)"을, 반복 끝 칸에 "2026-02-30"을 치고 칸을 벗어난다 | 없는 날짜를 굴려 12-01, 2027-01-01, 03-02로 받는다 | 형식에 맞지 않게 쓰면 칸을 벗어날 때 이전 값으로 돌아간다. 코드를 고침: 날짜 칸이 날짜 자리를 엄격히 읽어 없는 날짜를 받지 않고 이전 값을 둔다. 친 요일은 프로토타입처럼 읽지 않아 날짜 숫자만 고친 "2026-11-20 (목)"도 11-20이다 | 05 일정 입력 창 3번, porting.md 3절, [task-dialog.md](porting/task-dialog.md) E-UI-3, E-UI-5 |
+| S10a 설정 controller | 화면 밖 길로 한 주 시작을 수요일이나 null로 바꾼다(설정 화면에는 "월요일", "일요일"만 있다) | 수요일이 저장된다. null은 저장된 뒤 홈 달력의 다시 그리기가 `NullPointerException`이다 | `weekStart`는 `MONDAY` 또는 `SUNDAY`다. 코드를 고침: `setWeekStart`가 `IllegalArgumentException`을 던지고 값, 저장, 알림이 그대로다 | 06 데이터 절 `weekStart`, D-91, [settings.md](porting/settings.md) E-SET-5 |
