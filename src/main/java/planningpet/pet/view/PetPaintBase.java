@@ -8,7 +8,10 @@ import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
 import planningpet.pet.model.PetKind;
 
-/** PetArt 펫 그림의 바탕: 색, 시간 함수, 한 번 그리는 데 필요한 값, 그리기 도구. 머리는 PetPaintHead가 더한다(docs/porting/pet-art.md). */
+/**
+ * PetArt 펫 그림의 바탕: 색, 시간 함수, 한 번 그리는 데 필요한 값, 그리기 도구. 머리는 PetPaintHead, 몸은 PetPaintBody가 더한다
+ * (docs/porting/pet-art.md).
+ */
 abstract class PetPaintBase {
     // ---------- 색 (예시 픽셀에서 뽑은 값) ----------
     static final Color CAT_INK = new Color(0x3B3535);
@@ -29,7 +32,7 @@ abstract class PetPaintBase {
     static final float LINE = 6f;
 
     final Graphics2D g;
-    /** 움직임 시각(초). 귀 까딱임과 흔들림이 쓴다. */
+    /** 움직임 시각(초). 귀 까딱임과 흔들림, 꼬리가 쓴다. */
     final double t;
     final boolean cat;
     final Color ink;
@@ -82,6 +85,12 @@ abstract class PetPaintBase {
     void push(double x, double y, double rot) {
         g.translate(x, y);
         g.rotate(Math.toRadians(rot));
+    }
+
+    /** 외곽선 있는 굵은 관(꼬리). 짙은 선을 넓게, 그 위에 c를 좁게 긋는다. */
+    void tube(Shape path, float w, Color c) {
+        stroke(path, w + line * 2, ink);
+        stroke(path, w, c);
     }
 
     /** s 안쪽에만 shade를 칠한다(그림자 한 단). */
