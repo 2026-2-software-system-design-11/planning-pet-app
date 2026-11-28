@@ -16,6 +16,12 @@ class BarTest {
         return b;
     }
 
+    private static Bar cells(int done, int total) {
+        Bar b = new Bar(0, 8);
+        b.set(done, total);
+        return b;
+    }
+
     @Test
     void eBar1Ratio() throws IOException {
         for (double r : new double[] {0, 0.5, 1}) {
@@ -45,10 +51,48 @@ class BarTest {
     }
 
     @Test
+    void eBar4Cells() throws IOException {
+        int[][] cases = {{1, 4}, {0, 4}, {4, 4}, {3, 10}, {1, 1}, {5, 4}, {-1, 3}};
+        double[] ratios = {0.25, 0, 1, 0.3, 1, 1, 0};
+        for (int i = 0; i < cases.length; i++) {
+            Bar b = cells(cases[i][0], cases[i][1]);
+            assertEquals(ratios[i], b.ratio());
+            assertEquals(cases[i][1], b.segments());
+            Snap.assertLooksLikePrototype("bar-s" + cases[i][0] + "of" + cases[i][1] + "-120x8", b, 120, 8);
+        }
+    }
+
+    @Test
+    void eBar5CellEnds() throws IOException {
+        int[][] cases = {{0, 0}, {5, 11}, {15, 11}, {2, -3}};
+        double[] ratios = {0, 5 / 11.0, 1, 0};
+        int[] segments = {0, 0, 0, -3};
+        String[] looks = {"bar-r0.0-120x8", "bar-s5of11-120x8", "bar-r1.0-120x8", "bar-r0.0-120x8"};
+        for (int i = 0; i < cases.length; i++) {
+            Bar b = cells(cases[i][0], cases[i][1]);
+            assertEquals(ratios[i], b.ratio());
+            assertEquals(segments[i], b.segments());
+            Snap.assertLooksLikePrototype(looks[i], b, 120, 8);
+        }
+        Bar back = cells(2, 4);
+        back.set(0.25);
+        assertEquals(0, back.segments());
+        Snap.assertLooksLikePrototype("bar-reset-120x8", back, 120, 8);
+        Bar to = ratio(0.7);
+        to.set(1, 3);
+        assertEquals(1 / 3.0, to.ratio());
+        assertEquals(3, to.segments());
+    }
+
+    @Test
     void eBar6HeightAndWidth() throws IOException {
         for (int[] s : new int[][] {{120, 20}, {300, 12}, {120, 4}, {0, 8}, {10, 8}, {40, 8}, {0, 0}}) {
             Snap.assertLooksLikePrototype("bar-r0.5-" + s[0] + "x" + s[1], ratio(0.5), s[0], s[1]);
+            Snap.assertLooksLikePrototype("bar-s3of10-" + s[0] + "x" + s[1], cells(3, 10), s[0], s[1]);
         }
+        Bar low = cells(3, 10);
+        low.setPreferredSize(new Dimension(0, 4));
+        Snap.assertLooksLikePrototype("bar-pref4-s3of10-120x8", low, 120, 8);
     }
 
     @Test
@@ -57,6 +101,8 @@ class BarTest {
         assertSame(b, b.track(Theme.TRACK_DEEP));
         b.set(0.5);
         Snap.assertLooksLikePrototype("bar-deep-r0.5-120x8", b, 120, 8);
+        b.set(1, 4);
+        Snap.assertLooksLikePrototype("bar-deep-s1of4-120x8", b, 120, 8);
     }
 
     @Test
@@ -69,6 +115,8 @@ class BarTest {
         assertEquals(new Dimension(0, 8), card.getPreferredSize());
         assertEquals(new Dimension(20, 8), card.getMinimumSize());
         assertEquals(0, card.ratio());
+        assertEquals(0, card.segments());
+        assertEquals(10, Bar.MAX_SEGMENTS);
         Snap.assertLooksLikePrototype("bar-r0.0-120x8", card, 120, 8);
     }
 }
