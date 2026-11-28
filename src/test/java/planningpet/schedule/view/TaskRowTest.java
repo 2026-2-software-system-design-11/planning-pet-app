@@ -2,6 +2,7 @@ package planningpet.schedule.view;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.Component;
@@ -15,6 +16,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.AbstractButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -105,5 +107,34 @@ class TaskRowTest {
             assertEquals(w[2], p.getComponent(2).getX());
         }
         looks("narrow", row(t, "", TODAY, 200));
+    }
+
+    @Test
+    void eRow2Done() throws IOException {
+        JPanel p = row(task(Kind.TASK, "빨래", LocalTime.of(10, 0), 60, true), "10:00~11:00", TODAY, 480);
+        assertTrue(((AbstractButton) ((JPanel) p.getComponent(0)).getComponent(0)).isSelected());
+        JPanel east = (JPanel) p.getComponent(2);
+        TimePill pill = (TimePill) east.getComponent(0);
+        assertEquals("10:00~11:00", pill.getText());
+        assertFalse(pill.isEnabled());
+        assertNull(pill.getToolTipText());
+        assertEquals(Theme.INK_DIM, east.getComponent(1).getForeground());
+        assertEquals(new Dimension(303, 39), p.getPreferredSize());
+        looks("done", p);
+    }
+
+    @Test
+    void eRow6Minutes() {
+        int[][] want = {{5, 34, 217}, {100, 34, 217}, {300, 35, 216}, {1440, 41, 210}};
+        for (int[] w : want) {
+            JPanel p = row(task(Kind.TASK, "분", null, w[0], false), "", TODAY, 480);
+            JLabel m = (JLabel) ((JPanel) p.getComponent(2)).getComponent(1);
+            assertEquals(w[0] + "분", m.getText());
+            assertEquals(Theme.font(13), m.getFont());
+            assertEquals(JLabel.RIGHT, m.getHorizontalAlignment());
+            assertEquals(Theme.INK_SUB, m.getForeground());
+            assertEquals(new Dimension(w[1], 20), m.getPreferredSize());
+            assertEquals(w[2], p.getComponent(1).getWidth());
+        }
     }
 }

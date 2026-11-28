@@ -134,13 +134,17 @@ public final class TaskRows extends JPanel {
         return tag;
     }
 
-    /** 홈 목록의 할 일 한 줄. time이 ""이면 "시각 정하기", listDay는 이 줄이 보이는 목록의 날이다(D-65). 순서는 D-59, 아래에 가는 선. */
+    /** 홈 목록의 할 일 한 줄. time이 ""이면 "시각 정하기", listDay는 이 줄이 보이는 목록의 날이다(D-65). 순서는 D-59, 아래에 가는 선, 끝낸 줄은 민트빛 바탕. */
     JPanel row(Task t, String time, LocalDate listDay) {
         JPanel row = new JPanel(new BorderLayout(6, 0)) {
             @Override
             protected void paintComponent(Graphics graphics) {
                 Graphics2D g = (Graphics2D) graphics.create();
                 g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                if (t.isDone()) {
+                    g.setColor(Theme.ROW_DONE);
+                    g.fillRoundRect(0, 1, getWidth(), getHeight() - 3, 12, 12);
+                }
                 g.setColor(Theme.CARD_EDGE);
                 g.fillRect(6, getHeight() - 1, getWidth() - 12, 1);
                 g.dispose();
@@ -150,13 +154,14 @@ public final class TaskRows extends JPanel {
         row.setBorder(BorderFactory.createEmptyBorder(5, 6, 6, 4));
         row.setAlignmentX(LEFT_ALIGNMENT);
         JCheckBox box = RoundCheck.style(new JCheckBox());
+        box.setSelected(t.isDone());
         JLabel minutes = new JLabel(t.getDurationMinutes() + "분", JLabel.RIGHT);
         minutes.setFont(Theme.font(13));
-        minutes.setForeground(Theme.INK_SUB);
+        minutes.setForeground(t.isDone() ? Theme.INK_DIM : Theme.INK_SUB);
         minutes.setPreferredSize(new Dimension(Math.max(34, minutes.getPreferredSize().width), 20));
         CircleButton pencil = new CircleButton(Icons.Kind.PENCIL, 28, "수정", true);
         CircleButton trash = new CircleButton(Icons.Kind.TRASH, 28, "삭제", true);
-        TimePill when = new TimePill(time, false, false, null);
+        TimePill when = new TimePill(time, t.isDone(), t.isDone(), null);
         row.add(middle(box), BorderLayout.WEST);
         row.add(new TitleLabel(t), BorderLayout.CENTER);
         row.add(middle(when, minutes, pencil, trash), BorderLayout.EAST);
