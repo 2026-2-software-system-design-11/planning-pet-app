@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Rectangle;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -16,11 +17,19 @@ import java.sql.Statement;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.AbstractButton;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JToggleButton;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import planningpet.app.model.AppData;
@@ -30,9 +39,17 @@ import planningpet.app.model.LoadResult.Reason;
 import planningpet.app.store.SqliteDataStore;
 import planningpet.app.view.Tray;
 import planningpet.common.view.Card;
+import planningpet.common.view.Snap;
+import planningpet.common.view.Theme;
+import planningpet.home.view.MainScreen;
 import planningpet.pet.model.PetKind;
 import planningpet.pet.model.PetState;
 import planningpet.pet.view.PickDialog;
+import planningpet.schedule.model.Category;
+import planningpet.schedule.model.Kind;
+import planningpet.schedule.model.Task;
+import planningpet.schedule.model.TaskDraft;
+import planningpet.schedule.view.TaskRows;
 
 /** Main.start의 갈래. 번호는 docs/porting/main.md 2절. 지금은 11-16(월) 10:00이고, 창은 띄우지 않고 부른 차례만 적는다. */
 class MainStartTest {
@@ -64,6 +81,20 @@ class MainStartTest {
 
         public void exit(int code) { calls.add("끝내기 " + code); }
     };
+
+    /** Main.main처럼 부품을 만들기 전에 Theme를 건다. 검사마다 되돌린다. */
+    @BeforeEach
+    void install() {
+        Theme.install();
+    }
+
+    @AfterEach
+    void undoInstall() {
+        for (Object key : List.copyOf(UIManager.getLookAndFeelDefaults().keySet())) {
+            UIManager.put(key, null);
+        }
+        UIManager.put("swing.boldMetal", null);
+    }
 
     /** 고양이 "나비", lastOpenDay 11-15, 연속 5일. */
     private static AppData saved() {
@@ -97,6 +128,20 @@ class MainStartTest {
             }
         }
         return into;
+    }
+
+    private static <T> List<T> parts(Component c, Class<T> type) {
+        List<T> out = new ArrayList<>(type.isInstance(c) ? List.of(type.cast(c)) : List.of());
+        if (c instanceof Container k) {
+            for (Component child : k.getComponents()) {
+                out.addAll(parts(child, type));
+            }
+        }
+        return out;
+    }
+
+    private static String at(Rectangle r) {
+        return r.x + "," + r.y + " " + r.width + "x" + r.height;
     }
 
     /** result를 돌려주고, 저장하면 "저장"을 적거나 failing이면 실패하는 저장소. */
@@ -195,5 +240,47 @@ class MainStartTest {
         assertEquals(List.of("못 읽음 창 NEWER_VERSION " + file, "끝내기 1"), calls);
         assertArrayEquals(before, Files.readAllBytes(file));
         assertEquals(1, files());
+    }
+
+    /** 홈이 메뉴 "홈"으로 붙고 알림마다 다시 그리기가 Theme.clear보다 먼저 돈다(docs/porting/home.md S3ac E-SCREEN-15). */
+    @Test
+    void eScreen15HomeAttached() {
+        AppData data = saved();
+        data.getBook().add(new TaskDraft(Kind.TASK, "보고서", Category.OTHER, LocalDate.of(2026, 11, 16), null, null, 30, "", null, null,
+                false, null, null, false));
+        Main.start(store(LoadResult.loaded(data), false), folder, CLOCK, shell);
+        data.changed();
+        Snap.layOut(root, 1000, 680);
+        MainScreen home = parts(root, MainScreen.class).get(0);
+        assertEquals("[홈] 174,92 804x564 [오늘도 계획을 세우고, 조금씩 성장해요!] 0",
+                parts(root, JToggleButton.class).stream().filter(b -> b.getClass() == JToggleButton.class).map(AbstractButton::getText).toList() + " "
+                        + at(SwingUtilities.convertRectangle(home.getParent(), home.getBounds(), root)) + " "
+                        + parts(root, JLabel.class).stream().map(JLabel::getText).filter(t -> t != null && t.startsWith("오늘도")).toList() + " "
+                        + panels(parts(home, TaskRows.class).get(0), new ArrayList<>()).stream().filter(JPanel::isOpaque).count());
+    }
+
+    /** 06 T-LIST-9(D-94)를 창 1000x680의 홈 목록으로 본다. 오늘은 11-19 09:00이다. 화면이 홈뿐이라 목록이 10 높다(S3ac 2절). */
+    @Test
+    void tList9TitlesInWindow() {
+        Clock at = Clock.fixed(LocalDateTime.of(2026, 11, 19, 9, 0).atZone(ZONE).toInstant(), ZONE);
+        LocalDate d12 = LocalDate.of(2026, 11, 12);
+        AppData data = new AppData(at, new ArrayList<>(List.of(
+                new Task("a", 1, Kind.TASK, "졸업 작품 기획서", d12, null, 60, "", false, Category.OTHER, null, null, LocalDate.of(2026, 11, 19),
+                        d12, false, null, 0, 0, null, null),
+                new Task("b", 2, Kind.TASK, "E사 지원서", LocalDate.of(2026, 11, 18), LocalTime.of(9, 0), 120, "", false, Category.OTHER,
+                        null, null, LocalDate.of(2026, 11, 22), LocalDate.of(2026, 11, 16), false, null, 0, 0, null, null))), List.of());
+        data.addPet(new PetState(PetKind.CAT, "나비"));
+        data.setActiveKind(PetKind.CAT);
+        Main.start(store(LoadResult.loaded(data), false), folder, at, shell);
+        Snap.layOut(root, 1000, 680);
+        TaskRows rows = parts(root, TaskRows.class).get(0);
+        List<String> got = new ArrayList<>(List.of(at(rows.getParent().getParent().getBounds())));
+        for (int i : new int[] {0, 2}) {
+            JPanel row = (JPanel) rows.getComponent(i);
+            got.add(((TaskRows.TitleLabel) row.getComponent(1)).shown() + " "
+                    + ((JLabel) row.getComponent(3)).getText().replaceAll("<[^>]+>", "") + " " + at(row.getComponent(3).getBounds()));
+        }
+        assertEquals(List.of("16,67 383x402", "졸업 작품 기획서 ~11/19까지 오늘 마감 6,33 373x15", "E사 지원서 ~11/22까지 18일에 하려던 일 6,33 373x15"),
+                got);
     }
 }
