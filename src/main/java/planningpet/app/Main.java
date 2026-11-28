@@ -47,7 +47,7 @@ public final class Main {
             System.exit(0); // 06 24번: 실행 중인 앱에 신호를 보냈다.
             return;
         }
-        // --autostart는 S11b(#524)에서 트레이와 함께 창을 띄우지 않게 한다. 지금은 창을 띄운다.
+        // --autostart로 창을 띄우지 않는 일은 S11c(#537)다. 지금은 창을 띄운다.
         Theme.install(); // 부품을 만들기 전에 건다(프로토타입 Main).
         Clock clock = Clock.systemDefaultZone();
         SwingUtilities.invokeLater(() -> start(new SqliteDataStore(folder, clock), folder, clock, swing));
