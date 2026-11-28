@@ -133,4 +133,13 @@ class TitleLabelTest {
         draws(label("토익 공부", "", true, 200, 40), "토익 공부", 25, 20, false);
         draws(label("토익 공부", "", true, 200, 10), "토익 공부", 10, 5, false);
     }
+
+    /** 프로토타입과 일부러 다름(06 읽는 법, #450). 프로토타입은 폭 5에서 이모지의 앞 반쪽과 "…"였다. */
+    @Test
+    void eTitle9Emoji() {
+        draws(label("😀공부", "", false, 5, 24), "😀…", 17, -1, false);
+        draws(label("😀공부", "", false, 30, 24), "😀…", 17, -1, false);
+        draws(label("가나😀다라", "", false, 48, 24), "가나…", 17, -1, false);
+        draws(label("가나😀다라", "", false, 49, 24), "가나😀…", 17, -1, false);
+    }
 }
