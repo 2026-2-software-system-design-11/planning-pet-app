@@ -52,6 +52,7 @@ MainScreen *-- planningpet.schedule.view.TaskRows
 MainScreen ..> planningpet.schedule.controller.TaskController
 MainScreen ..> planningpet.schedule.model.DefaultDates
 CalendarPanel ..> HomeController
+CalendarPanel ..> planningpet.app.controller.AppController
 HomeController ..> planningpet.pet.model.PetTalk
 CalendarPanel ..> planningpet.schedule.model.CalendarCell
 PetCard ..> planningpet.reward.model.DailyProgress

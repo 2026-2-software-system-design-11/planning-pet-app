@@ -12,16 +12,18 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
+import planningpet.app.controller.AppController;
 import planningpet.app.model.AppData;
 import planningpet.common.view.CircleButton;
 import planningpet.common.view.Icons;
 import planningpet.common.view.Theme;
+import planningpet.home.controller.HomeController;
 import planningpet.schedule.model.CalendarCell;
 
 /**
  * 홈 달력(05 홈 "달력", UC-09). 한 주는 설정의 한 주 시작(처음은 월요일)부터 7일이다(D-91). 제목 줄 왼쪽에 달 제목, 오른쪽에
  * "오늘" 버튼과 이전 달, 다음 달 꺾쇠가 있다(D-60). 날짜 칸은 그날 일의 수와 마감 점을 보인다(D-86, 06 26번).
- * 누른 날 고르기와 다시 그리기 알림은 S3h가 더한다(docs/porting/home.md S3f, S3g).
+ * 날짜 칸을 누르면 그날을 고른다(UC-09, docs/porting/home.md S3f~S3h).
  */
 public final class CalendarPanel extends JPanel {
     private static final String DAYS = "일월화수목금토";
@@ -34,23 +36,41 @@ public final class CalendarPanel extends JPanel {
     final JLabel title = new JLabel();
     final CircleButton prev = new CircleButton(Icons.Kind.LEFT, 32, "이전 달", false);
     final CircleButton next = new CircleButton(Icons.Kind.RIGHT, 32, "다음 달", false);
-    /** D-60: 오늘이 든 달에서 오늘을 고르고 있으면 흐리다. 누르는 일은 S3h가 더한다. */
+    /** D-60: 오늘이 든 달로 옮기고 오늘을 고른다. 이미 그렇다면 흐리다. */
     final JButton today = new JButton("오늘");
     private DayOfWeek shownStart;
     private YearMonth month;
-    private final LocalDate selected;
+    private LocalDate selected;
+    /** 알림을 받은 때의 앱 날짜. 처음은 만들 때의 앱 날짜다(T-DAYW-4). */
+    private LocalDate noticed;
 
-    /** onPick은 날짜 칸을 누르면 그날을 받는다. */
+    /**
+     * 홈 화면의 달력. 누른 날을 home.pick에 넘기고(07 seq-uc09), 고른 날을 app.setHomeDay로 잇고(D-106), 데이터 변경 알림마다
+     * 다시 그린다. 앱 날짜가 바뀌면 고른 날을 옮긴다(docs/porting/home.md S3h).
+     */
+    public CalendarPanel(AppData data, HomeController home, AppController app) {
+        this(data, home::pick);
+        app.setHomeDay(this::selected);
+        data.onChange(this::changed);
+    }
+
+    /** onPick은 날짜 칸이나 "오늘" 버튼을 누르면 고른 날을 받는다. 검사가 쓴다. */
     public CalendarPanel(AppData data, Consumer<LocalDate> onPick) {
         super(new BorderLayout(0, 4));
         this.data = data;
         this.onPick = onPick;
         this.selected = data.today();
+        this.noticed = selected;
         this.month = YearMonth.from(selected);
         prev.addActionListener(e -> move(-1));
         next.addActionListener(e -> move(1));
         today.setFont(Theme.bold(12));
         today.setBorder(BorderFactory.createEmptyBorder(5, 12, 7, 12));
+        today.addActionListener(e -> {
+            selected = data.today();
+            month = YearMonth.from(selected);
+            onPick.accept(selected);
+        });
         title.setIcon(Icons.icon(Icons.Kind.CALENDAR, 24, Theme.ICON));
         title.setIconTextGap(8);
         title.setFont(Theme.heavy(21));
@@ -76,10 +96,27 @@ public final class CalendarPanel extends JPanel {
         return selected;
     }
 
+    /** 데이터 변경 알림. 앱 날짜가 바뀌었고 옛 오늘을 고르고 있었으면 새 오늘과 그 달로 옮긴 뒤(06 23번, T-DAYW-4) 다시 그린다. */
+    private void changed() {
+        LocalDate today = data.today();
+        if (!today.equals(noticed) && noticed.equals(selected)) {
+            selected = today;
+            month = YearMonth.from(today);
+        }
+        noticed = today;
+        refresh();
+    }
+
     /** 보이는 달을 months만큼 옮긴다. 고른 날은 그대로다(05 입력 항목 2). */
     private void move(int months) {
         month = month.plusMonths(months);
         refresh();
+    }
+
+    /** 날짜 칸을 누르면 그날을 고르고 받은 함수에 넘긴다. 다시 그리기는 그 뒤의 알림이 한다(프로토타입과 같다). */
+    private void choose(LocalDate date) {
+        selected = date;
+        onPick.accept(date);
     }
 
     /** 요일 줄을 한 주 시작부터 놓는다(D-91). */
@@ -128,7 +165,7 @@ public final class CalendarPanel extends JPanel {
             }
             LocalDate date = month.atDay(day);
             grid.add(new DayCell(date, CalendarCell.preview(data.getBook(), date, data.isCalendarFixed()), date.equals(today),
-                    date.equals(selected), onPick));
+                    date.equals(selected), this::choose));
         }
         grid.revalidate();
         grid.repaint();
