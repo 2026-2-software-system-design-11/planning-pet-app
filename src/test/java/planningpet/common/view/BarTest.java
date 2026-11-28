@@ -1,7 +1,10 @@
 package planningpet.common.view;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
+import java.awt.Dimension;
 import java.io.IOException;
 import org.junit.jupiter.api.Test;
 
@@ -39,5 +42,33 @@ class BarTest {
         Bar nan = ratio(Double.NaN);
         assertEquals(Double.NaN, nan.ratio());
         Snap.assertLooksLikePrototype("bar-r0.0-120x8", nan, 120, 8);
+    }
+
+    @Test
+    void eBar6HeightAndWidth() throws IOException {
+        for (int[] s : new int[][] {{120, 20}, {300, 12}, {120, 4}, {0, 8}, {10, 8}, {40, 8}, {0, 0}}) {
+            Snap.assertLooksLikePrototype("bar-r0.5-" + s[0] + "x" + s[1], ratio(0.5), s[0], s[1]);
+        }
+    }
+
+    @Test
+    void eBar7Track() throws IOException {
+        Bar b = new Bar(0, 8);
+        assertSame(b, b.track(Theme.TRACK_DEEP));
+        b.set(0.5);
+        Snap.assertLooksLikePrototype("bar-deep-r0.5-120x8", b, 120, 8);
+    }
+
+    @Test
+    void eBar8NewBar() throws IOException {
+        Bar room = new Bar(70, 10);
+        assertEquals(new Dimension(70, 10), room.getPreferredSize());
+        assertEquals(new Dimension(20, 10), room.getMinimumSize());
+        assertFalse(room.isOpaque());
+        Bar card = new Bar(0, 8);
+        assertEquals(new Dimension(0, 8), card.getPreferredSize());
+        assertEquals(new Dimension(20, 8), card.getMinimumSize());
+        assertEquals(0, card.ratio());
+        Snap.assertLooksLikePrototype("bar-r0.0-120x8", card, 120, 8);
     }
 }
