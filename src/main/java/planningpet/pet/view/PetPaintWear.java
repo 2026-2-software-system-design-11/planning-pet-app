@@ -5,12 +5,14 @@ import java.awt.Graphics2D;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Path2D;
+import java.util.Set;
 import planningpet.pet.model.PetKind;
+import planningpet.pet.model.WearId;
 
 /** PetArt 펫 그림의 장신구(D-51): 목걸이와 그 장식(docs/porting/pet-art.md 5절). 머리와 몸이 이것을 물려받아 입힌다. */
 abstract class PetPaintWear extends PetPaintBase {
-    PetPaintWear(Graphics2D g, PetKind kind, double t) {
-        super(g, kind, t);
+    PetPaintWear(Graphics2D g, PetKind kind, Set<WearId> wear, double t) {
+        super(g, kind, wear, t);
     }
 
     /** 가운데가 (x, y)이고 k배인 리본: 양쪽 고리와 가운데 매듭을 c로 칠한다. */

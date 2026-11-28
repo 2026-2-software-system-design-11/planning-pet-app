@@ -10,6 +10,7 @@ import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import planningpet.common.view.Snap;
 import planningpet.pet.model.PetKind;
@@ -21,7 +22,7 @@ class PetArtTest {
         Graphics2D g = img.createGraphics();
         PetPaintBase.hints(g);
         g.translate(120, 110);
-        PetPaintHead p = new PetPaintHead(g, kind, 0);
+        PetPaintHead p = new PetPaintHead(g, kind, Set.of(), 0);
         p.line = line;
         return p;
     }
@@ -42,7 +43,7 @@ class PetArtTest {
         Graphics2D g = img.createGraphics();
         int x = 0;
         for (int s : sizes) {
-            PetArt.drawFace(g, kind, x + cell(s) / 2.0, cell(s) / 2.0, s);
+            PetArt.drawFace(g, kind, Set.of(), x + cell(s) / 2.0, cell(s) / 2.0, s);
             x += cell(s);
         }
         g.dispose();
@@ -63,7 +64,7 @@ class PetArtTest {
     void eFace3NegativeSize() throws IOException {
         BufferedImage img = new BufferedImage(80, 80, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = img.createGraphics();
-        PetArt.drawFace(g, PetKind.CAT, 40, 40, -48);
+        PetArt.drawFace(g, PetKind.CAT, Set.of(), 40, 40, -48);
         g.dispose();
         Snap.assertLooksLikePrototype("pet-face-neg48", img);
     }
@@ -85,7 +86,7 @@ class PetArtTest {
     private static String face230Box(PetKind kind) {
         BufferedImage img = new BufferedImage(600, 600, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = img.createGraphics();
-        PetArt.drawFace(g, kind, 300, 300, 230);
+        PetArt.drawFace(g, kind, Set.of(), 300, 300, 230);
         g.dispose();
         return paintedBox(img, 300, 300);
     }
@@ -123,7 +124,7 @@ class PetArtTest {
         g.translate(3, 4);
         AffineTransform before = g.getTransform();
         Object aa = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-        PetArt.drawFace(g, PetKind.CAT, 40, 40, 60);
+        PetArt.drawFace(g, PetKind.CAT, Set.of(), 40, 40, 60);
         assertEquals(Color.RED, g.getColor());
         assertSame(stroke, g.getStroke());
         assertEquals(before, g.getTransform());
@@ -159,7 +160,7 @@ class PetArtTest {
         Graphics2D g = img.createGraphics();
         PetPaintBase.hints(g);
         g.translate(130, 120);
-        new PetPaintHead(g, PetKind.CAT, 0).head(0, 0, 0);
+        new PetPaintHead(g, PetKind.CAT, Set.of(), 0).head(0, 0, 0);
         g.dispose();
         Snap.assertLooksLikePrototype("pet-head", img);
     }
@@ -174,7 +175,7 @@ class PetArtTest {
         Snap.assertLooksLikePrototype("pet-dog-face-small", faces(PetKind.DOG, 0, 1, 7));
         BufferedImage img = new BufferedImage(80, 80, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = img.createGraphics();
-        PetArt.drawFace(g, PetKind.DOG, 40, 40, -48);
+        PetArt.drawFace(g, PetKind.DOG, Set.of(), 40, 40, -48);
         g.dispose();
         Snap.assertLooksLikePrototype("pet-dog-face-neg48", img);
     }
@@ -211,7 +212,7 @@ class PetArtTest {
         Graphics2D g = img.createGraphics();
         PetPaintBase.hints(g);
         g.translate(130, 120);
-        new PetPaintHead(g, kind, t).head(0, 0, rot);
+        new PetPaintHead(g, kind, Set.of(), t).head(0, 0, rot);
         g.dispose();
         return img;
     }

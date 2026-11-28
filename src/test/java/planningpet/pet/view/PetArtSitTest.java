@@ -11,6 +11,7 @@ import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import planningpet.common.view.Snap;
 import planningpet.pet.model.PetKind;
@@ -27,7 +28,7 @@ class PetArtSitTest {
     private static PetPaintBody part(BufferedImage img, PetKind kind) {
         Graphics2D g = img.createGraphics();
         PetPaintBase.hints(g);
-        return new PetPaintBody(g, kind, 0);
+        return new PetPaintBody(g, kind, Set.of(), 0);
     }
 
     @Test
@@ -68,7 +69,7 @@ class PetArtSitTest {
         Graphics2D g = img.createGraphics();
         int x = 0;
         for (double s : sizes) {
-            PetArt.drawAt(g, kind, 0, 99, x + cell(s) / 2.0, h - 4, s);
+            PetArt.drawAt(g, kind, Set.of(), 0, 99, x + cell(s) / 2.0, h - 4, s);
             x += cell(s);
         }
         g.dispose();
@@ -79,7 +80,7 @@ class PetArtSitTest {
     private static BufferedImage one(PetKind kind, double x, double ground, double size) {
         BufferedImage img = new BufferedImage(160, 160, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = img.createGraphics();
-        PetArt.drawAt(g, kind, 0, 99, x, ground, size);
+        PetArt.drawAt(g, kind, Set.of(), 0, 99, x, ground, size);
         g.dispose();
         return img;
     }
@@ -98,7 +99,7 @@ class PetArtSitTest {
         BufferedImage img = new BufferedImage(148 * values.length, 148, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = img.createGraphics();
         for (int i = 0; i < values.length; i++) {
-            PetArt.drawAt(g, kind, times ? values[i] : 0, times ? 99 : values[i], 148 * i + 74, 144, 140);
+            PetArt.drawAt(g, kind, Set.of(), times ? values[i] : 0, times ? 99 : values[i], 148 * i + 74, 144, 140);
         }
         g.dispose();
         return img;
@@ -122,7 +123,7 @@ class PetArtSitTest {
     private static String box(PetKind kind, double size) {
         BufferedImage img = new BufferedImage(800, 800, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = img.createGraphics();
-        PetArt.drawAt(g, kind, 0, 99, 400, 600, size);
+        PetArt.drawAt(g, kind, Set.of(), 0, 99, 400, 600, size);
         g.dispose();
         return PetArtTest.paintedBox(img, 400, 600);
     }
@@ -146,7 +147,7 @@ class PetArtSitTest {
         g.clipRect(10, 10, 100, 100);
         AffineTransform before = g.getTransform();
         Object aa = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-        PetArt.drawAt(g, PetKind.DOG, 1.3, 0.1, 80, 150, 140);
+        PetArt.drawAt(g, PetKind.DOG, Set.of(), 1.3, 0.1, 80, 150, 140);
         assertEquals(Color.RED, g.getColor());
         assertSame(stroke, g.getStroke());
         assertEquals(before, g.getTransform());

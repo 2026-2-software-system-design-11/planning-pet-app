@@ -6,7 +6,9 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
+import java.util.Set;
 import planningpet.pet.model.PetKind;
+import planningpet.pet.model.WearId;
 
 /**
  * PetArt 펫 그림의 바탕: 색, 시간 함수, 한 번 그리는 데 필요한 값, 그리기 도구. 머리는 PetPaintHead, 몸은 PetPaintBody가 더한다
@@ -38,19 +40,26 @@ abstract class PetPaintBase {
     final Graphics2D g;
     /** 움직임 시각(초). 귀 까딱임과 흔들림, 숨쉬기, 머리 기울기, 꼬리가 쓴다. */
     final double t;
+    /** 입은 장신구(D-51). */
+    final Set<WearId> wear;
     final boolean cat;
     final Color ink;
     final Color fur;
     final Color furShade;
     float line = LINE;
 
-    PetPaintBase(Graphics2D g, PetKind kind, double t) {
+    PetPaintBase(Graphics2D g, PetKind kind, Set<WearId> wear, double t) {
         this.g = g;
+        this.wear = wear == null ? Set.of() : wear;
         this.t = t;
         this.cat = kind == PetKind.CAT;
         this.ink = cat ? CAT_INK : DOG_INK;
         this.fur = cat ? CAT_WHITE : DOG_FUR;
         this.furShade = cat ? CAT_WHITE_SHADE : DOG_FUR_SHADE;
+    }
+
+    boolean has(WearId w) {
+        return wear.contains(w);
     }
 
     static void hints(Graphics2D g) {

@@ -5,15 +5,17 @@ import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Path2D;
 import java.awt.geom.QuadCurve2D;
+import java.util.Set;
 import planningpet.pet.model.PetKind;
+import planningpet.pet.model.WearId;
 
 /**
  * PetArt 펫 그림의 몸: 앉은 자세(D-50의 처음 자세)의 몸, 앞발, 꼬리와 그 위의 머리(docs/porting/pet-art.md 4절). 좌표는 320x320
  * 상자이고 발이 닿는 바닥은 y=300, 가운데는 x=160이다.
  */
 final class PetPaintBody extends PetPaintHead {
-    PetPaintBody(Graphics2D g, PetKind kind, double t) {
-        super(g, kind, t);
+    PetPaintBody(Graphics2D g, PetKind kind, Set<WearId> wear, double t) {
+        super(g, kind, wear, t);
     }
 
     /**
