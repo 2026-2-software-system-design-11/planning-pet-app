@@ -212,13 +212,8 @@ final class TaskForm {
             startTouched = t.timed();
             if (t.timed()) {
                 // 프로토타입과 일부러 다름(E-FORM-13): 5분 단위가 아닌 저장 값도 목록의 제자리에 끼워 그 값으로 연다.
-                String stored = Times.value(t.startMinute());
-                List<String> values = new ArrayList<>(Times.values());
-                if (!values.contains(stored)) {
-                    values.add(Math.min(t.startMinute() / 5 + 1, values.size()), stored);
-                    ((SpinnerListModel) start.getModel()).setList(values);
-                }
-                start.setValue(stored);
+                ((SpinnerListModel) start.getModel()).setList(Times.values(t.startMinute()));
+                start.setValue(Times.value(t.startMinute()));
             }
             memo.setText(t.getMemo());
         }

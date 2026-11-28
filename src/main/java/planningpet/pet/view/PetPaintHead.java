@@ -136,43 +136,63 @@ class PetPaintHead extends PetPaintWear {
     /**
      * 얼굴 부품: 감고 웃는 눈, 분홍 볼, 코, 입. 고양이는 세모 코, 닫은 입, 수염이고 강아지는 둥근 코와 혀가 보이게 벌린 입이다.
      * 노래하는 고양이는 입을 벌리고 먹는 고양이는 0.35초마다 벌렸다 닫는다. 노래하면 입이 0.5초 주기로 커졌다 작아진다(t).
+     * 잠든 얼굴은 아래로 감은 눈에 닫은 입(강아지도), 기지개는 꼭 감은 눈(&gt; &lt;)에 크게 벌린 입(높이 17)이다.
      * 눈은 선 굵기의 0.85배, 닫은 입은 그 0.75배, 수염은 0.42배다.
      */
     void faceParts() {
         float w = line * 0.85f;
-        double mouth = face == Face.SING ? wave(t, 0.5, 12, 18, 0) : 12;
-        stroke(new QuadCurve2D.Double(-54, 2, -40, -14, -26, 2), w, ink);
-        stroke(new QuadCurve2D.Double(26, 2, 40, -14, 54, 2), w, ink);
+        eyes(w);
         g.setColor(BLUSH);
         g.fill(ell(-62, 24, 15, 8));
         g.fill(ell(62, 24, 15, 8));
-        if (!cat) {
+        if (cat) {
+            Path2D n = new Path2D.Double();
+            n.moveTo(-7, 12);
+            n.quadTo(0, 9, 7, 12);
+            n.quadTo(2, 20, 0, 20);
+            n.quadTo(-2, 20, -7, 12);
+            n.closePath();
+            g.setColor(NOSE);
+            g.fill(n);
+        } else {
             g.setColor(NOSE);
             g.fill(ell(0, 14, 11, 8));
             g.setColor(new Color(255, 255, 255, 170));
             g.fill(ell(-4, 11, 3.5, 2));
-            openMouth(w, mouth);
-            return;
         }
-        Path2D n = new Path2D.Double();
-        n.moveTo(-7, 12);
-        n.quadTo(0, 9, 7, 12);
-        n.quadTo(2, 20, 0, 20);
-        n.quadTo(-2, 20, -7, 12);
-        n.closePath();
-        g.setColor(NOSE);
-        g.fill(n);
-        if (face == Face.SING || face == Face.EAT && Math.sin(t * Math.PI / 0.35) > 0) {
-            openMouth(w, mouth);
+        if (face == Face.SING || face == Face.STRETCH || !cat && face != Face.SLEEP
+                || face == Face.EAT && Math.sin(t * Math.PI / 0.35) > 0) {
+            openMouth(w, face == Face.SING ? wave(t, 0.5, 12, 18, 0) : face == Face.STRETCH ? 17 : 12);
         } else {
             stroke(new Line2D.Double(0, 20, 0, 25), w * 0.75f, ink);
             stroke(new QuadCurve2D.Double(-14, 24, -7, 33, 0, 25), w * 0.75f, ink);
             stroke(new QuadCurve2D.Double(0, 25, 7, 33, 14, 24), w * 0.75f, ink);
         }
-        float ww = line * 0.42f;
-        for (int s : new int[] {-1, 1}) {
-            stroke(new Line2D.Double(s * 82, 10, s * 124, 2), ww, ink);
-            stroke(new Line2D.Double(s * 82, 22, s * 120, 26), ww, ink);
+        if (cat) {
+            float ww = line * 0.42f;
+            for (int s : new int[] {-1, 1}) {
+                stroke(new Line2D.Double(s * 82, 10, s * 124, 2), ww, ink);
+                stroke(new Line2D.Double(s * 82, 22, s * 120, 26), ww, ink);
+            }
+        }
+    }
+
+    /** 두 눈을 굵기 w로 긋는다. 잠은 아래로 감은 눈, 기지개는 꼭 감은 눈(&gt; &lt;), 그 밖은 위로 웃는 눈이다. */
+    private void eyes(float w) {
+        if (face == Face.SLEEP) {
+            stroke(new QuadCurve2D.Double(-54, -2, -40, 8, -26, -2), w, ink);
+            stroke(new QuadCurve2D.Double(26, -2, 40, 8, 54, -2), w, ink);
+        } else if (face == Face.STRETCH) {
+            for (int s : new int[] {-1, 1}) {
+                Path2D e = new Path2D.Double();
+                e.moveTo(s * 54, -12);
+                e.lineTo(s * 30, -3);
+                e.lineTo(s * 54, 6);
+                stroke(e, w, ink);
+            }
+        } else {
+            stroke(new QuadCurve2D.Double(-54, 2, -40, -14, -26, 2), w, ink);
+            stroke(new QuadCurve2D.Double(26, 2, 40, -14, 54, 2), w, ink);
         }
     }
 

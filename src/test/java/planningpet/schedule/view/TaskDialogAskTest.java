@@ -106,4 +106,13 @@ class TaskDialogAskTest {
         assertThrows(HeadlessException.class, () -> TaskDialog.chooseScope(null, copy));
         assertThrows(HeadlessException.class, () -> TaskDialog.confirmDelete(null, one));
     }
+
+    @Test
+    void tEdit12ClearQuestion() {
+        assertEquals("시각 빼기", TaskDialog.CLEAR);
+        assertEquals(asked("'운동'은 반복 일정이에요. 어디까지 시각을 뺄까요?", List.of("이 일정만", "이후 반복 모두", "취소"), "이 일정만"),
+                shown(TaskDialog.clearPane(task("운동", true))));
+        // 답은 범위 창과 같은 번호다(E-ASK-5). 창 없이는 띄우려 할 때 창을 만들지 못한다.
+        assertThrows(HeadlessException.class, () -> TaskDialog.chooseClear(null, task("운동", true)));
+    }
 }
