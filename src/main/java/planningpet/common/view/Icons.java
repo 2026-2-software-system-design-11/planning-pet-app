@@ -18,7 +18,7 @@ import javax.swing.Icon;
  */
 public final class Icons {
     /** 아이콘의 종류. */
-    public enum Kind { HOME, ROOM, CALENDAR, CHART, GEAR, PAW, COIN, CHECK, HEART, SPARK, FLAME, LEFT, RIGHT, PLUS, PENCIL, TRASH, CLOCK,
+    public enum Kind { HOME, ROOM, CALENDAR, CHART, GEAR, PAW, COIN, CHECK, HEART, SPARK, FLAME, LEFT, RIGHT, DOWN, PLUS, PENCIL, TRASH, CLOCK,
         CHECKLIST }
 
     private Icons() {
@@ -97,6 +97,7 @@ public final class Icons {
             case PAW -> paw(g, 12, 13.5, 1.6);
             case LEFT -> g.draw(path(15, 5, 8, 12, 15, 19));
             case RIGHT -> g.draw(path(9, 5, 16, 12, 9, 19));
+            case DOWN -> g.draw(path(5, 9, 12, 16, 19, 9));
             case PLUS -> {
                 g.draw(path(12, 5, 12, 19));
                 g.draw(path(5, 12, 19, 12));
