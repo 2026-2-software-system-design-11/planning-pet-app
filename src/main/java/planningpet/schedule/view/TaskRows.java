@@ -397,6 +397,23 @@ public final class TaskRows extends JPanel implements Scrollable {
             row.add(marks, BorderLayout.SOUTH);
         }
         row.setMaximumSize(new Dimension(Integer.MAX_VALUE, marks == null ? 44 : 62));
+        // 줄과 제목 칸을 오른쪽 버튼으로 누르면 수정, 삭제 메뉴다(05 홈 "할 일 고치기와 지우기", docs/porting/task-rows.md S3y).
+        // 운영체제마다 누를 때나 뗄 때 팝업 깃발이 서서 둘 다 본다.
+        MouseAdapter mouse = new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                if (e.isPopupTrigger()) {
+                    TaskMenu.of(onEdit, onDelete, t).show(e.getComponent(), e.getX(), e.getY());
+                }
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                mousePressed(e);
+            }
+        };
+        label.addMouseListener(mouse);
+        row.addMouseListener(mouse);
         MouseAdapter hover = new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent e) {

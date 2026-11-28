@@ -5,12 +5,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
+import java.awt.IllegalComponentStateException;
 import java.awt.Insets;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
@@ -364,5 +366,45 @@ class TaskRowTest {
         tip(e.repeat(100), DIV + e.repeat(100) + END);
         tip(e.repeat(101), DIV + e.repeat(101) + END);
         tip(e.repeat(201), DIV + e.repeat(200) + "…" + END);
+    }
+
+    /** 부품에 단추(1, 2, 3), 누름 수, 팝업 깃발의 마우스 사건을 보낸다. */
+    private static void press(Component c, int id, int button, int count, boolean popup) {
+        c.dispatchEvent(new MouseEvent(c, id, 0, 0, 10, 12, count, popup, button));
+    }
+
+    /** 줄 안의 왼쪽 칸, 체크, 오른쪽 칸, 알약, 걸리는 시간, 연필, 휴지통. */
+    private static List<Component> inner(JPanel p) {
+        JPanel left = (JPanel) p.getComponent(0);
+        JPanel east = (JPanel) p.getComponent(2);
+        return List.of(left, left.getComponent(0), east, east.getComponent(0), east.getComponent(1), east.getComponent(2),
+                east.getComponent(3));
+    }
+
+    /** 창 없는 줄은 화면에 보이지 않아 메뉴를 띄우려 하면 show가 예외를 던진다(task-rows.md S3y). */
+    @Test
+    void ePop1RightButton() {
+        JPanel p = row(task(Kind.TASK, "보고서", LocalTime.of(10, 0), 60, false), "10:00~11:00", TODAY, 480);
+        int[][] events = {{MouseEvent.MOUSE_PRESSED, 3}, {MouseEvent.MOUSE_RELEASED, 3}, {MouseEvent.MOUSE_PRESSED, 1}};
+        for (Component c : List.of(p, p.getComponent(1))) {
+            for (int[] e : events) {
+                IllegalComponentStateException x = assertThrows(IllegalComponentStateException.class, () -> press(c, e[0], e[1], 1, true));
+                assertEquals("component must be showing on the screen to determine its location", x.getMessage());
+            }
+        }
+        assertEquals(List.of(), heard);
+    }
+
+    @Test
+    void ePop2NoMenu() {
+        JPanel p = row(task(Kind.TASK, "보고서", LocalTime.of(10, 0), 60, false), "10:00~11:00", TODAY, 480);
+        press(p, MouseEvent.MOUSE_PRESSED, 3, 1, false);
+        press(p, MouseEvent.MOUSE_RELEASED, 3, 1, false);
+        press(p, MouseEvent.MOUSE_CLICKED, 3, 1, true);
+        for (Component c : inner(p)) {
+            press(c, MouseEvent.MOUSE_PRESSED, 3, 1, true);
+            press(c, MouseEvent.MOUSE_RELEASED, 3, 1, true);
+        }
+        assertEquals(List.of(), heard);
     }
 }
