@@ -30,10 +30,16 @@ import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerDateModel;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingUtilities;
+import javax.swing.event.AncestorEvent;
+import javax.swing.event.AncestorListener;
 import javax.swing.text.BadLocationException;
 import org.junit.jupiter.api.Test;
 
-/** 입력칸과 칸 글, HTML 글자, 입력 창 칸의 도우미. 번호는 docs/porting/pick.md 2절, home.md S3d 2절(E-FIT), S3q 2절(E-ESC), task-dialog.md S4b 2절(E-UI), S4i 2절(E-LINE), schedule.md S5d 2절(E-BUB-8). */
+/**
+ * 입력칸과 칸 글, HTML 글자, 입력 창 칸의 도우미. 번호는 docs/porting/pick.md 2절, home.md S3d 2절(E-FIT), S3q 2절(E-ESC), task-dialog.md S4b 2절(E-UI), S4i 2절(E-LINE),
+ * character.md S8d2 2절(E-UI-8), schedule.md S5d 2절(E-BUB-8).
+ */
 class UiTest {
     private static final String TEN = "가나다라마바사아자차";
     private static final String SMILE = "😀";
@@ -413,6 +419,32 @@ class UiTest {
         assertEquals("0026-01-05", editor(s).getText());
         assertEquals(26, Ui.dateOf(s).getYear());
         assertNotEquals(LocalDate.of(26, 1, 5), Ui.dateOf(s)); // 1582년 전 달력 차이
+    }
+
+    @Test
+    void eUi8FocusWhenShown() throws Exception {
+        int[] asked = {0};
+        JTextField name = new JTextField() {
+            @Override
+            public boolean requestFocusInWindow() {
+                asked[0]++;
+                return super.requestFocusInWindow();
+            }
+        };
+        Ui.focusWhenShown(name);
+        AncestorListener[] heard = name.getAncestorListeners();
+        assertEquals(1, heard.length);
+        AncestorEvent e = new AncestorEvent(name, AncestorEvent.ANCESTOR_ADDED, new JPanel(), null);
+        heard[0].ancestorMoved(e);
+        heard[0].ancestorRemoved(e);
+        SwingUtilities.invokeAndWait(() -> { });
+        assertEquals(0, asked[0]);
+        SwingUtilities.invokeAndWait(() -> {
+            heard[0].ancestorAdded(e);
+            assertEquals(0, asked[0]); // 사건 차례 안에서는 아직 청하지 않는다
+        });
+        SwingUtilities.invokeAndWait(() -> { });
+        assertEquals(1, asked[0]);
     }
 
     /** 일정관리 펫 말풍선: 흰 둥근 상자와 CARD_LINE 테두리, 여백 8, 14, 8, 14. 둥근 모서리 밖은 칠하지 않는다. */

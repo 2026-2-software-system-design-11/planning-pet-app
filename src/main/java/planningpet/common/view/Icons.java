@@ -14,12 +14,13 @@ import javax.swing.Icon;
 
 /**
  * 디자인 시스템 9절의 선 아이콘 한 벌. 24 칸 격자에 그리고 크기만큼 늘린다. 선 굵기는 격자 2(크기의 1/12), 끝은 둥글다.
- * 창 틀, 고르기 창, 홈 화면이 쓰는 것만 옮겼고, 다른 종은 그것을 쓰는 화면의 단위가 더한다(docs/porting/icons.md, pick.md, home.md).
+ * 창 틀, 고르기 창, 홈 화면, 캐릭터 창이 쓰는 것만 옮겼고, 다른 종은 그것을 쓰는 화면의 단위가 더한다
+ * (docs/porting/icons.md, pick.md, home.md, character.md).
  */
 public final class Icons {
     /** 아이콘의 종류. */
-    public enum Kind { HOME, ROOM, CALENDAR, CHART, GEAR, PAW, COIN, CHECK, HEART, SPARK, FLAME, LEFT, RIGHT, DOWN, PLUS, PENCIL, TRASH, CLOCK,
-        CHECKLIST }
+    public enum Kind { HOME, ROOM, CALENDAR, CHART, GEAR, PAW, COIN, INFO, CHECK, HEART, SPARK, FLAME, LEFT, RIGHT, DOWN, PLUS, PENCIL,
+        LOCK, SHIRT, HAT, BOW, COLLAR, TRASH, CLOCK, CHECKLIST }
 
     private Icons() {
     }
@@ -105,6 +106,31 @@ public final class Icons {
             case PENCIL -> {
                 g.draw(path(4, 20, 5, 15.5, 15.5, 5, 19, 8.5, 8.5, 19, 4, 20));
                 g.draw(path(13, 7.5, 16.5, 11));
+            }
+            case LOCK -> {
+                g.draw(new RoundRectangle2D.Double(5, 10.5, 14, 10, 3, 3));
+                g.draw(new Arc2D.Double(8, 4, 8, 12, 0, 180, Arc2D.OPEN));
+                g.draw(path(8, 10, 8, 10.5));
+                g.draw(path(16, 10, 16, 10.5));
+            }
+            case SHIRT -> g.draw(path(8.5, 4, 3.5, 7, 5.5, 11, 7.5, 10, 7.5, 20, 16.5, 20, 16.5, 10, 18.5, 11, 20.5, 7, 15.5, 4,
+                    14, 6, 10, 6, 8.5, 4));
+            case HAT -> {
+                g.draw(new Arc2D.Double(6, 6, 12, 14, 0, 180, Arc2D.OPEN));
+                g.draw(new RoundRectangle2D.Double(3, 13, 18, 4, 4, 4));
+            }
+            case BOW -> {
+                g.draw(path(12, 12, 4, 7, 4, 17, 12, 12, 20, 7, 20, 17, 12, 12));
+                g.fill(new Ellipse2D.Double(10.3, 10.3, 3.4, 3.4));
+            }
+            case COLLAR -> {
+                g.draw(new Ellipse2D.Double(3, 6, 18, 8));
+                g.fill(new Ellipse2D.Double(10, 13, 4, 4));
+            }
+            case INFO -> {
+                g.draw(new Ellipse2D.Double(3, 3, 18, 18));
+                g.draw(path(12, 11, 12, 16.5));
+                g.fill(new Ellipse2D.Double(10.8, 6.6, 2.4, 2.4));
             }
             case TRASH -> {
                 g.draw(path(4, 6.5, 20, 6.5));
