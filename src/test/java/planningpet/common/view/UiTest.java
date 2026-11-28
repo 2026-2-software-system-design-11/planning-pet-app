@@ -240,6 +240,13 @@ class UiTest {
     }
 
     @Test
+    void eLine4KeepsBrackets() {
+        assertEquals(BLACK + "끝<br>03:35(다음 날)이<br>맞아요" + END, wrap("끝 03:35(다음 날)이 맞아요", 130, Color.BLACK));
+        assertEquals(BLACK + "끝 03:35(다음<br>날)이 맞아요" + END, wrap("끝 03:35(다음 날)이 맞아요", 100, Color.BLACK));
+        assertEquals(BLACK + "가<br>(나 다" + END, wrap("가 (나 다", 40, Color.BLACK));
+    }
+
+    @Test
     void eLine5BlendsColorAndEscapes() {
         assertEquals("<html><font color='#a3a6af'>a&lt;b<br>&amp;<br>c&gt;d</font></html>", wrap("a<b & c>d", 40, Theme.INK_DIM));
         assertEquals("<html><font color='#e55c64'>a&lt;b<br>&amp;<br>c&gt;d</font></html>", wrap("a<b & c>d", 40, Theme.SUNDAY));
