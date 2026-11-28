@@ -23,6 +23,7 @@ import javax.swing.Timer;
 import org.junit.jupiter.api.Test;
 import planningpet.app.model.AppData;
 import planningpet.common.view.Snap;
+import planningpet.common.view.Theme;
 import planningpet.pet.model.PetKind;
 import planningpet.pet.model.Pose;
 import planningpet.pet.model.PetState;
@@ -140,7 +141,48 @@ class PetCardTest {
         } finally {
             RepaintManager.setCurrentManager(before);
         }
-        assertEquals(List.of(c), asked);
+        assertEquals(List.of(c.expBar, c), asked);
         assertCovered("size-360x240", c, 360, 240);
+    }
+
+    /** 경험치 막대는 "경험치" 알약 뒤에 온다. 알약 폭은 글꼴에 달려 테스트 때의 글꼴로 잰다(S3n E-PCOL-1). */
+    @Test
+    void ePcol1ExpBarPlace() {
+        PetCard c = new PetCard(data(PetKind.CAT, 0));
+        int chip = c.getFontMetrics(Theme.bold(11)).stringWidth("경험치") + 16;
+        int[][] cases = {{360, 240, 152, 192, 51}, {300, 210, 128, 156, 51}, {800, 500, 270, 514, 131}, {120, 60, 128, -24, 51}};
+        for (int[] k : cases) {
+            Snap.layOut(c, k[0], k[1]);
+            assertEquals(new Rectangle(k[2] + chip + 8, k[4], Math.max(20, k[3] - chip - 8), 8), c.expBar.getBounds());
+        }
+    }
+
+    @Test
+    void ePcol5LevelAndExp() throws IOException {
+        int[] exps = {49, 50, 210, 1599, 1600, 9999, -5};
+        String[] texts = {"Lv. 1 경험치 49 / 50", "Lv. 2 경험치 0 / 80", "Lv. 3 경험치 80 / 110", "Lv. 9 경험치 329 / 330",
+            "Lv. 10 최고 레벨", "Lv. 10 최고 레벨", "Lv. 1 경험치 -5 / 50"};
+        double[] ratios = {0.98, 0, 80 / 110.0, 329 / 330.0, 1, 1, 0};
+        for (int i = 0; i < exps.length; i++) {
+            PetCard c = new PetCard(data(PetKind.CAT, exps[i]));
+            assertEquals(texts[i], c.levelText() + " " + c.expText());
+            assertEquals(ratios[i], c.expBar.ratio(), 1e-9);
+            for (String size : new String[] {"360x240", "300x210"}) {
+                String[] wh = size.split("x");
+                assertCovered("col-exp" + exps[i] + "-" + size, c, Integer.parseInt(wh[0]), Integer.parseInt(wh[1]));
+            }
+        }
+    }
+
+    @Test
+    void ePcol7Change() throws IOException {
+        AppData d = data(PetKind.CAT, 0);
+        PetCard c = new PetCard(d);
+        d.activePet().setExp(210);
+        assertEquals(0, c.expBar.ratio());
+        d.changed();
+        assertEquals(80 / 110.0, c.expBar.ratio(), 1e-9);
+        assertEquals("Lv. 3", c.levelText());
+        assertCovered("col-change-210", c, 360, 240);
     }
 }
