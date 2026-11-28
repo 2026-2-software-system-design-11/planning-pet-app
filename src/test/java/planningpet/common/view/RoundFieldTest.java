@@ -194,18 +194,18 @@ class RoundFieldTest {
         assertEquals("10 / 10", typed(limited, TWELVE).countText());
     }
 
-    /** 프로토타입처럼 UTF-16 단위로 센다. Ui.limit은 #417에서 코드 포인트로 막아 최대를 넘어 보인다. */
+    /** 06 읽는 법대로 코드 포인트로 센다. 프로토타입과 일부러 다름(UTF-16 단위로 셌다). */
     @Test
     void eRound10Emoji() {
-        assertEquals("4 / 10", typed(new RoundField(null, null).count(10), "😀😀").countText());
+        assertEquals("2 / 10", typed(new RoundField(null, null).count(10), "😀😀").countText());
         RoundField f = new RoundField(null, null).count(10);
         Ui.limit(f, 10);
         f.setText("가나다라마바사아자");
         f.replaceSelection("😀");
-        assertEquals("11 / 10", f.countText());
+        assertEquals("10 / 10", f.countText());
         f.setText("");
         f.replaceSelection("😀".repeat(11));
-        assertEquals("20 / 10", f.countText());
+        assertEquals("10 / 10", f.countText());
     }
 
     @Test

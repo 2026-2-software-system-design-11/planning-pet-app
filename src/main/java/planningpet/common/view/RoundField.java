@@ -84,9 +84,13 @@ public final class RoundField extends JTextField {
         return this;
     }
 
-    /** 칸 안 글자 수 표시. 세지 않는 칸이면 빈 글이다. */
+    /**
+     * 칸 안 글자 수 표시. 세지 않는 칸이면 빈 글이다. 글자는 06 읽는 법대로 코드 포인트로 세어 이모지 하나가 한 자다.
+     * 프로토타입과 일부러 다름(UTF-16 단위로 셌다, docs/porting.md 4절).
+     */
     public String countText() {
-        return count == 0 ? "" : getText().length() + " / " + count;
+        String t = getText();
+        return count == 0 ? "" : t.codePointCount(0, t.length()) + " / " + count;
     }
 
     @Override
