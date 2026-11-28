@@ -1,5 +1,6 @@
 package planningpet.schedule.view;
 
+import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
@@ -11,9 +12,12 @@ import java.awt.RenderingHints;
 import java.time.LocalDate;
 import java.util.function.BiConsumer;
 import javax.swing.BorderFactory;
+import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import planningpet.common.view.CircleButton;
+import planningpet.common.view.Icons;
 import planningpet.common.view.Theme;
 import planningpet.common.view.Ui;
 import planningpet.schedule.model.Task;
@@ -128,6 +132,36 @@ public final class TaskRows extends JPanel {
         tag.setForeground(Theme.INK_SUB);
         tag.setBorder(BorderFactory.createEmptyBorder(2, 7, 2, 7));
         return tag;
+    }
+
+    /** 홈 목록의 할 일 한 줄. time이 ""이면 "시각 정하기", listDay는 이 줄이 보이는 목록의 날이다(D-65). 순서는 D-59, 아래에 가는 선. */
+    JPanel row(Task t, String time, LocalDate listDay) {
+        JPanel row = new JPanel(new BorderLayout(6, 0)) {
+            @Override
+            protected void paintComponent(Graphics graphics) {
+                Graphics2D g = (Graphics2D) graphics.create();
+                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g.setColor(Theme.CARD_EDGE);
+                g.fillRect(6, getHeight() - 1, getWidth() - 12, 1);
+                g.dispose();
+            }
+        };
+        row.setOpaque(false);
+        row.setBorder(BorderFactory.createEmptyBorder(5, 6, 6, 4));
+        row.setAlignmentX(LEFT_ALIGNMENT);
+        JCheckBox box = RoundCheck.style(new JCheckBox());
+        JLabel minutes = new JLabel(t.getDurationMinutes() + "분", JLabel.RIGHT);
+        minutes.setFont(Theme.font(13));
+        minutes.setForeground(Theme.INK_SUB);
+        minutes.setPreferredSize(new Dimension(Math.max(34, minutes.getPreferredSize().width), 20));
+        CircleButton pencil = new CircleButton(Icons.Kind.PENCIL, 28, "수정", true);
+        CircleButton trash = new CircleButton(Icons.Kind.TRASH, 28, "삭제", true);
+        TimePill when = new TimePill(time, false, false, null);
+        row.add(middle(box), BorderLayout.WEST);
+        row.add(new TitleLabel(t), BorderLayout.CENTER);
+        row.add(middle(when, minutes, pencil, trash), BorderLayout.EAST);
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
+        return row;
     }
 
     /** 부품을 가로로 놓고 줄 높이의 가운데에 맞춘다. 둘째부터는 앞과 4 띄운다. 칸은 불투명이고 앱의 Theme.clear가 투명하게 한다. */
