@@ -37,8 +37,13 @@ abstract class PetPaintWear extends PetPaintBase {
      * 분홍 띠에 연분홍 리본, 별은 파랑 띠에 금색 별, 왕관은 금색 띠에 금색 왕관이다. 망토는 그 위 목 가운데에 금색 고리를 단다.
      */
     void neckWear(double x, double y, double w) {
+        neckWear(x, y, 0, w);
+    }
+
+    /** 목 둘레를 rot도 기울여 그린다. 누운 자세가 쓴다. */
+    void neckWear(double x, double y, double rot, double w) {
         AffineTransform old = g.getTransform();
-        push(x, y, 0);
+        push(x, y, rot);
         if (has(WearId.SCARF)) {
             Path2D s = new Path2D.Double();
             s.moveTo(-w * 0.95, -6);

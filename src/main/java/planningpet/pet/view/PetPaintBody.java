@@ -137,6 +137,25 @@ final class PetPaintBody extends PetPaintHead {
         g.setTransform(old);
     }
 
+    /** 누운 꼬리. 고양이는 엉덩이에서 바닥을 따라 왼쪽으로 길게 눕힌 회색 꼬리, 강아지는 엉덩이에서 오른쪽으로 뻗은 짧은 꼬리다. 앉은 꼬리보다 덜 흔들린다(t). */
+    void lyingTail() {
+        AffineTransform old = g.getTransform();
+        Path2D p = new Path2D.Double();
+        p.moveTo(0, 0);
+        if (cat) {
+            push(258, 270, wave(t, 2.0, -7, 9, 0) * 0.5);
+            p.curveTo(24, 10, 20, 26, -20, 22);
+            p.curveTo(-60, 20, -96, 22, -118, 14);
+            tube(p, 22, CAT_GREY);
+        } else {
+            push(266, 282, wave(t, 0.5, -14, 18, 0) * 0.4 + 62);
+            p.quadTo(26, -10, 30, -44);
+            tube(p, 24, DOG_FUR);
+            filled(ell(30, -48, 14, 13), DOG_FUR);
+        }
+        g.setTransform(old);
+    }
+
     /** 밥 먹는 펫 앞의 민트 밥그릇: 사료가 담긴 윗면, 사료 알 일곱, 그릇, 흰 빛, 테두리. 아래 끝(y=306)은 바닥보다 아래다. */
     void bowl() {
         Path2D b = new Path2D.Double();
@@ -174,6 +193,22 @@ final class PetPaintBody extends PetPaintHead {
             g.setStroke(stroke(4f));
             g.draw(new Line2D.Double(x + 8, y, x + 8, y - 30));
             g.draw(new QuadCurve2D.Double(x + 8, y - 30, x + 22, y - 24, x + 18, y - 12));
+        }
+    }
+
+    /** 자는 펫 오른쪽 위의 Z 셋. 2.6초 주기로 커지며 오른쪽 위로 오르고, 3분의 1 주기씩 어긋나 나타났다 사라진다(t). */
+    void zzz() {
+        for (int i = 0; i < 3; i++) {
+            double p = (t / 2.6 + i / 3.0) % 1.0;
+            double s = 9 + p * 8;
+            double x = 214 + p * 46;
+            double y = 176 - p * 70;
+            Path2D z = new Path2D.Double();
+            z.moveTo(x - s, y - s);
+            z.lineTo(x + s, y - s);
+            z.lineTo(x - s, y + s);
+            z.lineTo(x + s, y + s);
+            stroke(z, 4.5f, alpha(BLUE, (int) (255 * Math.min(1, Math.min(p * 4, (1 - p) * 3)))));
         }
     }
 }

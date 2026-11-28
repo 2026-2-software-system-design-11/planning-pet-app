@@ -117,6 +117,28 @@ class PetArtPoseTest {
         assertEquals(List.of(209, 201, 208), List.of(pawTop(0), pawTop(0.4), pawTop(0.8)));
     }
 
+    /** Z 셋만 320x320 그림에 상자 좌표 그대로 그린다. */
+    private static BufferedImage zzz(double t) {
+        BufferedImage img = new BufferedImage(320, 320, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = img.createGraphics();
+        PetPaintBase.hints(g);
+        new PetPaintBody(g, PetKind.CAT, Pose.SLEEP, Set.of(), t).zzz();
+        g.dispose();
+        return img;
+    }
+
+    /**
+     * 2.6초 주기의 자리 p(뒤의 Z는 3분의 1 주기씩 앞)에서 Z는 가운데 (214 + 46p, 176 - 70p), 반폭 9 + 8p이고 알파는 음표와 같다.
+     * 시각 0에 첫 Z는 투명이고 둘째와 셋째의 위 획은 다 보인다. 시각 1.3에 첫 Z가 (237, 141)에 반폭 13으로 보인다.
+     */
+    @Test
+    void ePose12Zzz() {
+        BufferedImage at0 = zzz(0);
+        assertEquals(0, at0.getRGB(214, 167) >>> 24);
+        assertEquals(List.of(PetPaintBase.BLUE.getRGB(), PetPaintBase.BLUE.getRGB()), List.of(at0.getRGB(229, 141), at0.getRGB(244, 115)));
+        assertEquals(PetPaintBase.BLUE.getRGB(), zzz(1.3).getRGB(237, 128));
+    }
+
     /** 머리만 상자 좌표 (160, 160)에 표정 face로 그린다. */
     private static BufferedImage head(PetKind kind, PetPaintBase.Face face) {
         BufferedImage img = new BufferedImage(320, 320, BufferedImage.TYPE_INT_ARGB);
