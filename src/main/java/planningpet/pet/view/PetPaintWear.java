@@ -37,8 +37,13 @@ abstract class PetPaintWear extends PetPaintBase {
      * 분홍 띠에 연분홍 리본, 별은 파랑 띠에 금색 별, 왕관은 금색 띠에 금색 왕관이다. 망토는 그 위 목 가운데에 금색 고리를 단다.
      */
     void neckWear(double x, double y, double w) {
+        neckWear(x, y, 0, w);
+    }
+
+    /** 목 둘레를 rot도 기울여 그린다. 누운 자세가 쓴다. */
+    void neckWear(double x, double y, double rot, double w) {
         AffineTransform old = g.getTransform();
-        push(x, y, 0);
+        push(x, y, rot);
         if (has(WearId.SCARF)) {
             Path2D s = new Path2D.Double();
             s.moveTo(-w * 0.95, -6);
@@ -155,10 +160,10 @@ abstract class PetPaintWear extends PetPaintBase {
     }
 
     /**
-     * 몸 모양 안쪽에 목 아래 top부터 bottom까지 민트색 띠를 칠한 조끼. 아래 끝에 짙은 단과 선을 긋고 몸 외곽선을 다시 그은 뒤 가운데에
-     * 금색 단추 둘을 단다. 프로토타입은 앉은 자세들에서만 단추를 다는데 앉기만 그리므로 늘 단다(docs/porting/pet-art.md 5절, 7절).
+     * 몸 모양 안쪽에 목 아래 top부터 bottom까지 민트색 띠를 칠한 조끼. 아래 끝에 짙은 단과 선을 긋고 몸 외곽선을 다시 그은 뒤, buttons면
+     * 가운데에 금색 단추 둘을 단다. 앉은 자세들(앉기, 밥 먹기, 노래)만 단추를 단다(docs/porting/character.md S8c).
      */
-    void vest(Shape body, double top, double bottom) {
+    void vest(Shape body, double top, double bottom, boolean buttons) {
         Shape old = g.getClip();
         g.clip(body);
         Rectangle r = new Area(body).getBounds();
@@ -174,8 +179,10 @@ abstract class PetPaintWear extends PetPaintBase {
         stroke(new Line2D.Double(r.x - 10, low, r.x + r.width + 10, low), line * 0.7f, ink);
         g.setClip(old);
         redraw(body);
-        filled(ell(160, 232, 5, 5), GOLD);
-        filled(ell(160, 248, 5, 5), GOLD);
+        if (buttons) {
+            filled(ell(160, 232, 5, 5), GOLD);
+            filled(ell(160, 248, 5, 5), GOLD);
+        }
     }
 
     /** 앉은 자세의 망토 뒤판: 목 가운데 (x, y), 목 반폭 w에서 몸 뒤로 넓게 퍼지고 아랫단 안쪽이 빨갛다. */
@@ -190,6 +197,21 @@ abstract class PetPaintWear extends PetPaintBase {
         filled(c, CAPE);
         shadeIn(c, ell(x, y + 120, w * 1.5, 18), CAPE_INNER);
         redraw(c);
+    }
+
+    /** 누운 자세의 망토: 몸 모양 안쪽 윗부분(몸 상자 위 변 가운데의 타원)을 덮고 덮은 곳과 몸의 외곽선을 다시 긋는다. */
+    void capeOnBack(Shape body) {
+        Shape old = g.getClip();
+        g.clip(body);
+        Rectangle r = body.getBounds();
+        Shape top = ell(r.getCenterX(), r.y, r.width * 0.52, r.height * 0.6);
+        g.setColor(CAPE);
+        g.fill(top);
+        g.setClip(old);
+        Area a = new Area(top);
+        a.intersect(new Area(body));
+        redraw(a);
+        redraw(body);
     }
 
     /** 가운데가 (x, y)이고 k배인 리본: 양쪽 고리와 가운데 매듭을 c로 칠한다. */

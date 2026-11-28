@@ -7,6 +7,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.QuadCurve2D;
+import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 import java.util.Set;
 import planningpet.pet.model.PetKind;
@@ -14,8 +15,8 @@ import planningpet.pet.model.Pose;
 import planningpet.pet.model.WearId;
 
 /**
- * PetArt 펫 그림의 몸: 앉은 자세들(D-50의 앉기, 밥 먹기, 노래)의 몸, 앞발, 꼬리와 그 위의 머리, 밥그릇과 음표
- * (docs/porting/pet-art.md 4절, docs/porting/character.md S8b). 좌표는 320x320 상자이고 발이 닿는 바닥은 y=300, 가운데는 x=160이다.
+ * PetArt 펫 그림의 몸: 다섯 자세(D-50)의 몸, 앞발, 꼬리와 그 위의 머리, 밥그릇과 음표와 Zzz(docs/porting/pet-art.md 4절,
+ * docs/porting/character.md S8b, S8c). 좌표는 320x320 상자이고 발이 닿는 바닥은 y=300, 가운데는 x=160이다.
  */
 final class PetPaintBody extends PetPaintHead {
     final Pose pose;
@@ -29,7 +30,22 @@ final class PetPaintBody extends PetPaintHead {
     PetPaintBody(Graphics2D g, PetKind kind, Pose pose, Set<WearId> wear, double t) {
         super(g, kind, wear, t);
         this.pose = pose;
-        face = pose == Pose.EAT ? Face.EAT : pose == Pose.SING ? Face.SING : Face.HAPPY;
+        face = switch (pose) {
+            case SIT -> Face.HAPPY;
+            case SLEEP -> Face.SLEEP;
+            case STRETCH -> Face.STRETCH;
+            case EAT -> Face.EAT;
+            case SING -> Face.SING;
+        };
+    }
+
+    /** 자세대로 그린다. 자기와 기지개는 누운 몸, 나머지는 앉은 몸이다. */
+    void paint() {
+        switch (pose) {
+            case SLEEP -> sleep();
+            case STRETCH -> stretch();
+            default -> sit();
+        }
     }
 
     /**
@@ -68,7 +84,7 @@ final class PetPaintBody extends PetPaintHead {
         }
         redraw(body);
         if (has(WearId.VEST)) {
-            vest(body, 200, 258);
+            vest(body, 200, 258, true);
         }
         // 뒷다리 허벅지 선
         stroke(new QuadCurve2D.Double(92, 268, 108, 250, 126, 262), line * 0.7f, ink);
@@ -131,6 +147,115 @@ final class PetPaintBody extends PetPaintHead {
         g.setTransform(old);
     }
 
+    /** 누운 꼬리. 고양이는 엉덩이에서 바닥을 따라 왼쪽으로 길게 눕힌 회색 꼬리, 강아지는 엉덩이에서 오른쪽으로 뻗은 짧은 꼬리다. 앉은 꼬리보다 덜 흔들린다(t). */
+    void lyingTail() {
+        AffineTransform old = g.getTransform();
+        Path2D p = new Path2D.Double();
+        p.moveTo(0, 0);
+        if (cat) {
+            push(258, 270, wave(t, 2.0, -7, 9, 0) * 0.5);
+            p.curveTo(24, 10, 20, 26, -20, 22);
+            p.curveTo(-60, 20, -96, 22, -118, 14);
+            tube(p, 22, CAT_GREY);
+        } else {
+            push(266, 282, wave(t, 0.5, -14, 18, 0) * 0.4 + 62);
+            p.quadTo(26, -10, 30, -44);
+            tube(p, 24, DOG_FUR);
+            filled(ell(30, -48, 14, 13), DOG_FUR);
+        }
+        g.setTransform(old);
+    }
+
+    /**
+     * 자는 펫: 옆으로 엎드린 몸이 3.6초 주기로 숨쉬고(조끼와 망토도 함께), 누운 꼬리, 앞발 둘, 왼쪽에 기울인 잠든 머리와 오른쪽 위 Zzz.
+     * 목 장신구는 바닥(y=300) 아래를 잘라 그린다. 망토는 몸 뒤가 아니라 등 위에 덮고 조끼는 단추가 없다.
+     */
+    void sleep() {
+        AffineTransform base = g.getTransform();
+        double breathe = wave(t, 3.6, 1.0, 1.035, 0);
+        Path2D body = new Path2D.Double();
+        body.moveTo(80, 302);
+        body.curveTo(56, 262, 100, 196, 186, 196);
+        body.curveTo(256, 196, 292, 240, 286, 284);
+        body.quadTo(284, 302, 264, 302);
+        body.closePath();
+        g.translate(170, 302);
+        g.scale(1, breathe);
+        g.translate(-170, -302);
+        filled(body, fur);
+        if (cat) {
+            shadeIn(body, ell(226, 210, 62, 34), CAT_GREY);
+        }
+        shadeIn(body, ell(170, 304, 120, 14), furShade);
+        redraw(body);
+        if (has(WearId.VEST)) {
+            vest(body, 214, 270, false);
+        }
+        if (has(WearId.CAPE)) {
+            capeOnBack(body);
+        }
+        g.setTransform(base);
+        lyingTail();
+        paw(150, 290, 0);
+        paw(104, 292, 0);
+        Shape clip = g.getClip();
+        g.clip(new Rectangle2D.Double(0, 0, 320, 300));
+        neckWear(116, 280, -6, 46);
+        g.setClip(clip);
+        head(112, 232, -6);
+        zzz();
+    }
+
+    /**
+     * 기지개 켜는 펫: 오른쪽 뒷다리로 엉덩이를 들고(고양이는 엉덩이에서 위로 선 꼬리, 강아지는 짧은 꼬리), 앞으로 기운 둥근 몸이 2.8초
+     * 주기로 조금 흔들리며, 왼쪽 앞으로 뻗은 앞다리 위에 기지개 표정의 머리를 둔다. 망토는 등 위에 덮고 조끼는 단추가 없다.
+     */
+    void stretch() {
+        AffineTransform base = g.getTransform();
+        double sway = wave(t, 2.8, -2, 2, 0);
+        Path2D hind = new Path2D.Double();
+        hind.moveTo(236, 200);
+        hind.lineTo(242, 290);
+        tube(hind, 30, fur);
+        paw(244, 292, 0);
+        Path2D p = new Path2D.Double();
+        p.moveTo(0, 0);
+        if (cat) {
+            push(256, 184, wave(t, 1.8, -6, 8, 0));
+            p.curveTo(26, -20, 22, -70, 6, -96);
+            tube(p, 24, CAT_GREY);
+        } else {
+            push(258, 196, wave(t, 0.5, -14, 18, 0) - 10);
+            p.quadTo(26, -10, 30, -44);
+            tube(p, 24, DOG_FUR);
+            filled(ell(30, -48, 14, 13), DOG_FUR);
+        }
+        g.setTransform(base);
+        push(184, 226, -24 + sway);
+        Shape body = new RoundRectangle2D.Double(-88, -42, 176, 84, 84, 84);
+        filled(body, fur);
+        if (cat) {
+            shadeIn(body, ell(46, -24, 48, 30), CAT_GREY);
+        }
+        shadeIn(body, ell(0, 44, 100, 16), furShade);
+        redraw(body);
+        if (has(WearId.VEST)) {
+            vest(body, -40, 40, false);
+        }
+        if (has(WearId.CAPE)) {
+            capeOnBack(body);
+        }
+        g.setTransform(base);
+        Path2D front = new Path2D.Double();
+        front.moveTo(118, 262);
+        front.lineTo(60, 292);
+        tube(front, 26, fur);
+        paw(52, 291, 0);
+        paw(84, 292, 0);
+        neckWear(124, 258, -24, 44);
+        head(96, 222, -12 + sway);
+    }
+
     /** 밥 먹는 펫 앞의 민트 밥그릇: 사료가 담긴 윗면, 사료 알 일곱, 그릇, 흰 빛, 테두리. 아래 끝(y=306)은 바닥보다 아래다. */
     void bowl() {
         Path2D b = new Path2D.Double();
@@ -168,6 +293,28 @@ final class PetPaintBody extends PetPaintHead {
             g.setStroke(stroke(4f));
             g.draw(new Line2D.Double(x + 8, y, x + 8, y - 30));
             g.draw(new QuadCurve2D.Double(x + 8, y - 30, x + 22, y - 24, x + 18, y - 12));
+        }
+    }
+
+    /**
+     * 자는 펫 오른쪽 위의 Z 셋. 2.6초 주기로 커지며 오른쪽 위로 오르고, 3분의 1 주기씩 어긋나 나타났다 사라진다(t). 음수 시각도 주기로
+     * 본다(프로토타입과 일부러 다름, character.md E-POSE-14).
+     */
+    void zzz() {
+        for (int i = 0; i < 3; i++) {
+            double p = (t / 2.6 + i / 3.0) % 1.0;
+            if (p < 0) {
+                p += 1;
+            }
+            double s = 9 + p * 8;
+            double x = 214 + p * 46;
+            double y = 176 - p * 70;
+            Path2D z = new Path2D.Double();
+            z.moveTo(x - s, y - s);
+            z.lineTo(x + s, y - s);
+            z.lineTo(x - s, y + s);
+            z.lineTo(x + s, y + s);
+            stroke(z, 4.5f, alpha(BLUE, (int) (255 * Math.min(1, Math.min(p * 4, (1 - p) * 3)))));
         }
     }
 }

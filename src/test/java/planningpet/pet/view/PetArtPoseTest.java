@@ -17,7 +17,7 @@ import planningpet.pet.model.PetKind;
 import planningpet.pet.model.Pose;
 import planningpet.pet.model.WearId;
 
-/** 자세(D-50)와 모습 단계 크기, 얼굴 그림. 번호는 docs/porting/character.md S8b. */
+/** 자세(D-50)와 모습 단계 크기, 얼굴 그림. 번호는 docs/porting/character.md S8b, S8c. */
 class PetArtPoseTest {
     private static final PetKind[] KINDS = {PetKind.CAT, PetKind.DOG};
     private static final Set<WearId> COLLAR = Set.of(WearId.BASIC_NECKLACE);
@@ -115,6 +115,153 @@ class PetArtPoseTest {
     @Test
     void ePose5RaisedPaw() {
         assertEquals(List.of(209, 201, 208), List.of(pawTop(0), pawTop(0.4), pawTop(0.8)));
+    }
+
+    private static final Pose[] LYING = {Pose.SLEEP, Pose.STRETCH};
+
+    /** 반 넘게 칠한(알파 128 이상) 가장 위 줄이 바닥(y=300)에서 떨어진 줄 수. */
+    private static int halfTop(BufferedImage img) {
+        for (int y = 0; ; y++) {
+            for (int x = 0; x < img.getWidth(); x++) {
+                if (img.getRGB(x, y) >>> 24 > 127) {
+                    return 300 - y;
+                }
+            }
+        }
+    }
+
+    /** 누운 자세의 높이 비율은 반 넘게 칠한 위 끝을 320으로 나눠 반올림한 값이다. 조금이라도 칠한 위 끝으로 재면 강아지 기지개는 152라 0.475다. */
+    @Test
+    void ePose7LyingHeightRatio() {
+        for (PetKind kind : KINDS) {
+            for (Pose pose : LYING) {
+                assertEquals(Math.round(halfTop(draw(kind, pose, COLLAR, 0)) / 320.0 * 100) / 100.0, PetArt.heightRatio(kind, pose), kind + " " + pose);
+            }
+        }
+        assertEquals(List.of(163, 198, 161, 151), Arrays.stream(KINDS).flatMap(k -> Arrays.stream(LYING).map(p -> halfTop(draw(k, p, COLLAR, 0)))).toList());
+        assertEquals(-152, box(PetKind.DOG, Pose.STRETCH, 0)[1]);
+    }
+
+    /** 480x400 그림의 (240, 300)에 크기 320으로 그려 칠한 상자를 잰다. fit이 거짓이면 줄이지 않고 상자 좌표 그대로 그린다. */
+    private static String wideBox(PetKind kind, Pose pose, boolean fit) {
+        BufferedImage img = new BufferedImage(480, 400, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = img.createGraphics();
+        if (fit) {
+            PetArt.drawAt(g, kind, pose, COLLAR, 0, 99, 240, 300, 320);
+        } else {
+            PetPaintBase.hints(g);
+            g.translate(80, 0);
+            new PetPaintBody(g, kind, pose, COLLAR, 0).paint();
+        }
+        g.dispose();
+        return PetArtTest.paintedBox(img, 240, 300);
+    }
+
+    /** 누운 자세는 0.86배로 줄여 상자 폭(가운데에서 -160부터 159) 안에 든다. 줄이지 않으면 고양이 기지개는 왼쪽, 강아지 자기는 오른쪽으로 넘친다. */
+    @Test
+    void ePose8LyingFitsBox() {
+        assertEquals(List.of("-149 -164 112 10", "-160 -198 110 9", "-141 -161 153 7", "-153 -152 111 9"),
+                Arrays.stream(KINDS).flatMap(k -> Arrays.stream(LYING).map(p -> wideBox(k, p, true))).toList());
+        assertEquals("-186 -231 128 10", wideBox(PetKind.CAT, Pose.STRETCH, false));
+        assertEquals("-163 -188 178 8", wideBox(PetKind.DOG, Pose.SLEEP, false));
+    }
+
+    /** 자는 펫의 목 장신구는 바닥 아래를 잘라 낸다. 잘라 내지 않은 스카프는 바닥 아래까지 내려오지만, 입혀 그려도 바닥 줄부터 아래는 픽셀이 같다. */
+    @Test
+    void ePose9SleepNeckClipped() {
+        BufferedImage alone = new BufferedImage(320, 340, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = alone.createGraphics();
+        new PetPaintBody(g, PetKind.CAT, Pose.SLEEP, Set.of(WearId.SCARF), 0).neckWear(116, 280, -6, 46);
+        g.dispose();
+        assertTrue(Integer.parseInt(PetArtTest.paintedBox(alone, 0, 300).split(" ")[3]) > 0);
+        for (PetKind kind : KINDS) {
+            int[] bare = Snap.pixels(draw(kind, Pose.SLEEP, Set.of(), 0));
+            for (WearId wear : new WearId[] {WearId.SCARF, WearId.CROWN_NECKLACE}) {
+                int[] worn = Snap.pixels(draw(kind, Pose.SLEEP, Set.of(wear), 0));
+                assertArrayEquals(Arrays.copyOfRange(bare, 320 * 300, bare.length), Arrays.copyOfRange(worn, 320 * 300, worn.length), kind + " " + wear);
+            }
+        }
+    }
+
+    /** 색 c인 픽셀만의 상자를 (160, 300)에서 잰다. */
+    private static String colorBox(BufferedImage img, Color c) {
+        BufferedImage only = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        for (int y = 0; y < img.getHeight(); y++) {
+            for (int x = 0; x < img.getWidth(); x++) {
+                only.setRGB(x, y, img.getRGB(x, y) == c.getRGB() ? c.getRGB() : 0);
+            }
+        }
+        return PetArtTest.paintedBox(only, 160, 300);
+    }
+
+    /** 누운 자세의 망토는 등 위에 덮여 바닥보다 위에만 있다. 앉으면 몸 뒤로 퍼져 바닥 아래까지 내려온다. */
+    @Test
+    void ePose10LyingCapeOnBack() {
+        Set<WearId> cape = Set.of(WearId.CAPE);
+        assertEquals(List.of("42 -85 90 -41", "25 -114 72 -66", "50 -83 90 -43", "31 -114 72 -72"),
+                Arrays.stream(KINDS).flatMap(k -> Arrays.stream(LYING).map(p -> colorBox(draw(k, p, cape, 0), PetPaintBase.CAPE))).toList());
+        assertEquals("-107 -54 107 10", colorBox(draw(PetKind.CAT, Pose.SIT, cape, 0), PetPaintBase.CAPE));
+    }
+
+    /** 조끼의 금색 단추는 앉은 자세들(앉기, 밥 먹기, 노래)에만 단다. */
+    @Test
+    void ePose11VestButtonsWhenSitting() {
+        for (PetKind kind : KINDS) {
+            for (Pose pose : Pose.values()) {
+                boolean sits = pose == Pose.SIT || pose == Pose.EAT || pose == Pose.SING;
+                assertEquals(sits, count(draw(kind, pose, Set.of(WearId.VEST), 0), PetPaintBase.GOLD) > 0, kind + " " + pose);
+            }
+        }
+    }
+
+    /** Z 셋만 320x320 그림에 상자 좌표 그대로 그린다. */
+    private static BufferedImage zzz(double t) {
+        BufferedImage img = new BufferedImage(320, 320, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = img.createGraphics();
+        PetPaintBase.hints(g);
+        new PetPaintBody(g, PetKind.CAT, Pose.SLEEP, Set.of(), t).zzz();
+        g.dispose();
+        return img;
+    }
+
+    /**
+     * 2.6초 주기의 자리 p(뒤의 Z는 3분의 1 주기씩 앞)에서 Z는 가운데 (214 + 46p, 176 - 70p), 반폭 9 + 8p이고 알파는 음표와 같다.
+     * 시각 0에 첫 Z는 투명이고 둘째와 셋째의 위 획은 다 보인다. 시각 1.3에 첫 Z가 (237, 141)에 반폭 13으로 보인다.
+     */
+    @Test
+    void ePose12Zzz() {
+        BufferedImage at0 = zzz(0);
+        assertEquals(0, at0.getRGB(214, 167) >>> 24);
+        assertEquals(List.of(PetPaintBase.BLUE.getRGB(), PetPaintBase.BLUE.getRGB()), List.of(at0.getRGB(229, 141), at0.getRGB(244, 115)));
+        assertEquals(PetPaintBase.BLUE.getRGB(), zzz(1.3).getRGB(237, 128));
+    }
+
+    /** 음수 시각도 2.6초 주기로 본다. 시각 -1.3의 첫 Z는 1.3과 같은 자리에 보인다(프로토타입은 알파가 음수라 멈춘다). */
+    @Test
+    void ePose14NegativeTimeZzz() {
+        assertEquals(PetPaintBase.BLUE.getRGB(), zzz(-1.3).getRGB(237, 128));
+        assertTrue(box(PetKind.DOG, Pose.SLEEP, -0.3)[1] < 0);
+    }
+
+    /** 머리만 상자 좌표 (160, 160)에 표정 face로 그린다. */
+    private static BufferedImage head(PetKind kind, PetPaintBase.Face face) {
+        BufferedImage img = new BufferedImage(320, 320, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = img.createGraphics();
+        PetPaintBase.hints(g);
+        PetPaintHead p = new PetPaintHead(g, kind, Set.of(), 0);
+        p.face = face;
+        p.head(160, 160, 0);
+        g.dispose();
+        return img;
+    }
+
+    /** 잠든 얼굴은 입을 닫고(늘 입을 벌린 강아지도), 기지개 얼굴은 입을 벌린다(고양이도). 웃는 얼굴은 강아지만 입을 벌린다. */
+    @Test
+    void ePose15SleepAndStretchFaces() {
+        assertEquals(List.of(0L, 0L, true, true), List.of(count(head(PetKind.CAT, PetPaintBase.Face.HAPPY), PetPaintBase.MOUTH),
+                count(head(PetKind.DOG, PetPaintBase.Face.SLEEP), PetPaintBase.MOUTH),
+                count(head(PetKind.CAT, PetPaintBase.Face.STRETCH), PetPaintBase.MOUTH) > 0,
+                count(head(PetKind.DOG, PetPaintBase.Face.HAPPY), PetPaintBase.MOUTH) > 0));
     }
 
     private static long count(BufferedImage img, Color c) {
