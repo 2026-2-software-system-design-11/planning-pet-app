@@ -23,7 +23,7 @@ public final class AppController {
     /** 메인 달력에서 고른 날(D-106). S3의 달력이 잇는다. */
     private Supplier<LocalDate> homeDay;
     private boolean changing;
-    /** 창이 보이는 중인지. onWindowShown이 true로 둔다. 숨기는 길(onClose)은 S11이다(docs/porting/app-window.md). */
+    /** 창이 보이는 중인지. onWindowShown이 true로, onClose가 false로 둔다. */
     private boolean windowVisible;
 
     public AppController(AppData data, DataStore store, Consumer<String> errors) {
@@ -127,5 +127,21 @@ public final class AppController {
             speak.run();
             data.changed();
         }
+    }
+
+    /**
+     * 06 25번 창 닫기. 트레이가 없으면 끝낸다(D-29). 있으면 창을 숨기고, 처음이면 그 기록을 저장한다. 저장에 실패해도 안내는 띄우고
+     * 다음 닫기에서 다시 안내한다(02 UC-19 1c).
+     */
+    public CloseAction onClose(boolean traySupported) {
+        if (!traySupported) {
+            return CloseAction.QUIT;
+        }
+        windowVisible = false;
+        if (data.isTrayNoticeShown()) {
+            return CloseAction.HIDE;
+        }
+        change("처음 창 닫기 안내", () -> data.setTrayNoticeShown(true));
+        return CloseAction.HIDE_WITH_NOTICE;
     }
 }
