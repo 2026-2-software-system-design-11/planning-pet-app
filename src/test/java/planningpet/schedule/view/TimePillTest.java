@@ -172,4 +172,23 @@ class TimePillTest {
         locked.doClick(0);
         assertEquals(1, fired[0]);
     }
+
+    /** 일정관리 목록의 글 없는 작은 시계 단추(docs/porting/schedule.md S5a). */
+    @Test
+    void eTpill11Icon() {
+        TimePill p = TimePill.icon(false, false, null);
+        assertEquals(new Dimension(26, 26), p.getPreferredSize());
+        assertEquals(new Dimension(26, 26), p.getMaximumSize());
+        assertEquals("", p.getText());
+        assertEquals("시각 정하기", p.getAccessibleContext().getAccessibleName());
+        assertEquals("시각 정하기", p.getToolTipText());
+        assertEquals(Cursor.HAND_CURSOR, p.getCursor().getType());
+        assertTrue(p.isEnabled());
+        TimePill done = TimePill.icon(true, true, null);
+        assertFalse(done.isEnabled());
+        assertNull(done.getToolTipText());
+        assertEquals(Cursor.DEFAULT_CURSOR, done.getCursor().getType());
+        String why = "마감이 지난 일은 시각을 정할 수 없어요";
+        assertEquals(why, TimePill.icon(false, true, why).getToolTipText());
+    }
 }

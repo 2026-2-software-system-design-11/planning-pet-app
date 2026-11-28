@@ -14,11 +14,14 @@ import planningpet.common.view.Theme;
 
 /**
  * 할 일 줄의 시각 알약 버튼(05 입력 항목 7, D-59). 시계 아이콘과 "10:00~11:00", 시각이 없으면 민트 "시각 정하기"다. 끝낸 일과
- * 잠근 알약은 흐린 글과 옅은 테두리다. 폭은 줄마다 같아서 목록에서 세로로 맞는다(docs/porting/task-rows.md S3s).
+ * 잠근 알약은 흐린 글과 옅은 테두리다. 폭은 줄마다 같아서 목록에서 세로로 맞는다(docs/porting/task-rows.md S3s). 일정관리 목록의
+ * 작은 시계 단추는 icon이다(docs/porting/schedule.md S5a).
  */
 final class TimePill extends JButton {
     private final boolean empty;
     private final boolean done;
+    /** 일정관리 목록의 작은 단추(D-102). 글 없이 시계 아이콘만 그리고 연필, 휴지통과 같은 26px 원이다. */
+    private boolean compact;
 
     /** locked면 누를 수 없는 흐린 알약이고(D-94) 마우스를 올렸을 때 why를 보인다. 끝낸 줄과 지난 날 목록의 기간 할 일이 그렇다. */
     TimePill(String time, boolean done, boolean locked, String why) {
@@ -38,8 +41,21 @@ final class TimePill extends JButton {
         setToolTipText(locked ? why : "눌러서 시각을 바꿔요");
     }
 
+    /** 일정관리 목록의 작은 시각 단추(D-102). 홈 알약과 같은 민트에 시계 아이콘만 있고, 마우스를 올리면 "시각 정하기"다. */
+    static TimePill icon(boolean done, boolean locked, String why) {
+        TimePill p = new TimePill("", done, locked, why);
+        p.compact = true;
+        p.setText("");
+        p.getAccessibleContext().setAccessibleName("시각 정하기");
+        p.setToolTipText(locked ? why : "시각 정하기");
+        return p;
+    }
+
     @Override
     public Dimension getPreferredSize() {
+        if (compact) {
+            return new Dimension(26, 26);
+        }
         FontMetrics fm = getFontMetrics(getFont());
         // 폭은 줄마다 같다. 자정을 넘는 "23:30~01:00(다음 날)"(D-77)만 글에 맞춰 넓어진다.
         int w = Math.max(Math.max(fm.stringWidth("00:00~00:00"), fm.stringWidth("시각 정하기")), fm.stringWidth(getText()))
@@ -79,7 +95,7 @@ final class TimePill extends JButton {
         }
         FontMetrics fm = g.getFontMetrics(getFont());
         int icon = 14;
-        int x = (w - (icon + 5 + fm.stringWidth(getText()))) / 2;
+        int x = compact ? (w - icon) / 2 : (w - (icon + 5 + fm.stringWidth(getText()))) / 2;
         Icons.draw(g, Icons.Kind.CLOCK, x, (h - icon) / 2, icon, done ? Theme.INK_DIM : Theme.ICON);
         g.setFont(getFont());
         g.setColor(done ? Theme.INK_DIM : empty ? Theme.ICON : Theme.INK);
