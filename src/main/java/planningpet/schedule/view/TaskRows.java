@@ -5,6 +5,9 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.time.LocalDate;
+import java.util.function.BiConsumer;
+import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import planningpet.common.view.Theme;
@@ -60,5 +63,66 @@ public final class TaskRows extends JPanel {
             }
             g.dispose();
         }
+    }
+
+    /**
+     * 제목 아래 둘째 줄 왼쪽의 표시(D-94). 흐린 마감 글("~11/22까지", D-65)과 하려던 일("17일에 하려던 일", D-67), 빨간 "오늘 마감"이나
+     * "마감"(D-70, D-93) 순이다. 하나도 없으면 null(docs/porting/task-rows.md S3u).
+     */
+    static JLabel marks(String due, String note, String tag) {
+        StringBuilder html = new StringBuilder();
+        BiConsumer<String, String> part = (text, color) -> {
+            if (text != null) {
+                html.append(html.length() == 0 ? "" : " ").append("<font color='").append(color).append("'>").append(text)
+                        .append("</font>");
+            }
+        };
+        part.accept(due, "#8A96A0");
+        part.accept(note, "#8A96A0");
+        part.accept(tag, "#C0392B");
+        if (html.length() == 0) {
+            return null;
+        }
+        JLabel label = new JLabel("<html>" + html + "</html>");
+        label.setFont(Theme.font(12));
+        label.setBorder(BorderFactory.createEmptyBorder(0, RoundCheck.SIZE + 10, 0, 0));
+        return label;
+    }
+
+    /** D-67: 시각을 정한 날에 못 끝낸 기간 할 일이면 "{일}일에 하려던 일"(정한 날의 일), 아니면 null. */
+    static String missedNote(Task t, LocalDate today) {
+        return t.missed(today) ? t.getDate().getDayOfMonth() + "일에 하려던 일" : null;
+    }
+
+    /**
+     * D-70, D-93: 끝내지 않은 기간 할 일을 마감 날 목록(listDay)에서 보면, 그날이 오늘이면 "오늘 마감", 앞날이면 "마감"이다. 마감이
+     * 지났으면 null이다.
+     */
+    static String dueTag(Task t, LocalDate listDay, LocalDate today) {
+        if (!t.period() || t.isDone() || !t.getDueDate().equals(listDay)) {
+            return null;
+        }
+        return listDay.equals(today) ? "오늘 마감" : listDay.isAfter(today) ? "마감" : null;
+    }
+
+    /** 고정 일정 줄의 "고정" 꼬리표(D-35): TRACK 바탕, CARD_LINE 테두리의 작은 둥근 꼬리표다. 부를 때마다 새 라벨이다. */
+    static JLabel fixedTag() {
+        JLabel tag = new JLabel("고정") {
+            @Override
+            protected void paintComponent(Graphics graphics) {
+                Graphics2D g = (Graphics2D) graphics.create();
+                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g.setColor(Theme.TRACK);
+                g.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 10, 10);
+                g.setColor(Theme.CARD_LINE);
+                g.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 10, 10);
+                g.dispose();
+                super.paintComponent(graphics);
+            }
+        };
+        tag.setFont(Theme.bold(11));
+        tag.setForeground(Theme.INK_SUB);
+        tag.setBorder(BorderFactory.createEmptyBorder(2, 7, 2, 7));
+        return tag;
     }
 }
