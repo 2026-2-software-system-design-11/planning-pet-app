@@ -14,6 +14,8 @@ import planningpet.app.model.LoadResult;
 import planningpet.app.view.AppWindow;
 import planningpet.app.view.Tray;
 import planningpet.common.view.Theme;
+import planningpet.pet.controller.PetController;
+import planningpet.pet.view.PickDialog;
 
 /** 진입점. 실행 인자로 데이터 폴더를 정하고 클래스를 만들어 잇는다(07 실행 모드). */
 public final class Main {
@@ -36,6 +38,9 @@ public final class Main {
 
     /** 창을 띄우고 앱을 끝내는 일. 검사가 창 없이 바꿔 끼운다(docs/porting/main.md). */
     interface Shell {
+        /** 고르기 창을 띄운다. 닫기 버튼을 누르면 closed를 부른다. */
+        void pick(PickDialog pick, Runnable closed);
+
         /** 메인 창을 띄운다. */
         void main(JComponent root);
 
@@ -44,12 +49,23 @@ public final class Main {
 
         /** 저장 실패 창을 띄운다(AppController의 errors). */
         void saveFailed(String text);
+
+        /** 앱을 끝낸다. */
+        void exit(int code);
     }
 
     /** UC-01. 06 21번 load의 결과로 갈린다. 창은 shell이 띄운다. */
     static void start(DataStore store, Path folder, Clock clock, Shell shell) {
         LoadResult result = store.load();
         switch (result.status()) {
+            case FIRST_RUN -> {
+                // 07 seq-uc01: 첫 실행은 빈 AppData이고 고르기 창과 메인 창이 controller 하나를 같이 쓴다(docs/porting/main.md).
+                AppData data = new AppData(clock);
+                AppController app = new AppController(data, store, shell::saveFailed);
+                PickDialog pick = new PickDialog();
+                pick.onStart(new PetController(data, app), data, () -> open(data, app, clock, shell));
+                shell.pick(pick, () -> shell.exit(0)); // 프로토타입 Main처럼 0으로 끝낸다. 저장한 것이 없다.
+            }
             case LOADED -> open(result.data(), new AppController(result.data(), store, shell::saveFailed), clock, shell);
         }
     }
