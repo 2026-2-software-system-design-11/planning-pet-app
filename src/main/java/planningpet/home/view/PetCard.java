@@ -16,6 +16,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
 import javax.swing.KeyStroke;
@@ -71,6 +73,7 @@ public final class PetCard extends JComponent {
         add(doneBar);
         setFocusable(true);
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        getAccessibleContext().setAccessibleName("펫 카드. 누르면 캐릭터 창이 열려요");
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent e) {
@@ -126,10 +129,26 @@ public final class PetCard extends JComponent {
         refresh();
     }
 
+    /** 화면 읽기 프로그램에는 누르는 단추로 알린다. 이름은 생성자가, 설명(펫, 레벨, 오늘 끝낸 일, 말)은 refresh가 채운다(S3q). */
+    @Override
+    public AccessibleContext getAccessibleContext() {
+        if (accessibleContext == null) {
+            accessibleContext = new AccessibleJComponent() {
+                @Override
+                public AccessibleRole getAccessibleRole() {
+                    return AccessibleRole.PUSH_BUTTON;
+                }
+            };
+        }
+        return accessibleContext;
+    }
+
     private void refresh() {
         expBar.set(Level.of(data.activePet().getExp()).ratio());
         DailyProgress d = progress();
         doneBar.set(d.getDone(), d.getTotal());
+        getAccessibleContext().setAccessibleDescription(nameText() + " " + levelText() + ", " + expText() + ", " + doneText()
+                + (periodText() == null ? "" : ", " + periodText()) + (bubbleText().isBlank() ? "" : ", " + bubbleText()));
         revalidate();
         repaint();
     }
