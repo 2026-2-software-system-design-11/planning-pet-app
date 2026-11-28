@@ -20,12 +20,14 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
+import planningpet.app.model.AppData;
 import planningpet.common.view.Card;
 import planningpet.common.view.Icons;
 import planningpet.common.view.RoundButtonUI;
 import planningpet.common.view.RoundField;
 import planningpet.common.view.Theme;
 import planningpet.common.view.Ui;
+import planningpet.pet.controller.PetController;
 import planningpet.pet.model.PetKind;
 
 /**
@@ -48,6 +50,8 @@ public final class PickDialog {
     public final JButton examples = new JButton("예시로 둘러보기");
     public final JButton start = new JButton("바로 시작");
     public final JPanel panel = new Backdrop();
+    /** 창을 닫는다. 창을 만들면 그 창의 dispose가 된다. 테스트가 바꿔 끼운다. */
+    Runnable close = () -> { };
 
     public PickDialog() {
         Ui.limit(name, 10);
@@ -94,6 +98,20 @@ public final class PickDialog {
         choose.setPreferredSize(new Dimension(ROW, choose.getPreferredSize().height));
         panel.add(center(choose));
         panel.add(Box.createVerticalGlue());
+    }
+
+    /**
+     * 바로 시작(Enter도 같다, 05 입력 항목 2, 3). 고른 카드의 종류와 이름 칸의 글로 06 30번 choose를 부른다(프로토타입 apply).
+     * 펫이 생겼으면 창을 닫고 picked를 부르고, 저장에 실패해 되돌렸으면 창을 그대로 둔다(seq-uc17 4a). 예시로 둘러보기는 C5가 잇는다.
+     */
+    public void onStart(PetController pets, AppData data, Runnable picked) {
+        start.addActionListener(e -> {
+            pets.choose(dog.isSelected() ? PetKind.DOG : PetKind.CAT, name.getText());
+            if (data.activePet() != null) {
+                close.run();
+                picked.run();
+            }
+        });
     }
 
     /** 이름 줄 카드: 연필, 라벨, 둥근 이름 칸, 칸 아래 안내(05). 테스트가 카드만 견주도록 패키지 안에 연다. */
