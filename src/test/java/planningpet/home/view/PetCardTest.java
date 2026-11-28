@@ -17,6 +17,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import javax.swing.JComponent;
 import javax.swing.RepaintManager;
@@ -137,12 +138,22 @@ class PetCardTest {
         }
     }
 
-    /** 본 구현 PetArt는 앉기만 그려 다른 자세도 앉기다. 프로토타입은 누운 그림이다(S3m E-PCARD-6). */
+    /** 360x240 카드에 밥그릇 색(0x9ED9C0) 픽셀이 있는지. */
+    private static boolean bowl(AppData d) {
+        return Arrays.stream(Snap.pixels(Snap.paint(card(d, new Bubble()), 360, 240))).anyMatch(p -> p == 0xFF9ED9C0);
+    }
+
+    /** 저장된 자세로 그리고 그 자세의 높이로 강조선 자리를 잡는다(character.md S8b E-PCARD-6). 누운 그림은 S8c가 더한다. */
     @Test
-    void ePcard6PoseDrawsSitting() throws IOException {
+    void ePcard6SavedPose() {
         AppData d = data(PetKind.CAT, 0);
+        Rectangle f = new Rectangle(2, 1, 356, 232);
+        assertFalse(bowl(d));
         d.activePet().setPose(Pose.SLEEP);
-        assertCovered("size-360x240", card(d, new Bubble()), 360, 240);
+        assertEquals(0.4597, PetCardArt.petFill(d.activePet(), f), 0.00005);
+        d.activePet().setPose(Pose.EAT);
+        assertEquals(0.7488, PetCardArt.petFill(d.activePet(), f), 0.00005);
+        assertTrue(bowl(d));
     }
 
     @Test

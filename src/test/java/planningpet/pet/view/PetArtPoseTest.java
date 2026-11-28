@@ -1,5 +1,6 @@
 package planningpet.pet.view;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -122,6 +123,18 @@ class PetArtPoseTest {
             assertTrue(count(face, PetPaintBase.STRAW) > 0, kind.name());
             assertEquals(0, count(face, PetPaintBase.TEAL), kind.name());
             assertEquals(0, count(PetArt.face(kind, Set.of()), PetPaintBase.STRAW), kind.name());
+        }
+    }
+
+    /** 자세 없는 drawAt은 앉기다(고르기 카드). */
+    @Test
+    void ePcard8PickCardSits() {
+        for (PetKind kind : KINDS) {
+            BufferedImage plain = new BufferedImage(320, 340, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g = plain.createGraphics();
+            PetArt.drawAt(g, kind, COLLAR, 0, 99, 160, 300, 320);
+            g.dispose();
+            assertArrayEquals(Snap.pixels(draw(kind, Pose.SIT, COLLAR, 0)), Snap.pixels(plain));
         }
     }
 }
