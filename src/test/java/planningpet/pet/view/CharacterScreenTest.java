@@ -5,8 +5,10 @@ import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.Component;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,9 +23,11 @@ import planningpet.pet.controller.PetController;
 import planningpet.pet.model.PetKind;
 import planningpet.pet.model.PetState;
 import planningpet.pet.model.Pose;
+import planningpet.pet.model.Slot;
+import planningpet.pet.model.WearId;
 
 /**
- * 캐릭터 창 왼쪽 열의 펫 탭. 번호는 docs/porting/character.md S8e 2절. 고양이 나비(경험치 0)를 고른 앱
+ * 캐릭터 창 왼쪽 열의 펫 탭, 화살표, 큰 펫 무대. 번호는 docs/porting/character.md S8e 2절. 고양이 나비(경험치 0)를 고른 앱
  * 데이터에서 시작한다.
  */
 @ExtendWith(ThemeOn.class)
@@ -97,6 +101,54 @@ class CharacterScreenTest {
         tabs(s).get(1).doClick(0);
         assertEquals(List.of(PetKind.DOG, 1), List.of(data.getActiveKind(), store.saves));
         assertEquals(List.of(false, true), tabs(s).stream().map(Pill::isSelected).toList());
+    }
+
+    @Test
+    void eChr3ArrowsDimWithOnePet() {
+        CharacterScreen one = screen();
+        assertEquals(List.of(false, false), List.of(one.prevPet.isEnabled(), one.nextPet.isEnabled()));
+        assertEquals(List.of("앞 펫", "다음 펫"), List.of(one.prevPet.getToolTipText(), one.nextPet.getToolTipText()));
+        CharacterScreen two = withDog();
+        assertEquals(List.of(true, true), List.of(two.prevPet.isEnabled(), two.nextPet.isEnabled()));
+    }
+
+    @Test
+    void eChr4ArrowPlaces() {
+        CharacterScreen s = screen();
+        Snap.layOut(s.stage, 400, 300);
+        assertEquals(List.of(new Rectangle(12, 130, 40, 40), new Rectangle(348, 130, 40, 40)),
+                List.of(s.prevPet.getBounds(), s.nextPet.getBounds()));
+        Snap.layOut(s.stage, 251, 181);
+        assertEquals(List.of(new Rectangle(12, 70, 40, 40), new Rectangle(199, 70, 40, 40)),
+                List.of(s.prevPet.getBounds(), s.nextPet.getBounds()));
+    }
+
+    @Test
+    void eChr5PressArrows() {
+        CharacterScreen s = withDog();
+        s.nextPet.doClick(0);
+        assertEquals(List.of(PetKind.DOG, 1), List.of(data.getActiveKind(), store.saves));
+        s.nextPet.doClick(0);
+        assertEquals(List.of(PetKind.CAT, 2), List.of(data.getActiveKind(), store.saves));
+        s.prevPet.doClick(0);
+        assertEquals(List.of(PetKind.DOG, 3), List.of(data.getActiveKind(), store.saves));
+        assertEquals(List.of(false, true), tabs(s).stream().map(Pill::isSelected).toList());
+    }
+
+    @Test
+    void eChr9DraftFollowsPet() {
+        PetState dog = new PetState(PetKind.DOG, "바둑이");
+        dog.setWear(Map.of(Slot.HAT, WearId.BERET));
+        data.addPet(dog);
+        CharacterScreen s = screen();
+        assertEquals(Map.of(Slot.NECK, WearId.BASIC_NECKLACE), s.draft);
+        s.draft.put(Slot.HAT, WearId.STRAW_HAT);
+        s.refresh();
+        assertEquals(Map.of(Slot.NECK, WearId.BASIC_NECKLACE, Slot.HAT, WearId.STRAW_HAT), s.draft);
+        s.nextPet.doClick(0);
+        assertEquals(Map.of(Slot.HAT, WearId.BERET), s.draft);
+        s.prevPet.doClick(0);
+        assertEquals(Map.of(Slot.NECK, WearId.BASIC_NECKLACE), s.draft);
     }
 
     @Test

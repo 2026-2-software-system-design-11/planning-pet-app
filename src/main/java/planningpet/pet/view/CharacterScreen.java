@@ -9,6 +9,7 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
+import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -18,6 +19,7 @@ import javax.swing.JComponent;
 import javax.swing.JPanel;
 import planningpet.app.model.AppData;
 import planningpet.common.view.Card;
+import planningpet.common.view.CircleButton;
 import planningpet.common.view.Icons;
 import planningpet.common.view.Images;
 import planningpet.common.view.Pill;
@@ -32,14 +34,20 @@ import planningpet.reward.model.Level;
 import planningpet.shop.model.ItemId;
 
 /**
- * 캐릭터 창 안(05 캐릭터 창, D-47~D-51, D-58). 큰 카드에 왼쪽 열(펫 탭, 방 속 큰 펫)을 둔다. 자세 다섯 칸(S8e2),
- * 오른쪽 카드(S8f)는 그 몫이 더한다. 데이터가 바뀌면 다시 그린다(docs/porting/character.md S8e).
+ * 캐릭터 창 안(05 캐릭터 창, D-47~D-51, D-58). 큰 카드에 왼쪽 열(펫 탭, 방 속 큰 펫과 화살표)을 둔다. 자세 다섯 칸은
+ * S8e2, 오른쪽 카드는 S8f가 더한다. 데이터가 바뀌면 다시 그린다(docs/porting/character.md S8e).
  */
 final class CharacterScreen extends JPanel {
     private final AppData data;
     private final PetController pets;
     /** 펫 탭 줄. 고양이, 강아지 차례다. */
     final JPanel petTabs = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+    /** 아직 적용하지 않은 장신구(D-51). draftKind의 펫 것이다. */
+    final Map<Slot, WearId> draft = new EnumMap<>(Slot.class);
+    private PetKind draftKind;
+    /** 큰 펫 양옆 화살표. 고른 펫을 바꾼다(D-80). 펫이 하나면 흐리다. */
+    final CircleButton prevPet = new CircleButton(Icons.Kind.LEFT, 40, "앞 펫", false);
+    final CircleButton nextPet = new CircleButton(Icons.Kind.RIGHT, 40, "다음 펫", false);
     /** 방 그림 위 큰 펫 무대. */
     final JComponent stage = stage();
     /** 왼쪽 열(펫 탭, 방 카드). */
@@ -66,6 +74,10 @@ final class CharacterScreen extends JPanel {
         Card roomCard = new Card(new BorderLayout(), 18);
         roomCard.setBorder(BorderFactory.createEmptyBorder(5, 5, 7, 5));
         roomCard.add(stage);
+        stage.add(prevPet);
+        stage.add(nextPet);
+        prevPet.addActionListener(e -> stepPet(-1));
+        nextPet.addActionListener(e -> stepPet(1));
         left.add(roomCard, BorderLayout.CENTER);
         return left;
     }
@@ -93,7 +105,7 @@ final class CharacterScreen extends JPanel {
         return (int) (box * PetArt.heightRatio(p.getKind(), p.getPose()));
     }
 
-    /** 방 그림 위 큰 펫. 저장된 자세와 장신구로 그린다. */
+    /** 방 그림 위 큰 펫. 입혀 보는 장신구(draft)로 그린다. 양옆 화살표는 펫을 바꾼다(D-80). */
     private JComponent stage() {
         return new JComponent() {
             @Override
@@ -115,7 +127,7 @@ final class CharacterScreen extends JPanel {
                 }
                 g.setColor(new Color(0x9A, 0x6A, 0x45, 40));
                 g.fillOval(w / 2 - size * 3 / 10, ground - size / 22, size * 3 / 5, size / 11);
-                drawStage(g, p.getKind(), p.getPose(), p.getWear(), Level.of(p.getExp()).getStage(), w / 2, ground, size);
+                drawStage(g, p.getKind(), p.getPose(), draft, Level.of(p.getExp()).getStage(), w / 2, ground, size);
                 BufferedImage yarn = Images.item(ItemId.YARN_BALL);
                 if (yarn != null) {
                     Images.fitBottom(g, yarn, w / 2 - size * 3 / 5, ground - size / 6, size / 5, size / 5);
@@ -126,12 +138,31 @@ final class CharacterScreen extends JPanel {
                 Icons.draw(g, Icons.Kind.SPARK, w / 2 + size / 4, top + size / 6, size / 6, Theme.SPARK);
                 g.dispose();
             }
+
+            @Override
+            public void doLayout() {
+                // 프로토타입은 크기가 바뀔 때(componentResized) 같은 자리에 놓는다. 창 없이도 배치되게 배치에서 놓는다.
+                prevPet.setBounds(12, (getHeight() - 40) / 2, 40, 40);
+                nextPet.setBounds(getWidth() - 52, (getHeight() - 40) / 2, 40, 40);
+            }
         };
     }
 
-    /** 펫 탭을 다시 만든다. */
+    /** D-80: 앞이나 다음 펫을 고른다. 입혀 본 장신구가 있으면 먼저 묻는 일(D-61)은 S8g가 앞에 끼운다. */
+    private void stepPet(int delta) {
+        if (data.getPets().size() > 1) {
+            pets.step(delta);
+        }
+    }
+
+    /** 입혀 보는 장신구를 고른 펫이 바뀌었을 때만 그 펫의 저장된 것으로 되돌리고, 펫 탭을 다시 만든다. */
     void refresh() {
         PetState p = data.activePet();
+        if (p.getKind() != draftKind) {
+            draftKind = p.getKind();
+            draft.clear();
+            draft.putAll(p.getWear());
+        }
         petTabs.removeAll();
         ButtonGroup g = new ButtonGroup();
         for (PetKind kind : PetKind.values()) {
@@ -156,6 +187,8 @@ final class CharacterScreen extends JPanel {
             petTabs.add(tab);
         }
         petTabs.revalidate();
+        prevPet.setEnabled(data.getPets().size() > 1);
+        nextPet.setEnabled(data.getPets().size() > 1);
         stage.repaint();
     }
 }
