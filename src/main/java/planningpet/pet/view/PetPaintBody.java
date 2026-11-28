@@ -1,11 +1,13 @@
 package planningpet.pet.view;
 
+import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.QuadCurve2D;
+import java.awt.geom.RoundRectangle2D;
 import java.util.Set;
 import planningpet.pet.model.PetKind;
 import planningpet.pet.model.WearId;
@@ -97,6 +99,26 @@ final class PetPaintBody extends PetPaintHead {
             filled(ell(30, -48, 14, 13), DOG_FUR);
         }
         g.setTransform(old);
+    }
+
+    /** 밥 먹는 펫 앞의 민트 밥그릇: 사료가 담긴 윗면, 사료 알 일곱, 그릇, 흰 빛, 테두리. 아래 끝(y=306)은 바닥보다 아래다. */
+    void bowl() {
+        Path2D b = new Path2D.Double();
+        b.moveTo(104, 270);
+        b.lineTo(216, 270);
+        b.quadTo(212, 304, 186, 306);
+        b.lineTo(134, 306);
+        b.quadTo(108, 304, 104, 270);
+        b.closePath();
+        filled(ell(160, 268, 58, 12), KIBBLE);
+        for (int i = 0; i < 7; i++) {
+            g.setColor(i % 2 == 0 ? KIBBLE.darker() : new Color(0xE9A35A));
+            g.fill(ell(122 + i * 12, 264 + (i % 3) * 2, 6, 4));
+        }
+        filled(b, BOWL);
+        g.setColor(new Color(255, 255, 255, 150));
+        g.fill(new RoundRectangle2D.Double(116, 278, 26, 6, 6, 6));
+        stroke(new Line2D.Double(104, 270, 216, 270), line, ink);
     }
 
     /** 노래하는 펫 오른쪽 위의 음표 둘. 2초 주기로 흔들리며 오르고, 반 주기 어긋나 하나가 나타날 때 하나가 사라진다(t). */

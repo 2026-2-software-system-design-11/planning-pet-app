@@ -32,6 +32,17 @@ class PetArtPoseTest {
         assertEquals(List.of(0.72, 0.72, 0.86, 1.0, 1.0), IntStream.range(0, 5).mapToObj(PetArt::stageScale).toList());
     }
 
+    /** 밥그릇은 사료 윗면 타원(가운데 (160, 268), 반지름 58과 12)과 아래 끝 y=306의 그릇에 굵기 6의 외곽선이라 바닥 아래 8줄까지 칠한다. */
+    @Test
+    void ePose3BowlBelowGround() {
+        BufferedImage img = new BufferedImage(320, 340, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = img.createGraphics();
+        PetPaintBase.hints(g);
+        new PetPaintBody(g, PetKind.CAT, Set.of(), 0).bowl();
+        g.dispose();
+        assertEquals("-61 -47 60 8", PetArtTest.paintedBox(img, 160, 300));
+    }
+
     /** 음표만 320x320 그림에 상자 좌표 그대로 그린다. */
     private static BufferedImage notes(double t) {
         BufferedImage img = new BufferedImage(320, 320, BufferedImage.TYPE_INT_ARGB);
