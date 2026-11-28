@@ -11,6 +11,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -28,7 +29,7 @@ import planningpet.schedule.model.DeleteScope;
 import planningpet.schedule.model.Kind;
 import planningpet.schedule.model.TaskDraft;
 
-/** 06 30번 choose, adopt, select의 검사 줄과 docs/porting/pet-controller.md 2절의 경계. 지금은 11-16 10:00이다. */
+/** 06 28번, 30번의 검사 줄과 docs/porting/pet-controller.md 2절, docs/porting/character.md S8a 2절의 경계. 지금은 11-16 10:00이다. */
 class PetControllerTest {
     private final AppData data = new AppData(Clock.fixed(
             LocalDateTime.of(2026, 11, 16, 10, 0).atZone(ZoneId.systemDefault()).toInstant(), ZoneId.systemDefault()));
@@ -353,5 +354,64 @@ class PetControllerTest {
         pets.pose(PetKind.CAT, Pose.SLEEP);
         assertEquals(Pose.SIT, data.pet(PetKind.CAT).getPose());
         assertEquals(List.of("자세 고르기 저장에 실패해서 바꾸기 전으로 돌렸어요."), errors);
+    }
+
+    @Test
+    void T_WEAR_1_onlyOpenWear() {
+        oneCat(130);
+        pets.applyWear(PetKind.CAT, Map.of(Slot.NECK, WearId.STAR_NECKLACE, Slot.HAT, WearId.STRAW_HAT,
+                Slot.CLOTHES, WearId.SCARF));
+        assertEquals(Map.of(Slot.HAT, WearId.STRAW_HAT, Slot.CLOTHES, WearId.SCARF), data.pet(PetKind.CAT).getWear());
+        assertEquals(1, saves);
+        assertEquals(1, heard);
+    }
+
+    @Test
+    void T_WEAR_3_levelTenWearsAll() {
+        Map<Slot, WearId> all = Map.of(Slot.NECK, WearId.CROWN_NECKLACE, Slot.ACCESSORY, WearId.GLASSES,
+                Slot.HAT, WearId.CROWN, Slot.CLOTHES, WearId.CAPE);
+        oneCat(1600);
+        pets.applyWear(PetKind.CAT, all);
+        assertEquals(all, data.pet(PetKind.CAT).getWear());
+    }
+
+    @Test
+    void E_WEAR_9_wrongSlotDropped() {
+        oneCat(1600);
+        pets.applyWear(PetKind.CAT, Map.of(Slot.HAT, WearId.GLASSES, Slot.NECK, WearId.RIBBON_NECKLACE));
+        assertEquals(Map.of(Slot.NECK, WearId.RIBBON_NECKLACE), data.pet(PetKind.CAT).getWear());
+    }
+
+    @Test
+    void E_WEAR_10_takeAllOff() {
+        oneCat(1600);
+        Map<Slot, WearId> hatOff = new EnumMap<>(Slot.class);
+        hatOff.put(Slot.HAT, null);
+        pets.applyWear(PetKind.CAT, hatOff);
+        assertEquals(Map.of(), data.pet(PetKind.CAT).getWear());
+        pets.applyWear(PetKind.CAT, Map.of(Slot.HAT, WearId.CROWN));
+        pets.applyWear(PetKind.CAT, Map.of());
+        assertEquals(Map.of(), data.pet(PetKind.CAT).getWear());
+        assertEquals(3, saves);
+        assertEquals(3, heard);
+    }
+
+    @Test
+    void E_WEAR_11_wearSaveFails() {
+        oneCat(130);
+        failing = true;
+        pets.applyWear(PetKind.CAT, Map.of(Slot.HAT, WearId.STRAW_HAT));
+        assertEquals(Map.of(Slot.NECK, WearId.BASIC_NECKLACE), data.pet(PetKind.CAT).getWear());
+        assertEquals(List.of("펫 꾸미기 저장에 실패해서 바꾸기 전으로 돌렸어요."), errors);
+    }
+
+    @Test
+    void E_WEAR_12_otherPetsLevel() {
+        oneCat(1600);
+        data.addPet(new PetState(PetKind.DOG, "바둑이"));
+        pets.applyWear(PetKind.DOG, Map.of(Slot.NECK, WearId.BASIC_NECKLACE, Slot.HAT, WearId.CROWN));
+        assertEquals(Map.of(Slot.NECK, WearId.BASIC_NECKLACE), data.pet(PetKind.DOG).getWear());
+        assertEquals(Map.of(Slot.NECK, WearId.BASIC_NECKLACE), data.pet(PetKind.CAT).getWear());
+        assertEquals(PetKind.CAT, data.getActiveKind());
     }
 }

@@ -1,6 +1,8 @@
 package planningpet.pet.controller;
 
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import planningpet.app.controller.AppController;
 import planningpet.app.model.AppData;
 import planningpet.pet.model.PetKind;
@@ -8,10 +10,14 @@ import planningpet.pet.model.PetState;
 import planningpet.pet.model.PetTalk;
 import planningpet.pet.model.Pose;
 import planningpet.pet.model.Situation;
+import planningpet.pet.model.Slot;
+import planningpet.pet.model.Wardrobe;
+import planningpet.pet.model.WearId;
+import planningpet.reward.model.Level;
 
 /**
- * 펫 controller(06 30번, 07). 반려동물 고르기, 데려오기, 고른 펫 바꾸기를 받아 22번 change로 감싼다. choose의 examples 인자는
- * C5가, step, rename, pose, applyWear는 S8이 더한다(docs/porting/pet-controller.md).
+ * 펫 controller(06 28번, 30번, 07). 반려동물 고르기, 데려오기, 고른 펫 바꾸기, 화살표, 이름, 자세, 꾸미기 적용을 받아 22번 change로
+ * 감싼다. choose의 examples 인자는 C5가 더한다(docs/porting/pet-controller.md, docs/porting/character.md).
  */
 public final class PetController {
     private final AppData data;
@@ -96,5 +102,21 @@ public final class PetController {
         }
         PetState pet = data.pet(kind);
         app.change("자세 고르기", () -> pet.setPose(pose));
+    }
+
+    /**
+     * 06 28번(D-51) 꾸미기 적용. 그 펫의 레벨(10번)에서 열리지 않았거나 칸이 맞지 않는 장신구는 빼고 나머지로 wear를 바꾼다. 값이 null인
+     * 칸은 안 입음이다(프로토타입과 같다).
+     */
+    public void applyWear(PetKind kind, Map<Slot, WearId> chosen) {
+        PetState pet = data.pet(kind);
+        int level = Level.of(pet.getExp()).getLevel();
+        Map<Slot, WearId> wear = new EnumMap<>(Slot.class);
+        chosen.forEach((slot, w) -> {
+            if (w != null && Wardrobe.slotOf(w) == slot && Wardrobe.opensAt(w) <= level) {
+                wear.put(slot, w);
+            }
+        });
+        app.change("펫 꾸미기", () -> pet.setWear(wear));
     }
 }
