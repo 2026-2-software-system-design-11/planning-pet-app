@@ -72,6 +72,16 @@ class SettingsControllerTest {
     }
 
     @Test
+    void eSet5OnlyMondayOrSunday() {
+        data.onChange(() -> changes++);
+        assertThrows(IllegalArgumentException.class, () -> settings.setWeekStart(DayOfWeek.WEDNESDAY));
+        assertThrows(IllegalArgumentException.class, () -> settings.setWeekStart(null));
+        assertEquals(DayOfWeek.MONDAY, data.getWeekStart());
+        assertEquals(0, store.saves);
+        assertEquals(0, changes);
+    }
+
+    @Test
     void tWin4AutostartRegistersWithoutSaving() throws IOException {
         data.onChange(() -> changes++);
         settings.setAutostart(true);

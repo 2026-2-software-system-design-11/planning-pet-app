@@ -23,8 +23,14 @@ public final class SettingsController {
         app.change("달력에 고정 일정 보이기", () -> data.setCalendarFixed(on));
     }
 
-    /** D-91. "한 주 시작". 홈 달력, 일정관리의 주, 자동 배치 범위, 통계의 주, 마감 기본값이 따른다. */
+    /**
+     * D-91. "한 주 시작". 홈 달력, 일정관리의 주, 자동 배치 범위, 통계의 주, 마감 기본값이 따른다. 06 데이터 절대로 월요일이나 일요일만
+     * 받고 그 밖은 IllegalArgumentException이다(docs/porting/settings.md E-SET-5).
+     */
     public void setWeekStart(DayOfWeek day) {
+        if (day != DayOfWeek.MONDAY && day != DayOfWeek.SUNDAY) {
+            throw new IllegalArgumentException("한 주 시작은 월요일이나 일요일이에요: " + day);
+        }
         app.change("한 주 시작", () -> data.setWeekStart(day));
     }
 
