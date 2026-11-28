@@ -18,9 +18,9 @@ public final class PetArt {
         g.translate(cx, cy);
         double k = size / 230.0;
         g.scale(k, k);
-        PetPaintHead p = new PetPaintHead(g, kind);
+        PetPaintHead p = new PetPaintHead(g, kind, 0);
         p.line = size < 48 ? 9f : size < 90 ? 7.5f : PetPaintBase.LINE;
-        p.head();
+        p.head(0, 0, 0);
         g.dispose();
     }
 

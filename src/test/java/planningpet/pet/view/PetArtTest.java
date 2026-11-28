@@ -21,7 +21,7 @@ class PetArtTest {
         Graphics2D g = img.createGraphics();
         PetPaintBase.hints(g);
         g.translate(120, 110);
-        PetPaintHead p = new PetPaintHead(g, kind);
+        PetPaintHead p = new PetPaintHead(g, kind, 0);
         p.line = line;
         return p;
     }
@@ -131,8 +131,8 @@ class PetArtTest {
     void eFace6Ears() throws IOException {
         BufferedImage img = new BufferedImage(240, 200, BufferedImage.TYPE_INT_ARGB);
         PetPaintHead p = part(img, PetKind.CAT, 6f);
-        p.ear(-1);
-        p.ear(1);
+        p.ear(-1, 0);
+        p.ear(1, 0);
         p.g.dispose();
         Snap.assertLooksLikePrototype("pet-ears", img);
     }
@@ -154,7 +154,7 @@ class PetArtTest {
         Graphics2D g = img.createGraphics();
         PetPaintBase.hints(g);
         g.translate(130, 120);
-        new PetPaintHead(g, PetKind.CAT).head();
+        new PetPaintHead(g, PetKind.CAT, 0).head(0, 0, 0);
         g.dispose();
         Snap.assertLooksLikePrototype("pet-head", img);
     }
@@ -200,14 +200,25 @@ class PetArtTest {
         }
     }
 
-    @Test
-    void eDog4Head() throws IOException {
+    /** 260x240 그림의 (130, 120)에 머리를 움직임 시각 t에 rot 기울여 1배로 그린다. */
+    private static BufferedImage head(PetKind kind, double t, double rot) {
         BufferedImage img = new BufferedImage(260, 240, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = img.createGraphics();
         PetPaintBase.hints(g);
         g.translate(130, 120);
-        new PetPaintHead(g, PetKind.DOG).head();
+        new PetPaintHead(g, kind, t).head(0, 0, rot);
         g.dispose();
-        Snap.assertLooksLikePrototype("pet-dog-head", img);
+        return img;
+    }
+
+    @Test
+    void eDog4Head() throws IOException {
+        Snap.assertLooksLikePrototype("pet-dog-head", head(PetKind.DOG, 0, 0));
+    }
+
+    @Test
+    void eHead1TurnedAndMoving() throws IOException {
+        Snap.assertLooksLikePrototype("pet-head-turned-cat", head(PetKind.CAT, 1.1, -9));
+        Snap.assertLooksLikePrototype("pet-head-turned-dog", head(PetKind.DOG, 0.6, -9));
     }
 }

@@ -15,8 +15,8 @@ import planningpet.pet.model.PetKind;
  * 얼굴 폭이 230이다.
  */
 class PetPaintHead extends PetPaintBase {
-    PetPaintHead(Graphics2D g, PetKind kind) {
-        super(g, kind);
+    PetPaintHead(Graphics2D g, PetKind kind, double t) {
+        super(g, kind, t);
     }
 
     Shape headShape() {
@@ -40,14 +40,16 @@ class PetPaintHead extends PetPaintBase {
     }
 
     /**
-     * 머리를 (0, 0)에 그린다. 고양이는 귀 둘, 흰 머리와 위의 회색 얼룩(이마 가운데는 흰 무늬), 강아지는 크림색 머리와 늘어진 귀다.
-     * 아래 그림자, 하이라이트, 웃는 얼굴은 같이 그린다.
+     * 머리를 (x, y)에 rot도 기울여 그린다. 고양이는 귀 둘, 흰 머리와 위의 회색 얼룩(이마 가운데는 흰 무늬), 강아지는 크림색 머리와
+     * 늘어진 귀다. 아래 그림자, 하이라이트, 웃는 얼굴은 같이 그린다. 고양이 오른쪽 귀는 4.4초마다 한 번 까딱인다(t).
      */
-    void head() {
+    void head(double x, double y, double rot) {
+        AffineTransform old = g.getTransform();
+        push(x, y, rot);
         Shape head = headShape();
         if (cat) {
-            ear(-1);
-            ear(1);
+            ear(-1, 0);
+            ear(1, Math.max(0, Math.sin(t * Math.PI / 2.2)) > 0.97 ? 8 : 0);
         }
         filled(head, fur);
         if (cat) {
@@ -64,6 +66,7 @@ class PetPaintHead extends PetPaintBase {
             dogEar(1);
         }
         faceParts();
+        g.setTransform(old);
     }
 
     /** 고양이 머리 위 회색 얼룩. 이마 가운데는 흰 무늬가 아래로 넓어지며 갈라진다. */
@@ -86,10 +89,10 @@ class PetPaintHead extends PetPaintBase {
         return grey;
     }
 
-    /** 고양이 귀 하나. side는 왼쪽 -1, 오른쪽 1이다. 회색 귀에 분홍 안쪽이다. */
-    void ear(int side) {
+    /** 고양이 귀 하나. side는 왼쪽 -1, 오른쪽 1이다. 회색 귀에 분홍 안쪽이고 flick도 바깥으로 젖힌다. */
+    void ear(int side, double flick) {
         AffineTransform old = g.getTransform();
-        g.translate(side * 66, -52);
+        push(side * 66, -52, side * flick);
         Path2D p = new Path2D.Double();
         p.moveTo(side * -40, 4);
         p.curveTo(side * -30, -34, side * -6, -58, side * 4, -60);
@@ -106,13 +109,11 @@ class PetPaintHead extends PetPaintBase {
         g.setTransform(old);
     }
 
-    /**
-     * 강아지의 늘어진 귀 하나. side는 왼쪽 -1, 오른쪽 1이다. 노란 귀 끝이 짙다. 기울기는 프로토타입에서 움직임 시각이 0일 때의 값
-     * (왼쪽 -3도, 오른쪽 9도)이다(docs/porting/pet-art.md).
-     */
+    /** 강아지의 늘어진 귀 하나. side는 왼쪽 -1, 오른쪽 1이다. 끝이 짙은 노란 귀가 바깥으로 조금 벌어져 2.4초 주기로 흔들린다(t). */
     void dogEar(int side) {
         AffineTransform old = g.getTransform();
-        push(side * 74, -50, side * (6 + 3 * side));
+        double sw = wave(t, 2.4, -3, 3, side > 0 ? 0.5 : 0);
+        push(side * 74, -50, side * (6 + sw));
         Path2D p = new Path2D.Double();
         p.moveTo(side * -18, 2);
         p.curveTo(side * 20, -14, side * 46, 26, side * 42, 76);

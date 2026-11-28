@@ -8,7 +8,7 @@ import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
 import planningpet.pet.model.PetKind;
 
-/** PetArt 펫 그림의 바탕: 색, 한 번 그리는 데 필요한 값, 그리기 도구. 머리는 PetPaintHead가 더한다(docs/porting/pet-art.md). */
+/** PetArt 펫 그림의 바탕: 색, 시간 함수, 한 번 그리는 데 필요한 값, 그리기 도구. 머리는 PetPaintHead가 더한다(docs/porting/pet-art.md). */
 abstract class PetPaintBase {
     // ---------- 색 (예시 픽셀에서 뽑은 값) ----------
     static final Color CAT_INK = new Color(0x3B3535);
@@ -29,13 +29,16 @@ abstract class PetPaintBase {
     static final float LINE = 6f;
 
     final Graphics2D g;
+    /** 움직임 시각(초). 귀 까딱임과 흔들림이 쓴다. */
+    final double t;
     final boolean cat;
     final Color ink;
     final Color fur;
     float line = LINE;
 
-    PetPaintBase(Graphics2D g, PetKind kind) {
+    PetPaintBase(Graphics2D g, PetKind kind, double t) {
         this.g = g;
+        this.t = t;
         this.cat = kind == PetKind.CAT;
         this.ink = cat ? CAT_INK : DOG_INK;
         this.fur = cat ? CAT_WHITE : DOG_FUR;
@@ -45,6 +48,12 @@ abstract class PetPaintBase {
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
         g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+    }
+
+    /** 시각 t에서 period초 주기로 a와 b 사이를 부드럽게 오가는 값. phase는 주기의 몇 분의 일만큼 앞서는지다. */
+    static double wave(double t, double period, double a, double b, double phase) {
+        double x = (t / period + phase) * 2 * Math.PI;
+        return a + (b - a) * (0.5 - 0.5 * Math.cos(x));
     }
 
     static Ellipse2D ell(double cx, double cy, double rx, double ry) {
