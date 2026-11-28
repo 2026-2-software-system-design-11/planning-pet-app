@@ -1,6 +1,7 @@
 package planningpet.app.view;
 
 import java.time.Clock;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -8,6 +9,7 @@ import java.util.function.BiConsumer;
 import javax.swing.Timer;
 import planningpet.app.controller.AppController;
 import planningpet.app.controller.DayWatcher;
+import planningpet.home.view.MainScreen;
 import planningpet.schedule.model.Reminder;
 
 /** 30초 타이머와 운영체제 알림(07). 06 23번 날 바뀜과 17번 일정 시작 알림을 본다(docs/porting/tray.md). */
@@ -16,15 +18,21 @@ public final class Tray {
     static final int PERIOD_MS = 30_000;
     private final AppController app;
     private final DayWatcher watcher;
+    private final AppWindow window;
+    private final MainScreen home;
     /** 창을 보이고 앞으로 가져온다. Main이 넣는다. */
     private final Runnable front;
     private final Timer timer;
     /** 운영체제 알림(제목, 내용). 트레이 아이콘을 달면 그 아이콘의 알림이 된다. 검사가 바꿔 끼운다. */
     BiConsumer<String, String> notify = (title, text) -> { };
+    /** 마지막으로 띄운 일정 시작 알림의 할 일 날짜. 그 뒤 첫 사건을 알림 누르기로 본다. */
+    private LocalDate alerted;
 
-    public Tray(AppController app, DayWatcher watcher, Clock clock, Runnable front) {
+    public Tray(AppController app, DayWatcher watcher, Clock clock, AppWindow window, MainScreen home, Runnable front) {
         this.app = app;
         this.watcher = watcher;
+        this.window = window;
+        this.home = home;
         this.front = front;
         timer = new Timer(PERIOD_MS, e -> tick(LocalDateTime.now(clock)));
     }
@@ -36,12 +44,30 @@ public final class Tray {
 
     Timer timer() { return timer; }
 
-    /** 날 바뀜을 먼저 보고 보낼 일정 시작 알림을 띄운다. */
+    /** 날 바뀜을 먼저 보고 보낼 일정 시작 알림을 띄운다. 알림의 날은 할 일의 date다(D-77로 다음 날 시작해도 목록이 있는 날). */
     void tick(LocalDateTime now) {
         watcher.tick(now);
         for (Reminder r : app.dueReminders(now)) {
             notify.accept(r.title(), r.text());
+            alerted = r.task().getDate();
         }
+    }
+
+    /**
+     * 알림이나 트레이 아이콘의 사건. Java가 둘을 가르지 못해 알림 뒤 첫 사건을 알림 누르기로 보고, 창을 앞으로 가져와 홈에서 그 날을
+     * 고르고 15번을 부른다(seq-uc13). 그 밖의 사건은 열기와 같다.
+     */
+    void clicked() {
+        LocalDate day = alerted;
+        alerted = null;
+        if (day == null) {
+            open();
+            return;
+        }
+        front.run();
+        window.show("홈");
+        home.showDay(day);
+        app.onWindowShown();
     }
 
     /** 트레이 메뉴의 이름과 할 일(06 25번). 열기는 창을 보이고 15번을 부르고, 끝내기는 앱을 끝낸다. */
