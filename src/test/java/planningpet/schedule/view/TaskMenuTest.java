@@ -7,6 +7,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -70,5 +73,17 @@ class TaskMenuTest {
             ((JMenuItem) m.getComponent(1)).doClick();
         }
         assertEquals(List.of("수정 보고서", "삭제 보고서", "수정 빨래", "삭제 빨래"), heard);
+    }
+
+    @Test
+    void eMenu3Looks() throws IOException {
+        JPopupMenu m = menu(task("보고서", false));
+        Snap.layOut(m, 47, 51);
+        Snap.blank(m);
+        BufferedImage img = new BufferedImage(51, 55, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = img.createGraphics();
+        m.paint(g);
+        g.dispose();
+        Snap.assertLooksLikePrototype("menu", img);
     }
 }
