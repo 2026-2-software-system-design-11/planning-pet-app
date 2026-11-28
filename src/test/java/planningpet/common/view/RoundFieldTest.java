@@ -4,9 +4,13 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
+import java.awt.Component;
+import java.awt.DefaultKeyboardFocusManager;
 import java.awt.Dimension;
 import java.awt.Insets;
+import java.awt.KeyboardFocusManager;
 import java.awt.Rectangle;
+import java.awt.event.FocusEvent;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -38,6 +42,13 @@ class RoundFieldTest {
     /** 창 없이 칸에 마우스가 들어오고 나가는 알림. */
     private static void mouse(RoundField f, int id) {
         f.dispatchEvent(new MouseEvent(f, id, 0, 0, 5, 5, 0, false));
+    }
+
+    /** 창 없이 초점을 주려고 setGlobalFocusOwner를 연다(RoundButtonUITest와 같다). 검사 동안만 건다. */
+    private static final class Focus extends DefaultKeyboardFocusManager {
+        void own(Component c) {
+            setGlobalFocusOwner(c);
+        }
     }
 
     /** 다시 그리라고 한 자리를 모은다. */
@@ -80,6 +91,34 @@ class RoundFieldTest {
         looks("over", f, 300, 40);
         mouse(f, MouseEvent.MOUSE_EXITED);
         looks("pencil", f, 300, 40);
+    }
+
+    @Test
+    void eRound4Focus() throws IOException {
+        Focus focus = new Focus();
+        KeyboardFocusManager.setCurrentKeyboardFocusManager(focus);
+        try {
+            RoundField f = pencil();
+            focus.own(f);
+            looks("focus", f, 300, 40);
+            mouse(f, MouseEvent.MOUSE_ENTERED);
+            looks("focus", f, 300, 40);
+            f = new RoundField(null, null);
+            focus.own(f);
+            looks("focus-none", f, 300, 40);
+            f = pencil();
+            f.setEnabled(false);
+            focus.own(f);
+            looks("focus-disabled", f, 300, 40);
+            RoundField p = new RoundField(Icons.Kind.PENCIL, "할 일을 쓰고 Enter");
+            focus.own(p);
+            int[] withPlaceholder = pixels(p, "");
+            RoundField plain = pencil();
+            focus.own(plain);
+            assertFalse(Arrays.equals(pixels(plain, ""), withPlaceholder), "초점이 있어도 예시 글을 그린다");
+        } finally {
+            KeyboardFocusManager.setCurrentKeyboardFocusManager(null);
+        }
     }
 
     @Test
@@ -126,6 +165,10 @@ class RoundFieldTest {
             Rectangle all = new Rectangle(0, 0, 300, 40);
             assertEquals(all, d.after(() -> mouse(f, MouseEvent.MOUSE_ENTERED)));
             assertEquals(all, d.after(() -> mouse(f, MouseEvent.MOUSE_EXITED)));
+            FocusEvent gained = new FocusEvent(f, FocusEvent.FOCUS_GAINED);
+            assertEquals(all, d.after(() -> Arrays.stream(f.getFocusListeners()).forEach(l -> l.focusGained(gained))));
+            FocusEvent lost = new FocusEvent(f, FocusEvent.FOCUS_LOST);
+            assertEquals(all, d.after(() -> Arrays.stream(f.getFocusListeners()).forEach(l -> l.focusLost(lost))));
             assertEquals(all, d.after(() -> f.replaceSelection("가")));
         } finally {
             RepaintManager.setCurrentManager(null);
