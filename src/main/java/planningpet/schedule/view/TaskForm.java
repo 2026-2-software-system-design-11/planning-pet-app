@@ -4,6 +4,8 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -24,6 +26,8 @@ import javax.swing.SpinnerListModel;
 import planningpet.common.view.Theme;
 import planningpet.common.view.Ui;
 import planningpet.schedule.model.Category;
+import planningpet.schedule.model.DefaultDates;
+import planningpet.schedule.model.Kind;
 
 /**
  * 일정 입력 창의 칸(05 일정 입력 창 1~11번). 창 없이 만들 수 있다. 지금은 추가 창의 칸과 처음 값, 칸에 쓴 값 draft()만 있고, 칸끼리 켜고
@@ -62,12 +66,14 @@ final class TaskForm {
     final Map<String, JLabel> errors = new LinkedHashMap<>();
     private int row;
 
-    /** weekStart는 요일 단추 차례의 한 주 시작(D-94). */
-    TaskForm(DayOfWeek weekStart) {
+    /** 추가 창의 칸. date는 06 14번 forAdd가 고른 날, weekStart는 마감 기본값과 요일 단추 차례의 한 주 시작(D-91, D-94). */
+    TaskForm(LocalDate date, LocalDateTime now, DayOfWeek weekStart) {
+        Ui.limit(title, 100);
+        Ui.limit(memo, 1000);
         ButtonGroup kinds = new ButtonGroup();
         kinds.add(task);
         kinds.add(fixed);
-        Ui.dayEditor(date, "yyyy-MM-dd (E)");
+        Ui.dayEditor(this.date, "yyyy-MM-dd (E)");
         Ui.dayEditor(repeatEnd, "yyyy-MM-dd");
         Ui.dayEditor(due, "yyyy-MM-dd");
         for (int i = 0; i < 7; i++) {
@@ -84,7 +90,7 @@ final class TaskForm {
         line("제목", title);
         line("", errors.get("제목"));
         line("유형", Ui.flow(category));
-        dateLabel = line("날짜", date);
+        dateLabel = line("날짜", this.date);
         line("기간", Ui.flow(period, periodHint, dueLabel, due));
         line("", errors.get("마감"));
         line("시작 시각", Ui.flow(timed, start, realTime));
@@ -104,6 +110,11 @@ final class TaskForm {
         line("", repeatHint);
         line("메모", new JScrollPane(memo));
         line("", errors.get("메모"));
+        category.setSelectedItem(Category.OTHER.label());
+        Ui.setDate(this.date, date);
+        Ui.setDate(due, DefaultDates.dueFor(date, weekStart));
+        Ui.setDate(repeatEnd, DefaultDates.repeatEndFor(Kind.TASK, date));
+        start.setValue(Times.value(DefaultDates.defaultStart(date, now)));
     }
 
     /** 이름 칸과 칸을 한 줄에 놓는다. 이름 칸을 돌려준다. */
