@@ -54,6 +54,11 @@ class PetCardTest {
                 done, done ? LocalDate.of(2026, 11, 20) : null, 0, 0, null, null);
     }
 
+    /** 고른 펫과 bubble의 펫 말을 그리는 카드. */
+    static PetCard card(AppData data, Bubble bubble) {
+        return new PetCard(data, bubble);
+    }
+
     /** w x h 카드를 그리고 이름 줄과 경험치 줄의 글 띠를 자홍색으로 덮어 기준 그림과 견준다(S3n). */
     static void assertCovered(String name, PetCard c, int w, int h) throws IOException {
         Snap.layOut(c, w, h);
@@ -81,7 +86,7 @@ class PetCardTest {
 
     @Test
     void ePcard1CardSizes() throws IOException {
-        PetCard c = new PetCard(data(PetKind.CAT, 0), new Bubble());
+        PetCard c = card(data(PetKind.CAT, 0), new Bubble());
         assertEquals(new Dimension(360, 240), c.getPreferredSize());
         assertEquals(new Dimension(300, 210), c.getMinimumSize());
         // 이름 줄의 글은 덮은 띠 안이라 수로 본다(S3n E-PCOL-1).
@@ -94,7 +99,7 @@ class PetCardTest {
     /** 창 없이 그리면 시각 0이다(E-PCARD-1). 시계는 처음 붙일 때 만든 40밀리초 시계이고 떼면 멈춘다. */
     @Test
     void ePcard4Clock() throws IOException {
-        PetCard c = new PetCard(data(PetKind.CAT, 0), new Bubble());
+        PetCard c = card(data(PetKind.CAT, 0), new Bubble());
         assertNull(c.clock);
         c.addNotify();
         try {
@@ -119,7 +124,7 @@ class PetCardTest {
     @Test
     void ePcard5OddSizes() throws IOException {
         AppData d = data(PetKind.CAT, 0);
-        PetCard c = new PetCard(d, new Bubble());
+        PetCard c = card(d, new Bubble());
         int[][] sizes = {{0, 0}, {4, 8}, {20, 20}, {120, 60}, {300, 100}, {1600, 300}, {360, 600}};
         double[] fill = {0, 1.6429, 6.5, 0.5, 0.6795, 0.8045, 0.3692};
         for (int i = 0; i < sizes.length; i++) {
@@ -137,7 +142,7 @@ class PetCardTest {
     void ePcard6PoseDrawsSitting() throws IOException {
         AppData d = data(PetKind.CAT, 0);
         d.activePet().setPose(Pose.SLEEP);
-        assertCovered("size-360x240", new PetCard(d, new Bubble()), 360, 240);
+        assertCovered("size-360x240", card(d, new Bubble()), 360, 240);
     }
 
     @Test
@@ -147,7 +152,7 @@ class PetCardTest {
         dog.setExp(240);
         d.addPet(dog);
         d.setActiveKind(PetKind.DOG);
-        PetCard c = new PetCard(d, new Bubble());
+        PetCard c = card(d, new Bubble());
         assertCovered("two-dog", c, 360, 240);
         List<JComponent> asked = new ArrayList<>();
         RepaintManager before = RepaintManager.currentManager(c);
@@ -170,7 +175,7 @@ class PetCardTest {
     /** 경험치 막대는 "경험치" 알약 뒤에 온다. 알약 폭은 글꼴에 달려 테스트 때의 글꼴로 잰다(S3n E-PCOL-1). */
     @Test
     void ePcol1ExpBarPlace() {
-        PetCard c = new PetCard(data(PetKind.CAT, 0), new Bubble());
+        PetCard c = card(data(PetKind.CAT, 0), new Bubble());
         int chip = c.getFontMetrics(Theme.bold(11)).stringWidth("경험치") + 16;
         int[][] cases = {{360, 240, 152, 192, 51}, {300, 210, 128, 156, 51}, {800, 500, 270, 514, 131}, {120, 60, 128, -24, 51}};
         for (int[] k : cases) {
@@ -186,7 +191,7 @@ class PetCardTest {
             "Lv. 10 최고 레벨", "Lv. 10 최고 레벨", "Lv. 1 경험치 -5 / 50"};
         double[] ratios = {0.98, 0, 80 / 110.0, 329 / 330.0, 1, 1, 0};
         for (int i = 0; i < exps.length; i++) {
-            PetCard c = new PetCard(data(PetKind.CAT, exps[i]), new Bubble());
+            PetCard c = card(data(PetKind.CAT, exps[i]), new Bubble());
             assertEquals(texts[i], c.levelText() + " " + c.expText());
             assertEquals(ratios[i], c.expBar.ratio(), 1e-9);
             for (String size : new String[] {"360x240", "300x210"}) {
@@ -199,7 +204,7 @@ class PetCardTest {
     @Test
     void ePcol7Change() throws IOException {
         AppData d = data(PetKind.CAT, 0);
-        PetCard c = new PetCard(d, new Bubble());
+        PetCard c = card(d, new Bubble());
         d.activePet().setExp(210);
         assertEquals(0, c.expBar.ratio());
         d.changed();
@@ -212,7 +217,7 @@ class PetCardTest {
         AppData d = data(kind, 0);
         d.clearPets();
         d.addPet(new PetState(kind, name));
-        return new PetCard(d, new Bubble());
+        return card(d, new Bubble());
     }
 
     /** 이름은 이름 자리(열 폭 - 22 - 레벨 폭 - 10 - 종류 폭 - 5)에 맞춰 Ui.fit으로 준다. 글은 덮은 띠 안이다(S3n E-PCOL-2~4). */
@@ -233,7 +238,7 @@ class PetCardTest {
     /** 카드가 250보다 높으면 오른쪽 열이 넘는 몫의 1/3만큼 내려온다. 아주 작은 카드도 예외 없이 그린다(S3n E-PCOL-6). */
     @Test
     void ePcol6TallAndTiny() throws IOException {
-        PetCard c = new PetCard(data(PetKind.CAT, 0), new Bubble());
+        PetCard c = card(data(PetKind.CAT, 0), new Bubble());
         for (int[] s : new int[][] {{360, 280}, {360, 340}, {360, 600}, {1600, 300}, {300, 100}, {120, 60}, {0, 0}}) {
             assertCovered("col-tall-" + s[0] + "x" + s[1], c, s[0], s[1]);
         }
@@ -242,7 +247,7 @@ class PetCardTest {
     /** 칸 막대는 작은 카드 + 34에 열 폭 - 24다. 자리는 글꼴에 달리지 않아 덮지 않는다(S3o E-PTODAY-1). */
     @Test
     void ePtoday1MiniCard() {
-        PetCard c = new PetCard(data(PetKind.CAT, 0), new Bubble());
+        PetCard c = card(data(PetKind.CAT, 0), new Bubble());
         assertEquals("오늘 끝낸 일 0 / 0", c.doneText());
         int[][] cases = {{360, 240, 164, 121, 168}, {300, 210, 140, 121, 132}, {800, 500, 282, 201, 490}, {120, 60, 140, 121, 20}};
         for (int[] k : cases) {
@@ -261,7 +266,7 @@ class PetCardTest {
             for (int j = 0; j < tasks.length; j++) {
                 tasks[j] = task("일" + j, 20, 0, j < counts[i][0]);
             }
-            PetCard c = new PetCard(data(PetKind.CAT, 0, tasks), new Bubble());
+            PetCard c = card(data(PetKind.CAT, 0, tasks), new Bubble());
             assertEquals("오늘 끝낸 일 " + counts[i][0] + " / " + counts[i][1], c.doneText());
             assertEquals(counts[i][0] / (double) counts[i][1], c.doneBar.ratio(), 1e-9);
             assertEquals(segments[i], c.doneBar.segments());
@@ -276,16 +281,16 @@ class PetCardTest {
     /** 기간 할 일 줄은 덮은 띠 안이라 글을 수로 보고, 작은 카드가 70으로 길어진 것을 그림으로 본다(S3o E-PTODAY-3). */
     @Test
     void ePtoday3PeriodLine() throws IOException {
-        PetCard one = new PetCard(data(PetKind.CAT, 0, task("할 일", 20, 0, true), task("E사 지원서", 16, 22, false)), new Bubble());
+        PetCard one = card(data(PetKind.CAT, 0, task("할 일", 20, 0, true), task("E사 지원서", 16, 22, false)), new Bubble());
         assertEquals(List.of("오늘 끝낸 일 1 / 1", "기간 할 일 1개 (~11/22)"), List.of(one.doneText(), one.periodText()));
         for (int[] s : new int[][] {{360, 240}, {300, 210}, {800, 500}}) {
             assertCovered("period-1-" + s[0] + "x" + s[1], one, s[0], s[1]);
         }
-        PetCard two = new PetCard(data(PetKind.CAT, 0, task("멀리", 18, 25, false), task("가까이", 19, 21, false),
+        PetCard two = card(data(PetKind.CAT, 0, task("멀리", 18, 25, false), task("가까이", 19, 21, false),
                 task("끝냄", 16, 24, true)), new Bubble());
         assertEquals(List.of("오늘 끝낸 일 1 / 1", "기간 할 일 2개 (~11/21)"), List.of(two.doneText(), two.periodText()));
         assertCovered("period-2-360x240", two, 360, 240);
-        PetCard due = new PetCard(data(PetKind.CAT, 0, task("오늘 마감", 16, 20, false)), new Bubble());
+        PetCard due = card(data(PetKind.CAT, 0, task("오늘 마감", 16, 20, false)), new Bubble());
         assertEquals("오늘 끝낸 일 0 / 1", due.doneText());
         assertEquals(null, due.periodText());
         assertCovered("period-dueday-360x240", due, 360, 240);
@@ -306,7 +311,7 @@ class PetCardTest {
                 Bubble said = new Bubble();
                 said.say(talks[t][1]);
                 boolean period = i == sizes.length - 1; // 마지막은 기간 할 일 줄이 있어 작은 카드가 70이다.
-                PetCard c = new PetCard(period ? data(PetKind.CAT, 0, task("E사 지원서", 16, 22, false)) : data(PetKind.CAT, 0), said);
+                PetCard c = card(period ? data(PetKind.CAT, 0, task("E사 지원서", 16, 22, false)) : data(PetKind.CAT, 0), said);
                 int[] s = sizes[i];
                 assertCovered("talk-" + talks[t][0] + (period ? "-period-" : "-") + s[0] + "x" + s[1], c, s[0], s[1]);
                 assertEquals(heights[t] == null ? null : new Rectangle(s[2], s[3], s[4], heights[t][i]), c.bubbleBox);
@@ -320,7 +325,7 @@ class PetCardTest {
     void ePtoday7Change() throws IOException {
         AppData d = data(PetKind.CAT, 0, task("일", 20, 0, false), task("이", 20, 0, false));
         Bubble said = new Bubble();
-        PetCard c = new PetCard(d, said);
+        PetCard c = card(d, said);
         new planningpet.reward.model.Rewards(d).complete(d.getBook().getTasks().get(0), d.today());
         said.say("잘했어! +10P");
         assertEquals(0, c.doneBar.ratio());
