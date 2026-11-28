@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.awt.Component;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.DayOfWeek;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JLabel;
@@ -76,6 +77,43 @@ class SettingsScreenTest {
     @Test
     void eSet6InstalledHasNoText() {
         assertFalse(screen().autostartHint.isVisible());
+    }
+
+    @Test
+    void eSet10CalendarFixed() {
+        SettingsScreen s = screen();
+        s.calendarFixed.doClick();
+        assertEquals(List.of(true, 1), List.of(data.isCalendarFixed(), store.saves));
+        store.failing = true;
+        s.calendarFixed.doClick();
+        assertTrue(s.calendarFixed.isSelected());
+        assertEquals(List.of("달력에 고정 일정 보이기 저장에 실패해서 바꾸기 전으로 돌렸어요."), errors);
+    }
+
+    @Test
+    void eSet11WeekStart() {
+        SettingsScreen s = screen();
+        s.sunday.doClick();
+        assertEquals(List.of(DayOfWeek.SUNDAY, 1), List.of(data.getWeekStart(), store.saves));
+        data.setWeekStart(DayOfWeek.MONDAY);
+        data.changed();
+        assertTrue(s.monday.isSelected());
+        store.failing = true;
+        s.sunday.doClick();
+        assertEquals(List.of(DayOfWeek.MONDAY, true, false), List.of(data.getWeekStart(), s.monday.isSelected(), s.sunday.isSelected()));
+        assertEquals(List.of("한 주 시작 저장에 실패해서 바꾸기 전으로 돌렸어요."), errors);
+    }
+
+    @Test
+    void eSet12Samples() {
+        SettingsScreen s = screen();
+        assertEquals(List.of(false, "예시 일정이 없어요"), List.of(s.sampleButton.isEnabled(), s.sampleCount.getText()));
+        int[] pressed = {0};
+        s.samples = () -> 3;
+        s.clearSamples = () -> pressed[0]++;
+        s.refresh();
+        s.sampleButton.doClick();
+        assertEquals(List.of(true, "예시 일정 3개가 남아 있어요", 1), List.of(s.sampleButton.isEnabled(), s.sampleCount.getText(), pressed[0]));
     }
 
     @Test
