@@ -245,12 +245,14 @@ public final class TaskRows extends JPanel {
         return row;
     }
 
-    /** 메모가 있으면 마우스를 올렸을 때 200자까지 보인다(D-33). 줄바꿈은 줄바꿈으로 보인다. 공백뿐이면 null(docs/porting/task-rows.md S3aa). */
+    /** 메모가 있으면 마우스를 올렸을 때 200자까지 보인다(D-33). 글자 수는 코드 포인트로 센다(06 읽는 법). 공백뿐이면 null(docs/porting/task-rows.md S3aa). */
     static String memoTip(Task t) {
         if (t.getMemo().isBlank()) {
             return null;
         }
-        String m = t.getMemo().length() > 200 ? t.getMemo().substring(0, 200) + "…" : t.getMemo();
+        String memo = t.getMemo();
+        // 프로토타입과 일부러 다름: 프로토타입은 UTF-16 단위로 잘라 200번째 자리의 이모지를 반쪽으로 남겼다(porting.md 4절).
+        String m = memo.codePointCount(0, memo.length()) > 200 ? memo.substring(0, memo.offsetByCodePoints(0, 200)) + "…" : memo;
         return "<html><div style='width:280px'>" + Ui.esc(m).replace("\n", "<br>") + "</div></html>";
     }
 

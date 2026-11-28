@@ -360,8 +360,9 @@ class TaskRowTest {
     @Test
     void eMemo4Emoji() {
         String e = "\uD83D\uDE00";
-        tip("가".repeat(199) + e + "나", DIV + "가".repeat(199) + "\uD83D…" + END);
+        tip("가".repeat(199) + e + "나", DIV + "가".repeat(199) + e + "…" + END);
         tip(e.repeat(100), DIV + e.repeat(100) + END);
-        tip(e.repeat(101), DIV + e.repeat(100) + "…" + END);
+        tip(e.repeat(101), DIV + e.repeat(101) + END);
+        tip(e.repeat(201), DIV + e.repeat(200) + "…" + END);
     }
 }
