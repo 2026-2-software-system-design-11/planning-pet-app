@@ -20,6 +20,7 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
@@ -41,6 +42,8 @@ import planningpet.reward.controller.RewardController;
 public final class AppWindow {
     /** 05 창 구조의 창 제목. */
     public static final String TITLE = "플래닝펫 (Planning Pet)";
+    /** 05 그 밖의 창과 알림의 저장 실패 창 제목. */
+    static final String SAVE_FAILED = "저장하지 못했어요";
     private static final String COMMON = "공통";
     /** 메뉴와 화면 머리의 아이콘(디자인 시스템 9절). 표에 없는 이름은 발자국이다. */
     private static final Map<String, Icons.Kind> ICONS = Map.of("홈", Icons.Kind.HOME, "일정관리", Icons.Kind.CALENDAR,
@@ -259,6 +262,19 @@ public final class AppWindow {
         f.pack();
         f.setLocationRelativeTo(null);
         return f;
+    }
+
+    /**
+     * 저장 실패 창(05 그 밖의 창과 알림). AppController의 errors로 넘긴다. 부모 없이 화면 가운데에 뜨고 확인을 누를 때까지
+     * 기다린다(docs/porting/pick.md).
+     */
+    public static void saveFailed(String text) {
+        savePane(text).createDialog(null, SAVE_FAILED).setVisible(true);
+    }
+
+    /** 저장 실패 창 내용: 오류 창에 06 22번 문장. 버튼 글은 로캘을 따르지 않게 "확인"으로 정한다(못 읽음 창과 같다). */
+    static JOptionPane savePane(String text) {
+        return new JOptionPane(text, JOptionPane.ERROR_MESSAGE, JOptionPane.DEFAULT_OPTION, null, new Object[] {"확인"}, "확인");
     }
 
     /** 창 제목 줄의 발자국 아이콘(D-47). */

@@ -21,6 +21,7 @@ import javax.swing.Icon;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 import org.junit.jupiter.api.AfterEach;
@@ -340,6 +341,17 @@ class AppWindowTest {
         for (String[] row : want) {
             assertEquals(row[1], AppWindow.twoLines(row[0]), row[0]);
         }
+    }
+
+    /** docs/porting/pick.md의 E-SFAIL-1. 창은 headless에서 띄울 수 없어 창 내용과 제목을 본다. */
+    @Test
+    void eSfail1SaveFailedPane() {
+        String text = "반려동물 고르기 저장에 실패해서 바꾸기 전으로 돌렸어요.";
+        JOptionPane pane = AppWindow.savePane(text);
+        assertEquals(List.of(text, JOptionPane.ERROR_MESSAGE, JOptionPane.DEFAULT_OPTION, List.of("확인"), "확인"),
+                List.of(pane.getMessage(), pane.getMessageType(), pane.getOptionType(), List.of(pane.getOptions()),
+                        pane.getInitialValue()));
+        assertEquals("저장하지 못했어요", AppWindow.SAVE_FAILED);
     }
 
     @Test
