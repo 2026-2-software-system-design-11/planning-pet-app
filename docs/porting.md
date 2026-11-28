@@ -95,6 +95,7 @@
 | S4b | 입력 창 도우미 | `common.view`의 `Ui`(`flow`, `minutes`, `dayEditor`, `dateOf`, `setDate`), `schedule.view`의 패키지 안 `Times`(#505) | 14번 T-DEF-13, T-DEF-14의 글 꼴(05 일정 입력 창 3, 5, 6번, D-38, D-43, D-77) | [docs/porting/task-dialog.md](porting/task-dialog.md) |
 | S4c | 고르는 칸 | `Icons`의 `DOWN`, `common.view`의 `ComboUI`, `Theme.install`의 고르는 칸 줄(#506) | 없음(05 일정 입력 창, 디자인 시스템 5절, D-97) | [docs/porting/task-dialog.md](porting/task-dialog.md) |
 | S4f | 입력 창 칸과 처음 값 | `schedule.view`의 패키지 안 `TaskForm`(칸, `line`, 제목 100자와 메모 1000자 막기, 추가 창의 처음 값, `draft()`, #509) | 없음(05 일정 입력 창 1~11번, 06 14번의 처음 값, D-54, D-64, D-65, D-91, D-94) | [docs/porting/task-dialog.md](porting/task-dialog.md) |
+| S4g | 입력 창 칸끼리 켜고 끄기와 끝 시각 글 | `schedule.view`의 패키지 안 `TaskForm`의 칸 듣는 이와 `sync()`(종류, 정하기, 기간, 반복, 요일 단추, 반복 끝 칸 켜고 끄기, 날짜 칸 이름, 끝 시각 글, 실제 날과 시각, 30분 안내, #510) | 3번 T-ADD-8의 창 몫, 14번 T-DEF-13과 T-DEF-14의 창 글자, 16번 T-TALK-28의 요일 단추(05 일정 입력 창 1, 4~7, 11번, D-16, D-43, D-65, D-68, D-73, D-77, D-94) | [docs/porting/task-dialog.md](porting/task-dialog.md) |
 | S4 | 일정 입력 창 | `TaskDialog`, `TaskController.add`, `update`, `delete`, 고르는 칸 `ComboUI`와 그것을 거는 `Theme.install`의 줄([theme.md](porting/theme.md)) | 2~5번, 14번 | [docs/porting/task-dialog.md](porting/task-dialog.md) |
 | S5 | 일정관리 | `ScheduleScreen`, `TimetablePanel`, `TimeEditor`, `TaskController.clearTime` | 4번의 시각 고치기 창, 7번, 19번 | `docs/porting/schedule.md` |
 | S6 | 자동 배치 결과 창 | `AutoPlaceDialog`, `TaskController.applyPlacement` | 18번 | `docs/porting/auto-place-dialog.md` |
