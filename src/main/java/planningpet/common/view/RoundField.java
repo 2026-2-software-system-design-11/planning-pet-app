@@ -8,8 +8,8 @@ import javax.swing.BorderFactory;
 import javax.swing.JTextField;
 
 /**
- * 알약 모양 입력칸(디자인 시스템 9절, 07). 흰 바탕에 CARD_LINE 가장자리, 비었을 때 흐린 예시 글. 아이콘이 있으면 왼쪽에
- * 아이콘 자리를 둔다. 홈 빠른 추가와 반려동물 이름 칸이 쓴다.
+ * 알약 모양 입력칸(디자인 시스템 9절, 07). 흰 바탕에 CARD_LINE 가장자리, 왼쪽에 선 아이콘, 비었을 때 흐린 예시 글.
+ * 홈 빠른 추가와 반려동물 이름 칸이 쓴다.
  */
 public final class RoundField extends JTextField {
     private final Icons.Kind kind;
@@ -35,6 +35,10 @@ public final class RoundField extends JTextField {
         g.fillRoundRect(0, 0, w, h, h, h);
         g.setColor(Theme.CARD_LINE);
         g.drawRoundRect(0, 0, w, h, h, h);
+        int s = 18;
+        if (kind != null) {
+            Icons.draw(g, kind, 15, (h - s) / 2, s, Theme.INK_SUB);
+        }
         if (getText().isEmpty() && placeholder != null) {
             g.setColor(Theme.INK_DIM);
             g.setFont(getFont());

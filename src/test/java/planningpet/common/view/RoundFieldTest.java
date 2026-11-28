@@ -31,6 +31,13 @@ class RoundFieldTest {
     }
 
     @Test
+    void eRound1Plain() throws IOException {
+        RoundField f = pencil();
+        assertEquals(new Insets(8, 40, 8, 16), f.getInsets());
+        looks("pencil", f, 300, 40);
+    }
+
+    @Test
     void eRound2NoIcon() throws IOException {
         RoundField f = new RoundField(null, null);
         assertEquals(new Insets(8, 18, 8, 16), f.getInsets());
