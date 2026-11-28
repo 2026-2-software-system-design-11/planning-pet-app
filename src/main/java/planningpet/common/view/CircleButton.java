@@ -1,5 +1,6 @@
 package planningpet.common.view;
 
+import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -46,6 +47,10 @@ public final class CircleButton extends JButton {
             // 바탕 없는 버튼도 마우스를 올리면 연민트 원이 떠서 누르는 곳임을 보인다.
             g.setColor(down ? Theme.MINT_SOFT : Theme.MINT_PALE);
             g.fillOval(x, y, d, d);
+        }
+        if (isFocusOwner() && isEnabled()) {
+            g.setColor(new Color(0x1F, 0xB9, 0x9C, 110));
+            g.drawOval(x + 1, y + 1, d - 2, d - 2);
         }
         int s = d * 11 / 20;
         Icons.draw(g, kind, x + (d - s) / 2, y + (d - s) / 2, s, isEnabled() ? Theme.ICON : Theme.INK_DIM);

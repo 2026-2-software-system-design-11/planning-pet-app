@@ -5,8 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.awt.Component;
 import java.awt.Cursor;
+import java.awt.DefaultKeyboardFocusManager;
 import java.awt.Dimension;
+import java.awt.KeyboardFocusManager;
 import java.io.IOException;
 import org.junit.jupiter.api.Test;
 
@@ -87,6 +90,34 @@ class CircleButtonTest {
         assertEquals(new Dimension(0, 0), zero.getPreferredSize());
         assertNull(zero.getToolTipText());
         assertEquals("", zero.getAccessibleContext().getAccessibleName());
+    }
+
+    /** 창 없이 초점을 주려고 setGlobalFocusOwner를 연다(RoundButtonUITest와 같다). 검사 동안만 건다. */
+    private static final class Focus extends DefaultKeyboardFocusManager {
+        void own(Component c) {
+            setGlobalFocusOwner(c);
+        }
+    }
+
+    @Test
+    void eCbtn5KeyboardFocus() throws IOException {
+        Focus focus = new Focus();
+        KeyboardFocusManager.setCurrentKeyboardFocusManager(focus);
+        try {
+            CircleButton b = button(Icons.Kind.LEFT, 32, false);
+            focus.own(b);
+            looks("focus", b, 32, 32);
+            b = button(Icons.Kind.LEFT, 32, false);
+            b.setEnabled(false);
+            focus.own(b);
+            looks("focus-disabled", b, 32, 32);
+            looks("disabled", b, 32, 32);
+            b = button(Icons.Kind.RIGHT, 30, true);
+            focus.own(b);
+            looks("focus-plain", b, 30, 30);
+        } finally {
+            KeyboardFocusManager.setCurrentKeyboardFocusManager(null);
+        }
     }
 
     @Test
