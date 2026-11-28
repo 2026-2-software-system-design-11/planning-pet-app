@@ -1,11 +1,13 @@
 package planningpet.common.view;
 
 import java.awt.Component;
+import java.awt.DefaultKeyboardFocusManager;
+import java.awt.KeyboardFocusManager;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
-/** 테스트가 함께 쓰는 창 없는 마우스 누르기(#520). */
+/** 테스트가 함께 쓰는 창 없는 마우스 누르기와 초점(#520). */
 public final class Input {
     private Input() {
     }
@@ -24,6 +26,30 @@ public final class Input {
         MouseEvent e = new MouseEvent(c, MouseEvent.MOUSE_CLICKED, 0, 0, 5, 5, 1, false, MouseEvent.BUTTON1);
         for (MouseListener l : c.getMouseListeners()) {
             l.mouseClicked(e);
+        }
+    }
+
+    /** 창 없이 초점을 줄 수 있는 관리자를 건다. try-with-resources로 쓰면 끝날 때 기본 관리자로 돌린다. */
+    public static Focus focus() {
+        Focus f = new Focus();
+        KeyboardFocusManager.setCurrentKeyboardFocusManager(f);
+        return f;
+    }
+
+    /** 창 없이 초점 주인을 정하는 관리자. 창이 없으면 requestFocus가 듣지 않아 setGlobalFocusOwner를 연다. */
+    public static final class Focus extends DefaultKeyboardFocusManager implements AutoCloseable {
+        private Focus() {
+        }
+
+        public void own(Component c) {
+            setGlobalFocusOwner(c);
+        }
+
+        /** 초점 주인은 관리자가 바뀌어도 남으므로 먼저 비우고 기본 관리자로 돌린다. */
+        @Override
+        public void close() {
+            setGlobalFocusOwner(null);
+            KeyboardFocusManager.setCurrentKeyboardFocusManager(null);
         }
     }
 }

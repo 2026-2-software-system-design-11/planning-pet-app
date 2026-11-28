@@ -1,15 +1,20 @@
 package planningpet.common.view;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.awt.KeyboardFocusManager;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.JButton;
 import javax.swing.JPanel;
 import org.junit.jupiter.api.Test;
 
-/** 공용 누르기 도우미 Input(#520). 글 없는 부품으로 본다. */
+/** 공용 누르기와 초점 도우미 Input(#520). 글 없는 부품으로 본다. */
 class InputTest {
     /** 받은 마우스 사건을 "번호 x,y 횟수 단추 눌린 단추"로 적는 판. */
     private static JPanel heard(List<String> out) {
@@ -56,5 +61,17 @@ class InputTest {
         Input.click(p);
         assertEquals(List.of(MouseEvent.MOUSE_CLICKED + " 5,5 1 1 false", MouseEvent.MOUSE_CLICKED + " 5,5 1 1 false"),
                 out);
+    }
+
+    @Test
+    void focusOwnsWithoutWindowAndRestores() {
+        JButton b = new JButton();
+        Input.Focus f = Input.focus();
+        try (f) {
+            f.own(b);
+            assertTrue(b.hasFocus());
+        }
+        assertNotSame(f, KeyboardFocusManager.getCurrentKeyboardFocusManager());
+        assertFalse(b.hasFocus());
     }
 }
