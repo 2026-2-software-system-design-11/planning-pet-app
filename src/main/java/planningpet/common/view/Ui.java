@@ -1,19 +1,36 @@
 package planningpet.common.view;
 
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextLayout;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Date;
+import java.util.Locale;
 import java.util.function.ToIntFunction;
+import javax.swing.JComponent;
+import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JSpinner;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
+import javax.swing.text.DateFormatter;
+import javax.swing.text.DefaultFormatterFactory;
 import javax.swing.text.Document;
 import javax.swing.text.DocumentFilter;
 import javax.swing.text.JTextComponent;
 
-/** 화면 여러 곳이 같이 쓰는 작은 부품. 입력칸과 칸 글이 쓰는 것, 툴팁의 HTML 글자 바꾸기만 옮겼고, 나머지는 그것을 쓰는 화면의 단위가 더한다(docs/porting/pick.md, home.md). */
+/**
+ * 화면 여러 곳이 같이 쓰는 작은 부품. 입력칸과 칸 글이 쓰는 것, 툴팁의 HTML 글자 바꾸기, 일정 입력 창의 칸 도우미만 옮겼고, 나머지는 그것을
+ * 쓰는 화면의 단위가 더한다(docs/porting/pick.md, home.md, task-dialog.md).
+ */
 public final class Ui {
     private Ui() {
     }
@@ -80,5 +97,61 @@ public final class Ui {
             cut = cut.substring(0, cut.offsetByCodePoints(cut.length(), -1));
         }
         return cut.strip() + "…";
+    }
+
+    /** 한 줄에 왼쪽부터 사이 4로 놓는 판. 일정 입력 창의 칸 줄과 단추 줄이 쓴다. */
+    public static JPanel flow(JComponent... parts) {
+        JPanel p = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
+        for (JComponent c : parts) {
+            p.add(c);
+        }
+        return p;
+    }
+
+    /** 걸리는 시간 칸(D-38). 10분부터 720분, 5분 단위다. 5분 단위가 아닌 값은 받지 않아 쳐 넣으면 이전 값으로 돌아간다. */
+    public static JSpinner minutes(int value) {
+        return new JSpinner(new SpinnerNumberModel(value, 10, 720, 5) {
+            @Override
+            public void setValue(Object v) {
+                if (v instanceof Number n && n.intValue() % 5 != 0) {
+                    throw new IllegalArgumentException("5분 단위가 아님");
+                }
+                super.setValue(v);
+            }
+        });
+    }
+
+    /**
+     * 날짜 칸(D-43). 화살표가 커서 자리(처음에는 연도) 대신 늘 하루씩 바꾸도록 DateEditor가 아닌 기본 편집기에 날짜 형식을 붙인다.
+     * SpinnerDateModel의 기본 단위가 하루다. 형식에 맞지 않는 글은 칸을 벗어날 때 이전 값으로 돌아간다(05 일정 입력 창 3번).
+     * 요일 글은 05 그림대로 운영체제 로캘과 관계없이 한국어다. 프로토타입과 일부러 다름(운영체제 로캘을 따랐다, docs/porting.md 4절).
+     */
+    public static void dayEditor(JSpinner s, String pattern) {
+        JSpinner.DefaultEditor editor = new JSpinner.DefaultEditor(s);
+        JFormattedTextField field = editor.getTextField();
+        field.setEditable(true);
+        // 날짜 자리만 엄격히 읽어 없는 날짜(11-31)를 다음 달로 굴려 받지 않고 형식 오류처럼 이전 값으로 돌아간다. 프로토타입과 일부러
+        // 다름(porting.md 4절). 친 요일은 프로토타입처럼 읽지 않아 "2026-11-20 (월)"도 11-20이다. parse는 날짜 뒤의 요일 글을 남겨 둔다.
+        SimpleDateFormat day = new SimpleDateFormat(pattern.replace(" (E)", ""), Locale.KOREAN);
+        day.setLenient(false);
+        field.setFormatterFactory(new DefaultFormatterFactory(new DateFormatter(new SimpleDateFormat(pattern, Locale.KOREAN)) {
+            @Override
+            public Object stringToValue(String text) throws ParseException {
+                Object value = super.stringToValue(text);
+                day.parse(text);
+                return value;
+            }
+        }));
+        s.setEditor(editor);
+    }
+
+    /** 날짜 칸의 날. 칸 값은 운영체제 시간대의 그날 00:00이다. */
+    public static LocalDate dateOf(JSpinner s) {
+        return ((Date) s.getValue()).toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+    }
+
+    /** 날짜 칸에 날을 넣는다. */
+    public static void setDate(JSpinner s, LocalDate d) {
+        s.setValue(Date.from(d.atStartOfDay(ZoneId.systemDefault()).toInstant()));
     }
 }

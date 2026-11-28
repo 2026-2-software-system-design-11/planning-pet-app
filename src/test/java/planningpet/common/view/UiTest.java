@@ -2,17 +2,34 @@ package planningpet.common.view;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.FontMetrics;
+import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.text.ParseException;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Locale;
+import javax.swing.JButton;
+import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JSpinner;
 import javax.swing.JTextField;
+import javax.swing.SpinnerDateModel;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.text.BadLocationException;
 import org.junit.jupiter.api.Test;
 
-/** 입력칸과 칸 글, HTML 글자의 도우미. 번호는 docs/porting/pick.md 2절, home.md S3d 2절(E-FIT), S3q 2절(E-ESC). */
+/** 입력칸과 칸 글, HTML 글자, 입력 창 칸의 도우미. 번호는 docs/porting/pick.md 2절, home.md S3d 2절(E-FIT), S3q 2절(E-ESC), task-dialog.md S4b 2절(E-UI). */
 class UiTest {
     private static final String TEN = "가나다라마바사아자차";
     private static final String SMILE = "😀";
@@ -181,5 +198,154 @@ class UiTest {
         assertEquals("a&amp;&amp;b&gt;&gt;", Ui.esc("a&&b>>"));
         assertEquals("plain 글", Ui.esc("plain 글"));
         assertThrows(NullPointerException.class, () -> Ui.esc(null));
+    }
+
+    private static final LocalDate NOV16 = LocalDate.of(2026, 11, 16);
+    private static final String WEEKDAY = "yyyy-MM-dd (E)";
+
+    /** pattern 형식의 날짜 칸에 d를 넣는다. 요일 글은 만들 때의 기본 로캘을 따른다. */
+    private static JSpinner day(String pattern, LocalDate d) {
+        JSpinner s = new JSpinner(new SpinnerDateModel());
+        Ui.dayEditor(s, pattern);
+        Ui.setDate(s, d);
+        return s;
+    }
+
+    private static JFormattedTextField editor(JSpinner s) {
+        return ((JSpinner.DefaultEditor) s.getEditor()).getTextField();
+    }
+
+    /** 칸의 화살표 동작(increment, decrement). */
+    private static void arrow(JSpinner s, String name) {
+        s.getActionMap().get(name).actionPerformed(new ActionEvent(s, ActionEvent.ACTION_PERFORMED, name));
+    }
+
+    /** 칸 글을 typed로 바꾸고 넣어 본다. 형식 오류면 값이 그대로다. */
+    private static void type(JSpinner s, String typed) {
+        editor(s).setText(typed);
+        try {
+            editor(s).commitEdit();
+        } catch (ParseException e) {
+            // 칸을 벗어날 때 이전 값으로 돌아간다(05 일정 입력 창 3번).
+        }
+    }
+
+    /** 기본 로캘을 locale로 두고 run을 부른 뒤 되돌린다. */
+    private static void inLocale(Locale locale, Runnable run) {
+        Locale before = Locale.getDefault();
+        Locale.setDefault(locale);
+        try {
+            run.run();
+        } finally {
+            Locale.setDefault(before);
+        }
+    }
+
+    @Test
+    void eUi1Flow() {
+        JLabel label = new JLabel("가");
+        label.setPreferredSize(new Dimension(30, 20));
+        JButton button = new JButton("x");
+        button.setPreferredSize(new Dimension(50, 26));
+        JPanel p = Ui.flow(label, button);
+        FlowLayout f = (FlowLayout) p.getLayout();
+        assertEquals(List.of(FlowLayout.LEFT, 4, 0), List.of(f.getAlignment(), f.getHgap(), f.getVgap()));
+        assertEquals(List.of(label, button), List.of(p.getComponents()));
+        assertTrue(p.isOpaque());
+        assertEquals(new Dimension(92, 26), p.getPreferredSize());
+        p.setSize(200, 30);
+        p.doLayout();
+        assertEquals(List.of(new Rectangle(4, 3, 30, 20), new Rectangle(38, 0, 50, 26)), List.of(label.getBounds(), button.getBounds()));
+        assertEquals(new Dimension(8, 0), Ui.flow().getPreferredSize());
+    }
+
+    @Test
+    void eUi2Minutes() {
+        JSpinner s = Ui.minutes(30);
+        SpinnerNumberModel m = (SpinnerNumberModel) s.getModel();
+        assertEquals(List.of(30, 10, 720, 5), List.of(s.getValue(), m.getMinimum(), m.getMaximum(), m.getStepSize()));
+        assertInstanceOf(JSpinner.NumberEditor.class, s.getEditor());
+        s.setValue(10);
+        assertNull(s.getPreviousValue());
+        s.setValue(720);
+        assertNull(s.getNextValue());
+        assertEquals(715, s.getPreviousValue());
+        assertEquals("5분 단위가 아님", assertThrows(IllegalArgumentException.class, () -> s.setValue(27)).getMessage());
+        s.setValue(730); // 범위는 보지 않는다
+        assertEquals(730, s.getValue());
+        for (String typed : List.of("27", "730", "5", "45")) {
+            JSpinner t = Ui.minutes(30);
+            type(t, typed);
+            assertEquals(typed.equals("45") ? 45 : 30, t.getValue(), typed);
+        }
+        assertThrows(IllegalArgumentException.class, () -> Ui.minutes(5));
+        assertEquals(27, Ui.minutes(27).getValue());
+    }
+
+    @Test
+    void eUi3DayEditor() {
+        // 프로토타입과 일부러 다름: 운영체제 로캘이 en_US여도 요일은 한국어다(프로토타입은 "(Mon)").
+        inLocale(Locale.US, () -> assertEquals("2026-11-16 (월)", editor(day(WEEKDAY, NOV16)).getText()));
+        inLocale(Locale.KOREA, () -> {
+            JSpinner s = day(WEEKDAY, NOV16);
+            assertEquals("2026-11-16 (월)", editor(s).getText());
+            assertEquals(JSpinner.DefaultEditor.class, s.getEditor().getClass());
+            assertTrue(editor(s).isEditable());
+            editor(s).setCaretPosition(0); // 연도 자리
+            arrow(s, "increment");
+            assertEquals(List.of(LocalDate.of(2026, 11, 17), "2026-11-17 (화)"), List.of(Ui.dateOf(s), editor(s).getText()));
+            arrow(s, "decrement");
+            arrow(s, "decrement");
+            assertEquals(LocalDate.of(2026, 11, 15), Ui.dateOf(s));
+            for (String typed : List.of("abc", "2026-11-20", "2026-11-20 (Fri)")) {
+                Ui.setDate(s, NOV16);
+                type(s, typed);
+                assertEquals(NOV16, Ui.dateOf(s), typed);
+            }
+            type(s, "2026-11-20 (월)"); // 친 요일은 읽지 않는다
+            assertEquals(List.of(LocalDate.of(2026, 11, 20), "2026-11-20 (금)"), List.of(Ui.dateOf(s), editor(s).getText()));
+            Ui.setDate(s, LocalDate.of(2026, 11, 19));
+            type(s, "2026-11-20 (목)"); // 날짜 숫자만 고침
+            assertEquals(LocalDate.of(2026, 11, 20), Ui.dateOf(s));
+        });
+    }
+
+    @Test
+    void eUi4DateRoundTrip() {
+        JSpinner s = day("yyyy-MM-dd", NOV16);
+        String[][] rows = {{"2026-11-30", "2026-12-01", "2026-11-29"}, {"2026-12-31", "2027-01-01", "2026-12-30"},
+            {"2027-01-01", "2027-01-02", "2026-12-31"}, {"2028-02-28", "2028-02-29", "2028-02-27"}, {"2026-03-01", "2026-03-02", "2026-02-28"}};
+        for (String[] row : rows) {
+            LocalDate d = LocalDate.parse(row[0]);
+            Ui.setDate(s, d);
+            assertEquals(d, Ui.dateOf(s));
+            arrow(s, "increment");
+            assertEquals(LocalDate.parse(row[1]), Ui.dateOf(s));
+            Ui.setDate(s, d);
+            arrow(s, "decrement");
+            assertEquals(LocalDate.parse(row[2]), Ui.dateOf(s));
+        }
+    }
+
+    /** 프로토타입과 일부러 다름: 없는 날짜를 굴려 받지 않고 이전 값이다(프로토타입은 12-01, 2027-01-01, 03-02). */
+    @Test
+    void eUi5NonexistentDate() {
+        JSpinner s = day(WEEKDAY, NOV16);
+        type(s, "2026-11-31 (월)");
+        assertEquals(NOV16, Ui.dateOf(s));
+        type(s, "2026-13-01 (월)");
+        assertEquals(NOV16, Ui.dateOf(s));
+        JSpinner plain = day("yyyy-MM-dd", NOV16);
+        type(plain, "2026-02-30");
+        assertEquals(NOV16, Ui.dateOf(plain));
+    }
+
+    @Test
+    void eUi6TwoDigitYear() {
+        JSpinner s = day("yyyy-MM-dd", NOV16);
+        type(s, "26-1-5");
+        assertEquals("0026-01-05", editor(s).getText());
+        assertEquals(26, Ui.dateOf(s).getYear());
+        assertNotEquals(LocalDate.of(26, 1, 5), Ui.dateOf(s)); // 1582년 전 달력 차이
     }
 }
