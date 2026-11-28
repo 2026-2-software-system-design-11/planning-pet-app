@@ -151,10 +151,16 @@ final class PetPaintBody extends PetPaintHead {
         stroke(new Line2D.Double(104, 270, 216, 270), line, ink);
     }
 
-    /** 노래하는 펫 오른쪽 위의 음표 둘. 2초 주기로 흔들리며 오르고, 반 주기 어긋나 하나가 나타날 때 하나가 사라진다(t). */
+    /**
+     * 노래하는 펫 오른쪽 위의 음표 둘. 2초 주기로 흔들리며 오르고, 반 주기 어긋나 하나가 나타날 때 하나가 사라진다(t). 음수 시각도 주기로
+     * 본다(프로토타입과 일부러 다름, character.md E-POSE-13).
+     */
     void notes() {
         for (int i = 0; i < 2; i++) {
             double p = (t / 2.0 + i * 0.5) % 1.0;
+            if (p < 0) {
+                p += 1;
+            }
             double x = 252 + i * 24 + Math.sin(p * Math.PI * 2) * 6;
             double y = 86 - p * 56;
             g.setColor(alpha(NOTE, (int) (255 * Math.min(1, Math.min(p * 4, (1 - p) * 3)))));

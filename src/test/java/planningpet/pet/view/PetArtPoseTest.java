@@ -94,6 +94,13 @@ class PetArtPoseTest {
         assertEquals(PetPaintBase.NOTE.getRGB(), at15.getRGB(282, 72));
     }
 
+    /** 음수 시각도 2초 주기로 본다. 시각 -1은 1과 같다(프로토타입은 알파가 음수라 멈춘다). */
+    @Test
+    void ePose13NegativeTime() {
+        assertArrayEquals(Snap.pixels(notes(1)), Snap.pixels(notes(-1)));
+        assertTrue(box(PetKind.DOG, Pose.SING, -0.3)[1] < 0);
+    }
+
     /** x=206 세로줄에서 y 200 아래 처음 나오는 선 색 픽셀(든 앞발의 위 테두리). */
     private static int pawTop(double t) {
         BufferedImage img = draw(PetKind.CAT, Pose.SING, Set.of(), t);
