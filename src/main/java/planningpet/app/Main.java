@@ -64,6 +64,9 @@ public final class Main {
         /** 메인 창을 띄운다. */
         void main(JComponent root);
 
+        /** 트레이 아이콘과 메뉴를 단다. 달았으면 true다(06 25번). */
+        boolean tray(Tray tray);
+
         /** 30초 타이머를 켠다. */
         void timer(Tray tray);
 
@@ -117,6 +120,7 @@ public final class Main {
             front.setVisible(true);
             front.toFront();
         }
+        public boolean tray(Tray tray) { return tray.install(); }
         public void timer(Tray tray) { tray.start(); }
         public void saveFailed(String text) { AppWindow.saveFailed(text); }
         public void exit(int code) { System.exit(code); }
@@ -152,10 +156,12 @@ public final class Main {
         DayWatcher watcher = new DayWatcher(data, app);
         window.watch(() -> Theme.clear(window.root()));
         Theme.clear(window.root());
+        Tray tray = new Tray(app, watcher, clock, window, home, shell::front);
+        shell.tray(tray);
         shell.main(window.root());
         app.onWindowShown();
         shell.signal(app::onWindowShown); // 고르기 창일 때의 신호는 15번을 부르지 않는다(E-ONE-5).
-        shell.timer(new Tray(app, watcher, clock, window, home, shell::front));
+        shell.timer(tray);
     }
 
     /** 데이터 폴더. --data-dir 뒤에 경로가 없으면 IllegalArgumentException. 모르는 인자는 무시한다. */

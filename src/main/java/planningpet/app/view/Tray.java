@@ -1,5 +1,10 @@
 package planningpet.app.view;
 
+import java.awt.AWTException;
+import java.awt.MenuItem;
+import java.awt.PopupMenu;
+import java.awt.SystemTray;
+import java.awt.TrayIcon;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -68,6 +73,29 @@ public final class Tray {
         window.show("홈");
         home.showDay(day);
         app.onWindowShown();
+    }
+
+    /** 아이콘과 메뉴를 운영체제 트레이에 단다. 달면 true다. 화면에 아이콘이 생겨 검사하지 않는다(docs/porting/tray.md 3절). */
+    public boolean install() {
+        if (!SystemTray.isSupported()) {
+            return false;
+        }
+        PopupMenu popup = new PopupMenu();
+        menu().forEach((name, run) -> {
+            MenuItem item = new MenuItem(name);
+            item.addActionListener(e -> run.run());
+            popup.add(item);
+        });
+        TrayIcon icon = new TrayIcon(AppWindow.icon(), AppWindow.TITLE, popup);
+        icon.setImageAutoSize(true);
+        icon.addActionListener(e -> clicked());
+        try {
+            SystemTray.getSystemTray().add(icon);
+        } catch (AWTException e) {
+            return false;
+        }
+        notify = (title, text) -> icon.displayMessage(title, text, TrayIcon.MessageType.INFO);
+        return true;
     }
 
     /** 트레이 메뉴의 이름과 할 일(06 25번). 열기는 창을 보이고 15번을 부르고, 끝내기는 앱을 끝낸다. */

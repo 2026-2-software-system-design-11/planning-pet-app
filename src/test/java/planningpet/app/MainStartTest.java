@@ -78,6 +78,11 @@ class MainStartTest {
             calls.add("메인 창");
         }
 
+        public boolean tray(Tray tray) {
+            calls.add("트레이");
+            return false;
+        }
+
         public void timer(Tray tray) { calls.add("타이머"); }
 
         public void saveFailed(String text) { calls.add(text); }
@@ -168,7 +173,7 @@ class MainStartTest {
     void eMain11Loaded() {
         AppData data = saved();
         Main.start(store(LoadResult.loaded(data), false), folder, CLOCK, shell);
-        assertEquals(List.of("메인 창", "저장", "타이머"), calls);
+        assertEquals(List.of("트레이", "메인 창", "저장", "타이머"), calls);
         assertEquals(List.of(6, LocalDate.of(2026, 11, 16)), List.of(data.getStreak(), data.getLastOpenDay()));
         List<JPanel> panels = panels(root, new ArrayList<>());
         panels.forEach(p -> assertFalse(p.isOpaque(), p.toString()));
@@ -184,7 +189,7 @@ class MainStartTest {
         int[] heard = {0};
         data.onChange(() -> heard[0]++);
         signalled.run();
-        assertEquals(List.of("메인 창", "저장", "타이머"), calls);
+        assertEquals(List.of("트레이", "메인 창", "저장", "타이머"), calls);
         assertEquals(List.of(1, 6), List.of(heard[0], data.getStreak()));
     }
 
@@ -199,7 +204,7 @@ class MainStartTest {
     void eMain12LoadedSaveFails() {
         AppData data = saved();
         Main.start(store(LoadResult.loaded(data), true), folder, CLOCK, shell);
-        assertEquals(List.of("메인 창", "연속 접속 저장에 실패해서 바꾸기 전으로 돌렸어요.", "타이머"), calls);
+        assertEquals(List.of("트레이", "메인 창", "연속 접속 저장에 실패해서 바꾸기 전으로 돌렸어요.", "타이머"), calls);
         assertEquals(List.of(5, LocalDate.of(2026, 11, 15)), List.of(data.getStreak(), data.getLastOpenDay()));
     }
 
@@ -215,7 +220,7 @@ class MainStartTest {
         run();
         pick.dog.doClick();
         pick.start.doClick();
-        assertEquals(List.of("고르기 창", "메인 창", "타이머"), calls);
+        assertEquals(List.of("고르기 창", "트레이", "메인 창", "타이머"), calls);
         AppData read = new SqliteDataStore(folder, CLOCK).load().data();
         assertEquals(List.of("DOG 바둑이"), read.getPets().stream().map(p -> p.getKind() + " " + p.getName()).toList());
         assertEquals(List.of(1, LocalDate.of(2026, 11, 16)), List.of(read.getStreak(), read.getLastOpenDay()));
