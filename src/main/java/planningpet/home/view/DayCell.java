@@ -13,7 +13,7 @@ import planningpet.schedule.model.CellPreview;
 
 /**
  * 홈 달력의 날짜 칸 하나(05 홈 "달력", D-86, 06 26번). 프로토타입 CalendarPanel.cell의 칸이다(docs/porting/home.md S3e).
- * 글(getText)은 숫자, 일의 수, 마감 표시의 HTML이고(QA와 화면 읽기 프로그램이 읽는다), 숫자는 손수 그린다.
+ * 글(getText)은 숫자, 일의 수, 마감 표시의 HTML이고(QA와 화면 읽기 프로그램이 읽는다), 그림은 손수 그린다: 숫자.
  * 오늘은 DAY_TODAY 둥근 네모, 고른 날은 MINT 테두리다.
  */
 final class DayCell extends JLabel {
@@ -59,11 +59,12 @@ final class DayCell extends JLabel {
             g.setStroke(new BasicStroke(2f));
             g.drawRoundRect(2, 1, w - 5, h - 3, r, r);
         }
-        g.setFont(Theme.font(14));
+        g.setFont(today || picked ? Theme.bold(14) : Theme.font(14));
         FontMetrics fm = g.getFontMetrics();
         String n = blank ? "" : String.valueOf(date.getDayOfMonth());
         int numY = (h + fm.getAscent() - fm.getDescent()) / 2;
-        g.setColor(Theme.INK);
+        int dow = date.getDayOfWeek().getValue() % 7;
+        g.setColor(dow == 0 ? Theme.SUNDAY : dow == 6 ? Theme.SATURDAY : Theme.INK);
         g.drawString(n, (w - fm.stringWidth(n)) / 2, numY);
         g.dispose();
     }
