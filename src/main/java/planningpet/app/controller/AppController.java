@@ -2,7 +2,11 @@ package planningpet.app.controller;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import planningpet.app.model.AppData;
@@ -11,6 +15,9 @@ import planningpet.app.model.Visits;
 import planningpet.pet.model.Bubble;
 import planningpet.pet.model.PetTalk;
 import planningpet.pet.model.Situation;
+import planningpet.schedule.model.Reminder;
+import planningpet.schedule.model.ReminderKey;
+import planningpet.schedule.model.Reminders;
 
 /** 앱 하나의 controller. 도메인 controller의 변경을 저장과 함께 감싼다(06 22번, 07). */
 public final class AppController {
@@ -27,6 +34,8 @@ public final class AppController {
     private boolean windowVisible;
     /** quit가 부르는 끝내기. Main이 넣는다(docs/porting/tray.md). */
     private Runnable quit = () -> { };
+    /** 이번 실행에서 보낸 일정 시작 알림. 저장하지 않는다(06 17번). */
+    private final Set<ReminderKey> sent = new HashSet<>();
 
     public AppController(AppData data, DataStore store, Consumer<String> errors) {
         this.data = data;
@@ -151,5 +160,10 @@ public final class AppController {
     /** 트레이 메뉴의 끝내기와 macOS Cmd+Q(06 25번). 변경마다 이미 저장했으므로 끝내기만 한다. */
     public void quit() {
         quit.run();
+    }
+
+    /** 06 17번. 지금 보낼 일정 시작 알림을 고르고 보낸 것으로 적는다. Tray의 30초 타이머가 부른다(07). */
+    public List<Reminder> dueReminders(LocalDateTime now) {
+        return Reminders.due(data.getBook(), now, sent);
     }
 }
